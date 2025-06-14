@@ -1,0 +1,41 @@
+package saves
+
+import "encoding/json"
+
+type exampleModel struct {
+	Id string `json:"id"`
+}
+
+// of course this is not proper repository and this isn't thread safe
+// this is example repository
+type exampleRepo struct {
+	models     []exampleModel
+	hasChanges bool
+}
+
+func ExampleSavableRepo() SavableRepo {
+	return &exampleRepo{}
+}
+
+func (exampleRepo *exampleRepo) TakeSnapshot() RepoSnapshot {
+	bytes, _ := json.Marshal(exampleRepo.models)
+	exampleRepo.hasChanges = false
+	return NewRepoSnapshot(bytes)
+}
+
+func (exampleRepo *exampleRepo) LoadSnapshot(snapshot RepoSnapshot) error {
+	if err := json.Unmarshal(snapshot.Bytes(), &exampleRepo.models); err != nil {
+		return ErrInvalidRepoSnapshot
+	}
+	exampleRepo.hasChanges = false
+	return nil
+}
+
+func (exampleRepo *exampleRepo) HasChanges() bool {
+	return exampleRepo.hasChanges
+}
+
+func (exampleRepo *exampleRepo) AddModel(model exampleModel) {
+	exampleRepo.models = append(exampleRepo.models, model)
+	exampleRepo.hasChanges = true
+}

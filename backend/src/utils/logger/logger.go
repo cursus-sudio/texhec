@@ -1,0 +1,30 @@
+package logger
+
+import (
+	"backend/src/utils/clock"
+	"fmt"
+
+	"github.com/ogiusek/ioc"
+)
+
+type Logger interface {
+	Error(err error)
+}
+
+type logger struct {
+	Clock clock.Clock
+}
+
+func (logger *logger) Error(err error) {
+	fmt.Printf("\033[31m[ Error ]\033[0m %s \033[31m\n%s\033[0m\n\n", logger.Clock.Now(), err)
+}
+
+type Pkg struct{}
+
+func Package() Pkg {
+	return Pkg{}
+}
+
+func (pkg Pkg) Register(c ioc.Dic) {
+	ioc.RegisterSingleton(c, func(c ioc.Dic) Logger { return &logger{Clock: ioc.Get[clock.Clock](c)} })
+}

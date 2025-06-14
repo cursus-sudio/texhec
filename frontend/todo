@@ -1,0 +1,17 @@
+todo:
+
+frontend:
+1. tests for ecs world - done
+2. tests for scene manager - done
+3. create frontend state service and load state from backend
+
+backend:
+4. create saving and loading service
+5. create some state service
+
+story pointy:
+1. 2
+2. 2
+3. 2
+4. 5
+5. 2

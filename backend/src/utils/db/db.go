@@ -6,8 +6,12 @@ import (
 	"backend/src/utils/services/scopecleanup"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/sqlite"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/ogiusek/ioc"
@@ -58,26 +62,41 @@ func (tx Tx) Ok() bool {
 // pkg
 
 type Pkg struct {
-	filePath string
+	dbPath        string
+	migrationsDir string
 }
 
-func Package(filePath string) Pkg {
+func Package(dbPath string, migrationsDir string) Pkg {
 	return Pkg{
-		filePath: filePath,
+		dbPath:        dbPath,
+		migrationsDir: migrationsDir,
 	}
 }
 
 func (pkg Pkg) Register(c ioc.Dic) {
 	ioc.RegisterSingleton(c, func(c ioc.Dic) DB {
-		db, err := sql.Open("sqlite3", pkg.filePath)
+		db, err := sql.Open("sqlite3", pkg.dbPath)
 		if err != nil {
-			panic(err)
+			panic(errors.Join(errors.New("opening database"), err))
+		}
+		driver, err := sqlite.WithInstance(db, &sqlite.Config{})
+		if err != nil {
+			panic(errors.Join(errors.New("creating driver"), err))
+		}
+		mig, err := migrate.NewWithDatabaseInstance(
+			fmt.Sprintf("file://%s", pkg.migrationsDir),
+			"sqlite3",
+			driver,
+		)
+		if err != nil {
+			panic(errors.Join(errors.New("creating migration"), err))
+		}
+		if err := mig.Up(); err != nil && err != migrate.ErrNoChange {
+			panic(errors.Join(errors.New("running up migration"), err))
 		}
 		go func() {
 			for {
-				if err := db.Ping(); err != nil {
-					// panic(err)
-				}
+				db.Ping()
 				time.Sleep(time.Hour)
 			}
 		}()
@@ -99,8 +118,9 @@ func (pkg Pkg) Register(c ioc.Dic) {
 			if args.Error != nil || err != nil {
 				return
 			}
-			err := tx.Commit()
-			logger.Error(errors.Join(ErrCommitFailed, err))
+			if err := tx.Commit(); err != nil {
+				logger.Error(errors.Join(ErrCommitFailed, err))
+			}
 		})
 		return NewTx(tx, true)
 	})

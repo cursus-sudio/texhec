@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	ErrAlreadyCleanedUp error = errors.New("ScopeCleanUp. Already cleaned up")
+	ErrAlreadyCleanedUp error = errors.New("scope clean up already cleaned up")
 )
 
 type CleanUpArgs struct {
@@ -62,7 +62,6 @@ func (scopeCleanUp *scopeCleanUp) AddCleanListener(listener CleanUpListener) err
 		return ErrAlreadyCleanedUp
 	}
 
-	scopeCleanUp.alreadyCalled = true
 	scopeCleanUp.listeners = append(scopeCleanUp.listeners, listener)
 
 	return nil

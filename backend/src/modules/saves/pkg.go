@@ -29,6 +29,7 @@ func (pkg Pkg) Register(c ioc.Dic) {
 			ioc.Get[uuid.Factory](c),
 		)
 	})
+	ioc.RegisterSingleton(c, func(c ioc.Dic) ListSavesQueryBuilder { return newQueryBuilder() })
 	ioc.RegisterScoped(c, func(c ioc.Dic) SavesMetaRepo {
 		return newSavesMetaRepo(
 			ioc.Get[db.Tx](c),

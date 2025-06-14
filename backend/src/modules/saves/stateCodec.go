@@ -2,6 +2,7 @@ package saves
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sync"
 )
@@ -54,7 +55,7 @@ func (repoStateCodec *repoStateCodec) Load(data SaveData) error {
 	// verify snapshots
 	for key, snapshot := range snapshots {
 		if valid := repoStateCodec.repositories[key].IsValidSnapshot(snapshot); !valid {
-			return ErrInvalidSaveFormat
+			return errors.Join(errors.New("repository does not recognize snapshot"), ErrInvalidSaveFormat)
 		}
 	}
 

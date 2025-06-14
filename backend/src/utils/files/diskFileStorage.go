@@ -4,12 +4,13 @@ import (
 	"backend/src/utils/httperrors"
 	"backend/src/utils/services/scopecleanup"
 	"errors"
-	"github.com/optimus-hft/lockset"
 	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/optimus-hft/lockset"
 )
 
 // os.PathError
@@ -58,7 +59,6 @@ func NewDiskFileStorage(
 					log.Printf("failed to save file %s", err)
 					time.Sleep(time.Second * 10)
 				}
-
 			}()
 		},
 	}

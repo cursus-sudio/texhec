@@ -2,6 +2,7 @@ package files
 
 import (
 	"backend/src/utils/services/scopecleanup"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -16,6 +17,9 @@ type Pkg struct {
 func Package(
 	baseDir string,
 ) Pkg {
+	if err := os.MkdirAll(baseDir, os.ModePerm); err != nil {
+		panic(fmt.Sprintf("error creating directories %s", err.Error()))
+	}
 	info, err := os.Stat(baseDir)
 	if err != nil {
 		panic(err)

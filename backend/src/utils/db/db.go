@@ -7,6 +7,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -75,6 +77,9 @@ func Package(dbPath string, migrationsDir string) Pkg {
 
 func (pkg Pkg) Register(c ioc.Dic) {
 	ioc.RegisterSingleton(c, func(c ioc.Dic) DB {
+		if err := os.MkdirAll(filepath.Dir(pkg.dbPath), os.ModePerm); err != nil {
+			panic(fmt.Sprintf("error creating directories %s", err.Error()))
+		}
 		db, err := sql.Open("sqlite3", pkg.dbPath)
 		if err != nil {
 			panic(errors.Join(errors.New("opening database"), err))

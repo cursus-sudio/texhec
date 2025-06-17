@@ -16,13 +16,14 @@ func Package(
 	utilsPkg utils.Pkg,
 	modulesPkg modules.Pkg,
 	backendApiPkg backendapi.Pkg,
-) ioc.Pkg {
+	modsPkgs []ioc.Pkg,
+) Pkg {
 	return Pkg{
-		pkgs: []ioc.Pkg{
+		pkgs: append([]ioc.Pkg{
 			utilsPkg,
 			modulesPkg,
 			backendApiPkg,
-		},
+		}, modsPkgs...),
 	}
 }
 

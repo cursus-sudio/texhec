@@ -3,7 +3,9 @@ package main
 import (
 	backendsrc "backend/src"
 	"backend/src/backendapi"
-	"backend/src/modules"
+	"backend/src/backendapi/ping"
+	"backend/src/backendapi/tacticalmapapi"
+	backendmodules "backend/src/modules"
 	"backend/src/modules/saves"
 	"backend/src/modules/tacticalmap"
 	"backend/src/utils"
@@ -24,15 +26,20 @@ import (
 	"frontend/src/engine/inputs"
 	"frontend/src/engine/scenes"
 	"frontend/src/engine/window"
+	frontendmodules "frontend/src/modules"
+	"frontend/src/modules/backendconnector"
+	"frontend/src/modules/backendconnector/localconnector"
 	"os"
 	"path/filepath"
-	"reflect"
 	"time"
 
 	"github.com/ogiusek/ioc"
+	"github.com/ogiusek/relay"
 )
 
-// game loop
+type X struct {
+	Shi []int
+}
 
 func main() {
 	currentDir, err := os.Getwd()
@@ -43,132 +50,67 @@ func main() {
 	currentDir = filepath.Dir(currentDir)
 	userStorage := filepath.Join(currentDir, "user_storage")
 
-	var backendPkgs []ioc.Pkg = []ioc.Pkg{
-		backendsrc.Package(
-			utils.Package(
-				clock.Package(time.RFC3339Nano),
-				db.Package(
-					fmt.Sprintf("%s/db.sql", userStorage),
-					// fmt.Sprintf("%s/migrations", userStorage),
-					fmt.Sprintf("%s/backend/db/migrations", currentDir),
-				),
-				files.Package(fmt.Sprintf("%s/files", userStorage)),
-				logger.Package(),
-				services.Package(
-					scopecleanup.Package(),
-				),
-				uuid.Package(),
+	var backendPkg backendsrc.Pkg = backendsrc.Package(
+		utils.Package(
+			clock.Package(time.RFC3339Nano),
+			db.Package(
+				fmt.Sprintf("%s/db.sql", userStorage),
+				fmt.Sprintf("%s/backend/db/migrations", currentDir),
 			),
-			modules.Package(
-				saves.Package(),
-				tacticalmap.Package(),
+			files.Package(fmt.Sprintf("%s/files", userStorage)),
+			logger.Package(),
+			services.Package(
+				scopecleanup.Package(),
 			),
-			backendapi.Package(),
+			uuid.Package(),
 		),
-	}
+		backendmodules.Package(
+			saves.Package(),
+			tacticalmap.Package(),
+		),
+		backendapi.Package(),
+		[]ioc.Pkg{
+			exBackendModPkg{},
+		},
+	)
 
-	var frontendPkgs []ioc.Pkg = []ioc.Pkg{
-		frontendsrc.Package(
-			engine.Package(
-				inputs.Package(),
-				window.Package(),
+	var pkg frontendsrc.Pkg = frontendsrc.Package(
+		engine.Package(
+			inputs.Package(),
+			window.Package(),
+		),
+		frontendmodules.Package(
+			backendconnector.Package(
+				localconnector.Package(backendPkg),
 			),
 		),
-	}
+	)
 
-	bC := ioc.NewContainer()
-	fC := ioc.NewContainer()
+	c := ioc.NewContainer()
+	pkg.Register(c)
 
-	for _, pkg := range backendPkgs {
-		pkg.Register(bC)
-		pkg.Register(fC) // temporary until mediator isn't created
-	}
-
-	for _, pkg := range frontendPkgs {
-		pkg.Register(fC)
+	{ // pinging backend
+		r := ioc.Get[backendapi.Backend](c).Relay()
+		res, err := relay.Handle(r, ping.PingReq{ID: 2077})
+		fmt.Printf("res is %v\nerr is %s\n", res, err)
 	}
 
 	{
-		repository := NewIntRepository(
-			0,
-			false,
-			ioc.Get[saves.StateCodecRWMutex](bC).RWMutex().RLocker(),
-		)
-		var intRepo IntRepo = nil
-		repoId := reflect.TypeOf(&intRepo).Elem().String()
-		print(repoId)
-		repositories := ioc.Get[saves.SavableRepositories](bC)
-		repositories.AddRepo(saves.RepoId(repoId), repository)
-
-		ioc.RegisterSingleton(bC, func(c ioc.Dic) IntRepo { return repository })
-	}
-
-	{
-		fmt.Print("saving\n")
-		saveMetaFactory := ioc.Get[saves.SaveMetaFactory](bC)
-		savesService := ioc.Get[saves.Saves](bC)
-
-		builder := ioc.Get[saves.ListSavesQueryBuilder](bC)
-		{
-			metas, err := savesService.ListSaves(
-				builder.SavesPerPage(100).Build(),
-			)
-			if err != nil {
-				panic(fmt.Sprintf("queried saves to delete them %s", err.Error()))
-			} else {
-				for _, meta := range metas {
-					savesService.Delete(meta.Id)
-				}
-			}
-		}
-
-		repo := ioc.Get[IntRepo](bC)
-		for i := 0; i < 10; i++ {
-			repo.Increment()
-		}
-		fmt.Printf("count s1 is %d\n", repo.GetCount())
-		s1 := saveMetaFactory.New(saves.SaveName("s1"))
-		if err := savesService.NewSave(s1); err != nil {
-			panic(err)
-		}
-		for i := 0; i < 10; i++ {
-			repo.Increment()
-		}
-		fmt.Printf("count s2 is %d\n", repo.GetCount())
-		s2 := saveMetaFactory.New(saves.SaveName("s2"))
-		if err := savesService.NewSave(s2); err != nil {
-			panic(err)
-		}
-		fmt.Print("loading\n")
-		if err := savesService.Load(s1.Id); err != nil {
-			panic(err)
-		}
-		fmt.Printf("count s1 is %d\n", repo.GetCount())
-		if err := savesService.Load(s2.Id); err != nil {
-			panic(err)
-		}
-		fmt.Printf("count s2 is %d\n", repo.GetCount())
-
-		metas, err := savesService.ListSaves(
-			builder.SavesPerPage(100).Build(),
-		)
-		if err != nil {
-			print(err.Error())
-			print("\nthis were error in case you didn't notice\n")
-		} else {
-			for i, meta := range metas {
-				fmt.Printf("meta %d: %s\n", i, meta)
-			}
-		}
-
-		scopeCleanUp := ioc.Get[scopecleanup.ScopeCleanUp](bC)
-		scopeCleanUp.Clean(scopecleanup.NewCleanUpArgs(nil))
+		r := ioc.Get[backendapi.Backend](c).Relay()
+		res, err := relay.Handle(r, tacticalmapapi.NewCreateReq(
+			tacticalmap.CreateArgs{
+				Tiles: []tacticalmap.Tile{
+					{Pos: tacticalmap.Pos{X: 7, Y: 13}},
+				},
+			},
+		))
+		fmt.Printf("create res is %v\nerr is %s\n", res, err)
 	}
 
 	{ // adding scene 1
-		sceneManager := ioc.Get[scenes.SceneManager](fC)
+		sceneManager := ioc.Get[scenes.SceneManager](c)
 
-		world := ioc.Get[ecs.WorldFactory](fC)()
+		world := ioc.Get[ecs.WorldFactory](c)()
 
 		for i := 0; i < 1; i++ {
 			entity := world.NewEntity()
@@ -178,8 +120,8 @@ func main() {
 		someSystem := NewSomeSystem(
 			sceneManager,
 			world,
-			ioc.Get[backendapi.Backend](fC),
-			ioc.Get[console.Console](fC),
+			ioc.Get[backendapi.Backend](c),
+			ioc.Get[console.Console](c),
 		)
 		world.LoadSystem(&someSystem, ecs.DrawSystem)
 
@@ -191,9 +133,9 @@ func main() {
 		sceneManager.AddScene(mainScene)
 	}
 	{ // adding scene 2
-		sceneManager := ioc.Get[scenes.SceneManager](fC)
+		sceneManager := ioc.Get[scenes.SceneManager](c)
 
-		world := ioc.Get[ecs.WorldFactory](fC)()
+		world := ioc.Get[ecs.WorldFactory](c)()
 
 		for i := 0; i < 2; i++ {
 			entity := world.NewEntity()
@@ -203,8 +145,8 @@ func main() {
 		someSystem := NewSomeSystem(
 			sceneManager,
 			world,
-			ioc.Get[backendapi.Backend](fC),
-			ioc.Get[console.Console](fC),
+			ioc.Get[backendapi.Backend](c),
+			ioc.Get[console.Console](c),
 		)
 		world.LoadSystem(&someSystem, ecs.DrawSystem)
 
@@ -217,7 +159,7 @@ func main() {
 	previousFrame = time.Now()
 
 	for { // runnning game loop
-		world := ioc.Get[ecs.World](fC)
+		world := ioc.Get[ecs.World](c)
 
 		now := time.Now()
 		deltaTime := ecsargs.NewDeltaTime(now.Sub(previousFrame))

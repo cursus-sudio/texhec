@@ -20,7 +20,6 @@ func Package(
 	dbPkg db.Pkg,
 	filesPkg files.Pkg,
 	loggerPkg logger.Pkg,
-	// savesPkg saves.Pkg,
 	servicesPkg services.Pkg,
 	uuidPkg uuid.Pkg,
 ) Pkg {

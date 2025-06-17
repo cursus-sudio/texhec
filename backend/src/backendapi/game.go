@@ -1,15 +1,21 @@
 package backendapi
 
-import "backend/src/modules/tacticalmap"
+import (
+	"github.com/ogiusek/relay"
+)
 
 type Backend interface {
-	TacticalMap() tacticalmap.TacticalMap
+	Relay() relay.Relay
 }
 
 type backend struct {
-	TacticalMapService tacticalmap.TacticalMap `inject:"1"`
+	relay relay.Relay
 }
 
-func (backend backend) TacticalMap() tacticalmap.TacticalMap {
-	return backend.TacticalMapService
+func newBackend(relay relay.Relay) Backend {
+	return &backend{relay: relay}
+}
+
+func (backend *backend) Relay() relay.Relay {
+	return backend.relay
 }

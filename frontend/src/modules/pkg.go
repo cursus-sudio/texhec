@@ -1,8 +1,7 @@
-package src
+package modules
 
 import (
-	"frontend/src/engine"
-	"frontend/src/modules"
+	"frontend/src/modules/backendconnector"
 
 	"github.com/ogiusek/ioc"
 )
@@ -12,13 +11,11 @@ type Pkg struct {
 }
 
 func Package(
-	enginePkg engine.Pkg,
-	modules modules.Pkg,
+	backendPkg backendconnector.Pkg,
 ) Pkg {
 	return Pkg{
 		pkgs: []ioc.Pkg{
-			enginePkg,
-			modules,
+			backendPkg,
 		},
 	}
 }

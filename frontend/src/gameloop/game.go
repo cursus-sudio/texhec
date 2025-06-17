@@ -2,11 +2,14 @@ package gameloop
 
 import (
 	"backend/src/backendapi"
+	"backend/src/backendapi/tacticalmapapi"
 	"fmt"
 	"frontend/src/engine/draw"
 	"frontend/src/engine/ecs"
 	"strings"
 	"time"
+
+	"github.com/ogiusek/relay"
 )
 
 type Game struct {
@@ -50,7 +53,7 @@ func (game *Game) Draw(args draw.DrawApi) {
 	text += fmt.Sprintf("current frame %d\n", game.Frame)
 	text += fmt.Sprintf("time in game %f\n", game.PastTime.Seconds())
 
-	tacticalMap, _ := game.Backend.TacticalMap().GetMap()
+	tacticalMap, _ := relay.Handle(game.Backend.Relay(), tacticalmapapi.NewGetReq())
 	text += fmt.Sprintf("found shit %v\n", tacticalMap)
 
 	fmt.Print(text)

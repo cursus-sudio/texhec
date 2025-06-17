@@ -1,12 +1,13 @@
 module frontend
 
-go 1.24.1
+go 1.24.3
 
 require backend v0.0.0
 
 require (
 	github.com/ogiusek/ioc v1.0.8
 	github.com/ogiusek/null v1.1.0
+	github.com/ogiusek/relay v1.0.1
 )
 
 require (

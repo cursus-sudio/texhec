@@ -8,11 +8,16 @@ import (
 )
 
 type Logger interface {
+	Info(message string)
 	Error(err error)
 }
 
 type logger struct {
 	Clock clock.Clock
+}
+
+func (logger *logger) Info(message string) {
+	fmt.Printf("\033[34m[ Info ]\033[0m %s \033[34m\n%s\033[0m\n\n", logger.Clock.Now(), message)
 }
 
 func (logger *logger) Error(err error) {

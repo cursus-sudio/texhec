@@ -6,10 +6,6 @@ import (
 	"backend/services/clock"
 	"backend/services/db"
 	"backend/services/files"
-	"backend/services/logger"
-	"backend/services/saves"
-	"backend/services/scopecleanup"
-	"backend/services/uuid"
 	"errors"
 	"fmt"
 	"frontend"
@@ -46,17 +42,12 @@ func main() {
 	userStorage := filepath.Join(engineDir, "user_storage")
 
 	var backendPkg backend.Pkg = backend.Package(
-		backendapi.Package(),
 		clock.Package(time.RFC3339Nano),
 		db.Package(
 			fmt.Sprintf("%s/db.sql", userStorage),
 			null.New(fmt.Sprintf("%s/backend/services/db/migrations", engineDir)),
 		),
 		files.Package(fmt.Sprintf("%s/files", userStorage)),
-		logger.Package(),
-		saves.Package(),
-		scopecleanup.Package(),
-		uuid.Package(),
 		[]ioc.Pkg{
 			exBackendModPkg{},
 			Package(),

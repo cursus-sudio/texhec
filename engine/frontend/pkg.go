@@ -5,6 +5,7 @@ import (
 	"frontend/services/console"
 	"frontend/services/draw"
 	"frontend/services/ecs"
+	"frontend/services/events"
 	"frontend/services/inputs"
 	"frontend/services/scenes"
 	"frontend/services/window"
@@ -28,8 +29,8 @@ func Package(
 			windowPkg,
 			draw.Package(),
 			console.Package(),
-
 			ecs.Package(),
+			events.Package(),
 			scenes.Package(),
 		},
 	}

@@ -4,6 +4,7 @@ import (
 	"backend/services/backendapi"
 	"backend/services/clock"
 	"backend/services/db"
+	"backend/services/events"
 	"backend/services/files"
 	"backend/services/logger"
 	"backend/services/saves"
@@ -18,26 +19,22 @@ type Pkg struct {
 }
 
 func Package(
-	backendApiPkg backendapi.Pkg,
 	clockPkg clock.Pkg,
 	dbPkg db.Pkg,
 	filesPkg files.Pkg,
-	loggerPkg logger.Pkg,
-	savesPkg saves.Pkg,
-	scopeCleanUpPkg scopecleanup.Pkg,
-	uuidPkg uuid.Pkg,
 	modsPkgs []ioc.Pkg,
 ) Pkg {
 	return Pkg{
 		pkgs: append([]ioc.Pkg{
-			backendApiPkg,
+			backendapi.Package(),
 			clockPkg,
 			dbPkg,
+			events.Package(),
 			filesPkg,
-			loggerPkg,
-			savesPkg,
-			scopeCleanUpPkg,
-			uuidPkg,
+			logger.Package(),
+			saves.Package(),
+			scopecleanup.Package(),
+			uuid.Package(),
 		}, modsPkgs...),
 	}
 }

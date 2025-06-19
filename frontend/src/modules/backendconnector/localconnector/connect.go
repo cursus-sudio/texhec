@@ -4,7 +4,7 @@ import (
 	backendsrc "backend/src"
 	"backend/src/backendapi"
 
-	"github.com/ogiusek/ioc"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type Connector interface {
@@ -32,15 +32,16 @@ type Pkg struct {
 func Package(
 	backend backendsrc.Pkg,
 ) Pkg {
-	c := ioc.NewContainer()
-	backend.Register(c)
+	b := ioc.NewBuilder()
+	backend.Register(b)
+	c := b.Build()
 	return Pkg{
 		backend: ioc.Get[backendapi.Backend](c),
 	}
 }
 
-func (pkg Pkg) Register(c ioc.Dic) {
-	ioc.RegisterSingleton(c, func(c ioc.Dic) Connector {
+func (pkg Pkg) Register(b ioc.Builder) {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) Connector {
 		return newConnector(pkg.backend)
 	})
 }

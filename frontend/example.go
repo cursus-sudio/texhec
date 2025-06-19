@@ -14,8 +14,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ogiusek/ioc"
-	"github.com/ogiusek/relay"
+	"github.com/ogiusek/ioc/v2"
+	"github.com/ogiusek/relay/v2"
 )
 
 // component
@@ -217,78 +217,19 @@ func (savableIntRepo *intRepo) GetCount() int {
 
 type exBackendModPkg struct{}
 
-func (exBackendModPkg) Register(c ioc.Dic) {
-	{
-		repository := NewIntRepository(
+func (exBackendModPkg) Register(b ioc.Builder) {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) *intRepo {
+		return NewIntRepository(
 			0,
 			false,
 			ioc.Get[saves.StateCodecRWMutex](c).RWMutex().RLocker(),
 		)
-		var intRepo IntRepo = nil
-		repoId := reflect.TypeOf(&intRepo).Elem().String()
-		print(repoId)
-		repositories := ioc.Get[saves.SavableRepositories](c)
-		repositories.AddRepo(saves.RepoId(repoId), repository)
-
-		ioc.RegisterSingleton(c, func(c ioc.Dic) IntRepo { return repository })
-	}
-
-	{
-		fmt.Print("saving\n")
-		saveMetaFactory := ioc.Get[saves.SaveMetaFactory](c)
-		savesService := ioc.Get[saves.Saves](c)
-
-		builder := ioc.Get[saves.ListSavesQueryBuilder](c)
-		{
-			metas, err := savesService.ListSaves(
-				builder.SavesPerPage(100).Build(),
-			)
-			if err != nil {
-				panic(fmt.Sprintf("queried saves to delete them %s", err.Error()))
-			} else {
-				for _, meta := range metas {
-					savesService.Delete(meta.Id)
-				}
-			}
-		}
-
-		repo := ioc.Get[IntRepo](c)
-		for i := 0; i < 10; i++ {
-			repo.Increment()
-		}
-		fmt.Printf("count s1 is %d\n", repo.GetCount())
-		s1 := saveMetaFactory.New(saves.SaveName("s1"))
-		if err := savesService.NewSave(s1); err != nil {
-			panic(err)
-		}
-		for i := 0; i < 10; i++ {
-			repo.Increment()
-		}
-		fmt.Printf("count s2 is %d\n", repo.GetCount())
-		s2 := saveMetaFactory.New(saves.SaveName("s2"))
-		if err := savesService.NewSave(s2); err != nil {
-			panic(err)
-		}
-		fmt.Print("loading\n")
-		if err := savesService.Load(s1.Id); err != nil {
-			panic(err)
-		}
-		fmt.Printf("count s1 is %d\n", repo.GetCount())
-		if err := savesService.Load(s2.Id); err != nil {
-			panic(err)
-		}
-		fmt.Printf("count s2 is %d\n", repo.GetCount())
-
-		metas, err := savesService.ListSaves(
-			builder.SavesPerPage(100).Build(),
-		)
-		if err != nil {
-			print(err.Error())
-			print("\nthis were error in case you didn't notice\n")
-		} else {
-			for i, meta := range metas {
-				fmt.Printf("meta %d: %s\n", i, meta)
-			}
-		}
-	}
+	})
+	ioc.RegisterSingleton(b, func(c ioc.Dic) IntRepo { return ioc.Get[*intRepo](c) })
+	ioc.WrapService(b,
+		func(c ioc.Dic, s saves.SavableRepoBuilder) saves.SavableRepoBuilder {
+			repoId := reflect.TypeFor[IntRepo]().String()
+			s.AddRepo(saves.RepoId(repoId), ioc.Get[*intRepo](c))
+			return s
+		})
 }

@@ -1,7 +1,7 @@
 package backendapi
 
 import (
-	"github.com/ogiusek/relay"
+	"github.com/ogiusek/relay/v2"
 )
 
 type Backend interface {

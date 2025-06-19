@@ -5,7 +5,7 @@ import (
 	"frontend/src/engine/ecs/ecsargs"
 	"time"
 
-	"github.com/ogiusek/ioc"
+	"github.com/ogiusek/ioc/v2"
 )
 
 func StartGameLoop(c ioc.Dic) {

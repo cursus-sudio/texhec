@@ -1,11 +1,12 @@
 package ping
 
 import (
+	"backend/src/backendapi"
 	"backend/src/utils/endpoint"
 	"backend/src/utils/logger"
 
-	"github.com/ogiusek/ioc"
-	"github.com/ogiusek/relay"
+	"github.com/ogiusek/ioc/v2"
+	"github.com/ogiusek/relay/v2"
 )
 
 type PingRes struct {
@@ -27,16 +28,15 @@ func (endpoint pingEndpoint) Handle(req PingReq) (PingRes, error) {
 	return PingRes{ID: req.ID, Ok: true}, nil
 }
 
-type Pkg struct {
-	c ioc.Dic
+type Pkg struct{}
+
+func Package() Pkg {
+	return Pkg{}
 }
 
-func Package(c ioc.Dic) Pkg {
-	return Pkg{
-		c: c,
-	}
-}
-
-func (pkg Pkg) Register(r relay.Relay) {
-	endpoint.Register[pingEndpoint](pkg.c, r)
+func (pkg Pkg) Register(b ioc.Builder) {
+	ioc.WrapService(b, func(c ioc.Dic, s backendapi.Builder) backendapi.Builder {
+		endpoint.Register[pingEndpoint](c, s.Relay())
+		return s
+	})
 }

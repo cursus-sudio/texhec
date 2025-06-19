@@ -16,7 +16,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/mattn/go-sqlite3"
 
-	"github.com/ogiusek/ioc"
+	"github.com/ogiusek/ioc/v2"
 )
 
 // db
@@ -75,8 +75,8 @@ func Package(dbPath string, migrationsDir string) Pkg {
 	}
 }
 
-func (pkg Pkg) Register(c ioc.Dic) {
-	ioc.RegisterSingleton(c, func(c ioc.Dic) DB {
+func (pkg Pkg) Register(b ioc.Builder) {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) DB {
 		if err := os.MkdirAll(filepath.Dir(pkg.dbPath), os.ModePerm); err != nil {
 			panic(fmt.Sprintf("error creating directories %s", err.Error()))
 		}
@@ -108,7 +108,7 @@ func (pkg Pkg) Register(c ioc.Dic) {
 		return NewDB(db, true)
 	})
 
-	ioc.RegisterScoped(c, func(c ioc.Dic) Tx {
+	ioc.RegisterScoped(b, func(c ioc.Dic) Tx {
 		logger := ioc.Get[logger.Logger](c)
 		db := ioc.Get[DB](c)
 		if !db.Ok() {

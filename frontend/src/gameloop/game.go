@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ogiusek/relay"
+	"github.com/ogiusek/relay/v2"
 )
 
 type Game struct {

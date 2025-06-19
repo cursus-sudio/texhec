@@ -3,6 +3,7 @@ package main
 import (
 	backendsrc "backend/src"
 	"backend/src/backendapi"
+	"backend/src/backendapi/backendapipkg"
 	"backend/src/backendapi/ping"
 	"backend/src/backendapi/tacticalmapapi"
 	backendmodules "backend/src/modules"
@@ -33,8 +34,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/ogiusek/ioc"
-	"github.com/ogiusek/relay"
+	"github.com/ogiusek/ioc/v2"
+	"github.com/ogiusek/relay/v2"
 )
 
 type X struct {
@@ -68,7 +69,7 @@ func main() {
 			saves.Package(),
 			tacticalmap.Package(),
 		),
-		backendapi.Package(),
+		backendapipkg.Package(),
 		[]ioc.Pkg{
 			exBackendModPkg{},
 		},
@@ -86,15 +87,16 @@ func main() {
 		),
 	)
 
-	c := ioc.NewContainer()
-	pkg.Register(c)
+	b := ioc.NewBuilder()
+	pkg.Register(b)
+	c := b.Build()
 
 	{ // pinging backend
-		r := ioc.Get[backendapi.Backend](c).Relay()
+		backend := ioc.Get[backendapi.Backend](c)
+		r := backend.Relay()
 		res, err := relay.Handle(r, ping.PingReq{ID: 2077})
-		fmt.Printf("res is %v\nerr is %s\n", res, err)
+		fmt.Printf("ping res is %v\nerr is %s\n", res, err)
 	}
-
 	{
 		r := ioc.Get[backendapi.Backend](c).Relay()
 		res, err := relay.Handle(r, tacticalmapapi.NewCreateReq(

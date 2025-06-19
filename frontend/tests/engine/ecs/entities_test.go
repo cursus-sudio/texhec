@@ -4,12 +4,13 @@ import (
 	"frontend/src/engine/ecs"
 	"testing"
 
-	"github.com/ogiusek/ioc"
+	"github.com/ogiusek/ioc/v2"
 )
 
 func TestEntities(t *testing.T) {
-	c := ioc.NewContainer()
-	ecs.Package().Register(c)
+	b := ioc.NewBuilder()
+	ecs.Package().Register(b)
+	c := b.Build()
 	world := ioc.Get[ecs.WorldFactory](c)()
 
 	if len(world.GetEntities()) != 0 {

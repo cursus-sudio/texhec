@@ -3,7 +3,7 @@ package services
 import (
 	"backend/src/utils/services/scopecleanup"
 
-	"github.com/ogiusek/ioc"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type Pkg struct {
@@ -20,8 +20,8 @@ func Package(
 	}
 }
 
-func (pkg Pkg) Register(c ioc.Dic) {
+func (pkg Pkg) Register(b ioc.Builder) {
 	for _, pkg := range pkg.pkgs {
-		pkg.Register(c)
+		pkg.Register(b)
 	}
 }

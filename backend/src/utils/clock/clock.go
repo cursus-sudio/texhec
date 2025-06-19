@@ -3,7 +3,7 @@ package clock
 import (
 	"time"
 
-	"github.com/ogiusek/ioc"
+	"github.com/ogiusek/ioc/v2"
 )
 
 // interface
@@ -44,7 +44,7 @@ func Package(
 	}
 }
 
-func (pkg Pkg) Register(c ioc.Dic) {
-	ioc.RegisterSingleton(c, func(c ioc.Dic) Clock { return &clock{} })
-	ioc.RegisterSingleton(c, func(c ioc.Dic) DateFormat { return pkg.dateFormat })
+func (pkg Pkg) Register(b ioc.Builder) {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) Clock { return &clock{} })
+	ioc.RegisterSingleton(b, func(c ioc.Dic) DateFormat { return pkg.dateFormat })
 }

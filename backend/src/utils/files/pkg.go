@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ogiusek/ioc"
+	"github.com/ogiusek/ioc/v2"
 	"github.com/optimus-hft/lockset"
 )
 
@@ -32,9 +32,9 @@ func Package(
 	}
 }
 
-func (pkg Pkg) Register(c ioc.Dic) {
+func (pkg Pkg) Register(b ioc.Builder) {
 	lockSet := lockset.New()
-	ioc.RegisterScoped(c, func(c ioc.Dic) FileStorage {
+	ioc.RegisterScoped(b, func(c ioc.Dic) FileStorage {
 		return NewDiskFileStorage(
 			pkg.BaseDir,
 			ioc.Get[scopecleanup.ScopeCleanUp](c),

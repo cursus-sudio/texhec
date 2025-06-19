@@ -6,7 +6,7 @@ import (
 	"backend/src/utils/files"
 	"backend/src/utils/uuid"
 
-	"github.com/ogiusek/ioc"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type Pkg struct{}
@@ -15,41 +15,40 @@ func Package() Pkg {
 	return Pkg{}
 }
 
-func (pkg Pkg) Register(c ioc.Dic) {
-	ioc.RegisterTransient(c, func(c ioc.Dic) Saves {
+func (pkg Pkg) Register(b ioc.Builder) {
+	ioc.RegisterTransient(b, func(c ioc.Dic) Saves {
 		return newSaves(
 			ioc.Get[SavesStorage](c),
 			ioc.Get[SavesMetaRepo](c),
 			ioc.Get[clock.Clock](c),
 		)
 	})
-	ioc.RegisterSingleton(c, func(c ioc.Dic) SaveMetaFactory {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) SaveMetaFactory {
 		return newSaveMetaFactory(
 			ioc.Get[clock.Clock](c),
 			ioc.Get[uuid.Factory](c),
 		)
 	})
-	ioc.RegisterSingleton(c, func(c ioc.Dic) ListSavesQueryBuilder { return newQueryBuilder() })
-	ioc.RegisterScoped(c, func(c ioc.Dic) SavesMetaRepo {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ListSavesQueryBuilder { return newQueryBuilder() })
+	ioc.RegisterScoped(b, func(c ioc.Dic) SavesMetaRepo {
 		return newSavesMetaRepo(
 			ioc.Get[db.Tx](c),
 			ioc.Get[clock.DateFormat](c),
 		)
 	})
-	ioc.RegisterScoped(c, func(c ioc.Dic) SavesStorage {
+	ioc.RegisterScoped(b, func(c ioc.Dic) SavesStorage {
 		return newSavesStorage(
 			ioc.Get[StateCodec](c),
 			ioc.Get[files.FileStorage](c),
 		)
 	})
-	ioc.RegisterSingleton(c, func(c ioc.Dic) StateCodecRWMutex { return newStateCodecRWMutex() })
-	ioc.RegisterSingleton(c, func(c ioc.Dic) StateCodec {
-		savableRepositories := ioc.Get[SavableRepositories](c)
-		savableRepositories.Seal()
+	ioc.RegisterSingleton(b, func(c ioc.Dic) StateCodecRWMutex { return newStateCodecRWMutex() })
+	ioc.RegisterSingleton(b, func(c ioc.Dic) StateCodec {
 		return newStateCodec(
-			savableRepositories.GetRepositories(),
+			ioc.Get[SavableRepositories](c).GetRepositories(),
 			ioc.Get[StateCodecRWMutex](c).RWMutex(),
 		)
 	})
-	ioc.RegisterSingleton(c, func(c ioc.Dic) SavableRepositories { return newSavableRepositories() })
+	ioc.RegisterSingleton(b, func(c ioc.Dic) SavableRepoBuilder { return newSavableRepoBuilder() })
+	ioc.RegisterSingleton(b, func(c ioc.Dic) SavableRepositories { return ioc.Get[SavableRepoBuilder](c).Build() })
 }

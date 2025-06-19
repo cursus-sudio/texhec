@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ogiusek/ioc"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type OrderedSystem struct {
@@ -27,8 +27,9 @@ func (system *OrderedSystem) Update(args ecs.Args) {
 }
 
 func TestSystemsOrder(t *testing.T) {
-	c := ioc.NewContainer()
-	ecs.Package().Register(c)
+	b := ioc.NewBuilder()
+	ecs.Package().Register(b)
+	c := b.Build()
 	world := ioc.Get[ecs.WorldFactory](c)()
 
 	counter := 0

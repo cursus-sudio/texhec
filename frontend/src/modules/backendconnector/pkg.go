@@ -4,12 +4,12 @@ import (
 	"backend/src/backendapi"
 	"frontend/src/modules/backendconnector/localconnector"
 
-	"github.com/ogiusek/ioc"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type Pkg struct {
 	pkgs        []ioc.Pkg
-	loadDefault func(c ioc.Dic)
+	loadDefault func(c ioc.Dic) backendapi.Backend
 }
 
 func Package(
@@ -19,23 +19,22 @@ func Package(
 		pkgs: []ioc.Pkg{
 			localPkg,
 		},
-		loadDefault: func(c ioc.Dic) {
-			ioc.Get[localconnector.Connector](c).Connect()
+		loadDefault: func(c ioc.Dic) backendapi.Backend {
+			return ioc.Get[localconnector.Connector](c).Connect()
 		},
 	}
 }
 
-func (pkg Pkg) Register(c ioc.Dic) {
-	ioc.RegisterSingleton(c, func(c ioc.Dic) Backend {
-		return NewBackend(func() backendapi.Backend {
-			return ioc.Get[localconnector.Connector](c).Connect()
-		})
+func (pkg Pkg) Register(b ioc.Builder) {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) Backend {
+		b := NewBuilder()
+		b.DefaultConnection(func() backendapi.Backend { return pkg.loadDefault(c) })
+		return b.Build()
 	})
-	ioc.RegisterSingleton(c, func(c ioc.Dic) backendapi.Backend {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) backendapi.Backend {
 		return ioc.Get[Backend](c).Connection()
 	})
 	for _, pkg := range pkg.pkgs {
-		pkg.Register(c)
+		pkg.Register(b)
 	}
-	pkg.loadDefault(c)
 }

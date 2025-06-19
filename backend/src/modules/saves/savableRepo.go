@@ -31,13 +31,22 @@ type SavableRepo interface {
 	HasChanges() bool
 }
 
-var (
-	ErrSealedSavableRepositories error = errors.New("already sealed savable repo")
-)
-
 type SavableRepositories interface {
-	// can return ErrSealedSavableRepositories
-	AddRepo(RepoId, SavableRepo) error
 	GetRepositories() map[RepoId]SavableRepo
-	Seal()
+}
+
+// imp
+
+type savableRepositories struct {
+	repositories map[RepoId]SavableRepo
+}
+
+func newSavableRepositories() SavableRepositories {
+	return &savableRepositories{
+		repositories: map[RepoId]SavableRepo{},
+	}
+}
+
+func (savableRepositories *savableRepositories) GetRepositories() map[RepoId]SavableRepo {
+	return savableRepositories.repositories
 }

@@ -1,17 +1,13 @@
 package tacticalmapapi
 
 import (
+	"backend/src/backendapi"
 	"backend/src/modules/tacticalmap"
 	"backend/src/utils/endpoint"
 
-	"github.com/ogiusek/ioc"
-	"github.com/ogiusek/relay"
+	"github.com/ogiusek/ioc/v2"
+	"github.com/ogiusek/relay/v2"
 )
-
-// OnCreate(CreateListener)
-// OnDestroy(DestroyListener)
-
-type Uh struct{}
 
 type CreateReq struct {
 	relay.Req[CreateRes]
@@ -72,15 +68,23 @@ func (endpoint getEndpoint) Handle(req GetReq) (GetRes, error) {
 //
 
 type Pkg struct {
-	c ioc.Dic
 }
 
-func Package(c ioc.Dic) Pkg {
-	return Pkg{c: c}
+func Package() Pkg {
+	return Pkg{}
 }
 
-func (pkg Pkg) Register(r relay.Relay) {
-	endpoint.Register[createEndpoint](pkg.c, r)
-	endpoint.Register[destroyEndpoint](pkg.c, r)
-	endpoint.Register[getEndpoint](pkg.c, r)
+//
+
+// OnCreate(CreateListener)
+// OnDestroy(DestroyListener)
+
+func (pkg Pkg) Register(b ioc.Builder) {
+	ioc.WrapService[backendapi.Builder](b, func(c ioc.Dic, s backendapi.Builder) backendapi.Builder {
+		r := s.Relay()
+		endpoint.Register[createEndpoint](c, r)
+		endpoint.Register[destroyEndpoint](c, r)
+		endpoint.Register[getEndpoint](c, r)
+		return s
+	})
 }

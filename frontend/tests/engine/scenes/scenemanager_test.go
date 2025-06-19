@@ -5,7 +5,7 @@ import (
 	"frontend/src/engine/scenes"
 	"testing"
 
-	"github.com/ogiusek/ioc"
+	"github.com/ogiusek/ioc/v2"
 )
 
 // type SceneId struct {
@@ -31,9 +31,10 @@ import (
 // }
 
 func TestScenes(t *testing.T) {
-	c := ioc.NewContainer()
-	scenes.Package().Register(c)
-	ecs.Package().Register(c)
+	b := ioc.NewBuilder()
+	scenes.Package().Register(b)
+	ecs.Package().Register(b)
+	c := b.Build()
 	worldFactory := ioc.Get[ecs.WorldFactory](c)
 	sceneManager := ioc.Get[scenes.SceneManager](c)
 	sceneBuilder := ioc.Get[scenes.SceneBuilder](c)

@@ -6,7 +6,6 @@ import (
 	"backend/utils/endpoint"
 
 	"github.com/ogiusek/ioc/v2"
-	"github.com/ogiusek/relay/v2"
 )
 
 type PingRes struct {
@@ -15,7 +14,7 @@ type PingRes struct {
 }
 
 type PingReq struct {
-	relay.Req[PingRes]
+	endpoint.Request[PingRes]
 	ID int
 }
 
@@ -36,7 +35,7 @@ func Package() Pkg {
 
 func (pkg Pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, func(c ioc.Dic, s backendapi.Builder) backendapi.Builder {
-		endpoint.Register[pingEndpoint](c, s.Relay())
+		endpoint.Register[pingEndpoint](s.Relay())
 		return s
 	})
 }

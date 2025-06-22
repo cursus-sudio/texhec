@@ -1,15 +1,17 @@
 package tacticalmap
 
 import (
-	"github.com/ogiusek/relay/v2"
+	"backend/utils/endpoint"
 )
 
 type CreateReq struct {
-	relay.Req[CreateRes]
+	endpoint.Request[CreateRes]
 	CreateArgs
 }
 
-func NewCreateReq(args CreateArgs) CreateReq { return CreateReq{CreateArgs: args} }
+func NewCreateReq(args CreateArgs) CreateReq {
+	return CreateReq{Request: endpoint.NewRequest[CreateRes](), CreateArgs: args}
+}
 
 type CreateRes struct{}
 type createEndpoint struct {
@@ -24,11 +26,13 @@ func (endpoint createEndpoint) Handle(req CreateReq) (CreateRes, error) {
 //
 
 type DestroyReq struct {
-	relay.Req[DestroyRes]
+	endpoint.Request[DestroyRes]
 	DestroyArgs
 }
 
-func NewDestroyReq(args DestroyArgs) DestroyReq { return DestroyReq{DestroyArgs: args} }
+func NewDestroyReq(args DestroyArgs) DestroyReq {
+	return DestroyReq{Request: endpoint.NewRequest[DestroyRes](), DestroyArgs: args}
+}
 
 type DestroyRes struct{}
 type destroyEndpoint struct {
@@ -43,10 +47,10 @@ func (endpoint destroyEndpoint) Handle(req DestroyReq) (DestroyRes, error) {
 //
 
 type GetReq struct {
-	relay.Req[GetRes]
+	endpoint.Request[GetRes]
 }
 
-func NewGetReq() GetReq { return GetReq{} }
+func NewGetReq() GetReq { return GetReq{Request: endpoint.NewRequest[GetRes]()} }
 
 type GetRes struct {
 	Tiles []Tile

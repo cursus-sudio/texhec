@@ -6,6 +6,7 @@ import (
 	"backend/services/clock"
 	"backend/services/db"
 	"backend/services/files"
+	"backend/utils/endpoint"
 	"errors"
 	"fmt"
 	"frontend"
@@ -67,7 +68,7 @@ func main() {
 	{ // pinging backend
 		backend := ioc.Get[backendapi.Backend](c)
 		r := backend.Relay()
-		res, err := relay.Handle(r, ping.PingReq{ID: 2077})
+		res, err := relay.Handle(r, ping.PingReq{Request: endpoint.NewRequest[ping.PingRes](), ID: 2077})
 		fmt.Printf("ping res is %v\nerr is %s\n", res, err)
 	}
 	{

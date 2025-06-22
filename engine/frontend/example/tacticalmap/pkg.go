@@ -15,11 +15,11 @@ func Package() Pkg {
 
 func (pkg Pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) TacticalMap { return newTacticalMap() })
-	ioc.WrapService[backendapi.Builder](b, func(c ioc.Dic, s backendapi.Builder) backendapi.Builder {
+	ioc.WrapService(b, func(c ioc.Dic, s backendapi.Builder) backendapi.Builder {
 		r := s.Relay()
-		endpoint.Register[createEndpoint](c, r)
-		endpoint.Register[destroyEndpoint](c, r)
-		endpoint.Register[getEndpoint](c, r)
+		endpoint.Register[createEndpoint](r)
+		endpoint.Register[destroyEndpoint](r)
+		endpoint.Register[getEndpoint](r)
 		return s
 	})
 }

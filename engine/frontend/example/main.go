@@ -2,7 +2,7 @@ package main
 
 import (
 	"backend"
-	"backend/services/backendapi"
+	"backend/services/api"
 	"backend/services/clock"
 	"backend/services/db"
 	"backend/services/files"
@@ -66,13 +66,13 @@ func main() {
 	c := b.Build()
 
 	{ // pinging backend
-		backend := ioc.Get[backendapi.Backend](c)
+		backend := ioc.Get[api.Server](c)
 		r := backend.Relay()
 		res, err := relay.Handle(r, ping.PingReq{Request: endpoint.NewRequest[ping.PingRes](), ID: 2077})
-		fmt.Printf("ping res is %v\nerr is %s\n", res, err)
+		fmt.Printf("client recieved ping res is %v\nerr is %s\n", res, err)
 	}
 	{
-		r := ioc.Get[backendapi.Backend](c).Relay()
+		r := ioc.Get[api.Server](c).Relay()
 		res, err := relay.Handle(r, tacticalmap.NewCreateReq(
 			tacticalmap.CreateArgs{
 				Tiles: []tacticalmap.Tile{
@@ -96,7 +96,7 @@ func main() {
 		someSystem := NewSomeSystem(
 			sceneManager,
 			world,
-			ioc.Get[backendapi.Backend](c),
+			ioc.Get[api.Server](c),
 			ioc.Get[console.Console](c),
 		)
 		world.LoadSystem(&someSystem, ecs.DrawSystem)
@@ -121,7 +121,7 @@ func main() {
 		someSystem := NewSomeSystem(
 			sceneManager,
 			world,
-			ioc.Get[backendapi.Backend](c),
+			ioc.Get[api.Server](c),
 			ioc.Get[console.Console](c),
 		)
 		world.LoadSystem(&someSystem, ecs.DrawSystem)

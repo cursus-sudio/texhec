@@ -1,13 +1,13 @@
 package gameloop
 
 import (
-	"backend/services/backendapi"
+	"backend/services/api"
 	"frontend/services/inputs"
 	"frontend/services/window"
 )
 
 type PlayedGame struct {
-	backend backendapi.Backend
+	backend api.Server
 	// idk received data on this end
 }
 
@@ -18,7 +18,7 @@ func (game *PlayedGame) Draw(window window.Window) {
 }
 
 func NewPlayedGame(
-	backend backendapi.Backend,
+	backend api.Server,
 ) PlayedGame {
 	return PlayedGame{
 		backend: backend,

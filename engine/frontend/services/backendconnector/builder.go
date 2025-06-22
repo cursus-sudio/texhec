@@ -1,24 +1,24 @@
 package backendconnector
 
 import (
-	"backend/services/backendapi"
+	"backend/services/api"
 	"sync"
 )
 
 type Builder interface {
-	DefaultConnection(defaultConnector func() backendapi.Backend)
+	DefaultConnection(defaultConnector func() api.Server)
 	Build() Backend
 }
 
 type builder struct {
-	defaultConnector func() backendapi.Backend
+	defaultConnector func() api.Server
 }
 
 func NewBuilder() Builder {
 	return &builder{}
 }
 
-func (builder *builder) DefaultConnection(defaultConnector func() backendapi.Backend) {
+func (builder *builder) DefaultConnection(defaultConnector func() api.Server) {
 	builder.defaultConnector = defaultConnector
 }
 

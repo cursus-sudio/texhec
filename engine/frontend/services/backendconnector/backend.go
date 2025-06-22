@@ -1,24 +1,24 @@
 package backendconnector
 
 import (
-	"backend/services/backendapi"
+	"backend/services/api"
 	"backend/utils/httperrors"
 	"sync"
 )
 
 type Backend interface {
-	Connect(backendapi.Backend) error
+	Connect(api.Server) error
 	Disconnect()
-	Connection() backendapi.Backend
+	Connection() api.Server
 }
 
 type backend struct {
 	rwMutex              sync.RWMutex
-	connection           backendapi.Backend
-	getDefaultConnection func() backendapi.Backend
+	connection           api.Server
+	getDefaultConnection func() api.Server
 }
 
-func NewBackend(getDefaultConnection func() backendapi.Backend) Backend {
+func NewBackend(getDefaultConnection func() api.Server) Backend {
 	return &backend{
 		rwMutex:              sync.RWMutex{},
 		connection:           getDefaultConnection(),
@@ -26,7 +26,7 @@ func NewBackend(getDefaultConnection func() backendapi.Backend) Backend {
 	}
 }
 
-func (backend *backend) Connect(connection backendapi.Backend) error {
+func (backend *backend) Connect(connection api.Server) error {
 	if connection == nil {
 		return httperrors.Err400
 	}
@@ -40,7 +40,7 @@ func (backend *backend) Disconnect() {
 	backend.connection = backend.getDefaultConnection()
 }
 
-func (backend *backend) Connection() backendapi.Backend {
+func (backend *backend) Connection() api.Server {
 	if backend.connection == nil {
 
 	}

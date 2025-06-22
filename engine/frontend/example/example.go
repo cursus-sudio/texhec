@@ -1,7 +1,7 @@
 package main
 
 import (
-	"backend/services/backendapi"
+	"backend/services/api"
 	"backend/services/saves"
 	"encoding/json"
 	"errors"
@@ -80,14 +80,14 @@ func (system *toggleSystem) Update(args ecs.Args) {
 type someSystem struct {
 	SceneManager scenes.SceneManager
 	World        ecs.World
-	Backend      backendapi.Backend
+	Backend      api.Server
 	Console      console.Console
 }
 
 func NewSomeSystem(
 	sceneMagener scenes.SceneManager,
 	world ecs.World,
-	backend backendapi.Backend,
+	backend api.Server,
 	console console.Console,
 ) someSystem {
 	return someSystem{

@@ -1,7 +1,7 @@
 package gameloop
 
 import (
-	"backend/services/backendapi"
+	"backend/services/api"
 	"fmt"
 	"frontend/example/tacticalmap"
 	"frontend/services/draw"
@@ -13,7 +13,7 @@ import (
 )
 
 type Game struct {
-	Backend    backendapi.Backend `inject:"1"`
+	Backend    api.Server `inject:"1"`
 	StartedAt  time.Time
 	Frame      int
 	PastTime   time.Duration

@@ -1,7 +1,7 @@
 package gameloop
 
 import (
-	"backend/services/backendapi"
+	"backend/services/api"
 	"frontend/services/inputs"
 	"frontend/services/window"
 
@@ -15,7 +15,7 @@ type GameState struct {
 	PlayedGame null.Nullable[PlayedGame]
 }
 
-func (gameState *GameState) LoadGame(backend backendapi.Backend) {
+func (gameState *GameState) LoadGame(backend api.Server) {
 	gameState.PlayedGame = null.New(NewPlayedGame(backend))
 }
 

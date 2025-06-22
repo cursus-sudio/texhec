@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"frontend/example/ping"
 	"frontend/services/backendconnector"
 	"frontend/services/console"
 	"frontend/services/draw"
@@ -24,6 +25,9 @@ func Package(
 ) Pkg {
 	return Pkg{
 		pkgs: []ioc.Pkg{
+			// TODO TEMP
+			ping.ClientPackage(),
+			//
 			backendConnectorPkg,
 			inputsPkg,
 			windowPkg,
@@ -41,44 +45,3 @@ func (pkg Pkg) Register(b ioc.Builder) {
 		pkg.Register(b)
 	}
 }
-
-// type Pkg struct {
-// 	pkgs []ioc.Pkg
-// }
-//
-// func Package() Pkg {
-// 	// var backendPkg backend.Pkg = backend.Package(
-// 	// 	backendapi.Package(),
-// 	// 	clock.Package(time.RFC3339Nano),
-// 	// 	db.Package(
-// 	// 		fmt.Sprintf("%s/db.sql", userStorage),
-// 	// 		fmt.Sprintf("%s/engine/backend/db/migrations", currentDir),
-// 	// 	),
-// 	// 	files.Package(fmt.Sprintf("%s/files", userStorage)),
-// 	// 	logger.Package(),
-// 	// 	saves.Package(),
-// 	// 	scopecleanup.Package(),
-// 	// 	uuid.Package(),
-// 	// 	[]ioc.Pkg{
-// 	// 		exBackendModPkg{},
-// 	// 		Package(),
-// 	// 	},
-// 	// )
-// 	//
-// 	// var pkg frontendsrc.Pkg = frontendsrc.Package(
-// 	// 	services.Package(
-// 	// 		backendconnector.Package(localconnector.Package(backendPkg)),
-// 	// 		inputs.Package(),
-// 	// 		window.Package(),
-// 	// 	),
-// 	// )
-// 	return Pkg{
-// 		pkgs: []ioc.Pkg{},
-// 	}
-// }
-//
-// func (pkg Pkg) Register(b ioc.Builder) {
-// 	for _, pkg := range pkg.pkgs {
-// 		pkg.Register(b)
-// 	}
-// }

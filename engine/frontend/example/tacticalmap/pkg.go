@@ -1,7 +1,7 @@
 package tacticalmap
 
 import (
-	"backend/services/backendapi"
+	"backend/services/api"
 	"backend/utils/endpoint"
 
 	"github.com/ogiusek/ioc/v2"
@@ -15,7 +15,7 @@ func Package() Pkg {
 
 func (pkg Pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) TacticalMap { return newTacticalMap() })
-	ioc.WrapService(b, func(c ioc.Dic, s backendapi.Builder) backendapi.Builder {
+	ioc.WrapService(b, func(c ioc.Dic, s api.ServerBuilder) api.ServerBuilder {
 		r := s.Relay()
 		endpoint.Register[createEndpoint](r)
 		endpoint.Register[destroyEndpoint](r)

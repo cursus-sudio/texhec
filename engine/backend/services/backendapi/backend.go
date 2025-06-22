@@ -12,7 +12,7 @@ type backend struct {
 	relay relay.Relay
 }
 
-func newBackend(relay relay.Relay) Backend {
+func NewBackend(relay relay.Relay) Backend {
 	return &backend{relay: relay}
 }
 

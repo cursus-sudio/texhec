@@ -22,7 +22,7 @@ func (backendBuilder builder) Relay() relay.Builder {
 }
 
 func (backendBuilder builder) Build() Backend {
-	return newBackend(
+	return NewBackend(
 		backendBuilder.relay.Build(),
 	)
 }

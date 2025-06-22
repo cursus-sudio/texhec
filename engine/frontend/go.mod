@@ -6,9 +6,9 @@ require backend v0.0.0
 
 require (
 	github.com/ogiusek/events v1.0.1
-	github.com/ogiusek/ioc/v2 v2.0.6
+	github.com/ogiusek/ioc/v2 v2.0.7
 	github.com/ogiusek/null v1.1.0
-	github.com/ogiusek/relay/v2 v2.0.2
+	github.com/ogiusek/relay/v2 v2.0.3
 )
 
 require (

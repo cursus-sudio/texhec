@@ -8,7 +8,7 @@ import (
 	"backend/services/files"
 	"backend/services/logger"
 	"backend/services/saves"
-	"backend/services/scopecleanup"
+	"backend/services/scopes"
 	"backend/services/uuid"
 
 	"github.com/ogiusek/ioc/v2"
@@ -33,7 +33,7 @@ func Package(
 			filesPkg,
 			logger.Package(),
 			saves.Package(),
-			scopecleanup.Package(),
+			scopes.Package(),
 			uuid.Package(),
 		}, modsPkgs...),
 	}

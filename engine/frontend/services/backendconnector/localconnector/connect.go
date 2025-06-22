@@ -32,11 +32,12 @@ type Pkg struct {
 func Package(
 	backend backend.Pkg,
 ) Pkg {
-	b := ioc.NewBuilder()
-	backend.Register(b)
-	c := b.Build()
+	cBuilder := ioc.NewBuilder()
+	backend.Register(cBuilder)
+	c := cBuilder.Build()
+	backendApi := ioc.Get[backendapi.Backend](c)
 	return Pkg{
-		backend: ioc.Get[backendapi.Backend](c),
+		backend: backendApi,
 	}
 }
 

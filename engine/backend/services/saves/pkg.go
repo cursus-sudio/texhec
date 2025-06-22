@@ -4,6 +4,7 @@ import (
 	"backend/services/clock"
 	"backend/services/db"
 	"backend/services/files"
+	"backend/services/scopes"
 	"backend/services/uuid"
 
 	"github.com/ogiusek/ioc/v2"
@@ -30,13 +31,13 @@ func (pkg Pkg) Register(b ioc.Builder) {
 		)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ListSavesQueryBuilder { return newQueryBuilder() })
-	ioc.RegisterScoped(b, func(c ioc.Dic) SavesMetaRepo {
+	ioc.RegisterScoped(b, scopes.Request, func(c ioc.Dic) SavesMetaRepo {
 		return newSavesMetaRepo(
 			ioc.Get[db.Tx](c),
 			ioc.Get[clock.DateFormat](c),
 		)
 	})
-	ioc.RegisterScoped(b, func(c ioc.Dic) SavesStorage {
+	ioc.RegisterScoped(b, scopes.Request, func(c ioc.Dic) SavesStorage {
 		return newSavesStorage(
 			ioc.Get[StateCodec](c),
 			ioc.Get[files.FileStorage](c),

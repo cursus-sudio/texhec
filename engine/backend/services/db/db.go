@@ -2,7 +2,7 @@ package db
 
 import (
 	"backend/services/logger"
-	"backend/services/scopecleanup"
+	"backend/services/scopes"
 	"backend/utils/httperrors"
 	"database/sql"
 	"errors"
@@ -112,7 +112,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 		return NewDB(db, true)
 	})
 
-	ioc.RegisterScoped(b, func(c ioc.Dic) Tx {
+	ioc.RegisterScoped(b, scopes.Request, func(c ioc.Dic) Tx {
 		logger := ioc.Get[logger.Logger](c)
 		db := ioc.Get[DB](c)
 		if !db.Ok() {
@@ -122,8 +122,8 @@ func (pkg Pkg) Register(b ioc.Builder) {
 		if err != nil {
 			logger.Error(errors.Join(httperrors.Err503, err))
 		}
-		scopeCleanUp := ioc.Get[scopecleanup.ScopeCleanUp](c)
-		scopeCleanUp.AddCleanListener(func(args scopecleanup.CleanUpArgs) {
+		scopeCleanUp := ioc.Get[scopes.RequestEnd](c)
+		scopeCleanUp.AddCleanListener(func(args scopes.RequestEndArgs) {
 			if args.Error != nil || err != nil {
 				return
 			}

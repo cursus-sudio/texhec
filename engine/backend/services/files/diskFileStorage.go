@@ -1,7 +1,7 @@
 package files
 
 import (
-	"backend/services/scopecleanup"
+	"backend/services/scopes"
 	"backend/utils/httperrors"
 	"errors"
 	"io/fs"
@@ -37,7 +37,7 @@ type diskFileStorage struct {
 
 func NewDiskFileStorage(
 	baseDir string,
-	scopeCleanUp scopecleanup.ScopeCleanUp,
+	requestEnd scopes.RequestEnd,
 	lockset *lockset.Set,
 ) FileStorage {
 	fileStorage := &diskFileStorage{
@@ -63,12 +63,12 @@ func NewDiskFileStorage(
 		},
 	}
 
-	scopeCleanUp.AddCleanListener(fileStorage.CleanUp)
+	requestEnd.AddCleanListener(fileStorage.CleanUp)
 
 	return fileStorage
 }
 
-func (fileStorage *diskFileStorage) CleanUp(args scopecleanup.CleanUpArgs) {
+func (fileStorage *diskFileStorage) CleanUp(args scopes.RequestEndArgs) {
 	for path, openedFile := range fileStorage.openedFiles {
 		defer fileStorage.lockset.Unlock(path.String())
 		if !openedFile.Modified {

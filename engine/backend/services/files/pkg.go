@@ -1,7 +1,7 @@
 package files
 
 import (
-	"backend/services/scopecleanup"
+	"backend/services/scopes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -34,10 +34,10 @@ func Package(
 
 func (pkg Pkg) Register(b ioc.Builder) {
 	lockSet := lockset.New()
-	ioc.RegisterScoped(b, func(c ioc.Dic) FileStorage {
+	ioc.RegisterScoped(b, scopes.Request, func(c ioc.Dic) FileStorage {
 		return NewDiskFileStorage(
 			pkg.BaseDir,
-			ioc.Get[scopecleanup.ScopeCleanUp](c),
+			ioc.Get[scopes.RequestEnd](c),
 			lockSet,
 		)
 	})

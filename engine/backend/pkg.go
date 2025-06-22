@@ -1,7 +1,7 @@
 package backend
 
 import (
-	"backend/services/backendapi"
+	"backend/services/api"
 	"backend/services/clock"
 	"backend/services/db"
 	"backend/services/events"
@@ -26,7 +26,7 @@ func Package(
 ) Pkg {
 	return Pkg{
 		pkgs: append([]ioc.Pkg{
-			backendapi.Package(),
+			api.Package(),
 			clockPkg,
 			dbPkg,
 			events.Package(),

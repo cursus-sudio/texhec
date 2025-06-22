@@ -1,4 +1,4 @@
-package backendapi
+package api
 
 import (
 	"backend/services/scopes"
@@ -16,8 +16,8 @@ func Package() Pkg {
 }
 
 func (pkg Pkg) Register(b ioc.Builder) {
-	ioc.RegisterTransient(b, func(c ioc.Dic) Builder {
-		b := NewBuilder()
+	ioc.RegisterTransient(b, func(c ioc.Dic) ServerBuilder {
+		b := NewServerBuilder()
 		r := b.Relay()
 		userSession := c.Scope(scopes.UserSession)
 
@@ -32,7 +32,10 @@ func (pkg Pkg) Register(b ioc.Builder) {
 		})
 		return b
 	})
-	ioc.RegisterTransient(b, func(c ioc.Dic) Backend {
-		return ioc.Get[Builder](c).Build()
+	ioc.RegisterTransient(b, func(c ioc.Dic) Server {
+		return ioc.Get[ServerBuilder](c).Build(func() {
+			userSessionService := ioc.Get[scopes.UserSessionEnd](c)
+			userSessionService.Clean(scopes.NewUserSessionEndArgs())
+		})
 	})
 }

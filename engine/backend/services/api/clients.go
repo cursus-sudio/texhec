@@ -1,4 +1,4 @@
-package clients
+package api
 
 import (
 	"backend/utils/httperrors"
@@ -8,7 +8,7 @@ import (
 type ClientID string
 
 type Clients interface {
-	Client(ClientID) (ClientEmitter, error)
+	Client(ClientID) (Client, error)
 	Connect(ClientID, Client) error
 	Disconnect(ClientID)
 }
@@ -25,7 +25,7 @@ func NewClients() Clients {
 	}
 }
 
-func (clients *clients) Client(id ClientID) (ClientEmitter, error) {
+func (clients *clients) Client(id ClientID) (Client, error) {
 	clients.clientMutex.Lock()
 	defer clients.clientMutex.Unlock()
 	client, ok := clients.clients[id]

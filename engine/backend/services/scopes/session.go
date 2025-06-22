@@ -5,7 +5,7 @@ import "sync"
 type UserSessionEndArgs struct {
 }
 
-func NewSessionEndArgs() UserSessionEndArgs {
+func NewUserSessionEndArgs() UserSessionEndArgs {
 	return UserSessionEndArgs{}
 }
 

@@ -1,8 +1,11 @@
 package console
 
-import "strings"
+import (
+	"strings"
+)
 
 type console struct {
+	permanent  string
 	drawnLines int
 	print      func(string)
 }
@@ -24,8 +27,13 @@ func (console *console) ClearConsole() {
 		text += goToPreviousLine()
 		text += clearCurrentLine()
 	}
-	console.print(text)
-	console.drawnLines = 0
+	console.print(text + console.permanent)
+	console.permanent = ""
+	console.drawnLines = strings.Count(text, "\n")
+}
+
+func (console *console) LogPermanentlyToConsole(text string) {
+	console.permanent += text + "\n"
 }
 
 func (console *console) LogToConsole(text string) {
@@ -40,7 +48,8 @@ func (console *console) ClearAndLogToConsole(text string) {
 		flushed += goToPreviousLine()
 		flushed += clearCurrentLine()
 	}
+	console.print(flushed + console.permanent + text)
+	console.permanent = ""
 	flushed += text
-	console.print(flushed)
 	console.drawnLines = strings.Count(text, "\n")
 }

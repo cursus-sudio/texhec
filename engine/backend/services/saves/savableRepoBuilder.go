@@ -1,6 +1,6 @@
 package saves
 
-import "backend/utils/httperrors"
+import "shared/utils/httperrors"
 
 type SavableRepoBuilder interface {
 	// can return Err409

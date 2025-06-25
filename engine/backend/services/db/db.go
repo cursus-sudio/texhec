@@ -3,12 +3,12 @@ package db
 import (
 	"backend/services/logger"
 	"backend/services/scopes"
-	"backend/utils/httperrors"
 	"database/sql"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"shared/utils/httperrors"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"

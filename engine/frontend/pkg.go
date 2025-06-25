@@ -1,15 +1,15 @@
 package frontend
 
 import (
-	"frontend/example/ping"
-	"frontend/services/backendconnector"
+	"frontend/services/api"
+	"frontend/services/backendconnection"
 	"frontend/services/console"
 	"frontend/services/draw"
 	"frontend/services/ecs"
-	"frontend/services/events"
 	"frontend/services/inputs"
 	"frontend/services/scenes"
 	"frontend/services/window"
+	"shared"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -19,24 +19,24 @@ type Pkg struct {
 }
 
 func Package(
-	backendConnectorPkg backendconnector.Pkg,
+	sharedPkg shared.Pkg,
+	backendConnectorPkg backendconnection.Pkg,
 	inputsPkg inputs.Pkg,
 	windowPkg window.Pkg,
+	mods []ioc.Pkg,
 ) Pkg {
 	return Pkg{
-		pkgs: []ioc.Pkg{
-			// TODO TEMP
-			ping.ClientPackage(),
-			//
+		pkgs: append([]ioc.Pkg{
+			sharedPkg,
+			api.Package(),
 			backendConnectorPkg,
 			inputsPkg,
 			windowPkg,
 			draw.Package(),
 			console.Package(),
 			ecs.Package(),
-			events.Package(),
 			scenes.Package(),
-		},
+		}, mods...),
 	}
 }
 

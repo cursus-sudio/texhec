@@ -2,12 +2,12 @@ package files
 
 import (
 	"backend/services/scopes"
-	"backend/utils/httperrors"
 	"errors"
 	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
+	"shared/utils/httperrors"
 	"time"
 
 	"github.com/optimus-hft/lockset"

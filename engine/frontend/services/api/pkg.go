@@ -1,9 +1,8 @@
 package api
 
 import (
-	"backend/services/logger"
-	"backend/services/scopes"
 	"fmt"
+	"frontend/services/console"
 	"reflect"
 	"shared/utils/connection"
 	"shared/utils/endpoint"
@@ -19,21 +18,21 @@ func Package() Pkg {
 	return Pkg{}
 }
 
-func (pkg Pkg) Register(b ioc.Builder) {
-	ioc.RegisterScoped(b, scopes.UserSession, func(c ioc.Dic) connection.Definition {
+func (Pkg) Register(b ioc.Builder) {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) connection.Definition {
 		return connection.NewDefinition()
 	})
 
 	ioc.WrapService(b, func(c ioc.Dic, con connection.Definition) connection.Definition {
-		logger := ioc.Get[logger.Logger](c)
+		console := ioc.Get[console.Console](c)
 		con.MessageListener().Relay().RegisterMiddleware(func(ctx relay.AnyContext, next func()) {
 			rawReq := ctx.Req()
 			req, ok := rawReq.(endpoint.AnyRequest)
 			if ok {
-				req.UseC(c.Scope(scopes.Request))
+				req.UseC(c)
 			} else {
-				logger.Error(
-					fmt.Errorf(
+				console.LogPermanentlyToConsole(
+					fmt.Sprintf(
 						"request of type `%s` doesn't implement `endpoint.AnyRequest` interface",
 						reflect.TypeOf(rawReq),
 					),
@@ -41,15 +40,14 @@ func (pkg Pkg) Register(b ioc.Builder) {
 			}
 			next()
 		})
-
 		con.MessageListener().Relay().RegisterMessageMiddleware(func(ctx relay.AnyMessageCtx, next func()) {
 			rawReq := ctx.Message()
 			req, ok := rawReq.(endpoint.Message)
 			if ok {
-				req.UseC(c.Scope(scopes.Request))
+				req.UseC(c)
 			} else {
-				logger.Error(
-					fmt.Errorf(
+				console.LogPermanentlyToConsole(
+					fmt.Sprintf(
 						"request of type `%s` doesn't implement `endpoint.AnyRequest` interface",
 						reflect.TypeOf(rawReq),
 					),

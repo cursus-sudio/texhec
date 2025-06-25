@@ -1,8 +1,6 @@
 package saves
 
-import (
-	"backend/services/clock"
-)
+import "shared/services/clock"
 
 type saves struct {
 	Storage SavesStorage

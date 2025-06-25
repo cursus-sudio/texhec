@@ -2,14 +2,13 @@ package backend
 
 import (
 	"backend/services/api"
-	"backend/services/clock"
+	"backend/services/clients"
 	"backend/services/db"
-	"backend/services/events"
 	"backend/services/files"
 	"backend/services/logger"
 	"backend/services/saves"
 	"backend/services/scopes"
-	"backend/services/uuid"
+	"shared"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -19,22 +18,22 @@ type Pkg struct {
 }
 
 func Package(
-	clockPkg clock.Pkg,
+	sharedPkg shared.Pkg,
 	dbPkg db.Pkg,
 	filesPkg files.Pkg,
+	loggerPkg logger.Pkg,
 	modsPkgs []ioc.Pkg,
 ) Pkg {
 	return Pkg{
 		pkgs: append([]ioc.Pkg{
+			sharedPkg,
 			api.Package(),
-			clockPkg,
+			clients.Package(),
 			dbPkg,
-			events.Package(),
 			filesPkg,
-			logger.Package(),
+			loggerPkg,
 			saves.Package(),
 			scopes.Package(),
-			uuid.Package(),
 		}, modsPkgs...),
 	}
 }

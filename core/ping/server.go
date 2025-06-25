@@ -1,0 +1,39 @@
+package ping
+
+import (
+	"backend/services/clients"
+	"backend/services/logger"
+	"fmt"
+	"shared/utils/endpoint"
+
+	"github.com/ogiusek/ioc/v2"
+	"github.com/ogiusek/relay/v2"
+)
+
+type serverPingEndpoint struct {
+	Logger logger.Logger         `inject:"1"`
+	Client clients.SessionClient `inject:"1"`
+}
+
+func (e serverPingEndpoint) Handle(req PingReq) (PingRes, error) {
+	e.Logger.Info("aok")
+	client, err := e.Client.Client()
+	if err != nil {
+		e.Logger.Error(err)
+		return PingRes{ID: req.ID, Ok: false}, err
+	}
+	res, err := relay.Handle(client.Connection.Relay(), PingReq{Request: endpoint.NewRequest[PingRes](), ID: req.ID + 10})
+	e.Logger.Info(fmt.Sprintf("server recieved: \nres is: %v\nerr is: %s\n", res, err))
+	return PingRes{ID: req.ID, Ok: true}, nil
+}
+
+type ServerPkg struct{}
+
+func ServerPackage() ServerPkg {
+	return ServerPkg{}
+}
+
+func (pkg ServerPkg) Register(b ioc.Builder) {
+	Package().Register(b)
+	endpoint.Register[serverPingEndpoint](b)
+}

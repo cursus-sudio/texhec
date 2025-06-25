@@ -1,11 +1,11 @@
 package saves
 
 import (
-	"backend/services/clock"
 	"backend/services/db"
 	"backend/services/files"
 	"backend/services/scopes"
-	"backend/services/uuid"
+	"shared/services/clock"
+	"shared/services/uuid"
 
 	"github.com/ogiusek/ioc/v2"
 )

@@ -4,7 +4,6 @@ import (
 	"shared/services/api"
 	"shared/services/clock"
 	"shared/services/codec"
-	"shared/services/connpkg"
 	"shared/services/events"
 	"shared/services/runtime"
 	"shared/services/uuid"
@@ -26,7 +25,6 @@ func Package(
 			clockPkg,
 			events.Package(),
 			codec.Package(),
-			connpkg.Package(),
 			runtime.Package(),
 			uuid.Package(),
 		},

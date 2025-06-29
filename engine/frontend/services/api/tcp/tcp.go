@@ -3,7 +3,7 @@ package tcp
 import (
 	"frontend/services/backendconnection"
 	"net"
-	"shared/services/connpkg/netconnection"
+	"shared/services/api/netconnection"
 	"shared/utils/connection"
 
 	"github.com/ogiusek/ioc/v2"

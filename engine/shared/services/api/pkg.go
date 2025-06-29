@@ -2,6 +2,7 @@ package api
 
 import (
 	"reflect"
+	"shared/services/api/netconnection"
 	"shared/utils/connection"
 	"shared/utils/httperrors"
 
@@ -10,16 +11,23 @@ import (
 )
 
 type Pkg struct {
+	pkgs            []ioc.Pkg
 	getRequestScope func(c ioc.Dic) ioc.Dic
 }
 
 func Package(getRequestScope func(c ioc.Dic) ioc.Dic) Pkg {
 	return Pkg{
+		pkgs: []ioc.Pkg{
+			netconnection.Package(),
+		},
 		getRequestScope: getRequestScope,
 	}
 }
 
 func (pkg Pkg) Register(b ioc.Builder) {
+	for _, pkg := range pkg.pkgs {
+		pkg.Register(b)
+	}
 	ioc.WrapService(b, connection.OrderAttachServices, func(c ioc.Dic, con connection.Definition) connection.Definition {
 		con.MessageListener().Relay().RegisterMiddleware(func(ctx relay.AnyContext, next func()) {
 			c := reflect.ValueOf(pkg.getRequestScope(c))

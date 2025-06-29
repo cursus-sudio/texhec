@@ -6,7 +6,7 @@ import (
 	"backend/services/scopes"
 	"fmt"
 	"net"
-	"shared/services/connpkg/netconnection"
+	"shared/services/api/netconnection"
 	"shared/services/runtime"
 
 	"github.com/ogiusek/ioc/v2"

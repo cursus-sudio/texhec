@@ -1,10 +1,15 @@
 package scenes
 
-import "frontend/services/ecs"
+import (
+	"frontend/services/ecs"
+
+	"github.com/ogiusek/events"
+)
 
 type sceneBuilder struct {
-	onLoad   []func(Scene)
-	onUnload []func(Scene)
+	onLoad        []func(Scene)
+	onUnload      []func(Scene)
+	eventsBuilder events.Builder
 }
 
 func newSceneBuilder() SceneBuilder {
@@ -32,5 +37,5 @@ func (sceneBuilder sceneBuilder) Build(sceneId SceneId, world ecs.World) Scene {
 			listener(s)
 		}
 	}
-	return newScene(sceneId, world, onLoad, onUnload)
+	return newScene(sceneId, world, onLoad, onUnload, NewSceneEvents(sceneBuilder.eventsBuilder.Build()))
 }

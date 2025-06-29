@@ -1,4 +1,4 @@
-package requestcodec
+package codec
 
 import (
 	"encoding/json"
@@ -82,9 +82,10 @@ func (codec *codec) Decode(bytes []byte) (any, error) {
 	if !ok {
 		return nil, ErrTypeIsNotRegistered
 	}
-	model := reflect.Zero(modelType).Interface()
-	if err := json.Unmarshal(encoded.Bytes, &model); err != nil {
+	modelPtr := reflect.New(modelType)
+	if err := json.Unmarshal(encoded.Bytes, modelPtr.Interface()); err != nil {
 		return nil, errors.Join(ErrInvalidBytes, err)
 	}
+	model := modelPtr.Elem().Interface()
 	return model, nil
 }

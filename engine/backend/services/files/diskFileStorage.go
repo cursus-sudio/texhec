@@ -37,7 +37,7 @@ type diskFileStorage struct {
 
 func NewDiskFileStorage(
 	baseDir string,
-	requestEnd scopes.RequestEnd,
+	requestEnd scopes.RequestService,
 	lockset *lockset.Set,
 ) FileStorage {
 	fileStorage := &diskFileStorage{

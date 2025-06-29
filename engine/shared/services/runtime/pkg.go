@@ -1,4 +1,4 @@
-package requestcodec
+package runtime
 
 import "github.com/ogiusek/ioc/v2"
 
@@ -10,9 +10,9 @@ func Package() Pkg {
 
 func (Pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) Builder {
-		return NewBuilder()
+		return newBuilder()
 	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) Codec {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) Runtime {
 		return ioc.Get[Builder](c).Build()
 	})
 }

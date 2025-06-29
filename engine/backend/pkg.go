@@ -19,6 +19,7 @@ type Pkg struct {
 
 func Package(
 	sharedPkg shared.Pkg,
+	apiPkg api.Pkg,
 	dbPkg db.Pkg,
 	filesPkg files.Pkg,
 	loggerPkg logger.Pkg,
@@ -27,7 +28,7 @@ func Package(
 	return Pkg{
 		pkgs: append([]ioc.Pkg{
 			sharedPkg,
-			api.Package(),
+			apiPkg,
 			clients.Package(),
 			dbPkg,
 			filesPkg,

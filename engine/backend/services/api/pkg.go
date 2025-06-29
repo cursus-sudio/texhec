@@ -1,70 +1,33 @@
 package api
 
 import (
-	"backend/services/logger"
+	"backend/services/api/tcp"
 	"backend/services/scopes"
-	"fmt"
-	"reflect"
 	"shared/utils/connection"
-	"shared/utils/endpoint"
-	"shared/utils/httperrors"
 
 	"github.com/ogiusek/ioc/v2"
-	"github.com/ogiusek/relay/v2"
 )
 
-type Pkg struct{}
+type Pkg struct {
+	pkgs []ioc.Pkg
+}
 
-func Package() Pkg {
-	return Pkg{}
+func Package(
+	tcpPkg tcp.Pkg,
+) Pkg {
+	return Pkg{
+		pkgs: []ioc.Pkg{
+			tcpPkg,
+		},
+	}
 }
 
 func (pkg Pkg) Register(b ioc.Builder) {
+	for _, service := range pkg.pkgs {
+		service.Register(b)
+	}
 	ioc.RegisterScoped(b, scopes.UserSession, func(c ioc.Dic) connection.Definition {
 		return connection.NewDefinition()
-	})
-
-	ioc.WrapService(b, func(c ioc.Dic, con connection.Definition) connection.Definition {
-		logger := ioc.Get[logger.Logger](c)
-		con.MessageListener().Relay().RegisterMiddleware(func(ctx relay.AnyContext, next func()) {
-			rawReq := ctx.Req()
-			req, ok := rawReq.(endpoint.AnyRequest)
-			if ok {
-				req.UseC(c.Scope(scopes.Request))
-			} else {
-				logger.Error(
-					fmt.Errorf(
-						"request of type `%s` doesn't implement `endpoint.AnyRequest` interface",
-						reflect.TypeOf(rawReq),
-					),
-				)
-			}
-			next()
-		})
-
-		con.MessageListener().Relay().RegisterMessageMiddleware(func(ctx relay.AnyMessageCtx, next func()) {
-			rawReq := ctx.Message()
-			req, ok := rawReq.(endpoint.Message)
-			if ok {
-				req.UseC(c.Scope(scopes.Request))
-			} else {
-				logger.Error(
-					fmt.Errorf(
-						"request of type `%s` doesn't implement `endpoint.AnyRequest` interface",
-						reflect.TypeOf(rawReq),
-					),
-				)
-			}
-			go next()
-		})
-		return con
-	})
-
-	ioc.WrapService(b, func(c ioc.Dic, con connection.Definition) connection.Definition {
-		con.MessageListener().Relay().DefaultHandler(func(ctx relay.AnyContext) {
-			ctx.SetErr(httperrors.Err404)
-		})
-		return con
 	})
 
 	ioc.RegisterTransient(b, func(c ioc.Dic) connection.Connection {

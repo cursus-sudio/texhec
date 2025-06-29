@@ -2,7 +2,7 @@ package tacticalmap
 
 import (
 	"reflect"
-	"shared/services/requestcodec"
+	"shared/services/codec"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -14,7 +14,7 @@ func Package() Pkg {
 }
 
 func (Pkg) Register(b ioc.Builder) {
-	ioc.WrapService(b, func(c ioc.Dic, s requestcodec.Builder) requestcodec.Builder {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s codec.Builder) codec.Builder {
 		s.Register(reflect.TypeFor[CreatedMessage]())
 		s.Register(reflect.TypeFor[DestroyedMessage]())
 

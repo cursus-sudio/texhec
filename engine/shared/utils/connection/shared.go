@@ -5,14 +5,17 @@ import "github.com/ogiusek/relay/v2"
 // builder
 
 type CloseBuilder interface {
-	OnClose(listener func())
+	OnClose(listener func()) CloseBuilder
 	Build() Closer
 }
 
 type closeBuilder struct{ listeners []func() }
 
-func NewCloseBuilder() CloseBuilder             { return &closeBuilder{listeners: []func(){}} }
-func (b *closeBuilder) OnClose(listener func()) { b.listeners = append(b.listeners, listener) }
+func NewCloseBuilder() CloseBuilder { return &closeBuilder{listeners: []func(){}} }
+func (b *closeBuilder) OnClose(listener func()) CloseBuilder {
+	b.listeners = append(b.listeners, listener)
+	return b
+}
 func (b *closeBuilder) Build() Closer {
 	heapB := *b
 	return &close{

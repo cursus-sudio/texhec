@@ -122,7 +122,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 		if err != nil {
 			logger.Error(errors.Join(httperrors.Err503, err))
 		}
-		scopeCleanUp := ioc.Get[scopes.RequestEnd](c)
+		scopeCleanUp := ioc.Get[scopes.RequestService](c)
 		scopeCleanUp.AddCleanListener(func(args scopes.RequestEndArgs) {
 			if args.Error != nil || err != nil {
 				return

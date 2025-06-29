@@ -12,14 +12,14 @@ func Package() Pkg {
 	return Pkg{}
 }
 
-func (Pkg) Register(c ioc.Builder) {
-	ioc.RegisterSingleton(c, func(c ioc.Dic) ClientsBuilder {
+func (Pkg) Register(b ioc.Builder) {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ClientsBuilder {
 		return NewClientsBuilder()
 	})
-	ioc.RegisterSingleton(c, func(c ioc.Dic) Clients {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) Clients {
 		return ioc.Get[ClientsBuilder](c).Build()
 	})
-	ioc.RegisterScoped(c, scopes.UserSession, func(c ioc.Dic) SessionClient {
+	ioc.RegisterScoped(b, scopes.UserSession, func(c ioc.Dic) SessionClient {
 		return NewSessionClient(ioc.Get[Clients](c))
 	})
 }

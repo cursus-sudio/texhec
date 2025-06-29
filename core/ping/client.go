@@ -13,7 +13,7 @@ type clientPingEndpoint struct {
 }
 
 func (endpoint clientPingEndpoint) Handle(req PingReq) (PingRes, error) {
-	endpoint.Console.LogToConsole(fmt.Sprintf("\nclient endpoint recieved: %v\n", req))
+	endpoint.Console.LogToConsole(fmt.Sprintf("\npinged client: %v\n", req))
 	return PingRes{ID: req.ID, Ok: true}, nil
 }
 

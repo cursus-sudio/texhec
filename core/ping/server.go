@@ -16,14 +16,14 @@ type serverPingEndpoint struct {
 }
 
 func (e serverPingEndpoint) Handle(req PingReq) (PingRes, error) {
-	e.Logger.Info("aok")
+	e.Logger.Info(fmt.Sprintf("pinged backend: %v", req))
 	client, err := e.Client.Client()
 	if err != nil {
 		e.Logger.Error(err)
 		return PingRes{ID: req.ID, Ok: false}, err
 	}
-	res, err := relay.Handle(client.Connection.Relay(), PingReq{Request: endpoint.NewRequest[PingRes](), ID: req.ID + 10})
-	e.Logger.Info(fmt.Sprintf("server recieved: \nres is: %v\nerr is: %s\n", res, err))
+	res, err := relay.Handle(client.Connection.Relay(), PingReq{ID: req.ID + 10})
+	e.Logger.Info(fmt.Sprintf("client responsed: \nres is: %v\nerr is: %s\n", res, err))
 	return PingRes{ID: req.ID, Ok: true}, nil
 }
 

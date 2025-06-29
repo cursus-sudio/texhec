@@ -1,4 +1,4 @@
-package requestcodec
+package codec
 
 import "errors"
 

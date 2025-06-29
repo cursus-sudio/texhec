@@ -18,11 +18,11 @@ type logger struct {
 }
 
 func (logger *logger) Info(message string) {
-	fmt.Printf("\033[34m[ Info ]\033[0m %s \033[34m\n%s\033[0m\n\n", logger.Clock.Now(), message)
+	fmt.Printf("\033[34m[ Info ]\033[0m %s \033[34m\n%s\033[0m\n", logger.Clock.Now(), message)
 }
 
 func (logger *logger) Error(err error) {
-	message := fmt.Sprintf("\033[31m[ Error ]\033[0m %s \033[31m\n%s\033[0m\n\n", logger.Clock.Now(), err)
+	message := fmt.Sprintf("\033[31m[ Error ]\033[0m %s \033[31m\n%s\033[0m\n", logger.Clock.Now(), err)
 	if logger.PanicOnError {
 		panic(message)
 	} else {

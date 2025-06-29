@@ -14,7 +14,7 @@ func NewRequestEndArgs(err error) RequestEndArgs {
 
 type RequestEndListener func(args RequestEndArgs)
 
-type RequestEnd interface {
+type RequestService interface {
 	// returns errors:
 	// - ErrAlreadyCleanedUp
 	Clean(Args RequestEndArgs) error
@@ -58,7 +58,7 @@ func (sessionEnd *requestEnd) AddCleanListener(listener RequestEndListener) erro
 	return nil
 }
 
-func newRequestEnd() RequestEnd {
+func newRequestEnd() RequestService {
 	return &requestEnd{
 		listeners:     []RequestEndListener{},
 		alreadyCalled: false,

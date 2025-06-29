@@ -1,9 +1,12 @@
 package shared
 
 import (
+	"shared/services/api"
 	"shared/services/clock"
+	"shared/services/codec"
+	"shared/services/connpkg"
 	"shared/services/events"
-	"shared/services/requestcodec"
+	"shared/services/runtime"
 	"shared/services/uuid"
 
 	"github.com/ogiusek/ioc/v2"
@@ -14,14 +17,18 @@ type Pkg struct {
 }
 
 func Package(
+	apiPkg api.Pkg,
 	clockPkg clock.Pkg,
 ) Pkg {
 	return Pkg{
 		pkgs: []ioc.Pkg{
-			uuid.Package(),
-			events.Package(),
-			requestcodec.Package(),
+			apiPkg,
 			clockPkg,
+			events.Package(),
+			codec.Package(),
+			connpkg.Package(),
+			runtime.Package(),
+			uuid.Package(),
 		},
 	}
 }

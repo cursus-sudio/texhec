@@ -15,7 +15,7 @@ type CreateReq struct {
 }
 
 func NewCreateReq(args CreateArgs) CreateReq {
-	return CreateReq{Request: endpoint.NewRequest[CreateRes](), CreateArgs: args}
+	return CreateReq{CreateArgs: args}
 }
 
 type CreateRes struct{}
@@ -27,7 +27,6 @@ type createEndpoint struct {
 
 func (e createEndpoint) Handle(req CreateReq) (CreateRes, error) {
 	err := e.TacticalMap.Create(req.CreateArgs)
-	e.Logger.Info("fml\n\n\n\n\n\n")
 	client, _ := e.Client.Client()
 	relay.HandleMessage(client.Connection.Relay(), CreatedMessage{
 		Message: endpoint.NewMessage(),
@@ -44,7 +43,7 @@ type DestroyReq struct {
 }
 
 func NewDestroyReq(args DestroyArgs) DestroyReq {
-	return DestroyReq{Request: endpoint.NewRequest[DestroyRes](), DestroyArgs: args}
+	return DestroyReq{DestroyArgs: args}
 }
 
 type DestroyRes struct{}
@@ -69,7 +68,7 @@ type GetReq struct {
 	endpoint.Request[GetRes]
 }
 
-func NewGetReq() GetReq { return GetReq{Request: endpoint.NewRequest[GetRes]()} }
+func NewGetReq() GetReq { return GetReq{} }
 
 type GetRes struct {
 	Tiles []Tile

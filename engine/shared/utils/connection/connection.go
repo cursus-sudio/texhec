@@ -1,5 +1,14 @@
 package connection
 
+import "github.com/ogiusek/ioc/v2"
+
+const (
+	OrderEndpoint ioc.Order = iota
+	OrderAuthorize
+	OrderAuthenticate
+	OrderAttachServices
+)
+
 type Definition interface {
 	Close() CloseBuilder
 	MessageListener() MessageListenerBuilder

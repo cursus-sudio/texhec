@@ -142,16 +142,18 @@ func (system *someSystem) Update(args ecs.Args) {
 type mainScene struct {
 	sceneId scenes.SceneId
 	world   ecs.World
+	events  scenes.SceneEvents
 }
 
-func newMainScene(sceneId scenes.SceneId, world ecs.World) scenes.Scene {
-	return &mainScene{sceneId: sceneId, world: world}
+func newMainScene(sceneId scenes.SceneId, e scenes.SceneEvents, world ecs.World) scenes.Scene {
+	return &mainScene{sceneId: sceneId, world: world, events: e}
 }
 
-func (mainScene *mainScene) Id() scenes.SceneId { return mainScene.sceneId }
-func (mainScene *mainScene) Load()              {}
-func (mainScene *mainScene) Unload()            {}
-func (mainScene *mainScene) World() ecs.World   { return mainScene.world }
+func (mainScene *mainScene) Id() scenes.SceneId              { return mainScene.sceneId }
+func (mainScene *mainScene) Load()                           {}
+func (mainScene *mainScene) Unload()                         {}
+func (mainScene *mainScene) SceneEvents() scenes.SceneEvents { return mainScene.events }
+func (mainScene *mainScene) World() ecs.World                { return mainScene.world }
 
 // repo
 
@@ -230,10 +232,9 @@ func (exBackendModPkg) Register(b ioc.Builder) {
 		)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) IntRepo { return ioc.Get[*intRepo](c) })
-	ioc.WrapService(b,
-		func(c ioc.Dic, s saves.SavableRepoBuilder) saves.SavableRepoBuilder {
-			repoId := reflect.TypeFor[IntRepo]().String()
-			s.AddRepo(saves.RepoId(repoId), ioc.Get[*intRepo](c))
-			return s
-		})
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s saves.SavableRepoBuilder) saves.SavableRepoBuilder {
+		repoId := reflect.TypeFor[IntRepo]().String()
+		s.AddRepo(saves.RepoId(repoId), ioc.Get[*intRepo](c))
+		return s
+	})
 }

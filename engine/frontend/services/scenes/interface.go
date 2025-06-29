@@ -4,6 +4,7 @@ import (
 	"errors"
 	"frontend/services/ecs"
 
+	"github.com/ogiusek/events"
 	"github.com/ogiusek/null"
 )
 
@@ -17,11 +18,19 @@ func NewSceneId(sceneId string) SceneId {
 	return SceneId{sceneId: sceneId}
 }
 
+// this is events.Events but these events are only called when scene is active
+type SceneEvents struct{ events events.Events }
+
+func NewSceneEvents(events events.Events) SceneEvents { return SceneEvents{events: events} }
+func (s SceneEvents) Events() events.Events           { return s.events }
+
 type Scene interface {
 	Id() SceneId
+
 	Load()
 	Unload()
 
+	SceneEvents() SceneEvents
 	World() ecs.World
 }
 

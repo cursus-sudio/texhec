@@ -37,7 +37,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 	ioc.RegisterScoped(b, scopes.Request, func(c ioc.Dic) FileStorage {
 		return NewDiskFileStorage(
 			pkg.BaseDir,
-			ioc.Get[scopes.RequestEnd](c),
+			ioc.Get[scopes.RequestService](c),
 			lockSet,
 		)
 	})

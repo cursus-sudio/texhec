@@ -13,6 +13,6 @@ func (pkg Pkg) Register(b ioc.Builder) {
 	b.RegisterScope(UserSession)
 	// ioc.RegisterScoped(c, func(c ioc.Dic) ScopeCleanUp { return newScopeCleanUp() })
 	// ioc.RegisterScoped(b, func(c ioc.Dic) ScopeCleanUp { return newScopeCleanUp() })
-	ioc.RegisterScoped(b, Request, func(c ioc.Dic) RequestEnd { return newRequestEnd() })
-	ioc.RegisterScoped(b, UserSession, func(c ioc.Dic) UserSessionEnd { return newSessionEnd() })
+	ioc.RegisterScoped(b, Request, func(c ioc.Dic) RequestService { return newRequestEnd() })
+	ioc.RegisterScoped(b, UserSession, func(c ioc.Dic) UserSessionService { return newSessionEnd() })
 }

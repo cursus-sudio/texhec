@@ -11,7 +11,7 @@ func NewUserSessionEndArgs() UserSessionEndArgs {
 
 type UserSessionEndListener func(args UserSessionEndArgs)
 
-type UserSessionEnd interface {
+type UserSessionService interface {
 	// returns errors:
 	// - ErrAlreadyCleanedUp
 	Clean(Args UserSessionEndArgs) error
@@ -55,7 +55,7 @@ func (sessionEnd *userSessionEnd) AddCleanListener(listener UserSessionEndListen
 	return nil
 }
 
-func newSessionEnd() UserSessionEnd {
+func newSessionEnd() UserSessionService {
 	return &userSessionEnd{
 		listeners:     []UserSessionEndListener{},
 		alreadyCalled: false,

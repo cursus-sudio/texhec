@@ -4,11 +4,11 @@ import (
 	"frontend/services/api"
 	"frontend/services/backendconnection"
 	"frontend/services/console"
-	"frontend/services/draw"
 	"frontend/services/ecs"
-	"frontend/services/inputs"
+	"frontend/services/frames"
+	"frontend/services/media"
 	"frontend/services/scenes"
-	"frontend/services/window"
+	"frontend/services/scopes"
 	"shared"
 
 	"github.com/ogiusek/ioc/v2"
@@ -20,22 +20,21 @@ type Pkg struct {
 
 func Package(
 	sharedPkg shared.Pkg,
+	apiPkg api.Pkg,
 	backendConnectorPkg backendconnection.Pkg,
-	inputsPkg inputs.Pkg,
-	windowPkg window.Pkg,
 	mods []ioc.Pkg,
 ) Pkg {
 	return Pkg{
 		pkgs: append([]ioc.Pkg{
 			sharedPkg,
-			api.Package(),
+			apiPkg,
 			backendConnectorPkg,
-			inputsPkg,
-			windowPkg,
-			draw.Package(),
 			console.Package(),
+			media.Package(), // media before ecs
 			ecs.Package(),
+			frames.Package(),
 			scenes.Package(),
+			scopes.Package(),
 		}, mods...),
 	}
 }

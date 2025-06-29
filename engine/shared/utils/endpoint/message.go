@@ -7,31 +7,28 @@ import (
 	"github.com/ogiusek/relay/v2"
 )
 
-type Message interface {
+type message interface {
 	relay.Message
-	C() ioc.Dic
-	UseC(ioc.Dic)
+	anyRequest
 }
 
-type message struct {
+type Message struct {
 	relay.Message
-	c ioc.Dic
+	AnyRequest
 }
 
-func (mess *message) C() ioc.Dic     { return mess.c }
-func (mess *message) UseC(c ioc.Dic) { mess.c = c }
-func NewMessage() Message            { return &message{} }
+func NewMessage() Message { return Message{} }
 
-type messageEndpoint[Mess Message] interface {
+type messageEndpoint[Mess message] interface {
 	Handle(Mess)
 }
 
-func MessageRegister[Endpoint messageEndpoint[Req], Req Message](b ioc.Builder) {
-	ioc.WrapService(b, func(c ioc.Dic, s connection.Definition) connection.Definition {
-		relay.MessageRegister(s.MessageListener().Relay(), func(req Req) {
-			c := req.C()
+func MessageRegister[Endpoint messageEndpoint[Msg], Msg message](b ioc.Builder) {
+	ioc.WrapService(b, connection.OrderEndpoint, func(c ioc.Dic, s connection.Definition) connection.Definition {
+		relay.MessageRegister(s.MessageListener().Relay(), func(msg Msg) {
+			c := msg.GetC()
 			endpoint := ioc.GetServices[Endpoint](c)
-			endpoint.Handle(req)
+			endpoint.Handle(msg)
 		})
 		return s
 	})

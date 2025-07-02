@@ -5,6 +5,7 @@ go 1.24.3
 require (
 	backend v0.0.0
 	frontend v0.0.0
+	github.com/ogiusek/events v1.0.2
 	github.com/ogiusek/ioc/v2 v2.0.8
 	github.com/ogiusek/null v1.1.0
 	github.com/ogiusek/relay/v2 v2.0.6
@@ -21,7 +22,6 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-sqlite3 v1.14.28 // indirect
-	github.com/ogiusek/events v1.0.2 // indirect
 	github.com/ogiusek/lockset v1.0.1 // indirect
 	github.com/optimus-hft/lockset v0.1.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect

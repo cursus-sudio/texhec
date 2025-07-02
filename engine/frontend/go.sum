@@ -2,12 +2,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/ogiusek/events v1.0.1 h1:US4C4pYrq+Qwq4YCGav2Xw7BUTapn6sWgAJEXHVykF4=
-github.com/ogiusek/events v1.0.1/go.mod h1:SPxHJgN/QSEhPaVA6PynXQk0TrTve31XPUpuCgkzZEM=
 github.com/ogiusek/events v1.0.2 h1:9Psy8GJpCBNEiWWCDHLNzDMgiAOg/cKzhzTRghASGNU=
 github.com/ogiusek/events v1.0.2/go.mod h1:SPxHJgN/QSEhPaVA6PynXQk0TrTve31XPUpuCgkzZEM=
-github.com/ogiusek/ioc/v2 v2.0.7 h1:3ZQ/hkpLY5lzdE5/6+9tSfD6f/2sdrTYhUj+M8bq1sY=
-github.com/ogiusek/ioc/v2 v2.0.7/go.mod h1:jE+0wS2MNt9M+ODUf6WAuARLZwvvGWCeyIDWsuZ9TiI=
 github.com/ogiusek/ioc/v2 v2.0.8 h1:mr3IDo2g9lCzbNzvHSIQW6VFHFci08iH+v5m/h+vnQc=
 github.com/ogiusek/ioc/v2 v2.0.8/go.mod h1:jE+0wS2MNt9M+ODUf6WAuARLZwvvGWCeyIDWsuZ9TiI=
 github.com/ogiusek/lockset v1.0.1 h1:im4DPx27LUCEz2gDkYG4DNF45De5hk+7Pq+vnowBZp0=

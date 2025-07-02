@@ -15,10 +15,13 @@ type Pkg struct {
 	getRequestScope func(c ioc.Dic) ioc.Dic
 }
 
-func Package(getRequestScope func(c ioc.Dic) ioc.Dic) Pkg {
+func Package(
+	netconnectionPkg netconnection.Pkg,
+	getRequestScope func(c ioc.Dic) ioc.Dic,
+) Pkg {
 	return Pkg{
 		pkgs: []ioc.Pkg{
-			netconnection.Package(),
+			netconnectionPkg,
 		},
 		getRequestScope: getRequestScope,
 	}

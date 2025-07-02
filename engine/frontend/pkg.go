@@ -22,6 +22,7 @@ func Package(
 	sharedPkg shared.Pkg,
 	apiPkg api.Pkg,
 	backendConnectorPkg backendconnection.Pkg,
+	mediaPkg media.Pkg,
 	mods []ioc.Pkg,
 ) Pkg {
 	return Pkg{
@@ -30,7 +31,7 @@ func Package(
 			apiPkg,
 			backendConnectorPkg,
 			console.Package(),
-			media.Package(), // media before ecs
+			mediaPkg, // media before ecs
 			ecs.Package(),
 			frames.Package(),
 			scenes.Package(),

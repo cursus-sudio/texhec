@@ -18,19 +18,13 @@ func NewSceneId(sceneId string) SceneId {
 	return SceneId{sceneId: sceneId}
 }
 
-// this is events.Events but these events are only called when scene is active
-type SceneEvents struct{ events events.Events }
-
-func NewSceneEvents(events events.Events) SceneEvents { return SceneEvents{events: events} }
-func (s SceneEvents) Events() events.Events           { return s.events }
-
 type Scene interface {
 	Id() SceneId
 
 	Load()
 	Unload()
 
-	SceneEvents() SceneEvents
+	Events() events.Events
 	World() ecs.World
 }
 
@@ -39,6 +33,7 @@ type Scene interface {
 type SceneBuilder interface {
 	OnLoad(func(Scene)) SceneBuilder
 	OnUnload(func(Scene)) SceneBuilder
+	Events(func(events.Builder)) SceneBuilder
 	Build(SceneId, ecs.World) Scene
 }
 

@@ -5,7 +5,6 @@ import (
 	"backend/services/clients"
 	"backend/services/db"
 	"backend/services/files"
-	"backend/services/logger"
 	"backend/services/saves"
 	"backend/services/scopes"
 	"shared"
@@ -22,7 +21,6 @@ func Package(
 	apiPkg api.Pkg,
 	dbPkg db.Pkg,
 	filesPkg files.Pkg,
-	loggerPkg logger.Pkg,
 	modsPkgs []ioc.Pkg,
 ) Pkg {
 	return Pkg{
@@ -32,7 +30,6 @@ func Package(
 			clients.Package(),
 			dbPkg,
 			filesPkg,
-			loggerPkg,
 			saves.Package(),
 			scopes.Package(),
 		}, modsPkgs...),

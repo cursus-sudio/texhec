@@ -42,6 +42,8 @@ func (b *clientBuilder) Build() Clients {
 //
 
 type Clients interface {
+	AllClients() []Client
+
 	// 404
 	ClientById(ClientID) (Client, error)
 
@@ -53,6 +55,14 @@ type clients struct {
 	mutex     sync.Mutex
 	onConnect func(Client)
 	clients   map[ClientID]Client
+}
+
+func (clients *clients) AllClients() []Client {
+	r := make([]Client, 0, len(clients.clients))
+	for _, client := range clients.clients {
+		r = append(r, client)
+	}
+	return r
 }
 
 func (clients *clients) ClientById(id ClientID) (Client, error) {

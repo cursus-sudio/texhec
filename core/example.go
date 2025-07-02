@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 	"github.com/ogiusek/relay/v2"
 )
@@ -123,8 +124,12 @@ func (system *someSystem) Update(args ecs.Args) {
 	if system.Backend == nil {
 		text += fmt.Sprintf("backend is nil\n")
 	} else {
-		tacticalMap, _ := relay.Handle(system.Backend.Relay(), tacticalmap.NewGetReq())
-		text += fmt.Sprintf("found shit %v\n", tacticalMap)
+		tacticalMap, err := relay.Handle(system.Backend.Relay(), tacticalmap.NewGetReq())
+		if err == nil {
+			text += fmt.Sprintf("found shit %v\n", tacticalMap)
+		} else {
+			text += fmt.Sprintf("found error %s\n", err)
+		}
 	}
 
 	text += "entities found: {\n"
@@ -142,18 +147,18 @@ func (system *someSystem) Update(args ecs.Args) {
 type mainScene struct {
 	sceneId scenes.SceneId
 	world   ecs.World
-	events  scenes.SceneEvents
+	events  events.Events
 }
 
-func newMainScene(sceneId scenes.SceneId, e scenes.SceneEvents, world ecs.World) scenes.Scene {
+func newMainScene(sceneId scenes.SceneId, e events.Events, world ecs.World) scenes.Scene {
 	return &mainScene{sceneId: sceneId, world: world, events: e}
 }
 
-func (mainScene *mainScene) Id() scenes.SceneId              { return mainScene.sceneId }
-func (mainScene *mainScene) Load()                           {}
-func (mainScene *mainScene) Unload()                         {}
-func (mainScene *mainScene) SceneEvents() scenes.SceneEvents { return mainScene.events }
-func (mainScene *mainScene) World() ecs.World                { return mainScene.world }
+func (mainScene *mainScene) Id() scenes.SceneId    { return mainScene.sceneId }
+func (mainScene *mainScene) Load()                 {}
+func (mainScene *mainScene) Unload()               {}
+func (mainScene *mainScene) Events() events.Events { return mainScene.events }
+func (mainScene *mainScene) World() ecs.World      { return mainScene.world }
 
 // repo
 

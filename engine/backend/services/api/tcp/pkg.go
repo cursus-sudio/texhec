@@ -2,11 +2,11 @@ package tcp
 
 import (
 	"backend/services/clients"
-	"backend/services/logger"
 	"backend/services/scopes"
 	"fmt"
 	"net"
 	"shared/services/api/netconnection"
+	"shared/services/logger"
 	"shared/services/runtime"
 
 	"github.com/ogiusek/ioc/v2"
@@ -24,7 +24,6 @@ func (pkg Pkg) hostServer(c ioc.Dic) {
 	}
 	// Close the listener when the application closes.
 	defer l.Close()
-	fmt.Printf("%s\n", logger)
 	logger.Info(
 		fmt.Sprintf("Listening on %s:%s",
 			pkg.host,

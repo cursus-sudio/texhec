@@ -16,7 +16,7 @@ func Package() Pkg {
 func (pkg Pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) WorldFactory { return func() World { return newWorld() } })
 
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, f frames.Builder) frames.Builder {
+	ioc.WrapService(b, frames.Update, func(c ioc.Dic, f frames.Builder) frames.Builder {
 		return f.OnFrame(func(of frames.OnFrame) {
 			world := ioc.Get[World](c)
 			deltaTime := ecsargs.NewDeltaTime(of.Delta)

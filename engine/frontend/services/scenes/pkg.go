@@ -2,7 +2,6 @@ package scenes
 
 import (
 	"frontend/services/ecs"
-	"frontend/services/scopes"
 
 	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
@@ -28,14 +27,10 @@ func (pkg Pkg) Register(b ioc.Builder) {
 		return newSceneBuilder()
 	})
 
-	ioc.RegisterScoped(b, scopes.Scene, func(c ioc.Dic) SceneEvents {
-		return NewSceneEvents(ioc.Get[events.Builder](c).Build())
-	})
-
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b events.Builder) events.Builder {
 		sceneManager := ioc.Get[SceneManager](c)
 		events.ListenToAll(b, func(e any) {
-			events.EmitAny(sceneManager.CurrentScene().SceneEvents().Events(), e)
+			events.EmitAny(sceneManager.CurrentScene().Events(), e)
 		})
 		return b
 	})

@@ -3,9 +3,12 @@ package inputs
 import (
 	"frontend/services/frames"
 	"shared/services/clock"
+	"shared/services/logger"
+	"shared/services/runtime"
 
 	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 type Pkg struct{}
@@ -15,18 +18,31 @@ func Package() Pkg {
 }
 
 func (Pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) *inputsApi {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) *api {
 		return newInputsApi(
+			ioc.Get[logger.Logger](c),
 			ioc.Get[clock.Clock](c),
 			ioc.Get[events.Events](c),
 		)
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) InputsApi { return ioc.Get[*inputsApi](c) })
+	ioc.RegisterTransient(b, func(c ioc.Dic) Api {
+		return newInputsApi(
+			ioc.Get[logger.Logger](c),
+			ioc.Get[clock.Clock](c),
+			ioc.Get[events.Events](c),
+		)
+	})
 
-	// ioc.RegisterSingleton()
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b frames.Builder) frames.Builder {
-		i := ioc.Get[inputsApi](c)
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b events.Builder) events.Builder {
+		events.Listen(b, func(qe sdl.QuitEvent) {
+			ioc.Get[runtime.Runtime](c).Stop()
+		})
+		return b
+	})
+
+	ioc.WrapService(b, frames.HandleInputs, func(c ioc.Dic, b frames.Builder) frames.Builder {
+		i := ioc.Get[*api](c)
 		return b.OnFrame(func(of frames.OnFrame) {
 			i.Poll()
 		})

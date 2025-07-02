@@ -1,13 +1,13 @@
 package db
 
 import (
-	"backend/services/logger"
 	"backend/services/scopes"
 	"database/sql"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"shared/services/logger"
 	"shared/utils/httperrors"
 	"time"
 

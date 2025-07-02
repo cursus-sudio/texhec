@@ -2,7 +2,7 @@ package tacticalmap
 
 import (
 	"fmt"
-	"frontend/services/console"
+	"shared/services/logger"
 	"shared/utils/endpoint"
 
 	"github.com/ogiusek/ioc/v2"
@@ -14,12 +14,12 @@ type CreatedMessage struct {
 }
 
 type createdMessageEndpoint struct {
-	Console console.Console `inject:"1"`
+	Logger logger.Logger `inject:"1"`
 }
 
 func (endpoint createdMessageEndpoint) Handle(req CreatedMessage) {
 	text := fmt.Sprintf("created tiles %v\n", req)
-	endpoint.Console.LogPermanentlyToConsole(text)
+	endpoint.Logger.Info(text)
 }
 
 type DestroyedMessage struct {
@@ -28,12 +28,12 @@ type DestroyedMessage struct {
 }
 
 type destroyedMessageEndpoint struct {
-	Console console.Console `inject:"1"`
+	Logger logger.Logger `inject:"1"`
 }
 
 func (endpoint destroyedMessageEndpoint) Handle(req DestroyedMessage) {
 	text := fmt.Sprintf("\ndestroyed tiles %v\n", req)
-	endpoint.Console.LogPermanentlyToConsole(text)
+	endpoint.Logger.Info(text)
 }
 
 //

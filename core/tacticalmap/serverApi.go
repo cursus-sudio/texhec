@@ -2,7 +2,7 @@ package tacticalmap
 
 import (
 	"backend/services/clients"
-	"backend/services/logger"
+	"shared/services/logger"
 	"shared/utils/endpoint"
 
 	"github.com/ogiusek/ioc/v2"
@@ -20,18 +20,19 @@ func NewCreateReq(args CreateArgs) CreateReq {
 
 type CreateRes struct{}
 type createEndpoint struct {
-	TacticalMap TacticalMap           `inject:"1"`
-	Logger      logger.Logger         `inject:"1"`
-	Client      clients.SessionClient `inject:"1"`
+	TacticalMap TacticalMap     `inject:"1"`
+	Logger      logger.Logger   `inject:"1"`
+	Clients     clients.Clients `inject:"1"`
 }
 
 func (e createEndpoint) Handle(req CreateReq) (CreateRes, error) {
 	err := e.TacticalMap.Create(req.CreateArgs)
-	client, _ := e.Client.Client()
-	relay.HandleMessage(client.Connection.Relay(), CreatedMessage{
-		Message: endpoint.NewMessage(),
-		Added:   req.CreateArgs.Tiles,
-	})
+	for _, client := range e.Clients.AllClients() {
+		relay.HandleMessage(client.Connection.Relay(), CreatedMessage{
+			Message: endpoint.NewMessage(),
+			Added:   req.CreateArgs.Tiles,
+		})
+	}
 	return CreateRes{}, err
 }
 
@@ -48,17 +49,18 @@ func NewDestroyReq(args DestroyArgs) DestroyReq {
 
 type DestroyRes struct{}
 type destroyEndpoint struct {
-	TacticalMap TacticalMap           `inject:"1"`
-	Client      clients.SessionClient `inject:"1"`
+	TacticalMap TacticalMap     `inject:"1"`
+	Clients     clients.Clients `inject:"1"`
 }
 
 func (e destroyEndpoint) Handle(req DestroyReq) (DestroyRes, error) {
 	err := e.TacticalMap.Destroy(req.DestroyArgs)
-	client, _ := e.Client.Client()
-	relay.HandleMessage(client.Connection.Relay(), DestroyedMessage{
-		Message:   endpoint.NewMessage(),
-		Destroyed: req.Tiles,
-	})
+	for _, client := range e.Clients.AllClients() {
+		relay.HandleMessage(client.Connection.Relay(), DestroyedMessage{
+			Message:   endpoint.NewMessage(),
+			Destroyed: req.Tiles,
+		})
+	}
 	return DestroyRes{}, err
 }
 

@@ -5,7 +5,26 @@ import (
 	"sync"
 )
 
-type impl struct {
+type Pos struct{ X, Y int }
+type Tile struct{ Pos Pos }
+
+type CreateArgs struct{ Tiles []Tile }
+type DestroyArgs struct{ Tiles []Tile }
+
+type CreateListener func(tiles []Tile)
+type DestroyListener func(tiles []Tile)
+
+type TacticalMap interface {
+	Create(CreateArgs) error
+	Destroy(DestroyArgs) error
+	GetMap() ([]Tile, error)
+	OnCreate(CreateListener)
+	OnDestroy(DestroyListener)
+}
+
+// impl
+
+type tacticalMap struct {
 	tiles map[Pos]Tile
 	mutex sync.RWMutex
 
@@ -17,7 +36,7 @@ type impl struct {
 }
 
 func newTacticalMap() TacticalMap {
-	return &impl{
+	return &tacticalMap{
 		tiles:                 map[Pos]Tile{},
 		mutex:                 sync.RWMutex{},
 		createListenersMutex:  sync.RWMutex{},
@@ -27,7 +46,7 @@ func newTacticalMap() TacticalMap {
 	}
 }
 
-func (tacticalMap *impl) Create(args CreateArgs) error {
+func (tacticalMap *tacticalMap) Create(args CreateArgs) error {
 	{
 		tacticalMap.mutex.Lock()
 
@@ -51,7 +70,7 @@ func (tacticalMap *impl) Create(args CreateArgs) error {
 	return nil
 }
 
-func (tacticalMap *impl) Destroy(args DestroyArgs) error {
+func (tacticalMap *tacticalMap) Destroy(args DestroyArgs) error {
 	{
 		tacticalMap.mutex.Lock()
 
@@ -75,7 +94,7 @@ func (tacticalMap *impl) Destroy(args DestroyArgs) error {
 	return nil
 }
 
-func (tacticalMap *impl) GetMap() ([]Tile, error) {
+func (tacticalMap *tacticalMap) GetMap() ([]Tile, error) {
 	tacticalMap.mutex.RLock()
 	defer tacticalMap.mutex.RUnlock()
 	tiles := make([]Tile, 0, len(tacticalMap.tiles))
@@ -88,14 +107,14 @@ func (tacticalMap *impl) GetMap() ([]Tile, error) {
 	return tiles, nil
 }
 
-func (tacticalMap *impl) OnCreate(listener CreateListener) {
+func (tacticalMap *tacticalMap) OnCreate(listener CreateListener) {
 	tacticalMap.createListenersMutex.Lock()
 	defer tacticalMap.createListenersMutex.Unlock()
 
 	tacticalMap.createListeners = append(tacticalMap.createListeners, listener)
 }
 
-func (tacticalMap *impl) OnDestroy(listener DestroyListener) {
+func (tacticalMap *tacticalMap) OnDestroy(listener DestroyListener) {
 	tacticalMap.destroyListenersMutex.Lock()
 	defer tacticalMap.destroyListenersMutex.Unlock()
 
@@ -103,7 +122,7 @@ func (tacticalMap *impl) OnDestroy(listener DestroyListener) {
 }
 
 func TacticalMapImpl() TacticalMap {
-	return &impl{
+	return &tacticalMap{
 		tiles: map[Pos]Tile{},
 		mutex: sync.RWMutex{},
 	}

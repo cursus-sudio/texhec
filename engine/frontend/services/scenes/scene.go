@@ -1,13 +1,17 @@
 package scenes
 
-import "frontend/services/ecs"
+import (
+	"frontend/services/ecs"
+
+	"github.com/ogiusek/events"
+)
 
 type scene struct {
 	id       SceneId
 	world    ecs.World
 	onLoad   func(Scene)
 	onUnload func(Scene)
-	events   SceneEvents
+	events   events.Events
 }
 
 func newScene(
@@ -15,7 +19,7 @@ func newScene(
 	world ecs.World,
 	onLoad func(Scene),
 	onUnload func(Scene),
-	events SceneEvents,
+	events events.Events,
 ) Scene {
 	return &scene{
 		id:       id,
@@ -36,4 +40,4 @@ func (scene *scene) Unload() { scene.onUnload(scene) }
 func (scene *scene) World() ecs.World {
 	return scene.world
 }
-func (scene *scene) SceneEvents() SceneEvents { return scene.events }
+func (scene *scene) Events() events.Events { return scene.events }

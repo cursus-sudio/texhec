@@ -12,6 +12,10 @@ func Package() Pkg {
 }
 
 func (pkg Pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) events.Builder { return events.NewBuilder() })
+	ioc.RegisterSingleton(b, func(c ioc.Dic) events.Builder {
+		b := events.NewBuilder()
+		b.GoroutinePerListener(false)
+		return b
+	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) events.Events { return ioc.Get[events.Builder](c).Build() })
 }

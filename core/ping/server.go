@@ -2,8 +2,8 @@ package ping
 
 import (
 	"backend/services/clients"
-	"backend/services/logger"
 	"fmt"
+	"shared/services/logger"
 	"shared/utils/endpoint"
 
 	"github.com/ogiusek/ioc/v2"

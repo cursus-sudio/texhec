@@ -7,10 +7,12 @@ import (
 	"io"
 	"net"
 	"shared/services/codec"
+	"shared/services/logger"
 	"shared/services/uuid"
 	"shared/utils/connection"
 	"shared/utils/httperrors"
 	"sync"
+	"time"
 
 	"github.com/ogiusek/relay/v2"
 )
@@ -24,17 +26,20 @@ type NetConnection interface {
 }
 
 type netConnection struct {
+	Logger          logger.Logger
 	Codec           codec.Codec
 	Connection      connection.Connection
 	UuidFactory     uuid.Factory
 	PendingMutex    sync.Mutex
 	PendingRequests map[string]chan Msg
+	Timeout         time.Duration
 }
 
 func newNetConnection(
 	codec codec.Codec,
 	connection connection.Connection,
 	uuidFactory uuid.Factory,
+	timeout time.Duration,
 ) NetConnection {
 	return &netConnection{
 		Codec:           codec,
@@ -42,6 +47,7 @@ func newNetConnection(
 		UuidFactory:     uuidFactory,
 		PendingMutex:    sync.Mutex{},
 		PendingRequests: map[string]chan Msg{},
+		Timeout:         timeout,
 	}
 }
 
@@ -51,9 +57,21 @@ func (c *netConnection) Request(conn net.Conn, msg Msg) Msg {
 	c.PendingRequests[string(msg.ID)] = msgChan
 	c.PendingMutex.Unlock()
 
+	defer func() {
+		c.PendingMutex.Lock()
+		delete(c.PendingRequests, string(msg.ID))
+		close(msgChan)
+		c.PendingMutex.Unlock()
+	}()
+
 	c.Send(conn, msg)
 
-	return <-msgChan
+	select {
+	case res := <-msgChan:
+		return res
+	case <-time.After(c.Timeout):
+		return NewResponse(msg.ID, "", httperrors.Err408)
+	}
 }
 func (c *netConnection) Respond(conn net.Conn, msg Msg) { c.Send(conn, msg) }
 func (c *netConnection) Message(conn net.Conn, msg Msg) { c.Send(conn, msg) }
@@ -77,13 +95,13 @@ func (c *netConnection) HandleMsg(conn net.Conn, msg Msg) error {
 		break
 	case MsgResponse:
 		c.PendingMutex.Lock()
-		defer c.PendingMutex.Unlock()
 		id := msg.ID
 		msgChan, ok := c.PendingRequests[id]
 		if !ok {
 			return httperrors.Err404
 		}
 		msgChan <- msg
+		c.PendingMutex.Unlock()
 		break
 	case MsgMessage:
 		if msg.Payload == nil {
@@ -162,6 +180,7 @@ func (c *netConnection) Connect(conn net.Conn, onClose func()) connection.Connec
 	cb := connection.NewCloseBuilder()
 	cb.OnClose(func() {
 		conn.Close()
+		c.Connection.Close()
 	})
 
 	mlb := connection.NewMessageListenerBuilder()

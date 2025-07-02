@@ -3,6 +3,14 @@ package frames
 import (
 	"shared/services/clock"
 	"time"
+
+	"github.com/ogiusek/ioc/v2"
+)
+
+const (
+	HandleInputs ioc.Order = iota
+	Update
+	Draw
 )
 
 type OnFrame struct {

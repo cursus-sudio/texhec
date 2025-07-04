@@ -34,13 +34,12 @@ func main() {
 		}
 	}
 
-	var netconnectionPkg = netconnection.Package(time.Second)
-	var clockPkg = clock.Package(time.RFC3339Nano)
-
-	backendC := backendDic(
-		netconnectionPkg,
-		clockPkg,
+	sharedPkg := SharedPackage(
+		netconnection.Package(time.Second),
+		clock.Package(time.RFC3339Nano),
 	)
+
+	backendC := backendDic(sharedPkg)
 
 	if isServer {
 		backendRuntime := ioc.Get[runtime.Runtime](backendC)
@@ -50,8 +49,7 @@ func main() {
 
 	c := frontendDic(
 		backendC,
-		netconnectionPkg,
-		clockPkg,
+		sharedPkg,
 	)
 
 	{ // connect

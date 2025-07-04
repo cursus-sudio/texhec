@@ -133,5 +133,8 @@ func (pkg Pkg) Register(b ioc.Builder) {
 		})
 		return NewTx(tx, true)
 	})
+	ioc.RegisterDependency[Tx, logger.Logger](b)
+	ioc.RegisterDependency[Tx, DB](b)
+	ioc.RegisterDependency[Tx, scopes.RequestService](b)
 
 }

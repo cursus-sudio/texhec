@@ -7,7 +7,7 @@ require shared v0.0.0
 require (
 	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/mattn/go-sqlite3 v1.14.28
-	github.com/ogiusek/ioc/v2 v2.0.8
+	github.com/ogiusek/ioc/v2 v2.0.11
 	github.com/ogiusek/null v1.1.0
 	github.com/optimus-hft/lockset v0.1.0
 )

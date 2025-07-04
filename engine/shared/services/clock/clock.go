@@ -18,11 +18,11 @@ func (format DateFormat) Parse(date string) (time.Time, error) {
 }
 func (format DateFormat) Format(date time.Time) string { return date.Format(format.String()) }
 
+// impl
+
 type Clock interface {
 	Now() time.Time
 }
-
-// impl
 
 type clock struct{}
 

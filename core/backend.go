@@ -1,20 +1,19 @@
 package main
 
 import (
-	"backend"
 	backendapi "backend/services/api"
 	backendtcp "backend/services/api/tcp"
+	"backend/services/clients"
 	"backend/services/db"
 	"backend/services/files"
+	"backend/services/saves"
+	"backend/services/scopes"
 	backendscopes "backend/services/scopes"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-	"shared"
 	"shared/services/api"
-	"shared/services/api/netconnection"
-	"shared/services/clock"
 	"shared/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
@@ -22,8 +21,7 @@ import (
 )
 
 func backendDic(
-	netconnectionPkg netconnection.Pkg,
-	clockPkg clock.Pkg,
+	sharedPkg SharedPkg,
 ) ioc.Dic {
 	engineDir, err := os.Getwd()
 	if err != nil {
@@ -33,35 +31,36 @@ func backendDic(
 	engineDir = filepath.Dir(engineDir)
 	userStorage := filepath.Join(engineDir, "user_storage")
 
-	var backendPkg backend.Pkg = backend.Package(
-		shared.Package(
-			api.Package(
-				netconnectionPkg,
-				func(c ioc.Dic) ioc.Dic { return c.Scope(backendscopes.Request) },
-			),
-			clockPkg,
-			logger.Package(true, func(c ioc.Dic, message string) { print(message) }),
+	pkgs := []ioc.Pkg{
+		sharedPkg,
+		api.Package(
+			func(c ioc.Dic) ioc.Dic { return c.Scope(backendscopes.Request) },
 		),
-		backendapi.Package(
-			backendtcp.Package(
-				"0.0.0.0",
-				"8080",
-				"tcp",
-			),
+		logger.Package(true, func(c ioc.Dic, message string) { print(message) }),
+		backendtcp.Package(
+			"0.0.0.0",
+			"8080",
+			"tcp",
 		),
+		backendapi.Package(),
+		clients.Package(),
 		db.Package(
 			fmt.Sprintf("%s/db.sql", userStorage),
 			null.New(fmt.Sprintf("%s/engine/backend/services/db/migrations", engineDir)),
 		),
 		files.Package(fmt.Sprintf("%s/files", userStorage)),
-		[]ioc.Pkg{
-			exBackendModPkg{},
-			ServerPackage(),
-		},
-	)
+		saves.Package(),
+		scopes.Package(),
+
+		// mods
+		ServerPackage(),
+	}
 
 	b := ioc.NewBuilder()
-	backendPkg.Register(b)
+	for _, pkg := range pkgs {
+		pkg.Register(b)
+	}
+	// backendPkg.Register(b)
 
 	return b.Build()
 }

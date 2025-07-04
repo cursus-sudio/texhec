@@ -1,32 +1,29 @@
-package shared
+package main
 
 import (
-	"shared/services/api"
+	"shared/services/api/netconnection"
 	"shared/services/clock"
 	"shared/services/codec"
 	"shared/services/events"
-	"shared/services/logger"
 	"shared/services/runtime"
 	"shared/services/uuid"
 
 	"github.com/ogiusek/ioc/v2"
 )
 
-type Pkg struct {
+type SharedPkg struct {
 	pkgs []ioc.Pkg
 }
 
-func Package(
-	apiPkg api.Pkg,
+func SharedPackage(
+	netconnectionPkg netconnection.Pkg,
 	clockPkg clock.Pkg,
-	loggerPkg logger.Pkg,
-) Pkg {
-	return Pkg{
+) SharedPkg {
+	return SharedPkg{
 		pkgs: []ioc.Pkg{
-			apiPkg,
+			netconnectionPkg,
 			clockPkg,
 			events.Package(),
-			loggerPkg,
 			codec.Package(),
 			runtime.Package(),
 			uuid.Package(),
@@ -34,7 +31,7 @@ func Package(
 	}
 }
 
-func (pkg Pkg) Register(b ioc.Builder) {
+func (pkg SharedPkg) Register(b ioc.Builder) {
 	for _, pkg := range pkg.pkgs {
 		pkg.Register(b)
 	}

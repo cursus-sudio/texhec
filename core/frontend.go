@@ -2,20 +2,20 @@ package main
 
 import (
 	"backend/services/clients"
-	"backend/services/scopes"
+	backendscopes "backend/services/scopes"
 	"fmt"
-	"frontend"
 	frontendapi "frontend/services/api"
 	frontendtcp "frontend/services/api/tcp"
 	"frontend/services/backendconnection"
 	"frontend/services/backendconnection/localconnector"
 	"frontend/services/console"
+	"frontend/services/ecs"
+	"frontend/services/frames"
 	"frontend/services/media"
 	windowapi "frontend/services/media/window"
-	"shared"
+	"frontend/services/scenes"
+	frontendscopes "frontend/services/scopes"
 	"shared/services/api"
-	"shared/services/api/netconnection"
-	"shared/services/clock"
 	"shared/services/logger"
 	"shared/services/uuid"
 	"shared/utils/connection"
@@ -26,8 +26,7 @@ import (
 
 func frontendDic(
 	backendC ioc.Dic,
-	netconnectionPkg netconnection.Pkg,
-	clockPkg clock.Pkg,
+	sharedPkg SharedPkg,
 ) ioc.Dic {
 	// defer sdl.Quit()
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
@@ -56,41 +55,45 @@ func frontendDic(
 	renderer.DrawRect(&sdl.Rect{X: 50, Y: 60, W: 100, H: 200})
 	renderer.Present()
 
-	var pkg frontend.Pkg = frontend.Package(
-		shared.Package(
-			api.Package(
-				netconnectionPkg,
-				func(c ioc.Dic) ioc.Dic { return c },
-			),
-			clockPkg,
-			logger.Package(true, func(c ioc.Dic, message string) {
-				ioc.Get[console.Console](c).LogPermanentlyToConsole(message)
-			}),
-		),
-		frontendapi.Package(
-			frontendtcp.Package("tcp"),
-		),
-		backendconnection.Package(
-			localconnector.Package(func(clientCon connection.Connection) connection.Connection {
-				backendC := backendC.Scope(scopes.UserSession)
-				client := clients.NewClient(
-					clients.ClientID(ioc.Get[uuid.Factory](backendC).NewUUID().String()),
-					clientCon,
-				)
-				sClient := ioc.Get[clients.SessionClient](backendC)
-				sClient.UseClient(client)
+	pkgs := []ioc.Pkg{
+		sharedPkg,
+		api.Package(func(c ioc.Dic) ioc.Dic { return c }),
+		logger.Package(true, func(c ioc.Dic, message string) {
+			ioc.Get[console.Console](c).LogPermanentlyToConsole(message)
+		}),
+		frontendtcp.Package("tcp"),
+		frontendapi.Package(),
+		localconnector.Package(func(clientCon connection.Connection) connection.Connection {
+			backendC := backendC.Scope(backendscopes.UserSession)
+			client := clients.NewClient(
+				clients.ClientID(ioc.Get[uuid.Factory](backendC).NewUUID().String()),
+				clientCon,
+			)
+			sClient := ioc.Get[clients.SessionClient](backendC)
+			sClient.UseClient(client)
 
-				return ioc.Get[connection.Connection](backendC)
-			}),
-		),
+			return ioc.Get[connection.Connection](backendC)
+		}),
+		backendconnection.Package(func(c ioc.Dic) connection.Connection {
+			return ioc.Get[localconnector.Connector](c).Connect()
+		}),
+		console.Package(),
 		media.Package(
 			windowapi.Package(window, renderer),
 		),
-		[]ioc.Pkg{
-			ClientPackage(),
-		},
-	)
+		ecs.Package(),
+		frames.Package(),
+		scenes.Package(),
+		frontendscopes.Package(),
+
+		// mods
+		ClientPackage(),
+	}
+
 	b := ioc.NewBuilder()
-	pkg.Register(b)
+	for _, pkg := range pkgs {
+		pkg.Register(b)
+	}
+	// pkg.Register(b)
 	return b.Build()
 }

@@ -34,4 +34,8 @@ func (pkg Pkg) Register(b ioc.Builder) {
 			pkg.timeout,
 		)
 	})
+
+	ioc.RegisterDependency[NetConnection, codec.Codec](b)
+	ioc.RegisterDependency[NetConnection, connection.Connection](b)
+	ioc.RegisterDependency[NetConnection, uuid.Factory](b)
 }

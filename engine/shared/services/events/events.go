@@ -18,4 +18,5 @@ func (pkg Pkg) Register(b ioc.Builder) {
 		return b
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) events.Events { return ioc.Get[events.Builder](c).Build() })
+	ioc.RegisterDependency[events.Events, events.Builder](b)
 }

@@ -29,6 +29,8 @@ func (pkg Pkg) Register(b ioc.Builder) {
 			ioc.Get[backendconnection.Backend](c),
 		)
 	})
+	ioc.RegisterDependency[Connect, netconnection.NetConnection](b)
+	ioc.RegisterDependency[Connect, backendconnection.Backend](b)
 }
 
 //

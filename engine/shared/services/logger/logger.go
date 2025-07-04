@@ -57,4 +57,5 @@ func (pkg Pkg) Register(b ioc.Builder) {
 			Panic:        func(s string) { panic(s) },
 		}
 	})
+	ioc.RegisterDependency[Logger, clock.Clock](b)
 }

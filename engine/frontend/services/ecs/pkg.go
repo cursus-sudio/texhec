@@ -24,4 +24,5 @@ func (pkg Pkg) Register(b ioc.Builder) {
 			world.Update(args)
 		})
 	})
+	ioc.RegisterDependency[frames.Builder, World](b)
 }

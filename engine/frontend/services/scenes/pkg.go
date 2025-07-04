@@ -18,6 +18,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 	ioc.RegisterTransient(b, func(c ioc.Dic) ecs.World {
 		return ioc.Get[SceneManager](c).CurrentScene().World()
 	})
+	ioc.RegisterDependency[ecs.World, SceneManager](b)
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneManager {
 		return newSceneManager()
@@ -34,4 +35,5 @@ func (pkg Pkg) Register(b ioc.Builder) {
 		})
 		return b
 	})
+	ioc.RegisterDependency[events.Builder, SceneManager](b)
 }

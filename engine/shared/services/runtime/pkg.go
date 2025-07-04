@@ -1,6 +1,8 @@
 package runtime
 
-import "github.com/ogiusek/ioc/v2"
+import (
+	"github.com/ogiusek/ioc/v2"
+)
 
 type Pkg struct{}
 
@@ -15,4 +17,5 @@ func (Pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) Runtime {
 		return ioc.Get[Builder](c).Build()
 	})
+	ioc.RegisterDependency[Runtime, Builder](b)
 }

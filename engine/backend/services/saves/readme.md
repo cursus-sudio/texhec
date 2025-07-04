@@ -1,7 +1,7 @@
 # order from top to bottom
 
 - saves (+ savesQueryBuilder)
-- saves repo
+- saves meta repo
 - storage
   - state codec
-    - repo (not a service)
+    - savable repo (not a service)

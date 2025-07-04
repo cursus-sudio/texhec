@@ -15,6 +15,7 @@ func ServerPackage() ServerPkg {
 
 func (ServerPkg) Register(b ioc.Builder) {
 	for _, pkg := range []ioc.Pkg{
+		exBackendModPkg{},
 		ping.ServerPackage(),
 		tacticalmap.ServerPackage(),
 	} {

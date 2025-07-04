@@ -41,5 +41,6 @@ func (pkg Pkg) Register(b ioc.Builder) {
 			lockSet,
 		)
 	})
+	ioc.RegisterDependency[FileStorage, scopes.RequestService](b)
 
 }

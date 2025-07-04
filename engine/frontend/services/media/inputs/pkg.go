@@ -25,14 +25,14 @@ func (Pkg) Register(b ioc.Builder) {
 			ioc.Get[events.Events](c),
 		)
 	})
+	ioc.RegisterDependency[*api, logger.Logger](b)
+	ioc.RegisterDependency[*api, clock.Clock](b)
+	ioc.RegisterDependency[*api, events.Events](b)
 
 	ioc.RegisterTransient(b, func(c ioc.Dic) Api {
-		return newInputsApi(
-			ioc.Get[logger.Logger](c),
-			ioc.Get[clock.Clock](c),
-			ioc.Get[events.Events](c),
-		)
+		return ioc.Get[*api](c)
 	})
+	ioc.RegisterDependency[Api, *api](b)
 
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b events.Builder) events.Builder {
 		events.Listen(b, func(qe sdl.QuitEvent) {
@@ -40,6 +40,7 @@ func (Pkg) Register(b ioc.Builder) {
 		})
 		return b
 	})
+	ioc.RegisterDependency[events.Builder, runtime.Runtime](b)
 
 	ioc.WrapService(b, frames.HandleInputs, func(c ioc.Dic, b frames.Builder) frames.Builder {
 		i := ioc.Get[*api](c)
@@ -47,4 +48,5 @@ func (Pkg) Register(b ioc.Builder) {
 			i.Poll()
 		})
 	})
+	ioc.RegisterDependency[frames.Builder, *api](b)
 }

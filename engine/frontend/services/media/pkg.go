@@ -38,6 +38,9 @@ func (pkg Pkg) Register(b ioc.Builder) {
 			ioc.Get[audio.Api](c),
 		)
 	})
+	ioc.RegisterDependency[Api, inputs.Api](b)
+	ioc.RegisterDependency[Api, window.Api](b)
+	ioc.RegisterDependency[Api, audio.Api](b)
 
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b runtime.Builder) runtime.Builder {
 		b.OnStop(func() {

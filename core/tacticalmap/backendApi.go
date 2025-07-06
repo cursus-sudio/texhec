@@ -86,13 +86,13 @@ func (endpoint getEndpoint) Handle(req GetReq) (GetRes, error) {
 
 //
 
-type ServerPkg struct{}
+type BackendPkg struct{}
 
-func ServerPackage() ServerPkg {
-	return ServerPkg{}
+func BackendPackage() BackendPkg {
+	return BackendPkg{}
 }
 
-func (pkg ServerPkg) Register(b ioc.Builder) {
+func (pkg BackendPkg) Register(b ioc.Builder) {
 	Package().Register(b)
 	ioc.RegisterSingleton(b, func(c ioc.Dic) TacticalMap { return newTacticalMap() })
 

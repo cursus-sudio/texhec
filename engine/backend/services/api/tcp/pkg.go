@@ -74,7 +74,7 @@ func Package(
 
 func (pkg Pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, r runtime.Builder) runtime.Builder {
-		r.OnStart(func() {
+		r.OnStart(func(r runtime.Runtime) {
 			go pkg.hostServer(c)
 		})
 		return r

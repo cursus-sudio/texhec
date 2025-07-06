@@ -10,12 +10,12 @@ import (
 	"github.com/ogiusek/relay/v2"
 )
 
-type serverPingEndpoint struct {
+type backendPingEndpoint struct {
 	Logger logger.Logger         `inject:"1"`
 	Client clients.SessionClient `inject:"1"`
 }
 
-func (e serverPingEndpoint) Handle(req PingReq) (PingRes, error) {
+func (e backendPingEndpoint) Handle(req PingReq) (PingRes, error) {
 	e.Logger.Info(fmt.Sprintf("pinged backend: %v", req))
 	client, err := e.Client.Client()
 	if err != nil {
@@ -27,13 +27,13 @@ func (e serverPingEndpoint) Handle(req PingReq) (PingRes, error) {
 	return PingRes{ID: req.ID, Ok: true}, nil
 }
 
-type ServerPkg struct{}
+type BackendPkg struct{}
 
-func ServerPackage() ServerPkg {
-	return ServerPkg{}
+func BackendPackage() BackendPkg {
+	return BackendPkg{}
 }
 
-func (pkg ServerPkg) Register(b ioc.Builder) {
+func (pkg BackendPkg) Register(b ioc.Builder) {
 	Package().Register(b)
-	endpoint.Register[serverPingEndpoint](b)
+	endpoint.Register[backendPingEndpoint](b)
 }

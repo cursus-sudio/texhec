@@ -2,7 +2,7 @@ package frames
 
 import (
 	"shared/services/clock"
-	"shared/services/runtime"
+	runtimeservice "shared/services/runtime"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -24,11 +24,15 @@ func (Pkg) Register(b ioc.Builder) {
 	})
 	ioc.RegisterDependency[Frames, Builder](b)
 
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, r runtime.Builder) runtime.Builder {
-		r.OnStart(func() {
-			go ioc.Get[Frames](c).Run()
+	ioc.WrapService(b, runtimeservice.OrderStop, func(c ioc.Dic, r runtimeservice.Builder) runtimeservice.Builder {
+		r.OnStartOnMainThread(func(r runtimeservice.Runtime) {
+			ioc.Get[Frames](c).Run()
+			r.Stop()
+		})
+		r.OnStop(func(r runtimeservice.Runtime) {
+			ioc.Get[Frames](c).Stop()
 		})
 		return r
 	})
-	ioc.RegisterDependency[runtime.Builder, Frames](b)
+	ioc.RegisterDependency[runtimeservice.Builder, Frames](b)
 }

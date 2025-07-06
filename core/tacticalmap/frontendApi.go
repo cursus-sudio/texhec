@@ -38,13 +38,13 @@ func (endpoint destroyedMessageEndpoint) Handle(req DestroyedMessage) {
 
 //
 
-type ClientPkg struct{}
+type FrontendPkg struct{}
 
-func ClientPackage() ClientPkg {
-	return ClientPkg{}
+func FrontendPackage() FrontendPkg {
+	return FrontendPkg{}
 }
 
-func (ClientPkg) Register(b ioc.Builder) {
+func (FrontendPkg) Register(b ioc.Builder) {
 	Package().Register(b)
 	endpoint.MessageRegister[createdMessageEndpoint](b)
 	endpoint.MessageRegister[destroyedMessageEndpoint](b)

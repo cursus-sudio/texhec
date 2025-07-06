@@ -10,7 +10,10 @@ import (
 const (
 	HandleInputs ioc.Order = iota
 	Update
+	BeforeDraw
+	Clear
 	Draw
+	AfterDraw
 )
 
 type OnFrame struct {
@@ -54,12 +57,12 @@ func (b *builder) OnFrame(onFrame func(OnFrame)) Builder {
 }
 
 func (b *builder) Build() Frames {
-	onFrame := b.onFrame
 	return &frames{
 		AlreadyRunning: false,
 		FPS:            b.fps,
+		Running:        true,
 		OnFrame: func(of OnFrame) {
-			for _, onFrame := range onFrame {
+			for _, onFrame := range b.onFrame {
 				onFrame(of)
 			}
 		},

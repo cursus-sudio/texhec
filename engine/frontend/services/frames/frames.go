@@ -3,6 +3,7 @@ package frames
 import (
 	"errors"
 	"shared/services/clock"
+	"sync"
 	"time"
 )
 
@@ -12,11 +13,14 @@ var (
 
 type Frames interface {
 	Run() error
+	Stop()
 }
 
 type frames struct {
 	AlreadyRunning bool
+	Running        bool
 	FPS            int
+	RunMutex       sync.RWMutex
 	OnFrame        func(OnFrame)
 	Clock          clock.Clock
 }
@@ -27,7 +31,8 @@ func (frames *frames) StartLoop() {
 	timePerFrame := time.Second / time.Duration(frames.FPS)
 	previousFrame = frames.Clock.Now()
 
-	for { // runnning game loop
+	frames.RunMutex.Lock()
+	for frames.Running { // runnning game loop
 		now := frames.Clock.Now()
 
 		deltaTime := now.Sub(previousFrame)
@@ -37,6 +42,7 @@ func (frames *frames) StartLoop() {
 		previousFrame = now
 		time.Sleep(previousFrame.Add(timePerFrame).Sub(now))
 	}
+	frames.RunMutex.Unlock()
 }
 
 func (frames *frames) Run() error {
@@ -44,7 +50,13 @@ func (frames *frames) Run() error {
 		return ErrAlreadyRunning
 	}
 
-	go frames.StartLoop()
+	frames.StartLoop()
 
 	return nil
+}
+
+func (frames *frames) Stop() {
+	frames.Running = false
+	frames.RunMutex.RLock()
+	frames.RunMutex.RUnlock()
 }

@@ -8,22 +8,22 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
-type clientPingEndpoint struct {
+type frontendPingEndpoint struct {
 	Console console.Console `inject:"1"`
 }
 
-func (endpoint clientPingEndpoint) Handle(req PingReq) (PingRes, error) {
+func (endpoint frontendPingEndpoint) Handle(req PingReq) (PingRes, error) {
 	endpoint.Console.LogToConsole(fmt.Sprintf("\npinged client: %v\n", req))
 	return PingRes{ID: req.ID, Ok: true}, nil
 }
 
-type ClientPkg struct{}
+type FrontendPkg struct{}
 
-func ClientPackage() ClientPkg {
-	return ClientPkg{}
+func FrontendPackage() FrontendPkg {
+	return FrontendPkg{}
 }
 
-func (pkg ClientPkg) Register(b ioc.Builder) {
+func (pkg FrontendPkg) Register(b ioc.Builder) {
 	Package().Register(b)
-	endpoint.Register[clientPingEndpoint](b)
+	endpoint.Register[frontendPingEndpoint](b)
 }

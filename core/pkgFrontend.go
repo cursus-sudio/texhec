@@ -3,6 +3,9 @@ package main
 import (
 	"backend/services/clients"
 	backendscopes "backend/services/scopes"
+	"core/ping"
+	"core/tacticalmap"
+	"core/triangle"
 	"fmt"
 	frontendapi "frontend/services/api"
 	frontendtcp "frontend/services/api/tcp"
@@ -20,6 +23,8 @@ import (
 	"shared/services/uuid"
 	"shared/utils/connection"
 
+	"github.com/go-gl/gl/v4.5-core/gl"
+	// "github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/ogiusek/ioc/v2"
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -28,32 +33,36 @@ func frontendDic(
 	backendC ioc.Dic,
 	sharedPkg SharedPkg,
 ) ioc.Dic {
-	// defer sdl.Quit()
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		panic(fmt.Errorf("Failed to initialize SDL: %s", err))
 	}
 
+	sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 3)
+	sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 3)
+	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
+	sdl.GLSetAttribute(sdl.GL_DOUBLEBUFFER, 1) // Essential for GLSwap
+	sdl.GLSetAttribute(sdl.GL_DEPTH_SIZE, 24)  // Good practice for depth testing
 	window, err := sdl.CreateWindow(
 		"texhec",
 		sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
 		800, 600,
-		sdl.WINDOW_SHOWN,
-		// sdl.WINDOW_FULLSCREEN,
+		sdl.WINDOW_SHOWN|sdl.WINDOW_OPENGL,
 	)
 	if err != nil {
 		panic(fmt.Errorf("Failed to create window: %s", err))
 	}
-	// defer window.Destroy()
 
-	renderer, err := sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED)
+	ctx, err := window.GLCreateContext()
 	if err != nil {
-		panic(fmt.Errorf("Failed to create renderer: %s", err))
+		panic(fmt.Errorf("Failed to create gl context: %s", err))
 	}
-	// defer renderer.Destroy()
-	renderer.Clear()
-	renderer.SetDrawColor(0, 0, 255, 255)
-	renderer.DrawRect(&sdl.Rect{X: 50, Y: 60, W: 100, H: 200})
-	renderer.Present()
+	if err := gl.Init(); err != nil {
+		panic(fmt.Errorf("could not initialize OpenGL: %v", err))
+	}
+	if err := window.GLMakeCurrent(ctx); err != nil {
+		panic(fmt.Errorf("could not make OpenGL context current: %v", err))
+	}
+	print("created everything\n")
 
 	pkgs := []ioc.Pkg{
 		sharedPkg,
@@ -79,7 +88,7 @@ func frontendDic(
 		}),
 		console.Package(),
 		media.Package(
-			windowapi.Package(window, renderer),
+			windowapi.Package(window, ctx),
 		),
 		ecs.Package(),
 		frames.Package(),
@@ -87,13 +96,14 @@ func frontendDic(
 		frontendscopes.Package(),
 
 		// mods
-		ClientPackage(),
+		ping.FrontendPackage(),
+		tacticalmap.FrontendPackage(),
+		triangle.FrontendPackage(),
 	}
 
 	b := ioc.NewBuilder()
 	for _, pkg := range pkgs {
 		pkg.Register(b)
 	}
-	// pkg.Register(b)
 	return b.Build()
 }

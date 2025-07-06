@@ -1,26 +1,28 @@
 package window
 
-import "github.com/veandco/go-sdl2/sdl"
+import (
+	"github.com/veandco/go-sdl2/sdl"
+)
 
 type Api interface {
 	Window() *sdl.Window
-	Renderer() *sdl.Renderer
+	Ctx() sdl.GLContext
 }
 
 type api struct {
-	window   *sdl.Window
-	renderer *sdl.Renderer
+	window  *sdl.Window
+	context sdl.GLContext
 }
 
 func newApi(
 	window *sdl.Window,
-	renderer *sdl.Renderer,
+	context sdl.GLContext,
 ) Api {
 	return api{
-		window:   window,
-		renderer: renderer,
+		window:  window,
+		context: context,
 	}
 }
 
-func (api api) Window() *sdl.Window     { return api.window }
-func (api api) Renderer() *sdl.Renderer { return api.renderer }
+func (api api) Window() *sdl.Window { return api.window }
+func (api api) Ctx() sdl.GLContext  { return nil }

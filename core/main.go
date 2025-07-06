@@ -11,11 +11,10 @@ import (
 	"frontend/services/scenes"
 	frontendscopes "frontend/services/scopes"
 	"os"
-	"shared/services/api/netconnection"
-	"shared/services/clock"
-	"shared/services/runtime"
-	"time"
+	"runtime"
+	appruntime "shared/services/runtime"
 
+	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 	"github.com/ogiusek/relay/v2"
@@ -26,6 +25,8 @@ import (
 
 func main() {
 	print("started\n")
+	runtime.LockOSThread()
+
 	isServer := false
 	for _, arg := range os.Args {
 		if arg == "server" {
@@ -34,15 +35,12 @@ func main() {
 		}
 	}
 
-	sharedPkg := SharedPackage(
-		netconnection.Package(time.Second),
-		clock.Package(time.RFC3339Nano),
-	)
+	sharedPkg := SharedPackage()
 
 	backendC := backendDic(sharedPkg)
 
 	if isServer {
-		backendRuntime := ioc.Get[runtime.Runtime](backendC)
+		backendRuntime := ioc.Get[appruntime.Runtime](backendC)
 		backendRuntime.Run()
 		return
 	}
@@ -126,43 +124,14 @@ func main() {
 		mainScene := newMainScene(sceneId, events.NewBuilder().Build(), world)
 		sceneManager.AddScene(mainScene)
 	}
+	{
+		gl.ClearColor(0.2, 0.3, 0.3, 1.0)
+	}
 
-	frontendRuntime := ioc.Get[runtime.Runtime](c)
+	frontendRuntime := ioc.Get[appruntime.Runtime](c)
+	// go func() {
+	// 	time.Sleep(time.Second / 10)
+	// 	frontendRuntime.Stop()
+	// }()
 	frontendRuntime.Run()
 }
-
-// defer sdl.Quit()
-//
-// if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
-// 	log.Fatalf("Failed to initialize SDL: %s", err)
-// }
-//
-// window, err := sdl.CreateWindow(
-// 	"SDL2 Go Example",
-// 	sdl.WINDOWPOS_UNDEFINED,
-// 	sdl.WINDOWPOS_UNDEFINED,
-// 	800,
-// 	600,
-// 	sdl.WINDOW_SHOWN,
-// )
-// if err != nil {
-// 	log.Fatalf("Failed to create window: %s", err)
-// }
-// defer window.Destroy()
-//
-// // window.SetFullscreen(sdl.WINDOW_FULLSCREEN)
-//
-// renderer, err := sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED)
-// if err != nil {
-// 	log.Fatalf("Failed to create renderer: %s", err)
-// }
-// defer renderer.Destroy()
-// renderer.SetDrawColor(0, 0, 255, 255)
-// renderer.Clear()
-// renderer.Present()
-// time.Sleep(3 * time.Second)
-//
-// // ---------------------------------------------------------------------------------
-// if true {
-// 	return
-// }

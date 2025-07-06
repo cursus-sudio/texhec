@@ -4,7 +4,7 @@ import (
 	"shared/services/api/netconnection"
 	"shared/services/clock"
 	"shared/services/codec"
-	"shared/services/events"
+	"shared/services/eventspkg"
 	"shared/services/runtime"
 	"shared/services/uuid"
 	"time"
@@ -23,7 +23,7 @@ func SharedPackage() SharedPkg {
 			clock.Package(time.RFC3339Nano),
 			// netconnectionPkg,
 			// clockPkg,
-			events.Package(),
+			eventspkg.Package(),
 			codec.Package(),
 			runtime.Package(),
 			uuid.Package(),

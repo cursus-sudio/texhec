@@ -2,7 +2,6 @@ package saves
 
 import (
 	"errors"
-	"shared/services/clock"
 )
 
 type SaveMetaFactory interface {
@@ -43,5 +42,3 @@ type Saves interface {
 	// - Err503
 	NewSave(SaveMeta) error
 }
-
-type SavesFactory func(SavesStorage, SavesMetaRepo, clock.Clock) Saves

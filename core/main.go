@@ -41,6 +41,14 @@ func main() {
 
 	if isServer {
 		backendRuntime := ioc.Get[appruntime.Runtime](backendC)
+		// go func() {
+		// 	time.Sleep(time.Second / 10)
+		// 	backendC := backendC.Scope(scopes.Request)
+		// 	s := ioc.Get[saves.Saves](backendC)
+		// 	factory := ioc.Get[saves.SaveMetaFactory](backendC)
+		// 	err := s.NewSave(factory.New("very funny save\n"))
+		// 	ioc.Get[scopes.RequestService](backendC).Clean(scopes.NewRequestEndArgs(err))
+		// }()
 		backendRuntime.Run()
 		return
 	}

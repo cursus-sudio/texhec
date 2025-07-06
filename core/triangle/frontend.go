@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	_ "embed"
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
@@ -52,20 +53,28 @@ func compileShader(source string, shaderType uint32) (uint32, error) {
 }
 
 // Vertex Shader source code
-const vertexShaderSource = `
-#version 330 core
-layout (location = 0) in vec3 aPos;
-void main() {
-    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-}`
+
+// const vertexShaderSource = `
+// #version 330 core
+// layout (location = 0) in vec3 aPos;
+// void main() {
+//     gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+// }`
+
+//go:embed vertexShader.frag
+var vertexShaderSource string
 
 // Fragment Shader source code
-const fragmentShaderSource = `
-#version 330 core
-out vec4 FragColor;
-void main() {
-    FragColor = vec4(1.0, 0.0, 0.0, 1.0); // Yellow color for the triangle
-}`
+
+//go:embed fragmentShader.frag
+var fragmentShaderSource string
+
+// const fragmentShaderSource = `
+// #version 330 core
+// out vec4 FragColor;
+// void main() {
+//     FragColor = vec4(1.0, 0.0, 0.0, 1.0); // Yellow color for the triangle
+// }`
 
 func createShaderProgram() (uint32, error) {
 	// 1. Compile Shaders

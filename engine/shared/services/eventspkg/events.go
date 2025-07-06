@@ -1,4 +1,4 @@
-package events
+package eventspkg
 
 import (
 	"github.com/ogiusek/events"

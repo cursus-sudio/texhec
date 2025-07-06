@@ -6,18 +6,22 @@ import (
 	"core/ping"
 	"core/tacticalmap"
 	"core/triangle"
+	"errors"
 	"fmt"
 	frontendapi "frontend/services/api"
 	frontendtcp "frontend/services/api/tcp"
 	"frontend/services/backendconnection"
 	"frontend/services/backendconnection/localconnector"
 	"frontend/services/console"
+	"frontend/services/dbpkg"
 	"frontend/services/ecs"
 	"frontend/services/frames"
 	"frontend/services/media"
 	windowapi "frontend/services/media/window"
 	"frontend/services/scenes"
 	frontendscopes "frontend/services/scopes"
+	"os"
+	"path/filepath"
 	"shared/services/api"
 	"shared/services/logger"
 	"shared/services/uuid"
@@ -33,6 +37,8 @@ func frontendDic(
 	backendC ioc.Dic,
 	sharedPkg SharedPkg,
 ) ioc.Dic {
+	// sdl + opengl
+
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		panic(fmt.Errorf("Failed to initialize SDL: %s", err))
 	}
@@ -62,7 +68,16 @@ func frontendDic(
 	if err := window.GLMakeCurrent(ctx); err != nil {
 		panic(fmt.Errorf("could not make OpenGL context current: %v", err))
 	}
-	print("created everything\n")
+
+	// path
+
+	engineDir, err := os.Getwd()
+	if err != nil {
+		panic(errors.Join(errors.New("current wordking direcotry"), err))
+	}
+	// parent of both /backend and /frontend directory
+	engineDir = filepath.Dir(engineDir)
+	storage := filepath.Join(engineDir, "user_storage", "frontend")
 
 	pkgs := []ioc.Pkg{
 		sharedPkg,
@@ -70,6 +85,7 @@ func frontendDic(
 		logger.Package(true, func(c ioc.Dic, message string) {
 			ioc.Get[console.Console](c).LogPermanentlyToConsole(message)
 		}),
+		dbpkg.Package(fmt.Sprintf("%s/db.sql", storage)),
 		frontendtcp.Package("tcp"),
 		frontendapi.Package(),
 		localconnector.Package(func(clientCon connection.Connection) connection.Connection {

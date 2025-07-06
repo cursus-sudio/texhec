@@ -5,9 +5,9 @@ go 1.24.3
 require (
 	backend v0.0.0
 	frontend v0.0.0
+	github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71
 	github.com/ogiusek/events v1.0.2
-	github.com/ogiusek/ioc/v2 v2.0.11
-	github.com/ogiusek/null v1.1.0
+	github.com/ogiusek/ioc/v2 v2.0.12
 	github.com/ogiusek/relay/v2 v2.0.6
 	github.com/veandco/go-sdl2 v0.4.40
 	shared v0.0.0
@@ -15,8 +15,6 @@ require (
 
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71 // indirect
-	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20250301202403-da16c1255728 // indirect
 	github.com/golang-migrate/migrate/v4 v4.18.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -25,6 +23,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-sqlite3 v1.14.28 // indirect
 	github.com/ogiusek/lockset v1.0.1 // indirect
+	github.com/ogiusek/null v1.1.0 // indirect
 	github.com/optimus-hft/lockset v0.1.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	go.uber.org/atomic v1.7.0 // indirect

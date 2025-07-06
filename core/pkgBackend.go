@@ -4,7 +4,7 @@ import (
 	backendapi "backend/services/api"
 	backendtcp "backend/services/api/tcp"
 	"backend/services/clients"
-	"backend/services/db"
+	"backend/services/dbpkg"
 	"backend/services/files"
 	"backend/services/saves"
 	"backend/services/scopes"
@@ -19,7 +19,6 @@ import (
 	"shared/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
-	"github.com/ogiusek/null"
 )
 
 func backendDic(
@@ -31,7 +30,7 @@ func backendDic(
 	}
 	// parent of both /backend and /frontend directory
 	engineDir = filepath.Dir(engineDir)
-	userStorage := filepath.Join(engineDir, "user_storage")
+	storage := filepath.Join(engineDir, "user_storage", "backend")
 
 	pkgs := []ioc.Pkg{
 		sharedPkg,
@@ -46,11 +45,8 @@ func backendDic(
 		),
 		backendapi.Package(),
 		clients.Package(),
-		db.Package(
-			fmt.Sprintf("%s/db.sql", userStorage),
-			null.New(fmt.Sprintf("%s/engine/backend/services/db/migrations", engineDir)),
-		),
-		files.Package(fmt.Sprintf("%s/files", userStorage)),
+		dbpkg.Package(fmt.Sprintf("%s/db.sql", storage)),
+		files.Package(fmt.Sprintf("%s/files", storage)),
 		saves.Package(),
 		scopes.Package(),
 
@@ -64,7 +60,5 @@ func backendDic(
 	for _, pkg := range pkgs {
 		pkg.Register(b)
 	}
-	// backendPkg.Register(b)
-
 	return b.Build()
 }

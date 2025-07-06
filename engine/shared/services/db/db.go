@@ -1,8 +1,8 @@
 package db
 
 import (
-	"backend/services/scopes"
 	"database/sql"
+	"embed"
 	"errors"
 	"fmt"
 	"os"
@@ -14,10 +14,10 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/ogiusek/ioc/v2"
-	"github.com/ogiusek/null"
 )
 
 // db
@@ -62,17 +62,28 @@ func (tx Tx) Ok() bool {
 	return tx.ok
 }
 
+// migrations
+
 // pkg
 
 type Pkg struct {
-	dbPath        string
-	migrationsDir null.Nullable[string]
+	dbPath            string
+	migrations        embed.FS
+	txScope           ioc.ScopeID
+	addOnScopeCleanUp func(c ioc.Dic, cleanUp func(err error))
 }
 
-func Package(dbPath string, migrationsDir null.Nullable[string]) Pkg {
+func Package(
+	dbPath string,
+	migrations embed.FS,
+	txScope ioc.ScopeID,
+	addOnScopeCleanUp func(c ioc.Dic, cleanUp func(err error)),
+) Pkg {
 	return Pkg{
-		dbPath:        dbPath,
-		migrationsDir: migrationsDir,
+		dbPath:            dbPath,
+		migrations:        migrations,
+		txScope:           txScope,
+		addOnScopeCleanUp: addOnScopeCleanUp,
 	}
 }
 
@@ -81,27 +92,29 @@ func (pkg Pkg) Register(b ioc.Builder) {
 		if err := os.MkdirAll(filepath.Dir(pkg.dbPath), os.ModePerm); err != nil {
 			panic(fmt.Sprintf("error creating directories %s", err.Error()))
 		}
+
 		db, err := sql.Open("sqlite3", pkg.dbPath)
 		if err != nil {
 			panic(errors.Join(errors.New("opening database"), err))
 		}
+
 		driver, err := sqlite.WithInstance(db, &sqlite.Config{})
 		if err != nil {
 			panic(errors.Join(errors.New("creating driver"), err))
 		}
-		migrationDir, ok := pkg.migrationsDir.Ok()
-		if ok {
-			mig, err := migrate.NewWithDatabaseInstance(
-				fmt.Sprintf("file://%s", migrationDir),
-				"sqlite3",
-				driver,
-			)
-			if err != nil {
-				panic(errors.Join(errors.New("creating migration"), err))
-			}
-			if err := mig.Up(); err != nil && err != migrate.ErrNoChange {
-				panic(errors.Join(errors.New("running up migration"), err))
-			}
+
+		sourceDriver, err := iofs.New(pkg.migrations, "migrations")
+		if err != nil {
+			panic(errors.Join(errors.New("migrations"), err))
+		}
+
+		mig, err := migrate.NewWithInstance("iofs", sourceDriver, "sqlite3", driver)
+		if err != nil {
+			panic(errors.Join(errors.New("creating migration"), err))
+		}
+
+		if err := mig.Up(); err != nil && err != migrate.ErrNoChange {
+			panic(errors.Join(errors.New("running up migration"), err))
 		}
 		go func() {
 			for {
@@ -112,19 +125,18 @@ func (pkg Pkg) Register(b ioc.Builder) {
 		return NewDB(db, true)
 	})
 
-	ioc.RegisterScoped(b, scopes.Request, func(c ioc.Dic) Tx {
+	ioc.RegisterScoped(b, pkg.txScope, func(c ioc.Dic) Tx {
 		logger := ioc.Get[logger.Logger](c)
 		db := ioc.Get[DB](c)
 		if !db.Ok() {
 			return NewTx(nil, false)
 		}
-		tx, err := db.DB().Begin()
-		if err != nil {
-			logger.Error(errors.Join(httperrors.Err503, err))
+		tx, txErr := db.DB().Begin()
+		if txErr != nil {
+			logger.Error(errors.Join(httperrors.Err503, txErr))
 		}
-		scopeCleanUp := ioc.Get[scopes.RequestService](c)
-		scopeCleanUp.AddCleanListener(func(args scopes.RequestEndArgs) {
-			if args.Error != nil || err != nil {
+		pkg.addOnScopeCleanUp(c, func(err error) {
+			if err != nil || txErr != nil {
 				return
 			}
 			if err := tx.Commit(); err != nil {
@@ -135,6 +147,5 @@ func (pkg Pkg) Register(b ioc.Builder) {
 	})
 	ioc.RegisterDependency[Tx, logger.Logger](b)
 	ioc.RegisterDependency[Tx, DB](b)
-	ioc.RegisterDependency[Tx, scopes.RequestService](b)
-
+	// ioc.RegisterDependency[Tx, scopes.RequestService](b)
 }

@@ -44,8 +44,8 @@ func frontendDic(
 		panic(fmt.Errorf("Failed to initialize SDL: %s", err))
 	}
 
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 3)
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 3)
+	sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 4 /* 3 */)
+	sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 1 /* 3 */)
 	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
 	sdl.GLSetAttribute(sdl.GL_DOUBLEBUFFER, 1) // Essential for GLSwap
 	sdl.GLSetAttribute(sdl.GL_DEPTH_SIZE, 24)  // Good practice for depth testing

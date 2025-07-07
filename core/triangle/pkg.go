@@ -2,6 +2,7 @@ package triangle
 
 import (
 	"frontend/services/frames"
+	"frontend/services/media/window"
 	appruntime "shared/services/runtime"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -16,7 +17,7 @@ func FrontendPackage() FrontendPkg {
 }
 
 func (FrontendPkg) Register(b ioc.Builder) {
-	tools, err := NewTools()
+	tools, err := NewTriangleTools()
 	if err != nil {
 		panic(err.Error())
 	}
@@ -26,10 +27,20 @@ func (FrontendPkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, frames.Draw, func(c ioc.Dic, b events.Builder) events.Builder {
 		events.Listen(b, func(e frames.FrameEvent) {
 			gl.UseProgram(tools.ShaderProgram)
-			gl.BindVertexArray(tools.TriangleVAO)
-			// gl.DrawArrays(gl.LINE_LOOP, 0, 3)
-			gl.DrawArrays(gl.TRIANGLES, 0, 3)
-			gl.BindVertexArray(0)
+
+			{
+				window := ioc.Get[window.Api](c).Window()
+				width, height := window.GetSize()
+				ResolutionLocation := gl.GetUniformLocation(tools.ShaderProgram, gl.Str("resolution\x00"))
+				gl.Uniform2f(ResolutionLocation, float32(width), float32(height))
+			}
+
+			{
+				// gl.DrawArrays(gl.LINE_LOOP, 0, 3)
+				gl.BindVertexArray(tools.TriangleVAO)
+				gl.DrawArrays(gl.TRIANGLES, 0, 3)
+				gl.BindVertexArray(0)
+			}
 		})
 		return b
 	})

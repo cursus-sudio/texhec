@@ -1,68 +1,77 @@
 package scenes
 
-import (
-	"github.com/ogiusek/null"
-)
+import "github.com/ogiusek/events"
+
+type sceneManagerBuilder struct {
+	scenes       map[SceneId]Scene
+	currentScene *SceneId
+}
+
+func NewSceneManagerBuilder() SceneManagerBuilder {
+	return &sceneManagerBuilder{
+		scenes:       map[SceneId]Scene{},
+		currentScene: nil,
+	}
+}
+
+func (b *sceneManagerBuilder) AddScene(scene Scene) SceneManagerBuilder {
+	id := scene.Id()
+	if _, ok := b.scenes[id]; ok {
+		panic(ErrSceneAlreadyExists.Error())
+	}
+	b.scenes[id] = scene
+	return b
+}
+
+func (b *sceneManagerBuilder) MakeActive(sceneId SceneId) SceneManagerBuilder {
+	sceneIdHeap := sceneId
+	b.currentScene = &sceneIdHeap
+	return b
+}
+
+func (b *sceneManagerBuilder) Build() SceneManager {
+	if b.currentScene == nil {
+		panic(ErrNoActiveScene.Error())
+	}
+	id := *b.currentScene
+	scene, ok := b.scenes[id]
+	if !ok {
+		panic(ErrSceneDoNotExists.Error())
+	}
+
+	manager := &sceneManager{
+		scenes:         b.scenes,
+		currentSceneId: id,
+	}
+	manager.events = scene.Load(manager)
+	return manager
+}
+
+//
 
 type sceneManager struct {
 	scenes         map[SceneId]Scene
+	events         events.Events
 	currentSceneId SceneId
 }
 
-func newSceneManager() SceneManager {
-	return &sceneManager{
-		scenes:         map[SceneId]Scene{},
-		currentSceneId: NewSceneId(""),
-	}
+func (sceneManager *sceneManager) CurrentScene() SceneId {
+	return sceneManager.currentSceneId
 }
 
-func (sceneManager *sceneManager) AddScene(scene Scene) error {
-	sceneId := scene.Id()
-	if _, ok := sceneManager.scenes[sceneId]; ok {
-		return ErrSceneAlreadyExists
-	}
-	sceneManager.scenes[sceneId] = scene
-	if sceneManager.currentSceneId == NewSceneId("") {
-		sceneManager.LoadScene(scene.Id())
-	}
-	return nil
-}
-
-func (sceneManager *sceneManager) CurrentScene() Scene {
-	scene, ok := sceneManager.scenes[sceneManager.currentSceneId]
-	if !ok {
-		panic("no scene was loaded")
-	}
-	return scene
-}
-
-func (sceneManager *sceneManager) GetScene(sceneId SceneId) null.Nullable[Scene] {
-	scene, ok := sceneManager.scenes[sceneId]
-	if !ok {
-		return null.Null[Scene]()
-	}
-	return null.New(scene)
-}
-
-func (sceneManager *sceneManager) GetScenes() []Scene {
-	scenes := make([]Scene, len(sceneManager.scenes))
-	for _, scene := range sceneManager.scenes {
-		scenes = append(scenes, scene)
-	}
-	return scenes
+func (sceneManager *sceneManager) CurrentSceneEvents() events.Events {
+	return sceneManager.events
 }
 
 func (sceneManager *sceneManager) LoadScene(sceneId SceneId) error {
-	newScene, ok := sceneManager.scenes[sceneId]
+	loadedScene, ok := sceneManager.scenes[sceneId]
 	if !ok {
 		return ErrSceneDoNotExists
 	}
-	currentScene, ok := sceneManager.scenes[sceneManager.currentSceneId]
-	if ok {
-		currentScene.Unload()
-	}
+	sceneManager.scenes[sceneManager.currentSceneId].Unload()
 
 	sceneManager.currentSceneId = sceneId
-	newScene.Load()
+	e := loadedScene.Load(sceneManager)
+	sceneManager.events = e
 	return nil
 }

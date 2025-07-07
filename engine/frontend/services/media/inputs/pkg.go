@@ -40,13 +40,15 @@ func (Pkg) Register(b ioc.Builder) {
 		})
 		return b
 	})
-	ioc.RegisterDependency[events.Builder, runtime.Runtime](b)
 
-	ioc.WrapService(b, frames.HandleInputs, func(c ioc.Dic, b frames.Builder) frames.Builder {
-		i := ioc.Get[*api](c)
-		return b.OnFrame(func(of frames.OnFrame) {
+	ioc.WrapService(b, frames.HandleInputs, func(c ioc.Dic, b events.Builder) events.Builder {
+		var i *api
+		events.Listen(b, func(e frames.FrameEvent) {
+			if i == nil {
+				i = ioc.Get[*api](c)
+			}
 			i.Poll()
 		})
+		return b
 	})
-	ioc.RegisterDependency[frames.Builder, *api](b)
 }

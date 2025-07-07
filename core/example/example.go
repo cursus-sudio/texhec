@@ -1,4 +1,4 @@
-package main
+package example
 
 import (
 	"backend/services/saves"
@@ -8,14 +8,13 @@ import (
 	"fmt"
 	"frontend/services/console"
 	"frontend/services/ecs"
+	"frontend/services/frames"
 	"frontend/services/scenes"
-	"reflect"
 	"shared/utils/connection"
 	"sync"
 	"time"
 
 	"github.com/ogiusek/events"
-	"github.com/ogiusek/ioc/v2"
 	"github.com/ogiusek/relay/v2"
 )
 
@@ -57,7 +56,7 @@ func NewToggledSystem(
 	}
 }
 
-func (system *toggleSystem) Update(args ecs.Args) {
+func (system *toggleSystem) Update(args frames.FrameEvent) {
 	if system.Toggled {
 		return
 	}
@@ -99,7 +98,7 @@ func NewSomeSystem(
 	}
 }
 
-func (system *someSystem) Update(args ecs.Args) {
+func (system *someSystem) Update(args frames.FrameEvent) {
 	format := "02-01-2006 15:04:05"
 	text := "----------------------------------------------------------------\n"
 	text += fmt.Sprintf("now %s\n", time.Now().Format(format))
@@ -109,7 +108,7 @@ func (system *someSystem) Update(args ecs.Args) {
 		if err := system.World.GetComponent(entity, &component); err != nil {
 			continue
 		}
-		component.PastTime += args.DeltaTime.Duration()
+		component.PastTime += args.Delta
 		component.Frame += 1
 		system.World.SaveComponent(entity, component)
 
@@ -145,20 +144,19 @@ func (system *someSystem) Update(args ecs.Args) {
 // scene
 
 type mainScene struct {
-	sceneId scenes.SceneId
-	world   ecs.World
-	events  events.Events
+	sceneId    scenes.SceneId
+	loadEvents func(scenes.SceneManager) events.Events
 }
 
-func newMainScene(sceneId scenes.SceneId, e events.Events, world ecs.World) scenes.Scene {
-	return &mainScene{sceneId: sceneId, world: world, events: e}
+func newMainScene(sceneId scenes.SceneId, e func(manager scenes.SceneManager) events.Events) scenes.Scene {
+	return &mainScene{sceneId: sceneId, loadEvents: e}
 }
 
-func (mainScene *mainScene) Id() scenes.SceneId    { return mainScene.sceneId }
-func (mainScene *mainScene) Load()                 {}
-func (mainScene *mainScene) Unload()               {}
-func (mainScene *mainScene) Events() events.Events { return mainScene.events }
-func (mainScene *mainScene) World() ecs.World      { return mainScene.world }
+func (mainScene *mainScene) Id() scenes.SceneId { return mainScene.sceneId }
+func (mainScene *mainScene) Load(manager scenes.SceneManager) events.Events {
+	return mainScene.loadEvents(manager)
+}
+func (mainScene *mainScene) Unload() {}
 
 // repo
 
@@ -224,22 +222,4 @@ func (savableIntRepo *intRepo) Increment() {
 
 func (savableIntRepo *intRepo) GetCount() int {
 	return savableIntRepo.Count
-}
-
-type exBackendModPkg struct{}
-
-func (exBackendModPkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) *intRepo {
-		return NewIntRepository(
-			0,
-			false,
-			ioc.Get[saves.StateCodecRWMutex](c).RWMutex().RLocker(),
-		)
-	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) IntRepo { return ioc.Get[*intRepo](c) })
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s saves.SavableRepoBuilder) saves.SavableRepoBuilder {
-		repoId := reflect.TypeFor[IntRepo]().String()
-		s.AddRepo(saves.RepoId(repoId), ioc.Get[*intRepo](c))
-		return s
-	})
 }

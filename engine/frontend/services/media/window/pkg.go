@@ -7,6 +7,7 @@ import (
 	runtimeservice "shared/services/runtime"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -48,27 +49,29 @@ func (pkg Pkg) Register(b ioc.Builder) {
 	})
 
 	// TEMP
-	ioc.WrapService(b, frames.Clear, func(c ioc.Dic, b frames.Builder) frames.Builder {
-		return b.OnFrame(func(of frames.OnFrame) {
+	ioc.WrapService(b, frames.Clear, func(c ioc.Dic, b events.Builder) events.Builder {
+		events.Listen(b, func(e frames.FrameEvent) {
 			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		})
+		return b
 	})
 
-	ioc.WrapService(b, frames.AfterDraw, func(c ioc.Dic, b frames.Builder) frames.Builder {
+	ioc.WrapService(b, frames.AfterDraw, func(c ioc.Dic, b events.Builder) events.Builder {
 		logger := ioc.Get[logger.Logger](c)
-		b.OnFrame(func(of frames.OnFrame) {
+		events.Listen(b, func(e frames.FrameEvent) {
 			if glErr := gl.GetError(); glErr != gl.NO_ERROR {
 				logger.Error(fmt.Errorf("opengl error: %x %s\n", glErr, glErrorStrings[glErr]))
 			}
 		})
-		//
+
 		api := ioc.Get[Api](c)
-		b.OnFrame(func(of frames.OnFrame) {
+		events.Listen(b, func(e frames.FrameEvent) {
 			api.Window().GLSwap()
 		})
 		return b
 	})
-	ioc.RegisterDependency[frames.Builder, Api](b)
+	ioc.RegisterDependency[logger.Logger, Api](b)
+	ioc.RegisterDependency[events.Builder, Api](b)
 
 	ioc.WrapService(b, runtimeservice.OrderCleanUp, func(c ioc.Dic, b runtimeservice.Builder) runtimeservice.Builder {
 		b.OnStop(func(r runtimeservice.Runtime) {

@@ -52,29 +52,13 @@ func compileShader(source string, shaderType uint32) (uint32, error) {
 	return shader, nil
 }
 
-// Vertex Shader source code
-
-// const vertexShaderSource = `
-// #version 330 core
-// layout (location = 0) in vec3 aPos;
-// void main() {
-//     gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-// }`
-
-//go:embed vertexShader.frag
+//go:embed vertexShader.glsl
 var vertexShaderSource string
 
 // Fragment Shader source code
 
-//go:embed fragmentShader.frag
+//go:embed fragmentShader.glsl
 var fragmentShaderSource string
-
-// const fragmentShaderSource = `
-// #version 330 core
-// out vec4 FragColor;
-// void main() {
-//     FragColor = vec4(1.0, 0.0, 0.0, 1.0); // Yellow color for the triangle
-// }`
 
 func createShaderProgram() (uint32, error) {
 	// 1. Compile Shaders
@@ -98,7 +82,6 @@ func createShaderProgram() (uint32, error) {
 }
 
 func createVAO() uint32 {
-	// return NewAppBuilder().Build(), nil
 	vertices := []float32{
 		// Position (x, y, z)
 		0.0, 0.5, 0.0, // Top
@@ -129,4 +112,24 @@ func createVAO() uint32 {
 	gl.BindVertexArray(0)
 
 	return triangleVAO
+}
+
+type triangleTools struct {
+	ShaderProgram uint32
+	TriangleVAO   uint32
+}
+
+func NewTools() (*triangleTools, error) {
+	shaderProgram, err := createShaderProgram()
+	if err != nil {
+		panic(err.Error())
+	}
+	triangleVAO := createVAO()
+	if err := gl.GetError(); err != gl.NO_ERROR {
+		panic(err)
+	}
+	return &triangleTools{
+		ShaderProgram: shaderProgram,
+		TriangleVAO:   triangleVAO,
+	}, nil
 }

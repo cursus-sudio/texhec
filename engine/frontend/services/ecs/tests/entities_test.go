@@ -3,15 +3,10 @@ package ecs_test
 import (
 	"frontend/services/ecs"
 	"testing"
-
-	"github.com/ogiusek/ioc/v2"
 )
 
 func TestEntities(t *testing.T) {
-	b := ioc.NewBuilder()
-	ecs.Package().Register(b)
-	c := b.Build()
-	world := ioc.Get[ecs.WorldFactory](c)()
+	world := ecs.NewWorld()
 
 	if len(world.GetEntities()) != 0 {
 		t.Errorf("entity has unexpected entities")

@@ -3,8 +3,6 @@ package ecs_test
 import (
 	"frontend/services/ecs"
 	"testing"
-
-	"github.com/ogiusek/ioc/v2"
 )
 
 type Component struct {
@@ -12,10 +10,7 @@ type Component struct {
 }
 
 func TestComponents(t *testing.T) {
-	b := ioc.NewBuilder()
-	ecs.Package().Register(b)
-	c := b.Build()
-	world := ioc.Get[ecs.WorldFactory](c)()
+	world := ecs.NewWorld()
 
 	component := Component{Counter: 7}
 	secondComponent := Component{Counter: 8}

@@ -3,6 +3,7 @@ package main
 import (
 	"backend/services/clients"
 	backendscopes "backend/services/scopes"
+	"core/example"
 	"core/ping"
 	"core/tacticalmap"
 	"core/triangle"
@@ -68,6 +69,7 @@ func frontendDic(
 	if err := window.GLMakeCurrent(ctx); err != nil {
 		panic(fmt.Errorf("could not make OpenGL context current: %v", err))
 	}
+	sdl.GLSetSwapInterval(0)
 
 	// path
 
@@ -107,7 +109,7 @@ func frontendDic(
 			windowapi.Package(window, ctx),
 		),
 		ecs.Package(),
-		frames.Package(),
+		frames.Package(60),
 		scenes.Package(),
 		frontendscopes.Package(),
 
@@ -115,11 +117,13 @@ func frontendDic(
 		ping.FrontendPackage(),
 		tacticalmap.FrontendPackage(),
 		triangle.FrontendPackage(),
+		example.FrontendPackage(),
 	}
 
 	b := ioc.NewBuilder()
 	for _, pkg := range pkgs {
 		pkg.Register(b)
 	}
+
 	return b.Build()
 }

@@ -5,6 +5,8 @@ import (
 	"shared/services/clock"
 	"sync"
 	"time"
+
+	"github.com/ogiusek/events"
 )
 
 var (
@@ -17,39 +19,42 @@ type Frames interface {
 }
 
 type frames struct {
-	AlreadyRunning bool
-	Running        bool
-	FPS            int
-	RunMutex       sync.RWMutex
-	OnFrame        func(OnFrame)
-	Clock          clock.Clock
+	Running  bool
+	FPS      int
+	RunMutex sync.RWMutex
+	Events   events.Events
+	Clock    clock.Clock
 }
 
 func (frames *frames) StartLoop() {
-	var previousFrame time.Time
-	// this should be in game loop when framerate could be changed
-	timePerFrame := time.Second / time.Duration(frames.FPS)
-	previousFrame = frames.Clock.Now()
-
 	frames.RunMutex.Lock()
-	for frames.Running { // runnning game loop
-		now := frames.Clock.Now()
+	defer frames.RunMutex.Unlock()
 
-		deltaTime := now.Sub(previousFrame)
-		onFrame := NewOnFrame(deltaTime)
-		frames.OnFrame(onFrame)
+	frameDuration := time.Second / time.Duration(frames.FPS)
+	ticker := time.NewTicker(frameDuration)
+	defer ticker.Stop()
 
-		previousFrame = now
-		time.Sleep(previousFrame.Add(timePerFrame).Sub(now))
+	var lastFrameTime time.Time
+	lastFrameTime = frames.Clock.Now()
+
+	for frames.Running {
+		<-ticker.C
+		currentTime := time.Now()
+
+		delta := currentTime.Sub(lastFrameTime)
+		event := NewFrameEvent(delta)
+		events.Emit(frames.Events, event)
+
+		lastFrameTime = currentTime
 	}
-	frames.RunMutex.Unlock()
 }
 
 func (frames *frames) Run() error {
-	if frames.AlreadyRunning {
+	if frames.Running {
 		return ErrAlreadyRunning
 	}
 
+	frames.Running = true
 	frames.StartLoop()
 
 	return nil

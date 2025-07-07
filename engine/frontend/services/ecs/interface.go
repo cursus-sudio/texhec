@@ -64,30 +64,9 @@ type componentsInterface interface {
 	GetEntitiesWithComponents(...ComponentType) []EntityId
 }
 
-// systems
-
-type SystemType int
-
-const (
-	UpdateSystem SystemType = iota
-	DrawSystem
-)
-
-type System interface {
-	Update(Args)
-}
-
-type systemsInterface interface {
-	LoadSystem(System, SystemType)
-	Update(Args)
-}
-
 // world
-
-type WorldFactory func() World
 
 type World interface {
 	entitiesInterface
 	componentsInterface
-	systemsInterface
 }

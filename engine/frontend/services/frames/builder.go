@@ -4,6 +4,7 @@ import (
 	"shared/services/clock"
 	"time"
 
+	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -16,33 +17,28 @@ const (
 	AfterDraw
 )
 
-type OnFrame struct {
+type FrameEvent struct {
 	Delta time.Duration
 }
 
-func NewOnFrame(delta time.Duration) OnFrame {
-	return OnFrame{
-		Delta: delta,
-	}
+func NewFrameEvent(delta time.Duration) FrameEvent {
+	return FrameEvent{Delta: delta}
 }
 
 type Builder interface {
 	FPS(int) Builder
-	OnFrame(func(OnFrame)) Builder
-	Build() Frames
+	Build(events events.Events, clock clock.Clock) Frames
 }
 
 type builder struct {
-	fps     int
-	onFrame []func(OnFrame)
-	clock   clock.Clock
+	fps    int
+	clock  clock.Clock
+	events events.Events
 }
 
-func NewBuilder(clock clock.Clock) Builder {
+func NewBuilder(fps int) Builder {
 	return &builder{
-		fps:     60,
-		onFrame: []func(OnFrame){},
-		clock:   clock,
+		fps: fps,
 	}
 }
 
@@ -51,21 +47,11 @@ func (b *builder) FPS(fps int) Builder {
 	return b
 }
 
-func (b *builder) OnFrame(onFrame func(OnFrame)) Builder {
-	b.onFrame = append(b.onFrame, onFrame)
-	return b
-}
-
-func (b *builder) Build() Frames {
+func (b *builder) Build(events events.Events, clock clock.Clock) Frames {
 	return &frames{
-		AlreadyRunning: false,
-		FPS:            b.fps,
-		Running:        true,
-		OnFrame: func(of OnFrame) {
-			for _, onFrame := range b.onFrame {
-				onFrame(of)
-			}
-		},
-		Clock: b.clock,
+		Running: false,
+		FPS:     b.fps,
+		Events:  events,
+		Clock:   clock,
 	}
 }

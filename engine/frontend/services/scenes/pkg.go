@@ -1,8 +1,6 @@
 package scenes
 
 import (
-	"frontend/services/ecs"
-
 	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
@@ -15,23 +13,23 @@ func Package() Pkg {
 }
 
 func (pkg Pkg) Register(b ioc.Builder) {
-	ioc.RegisterTransient(b, func(c ioc.Dic) ecs.World {
-		return ioc.Get[SceneManager](c).CurrentScene().World()
+	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneManagerBuilder {
+		return NewSceneManagerBuilder()
 	})
-	ioc.RegisterDependency[ecs.World, SceneManager](b)
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneManager {
-		return newSceneManager()
+		return ioc.Get[SceneManagerBuilder](c).Build()
 	})
+	ioc.RegisterDependency[SceneManager, SceneManagerBuilder](b)
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneBuilder {
 		return newSceneBuilder()
 	})
 
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b events.Builder) events.Builder {
-		sceneManager := ioc.Get[SceneManager](c)
-		events.ListenToAll(b, func(e any) {
-			events.EmitAny(sceneManager.CurrentScene().Events(), e)
+		m := ioc.Get[SceneManager](c)
+		events.ListenToAll(b, func(a any) {
+			events.EmitAny(m.CurrentSceneEvents(), a)
 		})
 		return b
 	})

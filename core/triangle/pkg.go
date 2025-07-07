@@ -5,6 +5,7 @@ import (
 	appruntime "shared/services/runtime"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -12,26 +13,6 @@ type FrontendPkg struct{}
 
 func FrontendPackage() FrontendPkg {
 	return FrontendPkg{}
-}
-
-type triangleTools struct {
-	ShaderProgram uint32
-	TriangleVAO   uint32
-}
-
-func NewTools() (*triangleTools, error) {
-	shaderProgram, err := createShaderProgram()
-	if err != nil {
-		panic(err.Error())
-	}
-	triangleVAO := createVAO()
-	if err := gl.GetError(); err != gl.NO_ERROR {
-		panic(err)
-	}
-	return &triangleTools{
-		ShaderProgram: shaderProgram,
-		TriangleVAO:   triangleVAO,
-	}, nil
 }
 
 func (FrontendPkg) Register(b ioc.Builder) {
@@ -42,12 +23,13 @@ func (FrontendPkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) *triangleTools { return tools })
 
-	ioc.WrapService(b, frames.Draw, func(c ioc.Dic, b frames.Builder) frames.Builder {
-		b.OnFrame(func(of frames.OnFrame) {
-			gl.UseProgram(tools.ShaderProgram)    // Use our compiled shader program
-			gl.BindVertexArray(tools.TriangleVAO) // Bind the VAO containing triangle data
-			gl.DrawArrays(gl.TRIANGLES, 0, 3)     // Draw 3 vertices as a triangle
-			gl.BindVertexArray(0)                 // Unbind VAO
+	ioc.WrapService(b, frames.Draw, func(c ioc.Dic, b events.Builder) events.Builder {
+		events.Listen(b, func(e frames.FrameEvent) {
+			gl.UseProgram(tools.ShaderProgram)
+			gl.BindVertexArray(tools.TriangleVAO)
+			// gl.DrawArrays(gl.LINE_LOOP, 0, 3)
+			gl.DrawArrays(gl.TRIANGLES, 0, 3)
+			gl.BindVertexArray(0)
 		})
 		return b
 	})

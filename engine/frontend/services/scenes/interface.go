@@ -2,10 +2,8 @@ package scenes
 
 import (
 	"errors"
-	"frontend/services/ecs"
 
 	"github.com/ogiusek/events"
-	"github.com/ogiusek/null"
 )
 
 // scene
@@ -21,40 +19,46 @@ func NewSceneId(sceneId string) SceneId {
 type Scene interface {
 	Id() SceneId
 
-	Load()
+	Load(SceneManager) events.Events
 	Unload()
-
-	Events() events.Events
-	World() ecs.World
 }
 
 // scene builder
 
 type SceneBuilder interface {
-	OnLoad(func(Scene)) SceneBuilder
+	OnLoad(func(SceneManager, Scene)) SceneBuilder
 	OnUnload(func(Scene)) SceneBuilder
-	Events(func(events.Builder)) SceneBuilder
-	Build(SceneId, ecs.World) Scene
+	Build(SceneId, func(SceneManager, Scene) events.Events) Scene
 }
 
 // scene manager
 
 var (
 	ErrSceneAlreadyExists error = errors.New("scene already exists")
+	ErrNoActiveScene      error = errors.New("no active scene")
 	ErrSceneDoNotExists   error = errors.New("scene do not exists")
 )
+
+type SceneManagerBuilder interface {
+	AddScene(Scene) SceneManagerBuilder
+	MakeActive(SceneId) SceneManagerBuilder
+	Build() SceneManager
+}
+
+// TODO
+// type SceneManagerBuilder interface {
+// 	AddScene(Scene) SceneManagerBuilder
+// }
 
 type SceneManager interface {
 	// if scene is first then it automatically is loaded
 	// this method returns error:
 	// - ErrSceneAlreadyExists
-	AddScene(Scene) error
+	// AddScene(Scene) error
 
 	// can panic when no scene is loaded
-	CurrentScene() Scene
-
-	GetScene(SceneId) null.Nullable[Scene]
-	GetScenes() []Scene
+	CurrentScene() SceneId
+	CurrentSceneEvents() events.Events
 
 	// this method returns error:
 	// - ErrSceneDoNotExists

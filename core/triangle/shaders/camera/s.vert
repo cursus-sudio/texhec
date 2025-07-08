@@ -1,6 +1,7 @@
 #version 330 core
 
 uniform vec2 resolution;
+uniform mat4 camera;
 
 layout(location = 0) in vec3 vertexPos;
 layout(location = 1) in vec4 vertexColor;

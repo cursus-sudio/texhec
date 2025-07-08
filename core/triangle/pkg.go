@@ -26,19 +26,25 @@ func (FrontendPkg) Register(b ioc.Builder) {
 
 	ioc.WrapService(b, frames.Draw, func(c ioc.Dic, b events.Builder) events.Builder {
 		events.Listen(b, func(e frames.FrameEvent) {
-			gl.UseProgram(tools.ShaderProgram)
-
+			{
+				gl.UseProgram(tools.ShaderProgram)
+			}
 			{
 				window := ioc.Get[window.Api](c).Window()
 				width, height := window.GetSize()
 				ResolutionLocation := gl.GetUniformLocation(tools.ShaderProgram, gl.Str("resolution\x00"))
 				gl.Uniform2f(ResolutionLocation, float32(width), float32(height))
 			}
-
 			{
-				// gl.DrawArrays(gl.LINE_LOOP, 0, 3)
+				// bind
 				gl.BindVertexArray(tools.TriangleVAO)
-				gl.DrawArrays(gl.TRIANGLES, 0, 3)
+
+				// gl.DrawArrays(gl.LINES, 0, 6)
+				// gl.DrawArrays(gl.TRIANGLES, 0, 9) // draws vbo
+				gl.DrawElementsWithOffset(gl.TRIANGLES, 9, gl.UNSIGNED_INT, 0) // draws ebo
+				// gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 6)
+
+				// unbind
 				gl.BindVertexArray(0)
 			}
 		})

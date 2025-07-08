@@ -9,7 +9,7 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
-var shadersDir string = "shaders/gradient2"
+var shadersDir string = "shaders/gradient"
 
 //go:embed shaders/*
 var shaders embed.FS

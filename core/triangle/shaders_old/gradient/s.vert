@@ -8,7 +8,7 @@ layout(location = 1) in vec4 vertexColor;
 out vec4 color;
 
 void main() {
-    vec3 normalizedPos = vertexPos / vec3(resolution.x, resolution.y, 1);
+    vec3 normalizedPos = vertexPos / vec3(resolution.x, resolution.y, 1000);
 
     normalizedPos = (normalizedPos * 2) - 1;
     normalizedPos *= vec3(1., -1., 1.);

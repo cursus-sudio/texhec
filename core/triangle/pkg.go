@@ -25,28 +25,18 @@ func (FrontendPkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) *triangleTools { return tools })
 
 	ioc.WrapService(b, frames.Draw, func(c ioc.Dic, b events.Builder) events.Builder {
+		window := ioc.Get[window.Api](c).Window()
+		resolutionLocation := gl.GetUniformLocation(tools.Program.ID, gl.Str("resolution\x00"))
+
 		events.Listen(b, func(e frames.FrameEvent) {
-			{
-				gl.UseProgram(tools.ShaderProgram)
-			}
-			{
-				window := ioc.Get[window.Api](c).Window()
-				width, height := window.GetSize()
-				ResolutionLocation := gl.GetUniformLocation(tools.ShaderProgram, gl.Str("resolution\x00"))
-				gl.Uniform2f(ResolutionLocation, float32(width), float32(height))
-			}
-			{
-				// bind
-				gl.BindVertexArray(tools.TriangleVAO)
+			tools.Program.Draw(func() {
+				tools.Texture.Draw(func() {
+					width, height := window.GetSize()
+					gl.Uniform2f(resolutionLocation, float32(width), float32(height))
 
-				// gl.DrawArrays(gl.LINES, 0, 6)
-				// gl.DrawArrays(gl.TRIANGLES, 0, 9) // draws vbo
-				gl.DrawElementsWithOffset(gl.TRIANGLES, 9, gl.UNSIGNED_INT, 0) // draws ebo
-				// gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 6)
-
-				// unbind
-				gl.BindVertexArray(0)
-			}
+					tools.Program.Draw(tools.VAO.Draw)
+				})
+			})
 		})
 		return b
 	})
@@ -54,8 +44,8 @@ func (FrontendPkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, appruntime.OrderCleanUp, func(c ioc.Dic, b appruntime.Builder) appruntime.Builder {
 		tools := ioc.Get[*triangleTools](c)
 		b.OnStop(func(r appruntime.Runtime) {
-			gl.DeleteProgram(tools.ShaderProgram)
-			gl.DeleteVertexArrays(1, &tools.TriangleVAO)
+			tools.Program.Release()
+			tools.VAO.Release()
 		})
 		return b
 	})

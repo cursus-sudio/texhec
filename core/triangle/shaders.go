@@ -1,57 +1,42 @@
 package triangle
 
 import (
+	"core/triangle/shader"
 	"embed"
 	"fmt"
 	"path/filepath"
-	"strings"
-
-	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
-var shadersDir string = "shaders/gradient"
+var shadersDir string = "shaders_old/texture"
 
-//go:embed shaders/*
+//go:embed shaders_old/*
 var shaders embed.FS
 
 type Shaders struct {
-	vertex   string
-	fragment string
+	vertex   shader.Shader
+	fragment shader.Shader
 }
 
 func NewShaders(fs embed.FS) (Shaders, error) {
-	vert, err := fs.ReadFile(filepath.Join(shadersDir, "s.vert"))
+	vertSource, err := fs.ReadFile(filepath.Join(shadersDir, "s.vert"))
 	if err != nil {
 		return Shaders{}, err
 	}
-	frag, err := fs.ReadFile(filepath.Join(shadersDir, "s.frag"))
+	vert, err := shader.NewShader(string(vertSource), shader.VertexShader)
 	if err != nil {
 		return Shaders{}, err
 	}
+	fragSource, err := fs.ReadFile(filepath.Join(shadersDir, "s.frag"))
+	if err != nil {
+		return Shaders{}, err
+	}
+	frag, err := shader.NewShader(string(fragSource), shader.FragmentShader)
+	if err != nil {
+		return Shaders{}, err
+	}
+	fmt.Printf("```vert\n%s\n```\n```frag\n%s\n```\n", vertSource, fragSource)
 	return Shaders{
-		vertex:   string(vert) + "\x00",
-		fragment: string(frag) + "\x00",
+		vertex:   vert,
+		fragment: frag,
 	}, nil
-}
-
-func compileShader(source string, shaderType uint32) (uint32, error) {
-	shader := gl.CreateShader(shaderType)
-	csources, free := gl.Strs(source)
-	gl.ShaderSource(shader, 1, csources, nil)
-	free()
-	gl.CompileShader(shader)
-
-	var status int32
-	gl.GetShaderiv(shader, gl.COMPILE_STATUS, &status)
-	if status == gl.FALSE {
-		var logLength int32
-		gl.GetShaderiv(shader, gl.INFO_LOG_LENGTH, &logLength)
-
-		infoLog := strings.Repeat("\x00", int(logLength+1))
-		gl.GetShaderInfoLog(shader, logLength, nil, gl.Str(infoLog))
-
-		return 0, fmt.Errorf("failed to compile %v: %v", source, infoLog)
-	}
-
-	return shader, nil
 }

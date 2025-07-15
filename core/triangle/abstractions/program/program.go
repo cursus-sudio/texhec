@@ -1,7 +1,7 @@
 package program
 
 import (
-	"core/triangle/shader"
+	"core/triangle/abstractions/shader"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 )

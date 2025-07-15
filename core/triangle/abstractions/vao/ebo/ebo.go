@@ -18,6 +18,10 @@ func NewEBO() EBO {
 	}
 }
 
+func (ebo *EBO) Configure() {
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo.ID)
+}
+
 func (ebo *EBO) Release() {
 	gl.DeleteBuffers(1, &ebo.ID)
 }

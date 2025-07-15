@@ -2,26 +2,25 @@ package triangle
 
 import (
 	"bytes"
-	"core/triangle/program"
-	"core/triangle/texture"
-	"core/triangle/vao"
-	"core/triangle/vao/ebo"
-	"core/triangle/vao/vbo"
+	"core/triangle/abstractions/program"
+	"core/triangle/abstractions/texture"
+	"core/triangle/abstractions/vao"
+	"core/triangle/abstractions/vao/ebo"
+	"core/triangle/abstractions/vao/vbo"
 	_ "embed"
+
+	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
 //go:embed square.png
 var textureSource []byte
 
 type triangleTools struct {
-	Program program.Program
-	VAO     vao.VAO
-	Texture texture.Texture
+	Program   program.Program
+	VAO       vao.VAO
+	Texture   texture.Texture
+	Locations locations
 }
-
-// if err := gl.GetError(); err != gl.NO_ERROR {
-// 	panic(err)
-// }
 
 func NewTriangleTools() (*triangleTools, error) {
 	// program
@@ -44,17 +43,12 @@ func NewTriangleTools() (*triangleTools, error) {
 		{Pos: [3]float32{0, 100, 0}, TexturePos: [2]float32{0, 1}},
 		{Pos: [3]float32{100, 100, 0}, TexturePos: [2]float32{1, 1}},
 	})
-
 	EBO := ebo.NewEBO()
 	EBO.SetIndices([]ebo.Index{
 		0, 1, 3,
 		0, 2, 3,
 	})
-
-	// VAO := vao.NewVAO(VBO, EBO)
-	VAO := vao.NewVAO()
-	VAO.SetVBO(&VBO)
-	VAO.SetEBO(&EBO)
+	VAO := vao.NewVAO(VBO, EBO)
 
 	// texture
 	t, err := texture.NewTexture(bytes.NewReader(textureSource))
@@ -66,5 +60,18 @@ func NewTriangleTools() (*triangleTools, error) {
 		Program: p,
 		VAO:     VAO,
 		Texture: t,
+		Locations: locations{
+			Resolution: gl.GetUniformLocation(p.ID, gl.Str("resolution\x00")),
+			Model:      gl.GetUniformLocation(p.ID, gl.Str("model\x00")),
+			Camera:     gl.GetUniformLocation(p.ID, gl.Str("camera\x00")),
+			Projection: gl.GetUniformLocation(p.ID, gl.Str("projection\x00")),
+		},
 	}, nil
+}
+
+type locations struct {
+	Resolution int32
+	Model      int32
+	Camera     int32
+	Projection int32
 }

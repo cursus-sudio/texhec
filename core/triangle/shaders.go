@@ -1,9 +1,8 @@
 package triangle
 
 import (
-	"core/triangle/shader"
+	"core/triangle/abstractions/shader"
 	"embed"
-	"fmt"
 	"path/filepath"
 )
 
@@ -34,7 +33,6 @@ func NewShaders(fs embed.FS) (Shaders, error) {
 	if err != nil {
 		return Shaders{}, err
 	}
-	fmt.Printf("```vert\n%s\n```\n```frag\n%s\n```\n", vertSource, fragSource)
 	return Shaders{
 		vertex:   vert,
 		fragment: frag,

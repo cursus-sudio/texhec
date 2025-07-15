@@ -19,17 +19,6 @@ type Vertex struct {
 func NewVBO() VBO {
 	var vbo uint32
 	gl.GenBuffers(1, &vbo)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-
-	// gl.VertexAttribPointerWithOffset(0, 3, gl.FLOAT, false,
-	// 	int32(unsafe.Sizeof(Vertex{})), uintptr(unsafe.Offsetof(Vertex{}.Pos)))
-	// gl.EnableVertexAttribArray(0)
-	//
-	// gl.VertexAttribPointerWithOffset(1, 2, gl.FLOAT, false,
-	// 	int32(unsafe.Sizeof(Vertex{})), uintptr(unsafe.Offsetof(Vertex{}.TexturePos)))
-	// gl.EnableVertexAttribArray(1)
-
-	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 	return VBO{
 		ID:  vbo,
 		Len: 0,
@@ -42,7 +31,6 @@ func (vbo *VBO) Configure() {
 	gl.VertexAttribPointerWithOffset(0, 3, gl.FLOAT, false,
 		int32(unsafe.Sizeof(Vertex{})), uintptr(unsafe.Offsetof(Vertex{}.Pos)))
 	gl.EnableVertexAttribArray(0)
-
 	gl.VertexAttribPointerWithOffset(1, 2, gl.FLOAT, false,
 		int32(unsafe.Sizeof(Vertex{})), uintptr(unsafe.Offsetof(Vertex{}.TexturePos)))
 	gl.EnableVertexAttribArray(1)

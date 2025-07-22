@@ -2,6 +2,7 @@ package program
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -26,4 +27,27 @@ func createProgram(vertexShader, fragmentShader uint32) (uint32, error) {
 	}
 
 	return program, nil
+}
+
+// fields with tag `uniform:"uniformName"` will have automatically generated uniform
+func createLocations[Locations any](program uint32) Locations {
+	var l Locations
+
+	val := reflect.ValueOf(&l).Elem()
+	typ := val.Type()
+
+	for i := 0; i < val.NumField(); i++ {
+		field := typ.Field(i)
+		fieldValue := val.Field(i)
+		uniformName := field.Tag.Get("uniform")
+
+		if field.Type.Kind() != reflect.Int32 || uniformName == "" {
+			continue
+		}
+
+		// ignores is location -1
+		location := gl.GetUniformLocation(program, gl.Str(uniformName+"\x00"))
+		fieldValue.SetInt(int64(location))
+	}
+	return l
 }

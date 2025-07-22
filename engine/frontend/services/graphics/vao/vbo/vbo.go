@@ -6,9 +6,17 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
-type VBO struct {
-	ID  uint32
-	Len int
+type VBO interface {
+	ID() uint32
+	Len() int
+	Configure()
+	Release()
+	SetVertices(vertices []Vertex)
+}
+
+type vbo struct {
+	id  uint32
+	len int
 }
 
 type Vertex struct {
@@ -17,16 +25,19 @@ type Vertex struct {
 }
 
 func NewVBO() VBO {
-	var vbo uint32
-	gl.GenBuffers(1, &vbo)
-	return VBO{
-		ID:  vbo,
-		Len: 0,
+	var id uint32
+	gl.GenBuffers(1, &id)
+	return &vbo{
+		id:  id,
+		len: 0,
 	}
 }
 
-func (vbo *VBO) Configure() {
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo.ID)
+func (vbo *vbo) ID() uint32 { return vbo.id }
+func (vbo *vbo) Len() int   { return vbo.len }
+
+func (vbo *vbo) Configure() {
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo.id)
 
 	gl.VertexAttribPointerWithOffset(0, 3, gl.FLOAT, false,
 		int32(unsafe.Sizeof(Vertex{})), uintptr(unsafe.Offsetof(Vertex{}.Pos)))
@@ -38,15 +49,15 @@ func (vbo *VBO) Configure() {
 	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 }
 
-func (vbo *VBO) Release() {
-	gl.DeleteBuffers(1, &vbo.ID)
+func (vbo *vbo) Release() {
+	gl.DeleteBuffers(1, &vbo.id)
 }
 
-func (vbo *VBO) SetVertices(vertices []Vertex) {
+func (vbo *vbo) SetVertices(vertices []Vertex) {
 	verticesLen := len(vertices)
 	verticesSize := int(unsafe.Sizeof(vertices[0]) * uintptr(verticesLen))
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo.ID)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo.id)
 	gl.BufferData(gl.ARRAY_BUFFER, verticesSize, gl.Ptr(vertices), gl.STATIC_DRAW)
 	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-	vbo.Len = verticesLen
+	vbo.len = verticesLen
 }

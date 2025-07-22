@@ -11,6 +11,7 @@ import (
 	"fmt"
 	frontendapi "frontend/services/api"
 	frontendtcp "frontend/services/api/tcp"
+	"frontend/services/assets"
 	"frontend/services/backendconnection"
 	"frontend/services/backendconnection/localconnector"
 	"frontend/services/console"
@@ -88,6 +89,7 @@ func frontendDic(
 	pkgs := []ioc.Pkg{
 		sharedPkg,
 		api.Package(func(c ioc.Dic) ioc.Dic { return c }),
+		assets.Package(),
 		logger.Package(true, func(c ioc.Dic, message string) {
 			ioc.Get[console.Console](c).LogPermanentlyToConsole(message)
 		}),

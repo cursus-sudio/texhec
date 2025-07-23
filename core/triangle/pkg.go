@@ -97,37 +97,21 @@ func (FrontendPkg) Register(b ioc.Builder) {
 
 	ioc.WrapService(b, frames.Draw, func(c ioc.Dic, b events.Builder) events.Builder {
 		window := ioc.Get[window.Api](c).Window()
-		assets := ioc.Get[assets.Assets](c)
+		assetsService := ioc.Get[assets.Assets](c)
 		events.Listen(b, func(e frames.FrameEvent) {
-			rawMeshAsset, err := assets.Get(MeshAssetID)
+			meshAsset, err := assets.GetAsset[mesh.MeshCachedAsset](assetsService, MeshAssetID)
 			if err != nil {
 				panic(err)
 			}
-			meshAsset, ok := rawMeshAsset.(mesh.MeshCachedAsset)
-			if !ok {
-				panic("not an expected asset")
-			}
 
-			//
-
-			rawTextureAsset, err := assets.Get(TextureAssetID)
+			textureAsset, err := assets.GetAsset[texture.TextureCachedAsset](assetsService, TextureAssetID)
 			if err != nil {
 				panic(err)
 			}
-			textureAsset, ok := rawTextureAsset.(texture.TextureCachedAsset)
-			if !ok {
-				panic("not an expected asset")
-			}
 
-			//
-
-			rawProgramAsset, err := assets.Get(ProgramAssetID)
+			programAsset, err := assets.GetAsset[program.ProgramCachedAsset[Locations]](assetsService, ProgramAssetID)
 			if err != nil {
 				panic(err)
-			}
-			programAsset, ok := rawProgramAsset.(program.ProgramCachedAsset[Locations])
-			if !ok {
-				panic("not an expected asset")
 			}
 
 			//
@@ -140,10 +124,13 @@ func (FrontendPkg) Register(b ioc.Builder) {
 			programAsset.Program().Use()
 			width, height := window.GetSize()
 			{
-				// gl.Uniform3f(tools.Locations.Resolution, float32(width), float32(height), 1)
+				// this should have its own system
 				gl.Uniform3f(programAsset.Program().Locations().Resolution, float32(width), float32(height), 1)
 			}
 			{
+				// this is complex system
+				// draw asset from its components.
+				// second system for modifying model components
 				transformSize := [3]float32{
 					transformSize[0],
 					transformSize[1] * (1 + float32(t.Seconds())),
@@ -172,22 +159,21 @@ func (FrontendPkg) Register(b ioc.Builder) {
 					}
 					model = model.Mul4(matrix)
 				}
-				// gl.UniformMatrix4fv(tools.Locations.Model, 1, false, &model[0])
 				gl.UniformMatrix4fv(programAsset.Program().Locations().Model, 1, false, &model[0])
 			}
 			{
+				// this should be just a camera system
 				camera := mgl32.Translate3D(0, 0, 0)
-				// gl.UniformMatrix4fv(tools.Locations.Camera, 1, false, &camera[0])
 				gl.UniformMatrix4fv(programAsset.Program().Locations().Camera, 1, false, &camera[0])
 			}
 			{
+				// this should be just a camera system
 				projection := mgl32.Ortho2D(
 					-float32(width)/2,
 					float32(width)/2,
 					-float32(height)/2,
 					float32(height)/2,
 				)
-				// gl.UniformMatrix4fv(tools.Locations.Projection, 1, false, &projection[0])
 				gl.UniformMatrix4fv(programAsset.Program().Locations().Projection, 1, false, &projection[0])
 			}
 

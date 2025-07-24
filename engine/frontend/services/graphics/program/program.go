@@ -1,42 +1,74 @@
 package program
 
 import (
+	"errors"
+	"fmt"
 	"frontend/services/graphics/shader"
+	"reflect"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
-type Program[Locations any] interface {
+var (
+	ErrProgramHasOtherLocations error = errors.New("invalid program locations type")
+)
+
+type Program interface {
 	ID() uint32
+	Locations(reflect.Type) (any, error)
 	Use()
-	Locations() Locations
 	Release()
 }
 
-type program[Locations any] struct {
-	id        uint32
-	locations Locations
+type program struct {
+	id            uint32
+	locationsType reflect.Type
+	locations     any
 }
 
-func NewProgram[Locations any](vertexShader, fragmentShader shader.Shader) (Program[Locations], error) {
-	p, err := createProgram(vertexShader.ID(), fragmentShader.ID())
+func NewProgram(vertexShader, fragmentShader shader.Shader, parameters []Parameter) (Program, error) {
+	p, err := createProgram(vertexShader.ID(), fragmentShader.ID(), parameters)
 	if err != nil {
 		return nil, err
 	}
-	locations := createLocations[Locations](p)
-	return &program[Locations]{id: p, locations: locations}, nil
+	return &program{id: p}, nil
 }
 
-func (p *program[Locations]) ID() uint32 { return p.id }
+func (p *program) ID() uint32 { return p.id }
 
-func (p *program[Locations]) Use() {
+func (p *program) Use() {
 	gl.UseProgram(p.id)
 }
 
-func (p *program[Locations]) Locations() Locations {
-	return p.locations
+func (p *program) Locations(t reflect.Type) (any, error) {
+	if p.locations != nil {
+		if p.locationsType != t {
+			err := errors.Join(
+				ErrProgramHasOtherLocations,
+				fmt.Errorf("requested \"%s\" but program has \"%s\"", t.String(), p.locationsType.String()),
+			)
+			return nil, err
+		}
+		return p.locations, nil
+	}
+	locations, err := createLocations(t, p.id)
+	if err != nil {
+		return nil, err
+	}
+	p.locations = locations
+	p.locationsType = t
+	return locations, nil
 }
 
-func (p *program[Locations]) Release() {
+func (p *program) Release() {
 	gl.DeleteProgram(p.id)
+}
+
+func GetProgramLocations[Locations any](p Program) (Locations, error) {
+	locations, err := p.Locations(reflect.TypeFor[Locations]())
+	if err != nil {
+		var l Locations
+		return l, err
+	}
+	return locations.(Locations), nil
 }

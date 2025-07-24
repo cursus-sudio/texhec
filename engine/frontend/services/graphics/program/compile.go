@@ -1,6 +1,7 @@
 package program
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -8,10 +9,25 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
-func createProgram(vertexShader, fragmentShader uint32) (uint32, error) {
+var (
+	ErrEveryFieldHasToBeLocation error = errors.New("every field has to be location")
+	ErrInvalidLocation           error = errors.New("invalid location")
+)
+
+type Parameter struct {
+	Name  uint32
+	Value int32
+}
+
+func createProgram(vertexShader, fragmentShader uint32, parameters []Parameter) (uint32, error) {
 	program := gl.CreateProgram()
 	gl.AttachShader(program, vertexShader)
 	gl.AttachShader(program, fragmentShader)
+
+	for _, p := range parameters {
+		gl.ProgramParameteri(program, p.Name, p.Value)
+	}
+
 	gl.LinkProgram(program)
 
 	var status int32
@@ -30,10 +46,8 @@ func createProgram(vertexShader, fragmentShader uint32) (uint32, error) {
 }
 
 // fields with tag `uniform:"uniformName"` will have automatically generated uniform
-func createLocations[Locations any](program uint32) Locations {
-	var l Locations
-
-	val := reflect.ValueOf(&l).Elem()
+func createLocations(t reflect.Type, program uint32) (any, error) {
+	val := reflect.New(t).Elem()
 	typ := val.Type()
 
 	for i := 0; i < val.NumField(); i++ {
@@ -42,12 +56,26 @@ func createLocations[Locations any](program uint32) Locations {
 		uniformName := field.Tag.Get("uniform")
 
 		if field.Type.Kind() != reflect.Int32 || uniformName == "" {
-			continue
+			err := errors.Join(
+				ErrEveryFieldHasToBeLocation,
+				fmt.Errorf(
+					"field \"%s.%s\" either isn't int32 or misses `uniform` struct tag with name",
+					typ.String(),
+					field.Name,
+				),
+			)
+			return nil, err
 		}
 
-		// ignores is location -1
 		location := gl.GetUniformLocation(program, gl.Str(uniformName+"\x00"))
+		if location == -1 {
+			err := errors.Join(
+				ErrInvalidLocation,
+				fmt.Errorf("uniform \"%s\" doesn't exist in shader program", uniformName),
+			)
+			return nil, err
+		}
 		fieldValue.SetInt(int64(location))
 	}
-	return l
+	return val.Interface(), nil
 }

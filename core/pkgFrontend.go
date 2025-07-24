@@ -18,6 +18,7 @@ import (
 	"frontend/services/dbpkg"
 	"frontend/services/ecs"
 	"frontend/services/frames"
+	"frontend/services/materials/texturematerial"
 	"frontend/services/media"
 	windowapi "frontend/services/media/window"
 	"frontend/services/scenes"
@@ -116,8 +117,11 @@ func frontendDic(
 		),
 		ecs.Package(),
 		frames.Package(60),
+		// frames.Package(10000),
 		scenes.Package(),
 		frontendscopes.Package(),
+
+		texturematerial.Package(),
 
 		// mods
 		ping.FrontendPackage(),

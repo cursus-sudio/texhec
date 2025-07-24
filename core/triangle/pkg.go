@@ -2,21 +2,20 @@ package triangle
 
 import (
 	"bytes"
-	"embed"
+	_ "embed"
+	"frontend/components/material"
 	"frontend/components/mesh"
-	"frontend/components/program"
 	"frontend/components/texture"
 	"frontend/components/transform"
 	"frontend/services/assets"
+	"frontend/services/ecs"
 	"frontend/services/frames"
 	"frontend/services/graphics/vao/ebo"
 	"frontend/services/graphics/vao/vbo"
-	"frontend/services/media/window"
-	"path/filepath"
+	"frontend/services/materials/texturematerial"
 	appruntime "shared/services/runtime"
 	"time"
 
-	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
@@ -24,11 +23,6 @@ import (
 
 //go:embed square.png
 var textureSource []byte
-
-var shadersDir string = "shaders_old/texture"
-
-//go:embed shaders_old/*
-var shaders embed.FS
 
 type FrontendPkg struct{}
 
@@ -39,31 +33,56 @@ func FrontendPackage() FrontendPkg {
 const (
 	MeshAssetID    assets.AssetID = "vao_asset"
 	TextureAssetID assets.AssetID = "texture_asset"
-	ProgramAssetID assets.AssetID = "program_asset"
-	SceneAssetID   assets.AssetID = "scene_asset"
 )
-
-type Locations struct {
-	Resolution int32 `uniform:"resolution"`
-	Model      int32 `uniform:"model"`
-	Camera     int32 `uniform:"camera"`
-	Projection int32 `uniform:"projection"`
-}
 
 func (FrontendPkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b assets.AssetsStorageBuilder) assets.AssetsStorageBuilder {
 		b.RegisterAsset(MeshAssetID, func() (assets.StorageAsset, error) {
-			verticies := []vbo.Vertex{
-				{Pos: [3]float32{0, 0, 0}, TexturePos: [2]float32{0, 0}},
-				{Pos: [3]float32{100, 0, 0}, TexturePos: [2]float32{1, 0}},
-				{Pos: [3]float32{0, 100, 0}, TexturePos: [2]float32{0, 1}},
-				{Pos: [3]float32{100, 100, 0}, TexturePos: [2]float32{1, 1}},
+			// vertices := []vbo.Vertex{
+			// 	{Pos: [3]float32{-1, -1, 0}, TexturePos: [2]float32{0, 0}},
+			// 	{Pos: [3]float32{1, -1, 0}, TexturePos: [2]float32{1, 0}},
+			// 	{Pos: [3]float32{-1, 1, 0}, TexturePos: [2]float32{0, 1}},
+			// 	{Pos: [3]float32{1, 1, 0}, TexturePos: [2]float32{1, 1}},
+			// }
+			// indices := []ebo.Index{
+			// 	0, 1, 3,
+			// 	0, 2, 3,
+			// }
+
+			vertices := []vbo.Vertex{
+				// Front face
+				{Pos: [3]float32{1, 1, 1}, TexturePos: [2]float32{0, 0}},
+				{Pos: [3]float32{1, -1, 1}, TexturePos: [2]float32{1, 0}},
+				{Pos: [3]float32{-1, -1, 1}, TexturePos: [2]float32{1, 1}},
+				{Pos: [3]float32{-1, 1, 1}, TexturePos: [2]float32{0, 1}},
+
+				// Back face
+				{Pos: [3]float32{-1, 1, -1}, TexturePos: [2]float32{1, 0}},
+				{Pos: [3]float32{-1, -1, -1}, TexturePos: [2]float32{1, 1}},
+				{Pos: [3]float32{1, -1, -1}, TexturePos: [2]float32{0, 1}},
+				{Pos: [3]float32{1, 1, -1}, TexturePos: [2]float32{0, 0}},
 			}
-			indicies := []ebo.Index{
-				0, 1, 3,
+
+			indices := []ebo.Index{
+				0, 1, 2,
 				0, 2, 3,
+
+				4, 5, 6,
+				4, 6, 7,
+
+				0, 1, 6,
+				0, 6, 7,
+
+				3, 2, 5, //
+				3, 5, 4,
+
+				0, 3, 4,
+				0, 4, 7, //
+
+				1, 5, 2, //
+				1, 6, 5,
 			}
-			asset := mesh.NewMeshStorageAsset(transform.NewSize(100, 100, 0), verticies, indicies)
+			asset := mesh.NewMeshStorageAsset(vertices, indices)
 			return asset, nil
 		})
 		return b
@@ -77,107 +96,55 @@ func (FrontendPkg) Register(b ioc.Builder) {
 		return b
 	})
 
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b assets.AssetsStorageBuilder) assets.AssetsStorageBuilder {
-		b.RegisterAsset(ProgramAssetID, func() (assets.StorageAsset, error) {
-			vertSource, err := shaders.ReadFile(filepath.Join(shadersDir, "s.vert"))
-			if err != nil {
-				return nil, err
-			}
-			fragSource, err := shaders.ReadFile(filepath.Join(shadersDir, "s.frag"))
-			if err != nil {
-				return nil, err
-			}
-			asset := program.NewProgramStorageAsset[Locations](string(vertSource), string(fragSource))
-			return asset, nil
-		})
-		return b
-	})
-
-	var t time.Duration
-
 	ioc.WrapService(b, frames.Draw, func(c ioc.Dic, b events.Builder) events.Builder {
-		window := ioc.Get[window.Api](c).Window()
+		var t time.Duration
 		assetsService := ioc.Get[assets.Assets](c)
+		world := ioc.Get[ecs.World](c)
+		entity := world.NewEntity()
+
+		originalTransform := transform.NewTransform().
+			SetPos(transform.NewPos(0, 0, 300)).
+			SetSize(transform.NewSize(100, 100, 100))
+		world.SaveComponent(entity, originalTransform)
+		world.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
+		world.SaveComponent(entity, material.NewMaterial(texturematerial.TextureMaterial))
+		world.SaveComponent(entity, texture.NewTexture(TextureAssetID))
+
 		events.Listen(b, func(e frames.FrameEvent) {
 			meshAsset, err := assets.GetAsset[mesh.MeshCachedAsset](assetsService, MeshAssetID)
 			if err != nil {
 				panic(err)
 			}
-
-			textureAsset, err := assets.GetAsset[texture.TextureCachedAsset](assetsService, TextureAssetID)
+			materialAsset, err := assets.GetAsset[material.MaterialCachedAsset](assetsService, texturematerial.TextureMaterial)
 			if err != nil {
 				panic(err)
 			}
-
-			programAsset, err := assets.GetAsset[program.ProgramCachedAsset[Locations]](assetsService, ProgramAssetID)
-			if err != nil {
-				panic(err)
-			}
-
-			//
 
 			t += e.Delta
 
-			transformSize := [3]float32{100, 100, 0}
+			materialAsset.OnFrame(world)
 
-			// before setting uniforms
-			programAsset.Program().Use()
-			width, height := window.GetSize()
 			{
-				// this should have its own system
-				gl.Uniform3f(programAsset.Program().Locations().Resolution, float32(width), float32(height), 1)
-			}
-			{
-				// this is complex system
-				// draw asset from its components.
-				// second system for modifying model components
-				transformSize := [3]float32{
-					transformSize[0],
-					transformSize[1] * (1 + float32(t.Seconds())),
-					transformSize[2],
-				}
-				scale := [3]float32{
-					transformSize[0] / max(0.1, meshAsset.Size().X),
-					transformSize[1] / max(0.1, meshAsset.Size().Y),
-				}
+				transformComponent := originalTransform
+
 				radians := mgl32.DegToRad(float32(t.Seconds()) * 100)
+				// radians := mgl32.DegToRad(45)
 				rotation := mgl32.QuatIdent().
+					Mul(mgl32.QuatRotate(radians, mgl32.Vec3{1, 0, 0})).
+					// Mul(mgl32.QuatRotate(radians, mgl32.Vec3{0, 1, 0})).
 					Mul(mgl32.QuatRotate(radians, mgl32.Vec3{0, 0, 1}))
-				matrices := []mgl32.Mat4{
-					rotation.Mat4(),
-					mgl32.Translate3D(
-						0-transformSize[0]/2,
-						0-transformSize[1]/2,
-						0-transformSize[2]/2),
-					mgl32.Scale3D(scale[0], scale[1], scale[2]),
-				}
-				var model mgl32.Mat4
-				for i, matrix := range matrices {
-					if i == 0 {
-						model = matrix
-						continue
-					}
-					model = model.Mul4(matrix)
-				}
-				gl.UniformMatrix4fv(programAsset.Program().Locations().Model, 1, false, &model[0])
-			}
-			{
-				// this should be just a camera system
-				camera := mgl32.Translate3D(0, 0, 0)
-				gl.UniformMatrix4fv(programAsset.Program().Locations().Camera, 1, false, &camera[0])
-			}
-			{
-				// this should be just a camera system
-				projection := mgl32.Ortho2D(
-					-float32(width)/2,
-					float32(width)/2,
-					-float32(height)/2,
-					float32(height)/2,
-				)
-				gl.UniformMatrix4fv(programAsset.Program().Locations().Projection, 1, false, &projection[0])
+					// Mul(mgl32.QuatRotate(radians, mgl32.Vec3{0, 1, 1}))
+				transformComponent.Rotation = rotation
+
+				// transformComponent.Size.Y *= 1 + float32(t.Seconds())
+				// transformComponent.Pos.X = float32(t.Seconds()) * 100
+
+				world.SaveComponent(entity, transformComponent)
 			}
 
-			textureAsset.Texture().Use()
+			if err := materialAsset.UseForEntity(world, entity); err != nil {
+				panic(err)
+			}
 			meshAsset.VAO().Draw()
 		})
 		return b
@@ -189,7 +156,7 @@ func (FrontendPkg) Register(b ioc.Builder) {
 			assets.Release(
 				MeshAssetID,
 				TextureAssetID,
-				ProgramAssetID,
+				texturematerial.TextureMaterial,
 			)
 		})
 		return b

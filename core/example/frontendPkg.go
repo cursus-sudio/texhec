@@ -22,27 +22,18 @@ func FrontendPackage() FrontendPkg {
 	return FrontendPkg{}
 }
 
-type SceneOneBuilder events.Builder
+var scene1Id = scenes.NewSceneId("main scene")
+
+type SceneOneBuilder scenes.SceneBuilder
 type SceneOneWorld ecs.World
 
-type SceneTwoBuilder events.Builder
-type SceneTwoWorld ecs.World
-
-func (FrontendPkg) Register(b ioc.Builder) {
-	scene1Id := scenes.NewSceneId("main scene")
-	scene2Id := scenes.NewSceneId("main scene 2")
-
-	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneOneBuilder { return SceneOneBuilder(events.NewBuilder()) })
+func AddSceneOne(b ioc.Builder) {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneOneBuilder { return scenes.NewSceneBuilder() })
 	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneOneWorld { return ecs.NewWorld() })
-
-	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneTwoBuilder { return SceneTwoBuilder(events.NewBuilder()) })
-	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneTwoWorld { return ecs.NewWorld() })
-
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b scenes.SceneManagerBuilder) scenes.SceneManagerBuilder {
-		scene := newMainScene(scene1Id, func(sceneManager scenes.SceneManager) events.Events {
-			eventsBuilder := events.Builder(ioc.Get[SceneOneBuilder](c))
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, sceneBuilder SceneOneBuilder) SceneOneBuilder {
+		sceneBuilder.OnLoad(func(sceneManager scenes.SceneManager, s scenes.Scene, b events.Builder) {
 			world := ecs.World(ioc.Get[SceneOneWorld](c))
-			triangle.AddToWorld(c, world, eventsBuilder)
+			triangle.AddToWorld(c, world, b)
 			console := ioc.Get[console.Console](c)
 
 			for i := 0; i < 1; i++ {
@@ -64,23 +55,30 @@ func (FrontendPkg) Register(b ioc.Builder) {
 				ioc.Get[logger.Logger](c),
 			)
 
-			events.Listen(eventsBuilder, func(e frames.FrameEvent) {
+			events.Listen(b, func(e frames.FrameEvent) {
 				someSystem.Update(e)
 				toggleSystem.Update(e)
 				renderSystem.Update(e)
-
 			})
-			return eventsBuilder.Build()
 		})
-		b.AddScene(scene)
-		b.MakeActive(scene1Id)
-		return b
+		return sceneBuilder
 	})
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b scenes.SceneManagerBuilder) scenes.SceneManagerBuilder {
-		scene := newMainScene(scene2Id, func(sceneManager scenes.SceneManager) events.Events {
-			eventsBuilder := events.Builder(ioc.Get[SceneTwoBuilder](c))
+}
+
+//
+
+var scene2Id = scenes.NewSceneId("main scene 2")
+
+type SceneTwoBuilder scenes.SceneBuilder
+type SceneTwoWorld ecs.World
+
+func AddSceneTwo(b ioc.Builder) {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneTwoBuilder { return scenes.NewSceneBuilder() })
+	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneTwoWorld { return ecs.NewWorld() })
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, sceneBuilder SceneTwoBuilder) SceneTwoBuilder {
+		sceneBuilder.OnLoad(func(sceneManager scenes.SceneManager, s scenes.Scene, b events.Builder) {
 			world := ecs.World(ioc.Get[SceneTwoWorld](c))
-			triangle.AddToWorld(c, world, eventsBuilder)
+			triangle.AddToWorld(c, world, b)
 
 			for i := 0; i < 2; i++ {
 				entity := world.NewEntity()
@@ -98,13 +96,29 @@ func (FrontendPkg) Register(b ioc.Builder) {
 				ioc.Get[assets.Assets](c),
 				ioc.Get[logger.Logger](c),
 			)
-			events.Listen(eventsBuilder, func(e frames.FrameEvent) {
+			events.Listen(b, func(e frames.FrameEvent) {
 				someSystem.Update(e)
 				renderSystem.Update(e)
 			})
-			return eventsBuilder.Build()
 		})
-		b.AddScene(scene)
+
+		return sceneBuilder
+	})
+}
+
+func (FrontendPkg) Register(b ioc.Builder) {
+	AddSceneOne(b)
+	AddSceneTwo(b)
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b scenes.SceneManagerBuilder) scenes.SceneManagerBuilder {
+		scene1Builder := ioc.Get[SceneOneBuilder](c)
+		scene1 := scene1Builder.Build(scene1Id)
+		b.AddScene(scene1)
+
+		scene2Builder := ioc.Get[SceneTwoBuilder](c)
+		scene2 := scene2Builder.Build(scene2Id)
+		b.AddScene(scene2)
+
+		b.MakeActive(scene1Id)
 		return b
 	})
 }

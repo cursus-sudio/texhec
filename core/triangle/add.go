@@ -50,15 +50,17 @@ func AddToWorld(c ioc.Dic, world ecs.World, b events.Builder) {
 		)))
 	}
 
-	entity := world.NewEntity()
+	{
+		entity := world.NewEntity()
 
-	world.SaveComponent(entity, transform.NewTransform().
-		SetPos(transform.NewPos(0, 0, 300)).
-		SetSize(transform.NewSize(100, 100, 100)))
-	world.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
-	world.SaveComponent(entity, material.NewMaterial(texturematerial.TextureMaterial))
-	world.SaveComponent(entity, texture.NewTexture(TextureAssetID))
-	world.SaveComponent(entity, ChangeTransformOverTimeComponent{})
+		world.SaveComponent(entity, transform.NewTransform().
+			SetPos(transform.NewPos(0, 0, 300)).
+			SetSize(transform.NewSize(100, 100, 100)))
+		world.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
+		world.SaveComponent(entity, material.NewMaterial(texturematerial.TextureMaterial))
+		world.SaveComponent(entity, texture.NewTexture(TextureAssetID))
+		world.SaveComponent(entity, ChangeTransformOverTimeComponent{})
+	}
 
 	system := ChangeTransformOverTimeSystem{World: world}
 

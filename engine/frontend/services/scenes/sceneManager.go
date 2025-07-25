@@ -2,6 +2,12 @@ package scenes
 
 import "github.com/ogiusek/events"
 
+type SceneManagerBuilder interface {
+	AddScene(Scene) SceneManagerBuilder
+	MakeActive(SceneId) SceneManagerBuilder
+	Build() SceneManager
+}
+
 type sceneManagerBuilder struct {
 	scenes       map[SceneId]Scene
 	currentScene *SceneId
@@ -48,6 +54,21 @@ func (b *sceneManagerBuilder) Build() SceneManager {
 }
 
 //
+
+type SceneManager interface {
+	// if scene is first then it automatically is loaded
+	// this method returns error:
+	// - ErrSceneAlreadyExists
+	// AddScene(Scene) error
+
+	// can panic when no scene is loaded
+	CurrentScene() SceneId
+	CurrentSceneEvents() events.Events
+
+	// this method returns error:
+	// - ErrSceneDoNotExists
+	LoadScene(SceneId) error
+}
 
 type sceneManager struct {
 	scenes         map[SceneId]Scene

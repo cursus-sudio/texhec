@@ -53,7 +53,7 @@ func main() {
 		sharedPkg,
 	)
 
-	if false { // connect
+	if true { // connect
 		tcpConnect := ioc.Get[frontendtcp.Connect](c)
 		err := tcpConnect.Connect("localhost:8080")
 		if err != nil {

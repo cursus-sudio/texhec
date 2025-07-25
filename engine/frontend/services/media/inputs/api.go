@@ -34,9 +34,7 @@ func (i *api) Poll() {
 	for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 		var e any
 		switch event.(type) {
-		// TODO this creates an error
 		case *sdl.AudioDeviceEvent:
-			// events.Emit(i.events, *event.(*sdl.AudioDeviceEvent))
 			e = *event.(*sdl.AudioDeviceEvent)
 			break
 		case *sdl.ClipboardEvent:

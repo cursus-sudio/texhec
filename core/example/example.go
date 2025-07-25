@@ -14,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ogiusek/events"
 	"github.com/ogiusek/relay/v2"
 )
 
@@ -141,23 +140,6 @@ func (system *someSystem) Update(args frames.FrameEvent) {
 	system.Console.Print(text)
 	system.Console.Flush()
 }
-
-// scene
-
-type mainScene struct {
-	sceneId    scenes.SceneId
-	loadEvents func(scenes.SceneManager) events.Events
-}
-
-func newMainScene(sceneId scenes.SceneId, e func(manager scenes.SceneManager) events.Events) scenes.Scene {
-	return &mainScene{sceneId: sceneId, loadEvents: e}
-}
-
-func (mainScene *mainScene) Id() scenes.SceneId { return mainScene.sceneId }
-func (mainScene *mainScene) Load(manager scenes.SceneManager) events.Events {
-	return mainScene.loadEvents(manager)
-}
-func (mainScene *mainScene) Unload() {}
 
 // repo
 

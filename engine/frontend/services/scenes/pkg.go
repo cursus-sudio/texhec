@@ -22,9 +22,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 	})
 	ioc.RegisterDependency[SceneManager, SceneManagerBuilder](b)
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneBuilder {
-		return newSceneBuilder()
-	})
+	// ioc.RegisterSingleton(b, func(c ioc.Dic) SceneBuilder {		return NewSceneBuilder()	})
 
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b events.Builder) events.Builder {
 		m := ioc.Get[SceneManager](c)

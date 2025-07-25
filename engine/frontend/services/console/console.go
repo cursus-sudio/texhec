@@ -5,51 +5,41 @@ import (
 )
 
 type console struct {
-	permanent  string
-	drawnLines int
-	print      func(string)
+	permanent          string
+	previousDrawnLines int
+	toPrint            string
+	print              func(string)
 }
 
 func newConsole() Console {
 	return &console{
-		drawnLines: 0,
-		print:      func(s string) { print(s) },
+		permanent:          "",
+		previousDrawnLines: 0,
+		print:              func(s string) { print(s) },
 	}
 }
 
 func clearCurrentLine() string { return "\033[2K" }
 func goToPreviousLine() string { return "\033[1A" }
 
-func (console *console) ClearConsole() {
-	text := ""
-	text += clearCurrentLine()
-	for i := 0; i < console.drawnLines; i++ {
-		text += goToPreviousLine()
-		text += clearCurrentLine()
-	}
-	console.print(text + console.permanent)
-	console.permanent = ""
-	console.drawnLines = strings.Count(text, "\n")
-}
-
-func (console *console) LogPermanentlyToConsole(text string) {
+func (console *console) PrintPermanent(text string) {
 	console.permanent += text + "\n"
 }
 
-func (console *console) LogToConsole(text string) {
-	console.print(text)
-	console.drawnLines += strings.Count(text, "\n")
+func (console *console) Print(text string) {
+	console.toPrint += text
 }
 
-func (console *console) ClearAndLogToConsole(text string) {
+func (console *console) Flush() {
 	flushed := ""
 	flushed += clearCurrentLine()
-	for i := 0; i < console.drawnLines; i++ {
+	for i := 0; i < console.previousDrawnLines; i++ {
 		flushed += goToPreviousLine()
 		flushed += clearCurrentLine()
 	}
-	console.print(flushed + console.permanent + text)
+	console.print(flushed + console.permanent + console.toPrint)
 	console.permanent = ""
-	flushed += text
-	console.drawnLines = strings.Count(text, "\n")
+	flushed += console.toPrint
+	console.previousDrawnLines = strings.Count(console.toPrint, "\n")
+	console.toPrint = ""
 }

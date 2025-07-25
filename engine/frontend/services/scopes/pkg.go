@@ -9,7 +9,6 @@ func Package() Pkg {
 }
 
 func (Pkg) Register(b ioc.Builder) {
-	b.RegisterScope(Scene)
 
 	b.RegisterScope(Request)
 	ioc.RegisterScoped(b, Request, func(c ioc.Dic) RequestService {

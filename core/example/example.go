@@ -138,7 +138,8 @@ func (system *someSystem) Update(args frames.FrameEvent) {
 	text += "}\n"
 	text += "\n"
 
-	system.Console.ClearAndLogToConsole(text)
+	system.Console.Print(text)
+	system.Console.Flush()
 }
 
 // scene

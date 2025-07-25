@@ -13,7 +13,7 @@ type frontendPingEndpoint struct {
 }
 
 func (endpoint frontendPingEndpoint) Handle(req PingReq) (PingRes, error) {
-	endpoint.Console.LogToConsole(fmt.Sprintf("\npinged client: %v\n", req))
+	endpoint.Console.Print(fmt.Sprintf("\npinged client: %v\n", req))
 	return PingRes{ID: req.ID, Ok: true}, nil
 }
 

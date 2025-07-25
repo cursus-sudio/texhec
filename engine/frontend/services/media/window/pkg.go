@@ -48,15 +48,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 		)
 	})
 
-	// TEMP
-	ioc.WrapService(b, frames.Clear, func(c ioc.Dic, b events.Builder) events.Builder {
-		events.Listen(b, func(e frames.FrameEvent) {
-			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-		})
-		return b
-	})
-
-	ioc.WrapService(b, frames.AfterDraw, func(c ioc.Dic, b events.Builder) events.Builder {
+	ioc.WrapService(b, frames.FlushDraw, func(c ioc.Dic, b events.Builder) events.Builder {
 		logger := ioc.Get[logger.Logger](c)
 		events.Listen(b, func(e frames.FrameEvent) {
 			if glErr := gl.GetError(); glErr != gl.NO_ERROR {
@@ -67,6 +59,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 		api := ioc.Get[Api](c)
 		events.Listen(b, func(e frames.FrameEvent) {
 			api.Window().GLSwap()
+			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		})
 		return b
 	})

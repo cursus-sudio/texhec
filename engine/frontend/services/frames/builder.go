@@ -9,12 +9,9 @@ import (
 )
 
 const (
+	// before scene listeners are executed
 	HandleInputs ioc.Order = iota
-	Update
-	BeforeDraw
-	Clear
-	Draw
-	AfterDraw
+	FlushDraw
 )
 
 type FrameEvent struct {

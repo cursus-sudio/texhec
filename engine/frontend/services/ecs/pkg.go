@@ -1,8 +1,6 @@
 package ecs
 
 import (
-	"frontend/services/scopes"
-
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -13,5 +11,5 @@ func Package() Pkg {
 }
 
 func (pkg Pkg) Register(b ioc.Builder) {
-	ioc.RegisterScoped(b, scopes.Scene, func(c ioc.Dic) World { return NewWorld() })
+	ioc.RegisterTransient(b, func(c ioc.Dic) World { return NewWorld() })
 }

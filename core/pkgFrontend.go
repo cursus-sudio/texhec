@@ -92,7 +92,7 @@ func frontendDic(
 		api.Package(func(c ioc.Dic) ioc.Dic { return c }),
 		assets.Package(),
 		logger.Package(true, func(c ioc.Dic, message string) {
-			ioc.Get[console.Console](c).LogPermanentlyToConsole(message)
+			ioc.Get[console.Console](c).PrintPermanent(message)
 		}),
 		dbpkg.Package(fmt.Sprintf("%s/db.sql", storage)),
 		frontendtcp.Package("tcp"),

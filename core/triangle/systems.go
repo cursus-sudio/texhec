@@ -2,7 +2,7 @@ package triangle
 
 import (
 	_ "embed"
-	"frontend/components/transform"
+	"frontend/engine/components/transform"
 	"frontend/services/ecs"
 	"frontend/services/frames"
 	"time"

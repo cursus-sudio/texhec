@@ -1,8 +1,8 @@
 package render
 
 import (
-	"frontend/components/material"
-	"frontend/components/mesh"
+	"frontend/engine/components/material"
+	"frontend/engine/components/mesh"
 	"frontend/services/assets"
 	"frontend/services/ecs"
 	"frontend/services/frames"

@@ -2,8 +2,8 @@ package triangle
 
 import (
 	_ "embed"
+	"frontend/engine/materials/texturematerial"
 	"frontend/services/assets"
-	"frontend/services/materials/texturematerial"
 	"github.com/ogiusek/ioc/v2"
 	appruntime "shared/services/runtime"
 )

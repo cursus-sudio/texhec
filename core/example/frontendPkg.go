@@ -2,13 +2,13 @@ package example
 
 import (
 	"core/triangle"
+	"frontend/engine/systems/render"
 	"frontend/services/assets"
 	"frontend/services/backendconnection"
 	"frontend/services/console"
 	"frontend/services/ecs"
 	"frontend/services/frames"
 	"frontend/services/scenes"
-	"frontend/systems/render"
 	"shared/services/logger"
 
 	"github.com/ogiusek/events"
@@ -38,16 +38,11 @@ func (FrontendPkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneTwoBuilder { return SceneTwoBuilder(events.NewBuilder()) })
 	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneTwoWorld { return ecs.NewWorld() })
 
-	addTriangleSystem := true
-	// addTriangleSystem = false
-
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b scenes.SceneManagerBuilder) scenes.SceneManagerBuilder {
 		scene := newMainScene(scene1Id, func(sceneManager scenes.SceneManager) events.Events {
 			eventsBuilder := events.Builder(ioc.Get[SceneOneBuilder](c))
 			world := ecs.World(ioc.Get[SceneOneWorld](c))
-			if addTriangleSystem {
-				triangle.AddToWorld(c, world, eventsBuilder)
-			}
+			triangle.AddToWorld(c, world, eventsBuilder)
 			console := ioc.Get[console.Console](c)
 
 			for i := 0; i < 1; i++ {
@@ -85,9 +80,7 @@ func (FrontendPkg) Register(b ioc.Builder) {
 		scene := newMainScene(scene2Id, func(sceneManager scenes.SceneManager) events.Events {
 			eventsBuilder := events.Builder(ioc.Get[SceneTwoBuilder](c))
 			world := ecs.World(ioc.Get[SceneTwoWorld](c))
-			if addTriangleSystem {
-				triangle.AddToWorld(c, world, eventsBuilder)
-			}
+			triangle.AddToWorld(c, world, eventsBuilder)
 
 			for i := 0; i < 2; i++ {
 				entity := world.NewEntity()

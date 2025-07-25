@@ -3,8 +3,8 @@ package triangle
 import (
 	"bytes"
 	_ "embed"
-	"frontend/components/mesh"
-	"frontend/components/texture"
+	"frontend/engine/components/mesh"
+	"frontend/engine/components/texture"
 	"frontend/services/assets"
 	"frontend/services/graphics/vao/ebo"
 	"frontend/services/graphics/vao/vbo"

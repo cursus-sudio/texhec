@@ -2,10 +2,10 @@ package texturematerial
 
 import (
 	"errors"
-	"frontend/components/material"
-	"frontend/components/projection"
-	"frontend/components/texture"
-	"frontend/components/transform"
+	"frontend/engine/components/material"
+	"frontend/engine/components/projection"
+	"frontend/engine/components/texture"
+	"frontend/engine/components/transform"
 	"frontend/services/assets"
 	"frontend/services/ecs"
 	"frontend/services/graphics/program"

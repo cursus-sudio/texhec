@@ -6,7 +6,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/google/uuid v1.6.0
 	github.com/mattn/go-sqlite3 v1.14.28
-	github.com/ogiusek/events v1.0.2
+	github.com/ogiusek/events v1.0.5
 	github.com/ogiusek/ioc/v2 v2.0.12
 	github.com/ogiusek/relay/v2 v2.0.6
 )

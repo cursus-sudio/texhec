@@ -71,9 +71,10 @@ type SceneManager interface {
 }
 
 type sceneManager struct {
-	scenes         map[SceneId]Scene
-	events         events.Events
-	currentSceneId SceneId
+	scenes             map[SceneId]Scene
+	events             events.Events
+	loadedCurrentScene bool
+	currentSceneId     SceneId
 }
 
 func (sceneManager *sceneManager) CurrentScene() SceneId {
@@ -81,6 +82,9 @@ func (sceneManager *sceneManager) CurrentScene() SceneId {
 }
 
 func (sceneManager *sceneManager) CurrentSceneEvents() events.Events {
+	if !sceneManager.loadedCurrentScene {
+		sceneManager.LoadScene(sceneManager.currentSceneId)
+	}
 	return sceneManager.events
 }
 
@@ -89,10 +93,13 @@ func (sceneManager *sceneManager) LoadScene(sceneId SceneId) error {
 	if !ok {
 		return ErrSceneDoNotExists
 	}
-	sceneManager.scenes[sceneManager.currentSceneId].Unload()
+	if sceneManager.loadedCurrentScene {
+		sceneManager.scenes[sceneManager.currentSceneId].Unload()
+	}
 
 	sceneManager.currentSceneId = sceneId
 	e := loadedScene.Load(sceneManager)
+	sceneManager.loadedCurrentScene = true
 	sceneManager.events = e
 	return nil
 }

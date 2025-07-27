@@ -36,22 +36,25 @@ func newSomeComponent() someComponent {
 // system
 
 type toggleSystem struct {
-	SceneManager scenes.SceneManager
-	World        ecs.World
-	Toggled      bool
-	Scene2       scenes.SceneId
+	SceneManager   scenes.SceneManager
+	World          ecs.World
+	Toggled        bool
+	Scene2         scenes.SceneId
+	ToggleTreshold time.Duration
 }
 
 func NewToggledSystem(
 	sceneManager scenes.SceneManager,
 	world ecs.World,
 	scene2 scenes.SceneId,
+	toggleTreshold time.Duration,
 ) toggleSystem {
 	return toggleSystem{
-		SceneManager: sceneManager,
-		World:        world,
-		Toggled:      false,
-		Scene2:       scene2,
+		SceneManager:   sceneManager,
+		World:          world,
+		Toggled:        false,
+		Scene2:         scene2,
+		ToggleTreshold: toggleTreshold,
 	}
 }
 
@@ -67,7 +70,7 @@ func (system *toggleSystem) Update(args frames.FrameEvent) {
 		if err := system.World.GetComponent(entity, &component); err != nil {
 			continue
 		}
-		if component.PastTime.Seconds() < 5 {
+		if component.PastTime < system.ToggleTreshold {
 			return
 		}
 	}
@@ -75,6 +78,10 @@ func (system *toggleSystem) Update(args frames.FrameEvent) {
 	system.SceneManager.LoadScene(system.Scene2)
 	system.Toggled = true
 }
+
+//
+
+//
 
 type someSystem struct {
 	SceneManager scenes.SceneManager
@@ -140,6 +147,8 @@ func (system *someSystem) Update(args frames.FrameEvent) {
 	system.Console.Print(text)
 	system.Console.Flush()
 }
+
+//
 
 // repo
 

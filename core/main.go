@@ -15,8 +15,36 @@ import (
 	"github.com/ogiusek/relay/v2"
 )
 
-// TODO
-// set different events for scene and for rest
+// remember this ->
+// """ray technique (prompt)
+// ray casting collisions algorithms.
+//
+// 1. casting ray from camera with ortho and/or perspective projection.
+// 2. detecting first colliding object.
+// """
+
+// """collisions
+// general:
+// - aabb
+// - spheres
+// specific:
+// - check just whole collision mesh (or other algorithms. but note that this is enough for your use case)
+// types of collisions:
+// - dcd (per frame)
+// - ccd (continous check)
+// """
+
+// can you write method below.
+//
+// Vertex{ [3]float32 }
+//
+// 1. method takes:
+// projection mat4
+// camera mat4
+// object mat4
+// vertices []Vertex
+// 2. returns:
+// do collides
 
 func main() {
 	print("started\n")
@@ -53,7 +81,7 @@ func main() {
 		sharedPkg,
 	)
 
-	if true { // connect
+	if false { // connect
 		tcpConnect := ioc.Get[frontendtcp.Connect](c)
 		err := tcpConnect.Connect("localhost:8080")
 		if err != nil {

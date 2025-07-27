@@ -15,7 +15,11 @@ type RenderSystem struct {
 	Logger logger.Logger
 }
 
-func NewRenderSystem(world ecs.World, assets assets.Assets, logger logger.Logger) RenderSystem {
+func NewRenderSystem(
+	world ecs.World,
+	assets assets.Assets,
+	logger logger.Logger,
+) RenderSystem {
 	return RenderSystem{
 		World:  world,
 		Assets: assets,

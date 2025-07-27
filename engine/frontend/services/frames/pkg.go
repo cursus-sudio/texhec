@@ -33,7 +33,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, runtimeservice.OrderStop, func(c ioc.Dic, r runtimeservice.Builder) runtimeservice.Builder {
 		r.OnStartOnMainThread(func(r runtimeservice.Runtime) {
 			ioc.Get[Frames](c).Run()
-			r.Stop()
+			go r.Stop()
 		})
 		r.OnStop(func(r runtimeservice.Runtime) {
 			ioc.Get[Frames](c).Stop()

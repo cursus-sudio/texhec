@@ -14,7 +14,9 @@ var (
 	ErrNotHandledInput error = errors.New("not handled input")
 )
 
-type Api interface{}
+type Api interface {
+	Poll()
+}
 
 type api struct {
 	logger logger.Logger

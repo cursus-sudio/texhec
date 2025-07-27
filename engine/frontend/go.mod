@@ -6,7 +6,7 @@ require shared v0.0.0
 
 require (
 	github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71
-	github.com/ogiusek/events v1.0.2
+	github.com/ogiusek/events v1.0.5
 	github.com/ogiusek/ioc/v2 v2.0.12
 	github.com/ogiusek/null v1.1.0
 	github.com/veandco/go-sdl2 v0.4.40

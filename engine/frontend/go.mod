@@ -6,14 +6,13 @@ require shared v0.0.0
 
 require (
 	github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71
+	github.com/go-gl/mathgl v1.2.0
 	github.com/ogiusek/events v1.0.5
 	github.com/ogiusek/ioc/v2 v2.0.12
-	github.com/ogiusek/null v1.1.0
 	github.com/veandco/go-sdl2 v0.4.40
 )
 
 require (
-	github.com/go-gl/mathgl v1.2.0 // indirect
 	github.com/golang-migrate/migrate/v4 v4.18.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect

@@ -15,6 +15,8 @@ import (
 	"frontend/services/assets"
 	"frontend/services/backendconnection"
 	"frontend/services/backendconnection/localconnector"
+	"frontend/services/colliders"
+	"frontend/services/colliders/shapes"
 	"frontend/services/console"
 	"frontend/services/dbpkg"
 	"frontend/services/ecs"
@@ -91,6 +93,8 @@ func frontendDic(
 		sharedPkg,
 		api.Package(func(c ioc.Dic) ioc.Dic { return c }),
 		assets.Package(),
+		colliders.Package(),
+		shapes.Package(),
 		logger.Package(true, func(c ioc.Dic, message string) {
 			ioc.Get[console.Console](c).PrintPermanent(message)
 		}),

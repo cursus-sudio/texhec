@@ -1,0 +1,157 @@
+package shapes
+
+import (
+	"frontend/engine/components/transform"
+	"frontend/services/colliders"
+
+	"github.com/go-gl/mathgl/mgl32"
+)
+
+// Sphere
+// Box
+// ensure does capsule and triaxial ellipsoid have to be distinct shapes
+// Capsule
+// Triaxial Ellipsoid
+
+//
+
+type box struct {
+	transform.Transform
+}
+
+type Box struct{ box }
+
+func NewBox(t transform.Transform) colliders.Shape {
+	return Box{box{Transform: t}}
+}
+
+func (s box) Apply(t transform.Transform) colliders.Shape {
+	return Box{box{s.Transform.Mul(t)}}
+}
+
+// TODO check is this function correct (currently written by ai)
+func boxBoxHandler(s1 Box, s2 Box) colliders.Collision {
+	box1Min := s1.Pos.Sub(s1.Size)
+	box1Max := s1.Pos.Add(s1.Size)
+	box2Min := s2.Pos.Sub(s2.Size)
+	box2Max := s2.Pos.Add(s2.Size)
+
+	// Check for non-overlap on each axis.
+	// If there is a gap on any axis, there is no collision.
+	if box1Max.X() < box2Min.X() || box1Min.X() > box2Max.X() {
+		return nil
+	}
+	if box1Max.Y() < box2Min.Y() || box1Min.Y() > box2Max.Y() {
+		return nil
+	}
+	if box1Max.Z() < box2Min.Z() || box1Min.Z() > box2Max.Z() {
+		return nil
+	}
+
+	// If we reach this point, the boxes are colliding.
+	// Now, we calculate the collision details.
+
+	// Calculate the overlap on each axis.
+	overlapX := min(box1Max.X(), box2Max.X()) - max(box1Min.X(), box2Min.X())
+	overlapY := min(box1Max.Y(), box2Max.Y()) - max(box1Min.Y(), box2Min.Y())
+	overlapZ := min(box1Max.Z(), box2Max.Z()) - max(box1Min.Z(), box2Min.Z())
+
+	// The penetration depth is the smallest of the overlaps.
+	// The collision normal is the axis with the smallest overlap.
+	var normal mgl32.Vec3
+	var penetrationDepth float32
+
+	if overlapX <= overlapY && overlapX <= overlapZ {
+		penetrationDepth = overlapX
+		if s1.Pos.X() < s2.Pos.X() {
+			normal = mgl32.Vec3{-1, 0, 0}
+		} else {
+			normal = mgl32.Vec3{1, 0, 0}
+		}
+	} else if overlapY <= overlapX && overlapY <= overlapZ {
+		penetrationDepth = overlapY
+		if s1.Pos.Y() < s2.Pos.Y() {
+			normal = mgl32.Vec3{0, -1, 0}
+		} else {
+			normal = mgl32.Vec3{0, 1, 0}
+		}
+	} else {
+		penetrationDepth = overlapZ
+		if s1.Pos.Z() < s2.Pos.Z() {
+			normal = mgl32.Vec3{0, 0, -1}
+		} else {
+			normal = mgl32.Vec3{0, 0, 1}
+		}
+	}
+
+	contactPoint1 := s1.Pos.Add(normal.Mul(penetrationDepth / 2))
+	contactPoint2 := s2.Pos.Sub(normal.Mul(penetrationDepth / 2))
+
+	intersection := colliders.NewIntersection(
+		contactPoint1,
+		contactPoint2,
+		normal,
+		penetrationDepth,
+	)
+
+	return colliders.NewCollision(intersection)
+}
+
+//
+
+type ellipsoid struct {
+	transform.Transform
+}
+
+type Ellipsoid struct{ ellipsoid }
+
+func (s ellipsoid) R() float32 { return max(s.Size[0], s.Size[1], s.Size[2]) }
+
+func (s ellipsoid) Apply(t transform.Transform) colliders.Shape {
+	return Ellipsoid{ellipsoid{s.Transform.Mul(t)}}
+}
+
+func NewEllipsoid(t transform.Transform) colliders.Shape {
+	return Ellipsoid{ellipsoid{t}}
+}
+
+func NewSphere(pos mgl32.Vec3, r float32) colliders.Shape {
+	return Ellipsoid{ellipsoid{
+		transform.NewTransform().
+			SetPos(pos).
+			SetSize(mgl32.Vec3{r, r, r}),
+	}}
+}
+
+func ellipsoidEllipsoidHandler(s1 Ellipsoid, s2 Ellipsoid) colliders.Collision {
+	distSq := pow2(s1.Pos.X()-s2.Pos.X()) + pow2(s1.Pos.Y()-s2.Pos.Y()) + pow2(s1.Pos.Z()-s2.Pos.Z())
+	radiusSumSq := pow2(s1.R() + s2.R())
+	if distSq > radiusSumSq {
+		return nil
+	}
+	dist := sqrt2(distSq)
+	if dist == 0 {
+		return colliders.NewCollision()
+	}
+	penetrationDepth := (s1.R() + s2.R()) - float32(dist)
+	normal := s2.Pos.
+		Sub(s1.Pos).
+		Mul(1 / dist)
+
+	contactPoint1 := normal.
+		Mul(s1.R()).
+		Add(s1.Pos)
+
+	contactPoint2 := normal.
+		Mul(s2.R()).
+		Add(s2.Pos)
+
+	intersection := colliders.NewIntersection(
+		contactPoint1,
+		contactPoint2,
+		normal,
+		penetrationDepth,
+	)
+
+	return colliders.NewCollision(intersection)
+}

@@ -36,12 +36,14 @@ func (s *RenderSystem) Update(args frames.FrameEvent) {
 		if err := s.World.GetComponent(entity, &materialComponent); err != nil {
 			continue
 		}
-		materialAsset, err := assets.GetAsset[material.MaterialCachedAsset](s.Assets, materialComponent.ID)
-		if err != nil {
-			s.Logger.Error(err)
-			continue
+		for _, materialID := range materialComponent.IDs {
+			materialAsset, err := assets.GetAsset[material.MaterialCachedAsset](s.Assets, materialID)
+			if err != nil {
+				s.Logger.Error(err)
+				continue
+			}
+			materials[materialID] = materialAsset
 		}
-		materials[materialComponent.ID] = materialAsset
 	}
 
 	for _, material := range materials {
@@ -69,17 +71,19 @@ func (s *RenderSystem) Update(args frames.FrameEvent) {
 		if err := s.World.GetComponent(entity, &materialComponent); err != nil {
 			continue
 		}
-		materialAsset, err := assets.GetAsset[material.MaterialCachedAsset](s.Assets, materialComponent.ID)
-		if err != nil {
-			s.Logger.Error(err)
-			continue
-		}
+		for _, materialID := range materialComponent.IDs {
+			materialAsset, err := assets.GetAsset[material.MaterialCachedAsset](s.Assets, materialID)
+			if err != nil {
+				s.Logger.Error(err)
+				continue
+			}
 
-		if err := materialAsset.UseForEntity(s.World, entity); err != nil {
-			s.Logger.Error(err)
-			continue
-		}
+			if err := materialAsset.UseForEntity(s.World, entity); err != nil {
+				s.Logger.Error(err)
+				continue
+			}
 
-		meshAsset.VAO().Draw()
+			meshAsset.VAO().Draw()
+		}
 	}
 }

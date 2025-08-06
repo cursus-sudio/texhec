@@ -9,7 +9,8 @@ import (
 
 type Logger interface {
 	Info(message string)
-	Error(err error)
+	Error(err ...error)
+	Fatal(err ...error)
 }
 
 type logger struct {
@@ -24,13 +25,18 @@ func (logger *logger) Info(message string) {
 	logger.Print(msg)
 }
 
-func (logger *logger) Error(err error) {
+func (logger *logger) Error(err ...error) {
 	message := fmt.Sprintf("\033[31m[ Error ]\033[0m %s \033[31m\n%s\033[0m\n", logger.Clock.Now(), err)
 	if logger.PanicOnError {
 		logger.Panic(message)
 	} else {
 		logger.Print(message)
 	}
+}
+
+func (logger *logger) Fatal(err ...error) {
+	message := fmt.Sprintf("\033[31m[ Error ]\033[0m %s \033[31m\n%s\033[0m\n", logger.Clock.Now(), err)
+	logger.Panic(message)
 }
 
 type Pkg struct {

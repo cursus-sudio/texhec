@@ -26,7 +26,8 @@ func (FrontendPkg) Register(b ioc.Builder) {
 			assets.Release(
 				MeshAssetID,
 				TextureAssetID,
-				texturematerial.TextureMaterial,
+				texturematerial.TextureMaterial3D,
+				texturematerial.TextureMaterial2D,
 			)
 		})
 		return b

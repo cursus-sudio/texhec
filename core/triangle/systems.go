@@ -43,9 +43,10 @@ func (s *ChangeTransformOverTimeSystem) Update(args frames.FrameEvent) {
 		transformComponent.Rotation = rotation
 
 		scaleFactor := (1 + float32(t.Seconds())) / (1 + float32(t.Seconds()-args.Delta.Seconds()))
-		transformComponent.Size.X *= scaleFactor
-		transformComponent.Size.Y *= scaleFactor
-		transformComponent.Size.Z *= scaleFactor
+		transformComponent.Size = transformComponent.Size.Mul(scaleFactor)
+		// transformComponent.Size[0]*= scaleFactor
+		// transformComponent.Size.Y *= scaleFactor
+		// transformComponent.Size.Z *= scaleFactor
 		// transformComponent.Pos.X = float32(t.Seconds()) * 100
 
 		s.World.SaveComponent(entity, transformComponent)

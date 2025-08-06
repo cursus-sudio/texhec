@@ -8,11 +8,11 @@ import (
 )
 
 type Material struct {
-	ID assets.AssetID
+	IDs []assets.AssetID
 }
 
-func NewMaterial(id assets.AssetID) Material {
-	return Material{ID: id}
+func NewMaterial(id ...assets.AssetID) Material {
+	return Material{IDs: id}
 }
 
 type MaterialStorageAsset interface {

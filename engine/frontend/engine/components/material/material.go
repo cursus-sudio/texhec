@@ -23,12 +23,12 @@ type MaterialStorageAsset interface {
 	// - space for more shaders (use for them *string because they are optional)
 
 	// to set uniforms
-	OnFrame() func(world ecs.World, program program.Program) error
 	// - camera
 	// - lights
-	UseForEntity() func(world ecs.World, program program.Program, entityId ecs.EntityId) error
+	OnFrame() func(world ecs.World, program program.Program) error
 	// - position
 	// - reflection
+	UseForEntity() func(world ecs.World, program program.Program, entityId ecs.EntityId) error
 
 	// flags (parameters)
 	Parameters() []program.Parameter
@@ -78,7 +78,7 @@ func (a *materialStorageAsset) Cache() (assets.CachedAsset, error) {
 	if err != nil {
 		return nil, err
 	}
-	p, err := program.NewProgram(vert, frag, a.parameters)
+	p, err := program.NewProgram(vert, frag, a.Parameters())
 	if err != nil {
 		vert.Release()
 		frag.Release()

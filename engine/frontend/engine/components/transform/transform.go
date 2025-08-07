@@ -4,6 +4,9 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
+var Up mgl32.Vec3 = mgl32.Vec3{0, 1, 0}
+var Foward mgl32.Vec3 = mgl32.Vec3{0, 0, -1}
+
 type transform struct {
 	Pos      mgl32.Vec3
 	Rotation mgl32.Quat
@@ -20,12 +23,19 @@ func NewTransform() Transform {
 	}}
 }
 
-func (t1 Transform) Join(t2 Transform) Transform {
+func (t1 Transform) Merge(t2 Transform) Transform {
 	return Transform{&transform{
 		Pos:      t1.Pos.Add(t2.Pos),
 		Rotation: t1.Rotation.Mul(t2.Rotation),
 		Size:     mgl32.Vec3{t1.Size[0] * t2.Size[0], t1.Size[1] * t2.Size[1], t1.Size[2] * t2.Size[2]},
 	}}
+}
+
+func (t *Transform) Mat4() mgl32.Mat4 {
+	translation := mgl32.Translate3D(t.Pos.X(), t.Pos.Y(), t.Pos.Z())
+	rotation := t.Rotation.Mat4()
+	scale := mgl32.Scale3D(t.Size.X()/2, t.Size.Y()/2, t.Size.Z()/2)
+	return translation.Mul4(rotation).Mul4(scale)
 }
 
 func (t Transform) SetPos(pos mgl32.Vec3) Transform {

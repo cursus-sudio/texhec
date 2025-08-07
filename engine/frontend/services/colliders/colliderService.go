@@ -23,8 +23,8 @@ type colliderService struct {
 }
 
 func (colliderService *colliderService) Collides(c1, c2 Collider) (Collision, error) {
-	c1Layers := c1.Layers()
-	c2Layers := c2.Layers()
+	c1Layers := c1.Layers
+	c2Layers := c2.Layers
 	layersCount := len(c1Layers)
 	if len(c2Layers) != layersCount {
 		return nil, ErrCollidersHaveDifferentLayersCount

@@ -87,7 +87,7 @@ func (m *textureMaterialServices[Projection]) onFrame(world ecs.World, p program
 		)
 
 		rotation := transformComponent.Rotation.
-			Mul(mgl32.QuatRotate(mgl32.DegToRad(180), mgl32.Vec3{0, 1, 0})).
+			// Mul(mgl32.QuatRotate(mgl32.DegToRad(180), mgl32.Vec3{0, 1, 0})).
 			Mat4()
 
 		matrices := []mgl32.Mat4{
@@ -131,33 +131,7 @@ func (m *textureMaterialServices[Projection]) useForEntity(world ecs.World, p pr
 		return err
 	}
 
-	position := mgl32.Translate3D(
-		transformComponent.Pos.X(),
-		transformComponent.Pos.Y(),
-		transformComponent.Pos.Z(),
-	)
-
-	rotation := transformComponent.Rotation.Mat4()
-
-	scale := mgl32.Scale3D(
-		transformComponent.Size.X()/2,
-		transformComponent.Size.Y()/2,
-		transformComponent.Size.Z()/2,
-	)
-
-	matrices := []mgl32.Mat4{
-		position,
-		rotation,
-		scale,
-	}
-	var model mgl32.Mat4
-	for i, matrix := range matrices {
-		if i == 0 {
-			model = matrix
-			continue
-		}
-		model = model.Mul4(matrix)
-	}
+	model := transformComponent.Mat4()
 	gl.UniformMatrix4fv(locations.Model, 1, false, &model[0])
 
 	textureAsset.Texture().Use()

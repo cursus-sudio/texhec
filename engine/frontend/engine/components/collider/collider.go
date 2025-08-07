@@ -1,39 +1,32 @@
 package collider
 
-type Vec3 struct{ X, Y, Z float32 }
+import (
+	"frontend/services/assets"
+	"frontend/services/colliders"
+)
 
-type Intersection interface {
-	// point nearest to shape A center
-	PointOnA() Vec3
-	// point nearest to shape B center
-	PointOnB() Vec3
+type Collider struct{ ID assets.AssetID }
+
+func NewCollider(id assets.AssetID) Collider {
+	return Collider{ID: id}
 }
 
-type intersection struct {
-	pointOnA, pointOnB Vec3
+type ColliderAsset interface {
+	assets.GoAsset
+	Collider() colliders.Collider
 }
 
-func (i *intersection) PointOnA() Vec3 { return i.pointOnA }
-func (i *intersection) PointOnB() Vec3 { return i.pointOnB }
-
-func NewIntersection(pointOnA, pointOnB Vec3) Intersection {
-	return &intersection{
-		pointOnA: pointOnA,
-		pointOnB: pointOnB,
-	}
+type colliderAsset struct {
+	assets.GoAsset
+	collider colliders.Collider
 }
 
-//
-
-// type Shape any
-
-// shape should have relative position to transform.Position
-// shape should have relative rotation to transform.Rotation
-// shape should have relative size to tranform.Size (in percantages)
-type Shape interface {
-	Intersects(other Shape) (Intersection, error)
+func NewMaterialStorageAsset(c colliders.Collider) ColliderAsset {
+	asset := &colliderAsset{collider: c}
+	asset.GoAsset = assets.NewGoAsset(asset)
+	return asset
 }
 
-type Collider struct {
-	Shape Shape
+func (a *colliderAsset) Collider() colliders.Collider {
+	return a.collider
 }

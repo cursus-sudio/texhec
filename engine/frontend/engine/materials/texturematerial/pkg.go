@@ -39,14 +39,7 @@ func (Pkg) Register(b ioc.Builder) {
 				ioc.Get[window.Api](c),
 				ioc.Get[assets.Assets](c),
 				nil,
-				func(component projection.Perspecrive) mgl32.Mat4 {
-					return mgl32.Perspective(
-						component.FovY,
-						component.AspectRatio,
-						component.Near,
-						component.Far,
-					)
-				},
+				func(component projection.Perspective) mgl32.Mat4 { return component.Mat4() },
 			)
 			return material.Material(), nil
 		})
@@ -57,16 +50,7 @@ func (Pkg) Register(b ioc.Builder) {
 				ioc.Get[window.Api](c),
 				ioc.Get[assets.Assets](c),
 				nil,
-				func(component projection.Ortho) mgl32.Mat4 {
-					return mgl32.Ortho(
-						-float32(component.Width)/2,
-						float32(component.Width)/2,
-						-float32(component.Height)/2,
-						float32(component.Height)/2,
-						component.Near,
-						component.Far,
-					)
-				},
+				func(component projection.Ortho) mgl32.Mat4 { return component.Mat4() },
 			)
 			return material.Material(), nil
 		})

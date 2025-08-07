@@ -21,7 +21,7 @@ type Ellipsoid2D struct{ ellipsoid2D }
 func (s ellipsoid2D) R() float32 { return max(s.Size[0], s.Size[1]) }
 
 func (s ellipsoid2D) Apply(t transform.Transform) colliders.Shape {
-	return Ellipsoid2D{ellipsoid2D{s.Transform.Join(t)}}
+	return Ellipsoid2D{ellipsoid2D{s.Transform.Merge(t)}}
 }
 
 func (s ellipsoid2D) Position() mgl32.Vec3 { return s.Pos }
@@ -80,7 +80,7 @@ type rect2D struct {
 type Rect2D struct{ rect2D }
 
 func (s rect2D) Apply(t transform.Transform) colliders.Shape {
-	return Rect2D{rect2D{s.Transform.Join(t)}}
+	return Rect2D{rect2D{s.Transform.Merge(t)}}
 }
 
 func (s rect2D) Position() mgl32.Vec3 { return s.Pos }
@@ -294,8 +294,8 @@ func rect2DEllipse2DHandler(s1 Rect2D, s2 Ellipsoid2D) colliders.Collision {
 
 func rect2DRayHandler(s1 Rect2D, s2 Ray) colliders.Collision {
 	rect := s1
-	rayOrigin := s2.pos
-	rayDirection := s2.rotation.Rotate(mgl32.Vec3{0, 1, 0}).Normalize()
+	rayOrigin := s2.Pos
+	rayDirection := s2.Rotation.Rotate(mgl32.Vec3{0, 1, 0}).Normalize()
 
 	if rayDirection.LenSqr() < 1e-6 {
 		return nil
@@ -387,8 +387,8 @@ func ellipse2DRayHandler(s1 Ellipsoid2D, s2 Ray) colliders.Collision {
 	circlePos := circle.Pos
 	circleRadius := circle.R()
 
-	rayPos := ray.pos
-	rayDir := ray.rotation.Rotate(mgl32.Vec3{0, 1, 0}).Normalize()
+	rayPos := ray.Pos
+	rayDir := ray.Rotation.Rotate(mgl32.Vec3{0, 1, 0}).Normalize()
 
 	// Remove the Z-coordinate checks
 	// The original code checked for Z-plane alignment, which is not desired for 2D collision with Z as an index.

@@ -6,28 +6,24 @@ import (
 	"frontend/services/assets"
 	"frontend/services/ecs"
 	"frontend/services/frames"
-	"shared/services/logger"
 )
 
 type RenderSystem struct {
 	World  ecs.World
 	Assets assets.Assets
-	Logger logger.Logger
 }
 
 func NewRenderSystem(
 	world ecs.World,
 	assets assets.Assets,
-	logger logger.Logger,
 ) RenderSystem {
 	return RenderSystem{
 		World:  world,
 		Assets: assets,
-		Logger: logger,
 	}
 }
 
-func (s *RenderSystem) Update(args frames.FrameEvent) {
+func (s *RenderSystem) Update(args frames.FrameEvent) error {
 	materials := map[assets.AssetID]material.MaterialCachedAsset{}
 	for _, entity := range s.World.GetEntitiesWithComponents(
 		ecs.GetComponentType(material.Material{}),
@@ -39,8 +35,7 @@ func (s *RenderSystem) Update(args frames.FrameEvent) {
 		for _, materialID := range materialComponent.IDs {
 			materialAsset, err := assets.GetAsset[material.MaterialCachedAsset](s.Assets, materialID)
 			if err != nil {
-				s.Logger.Error(err)
-				continue
+				return err
 			}
 			materials[materialID] = materialAsset
 		}
@@ -48,7 +43,7 @@ func (s *RenderSystem) Update(args frames.FrameEvent) {
 
 	for _, material := range materials {
 		if err := material.OnFrame(s.World); err != nil {
-			s.Logger.Error(err)
+			return err
 		}
 	}
 
@@ -63,8 +58,7 @@ func (s *RenderSystem) Update(args frames.FrameEvent) {
 		}
 		meshAsset, err := assets.GetAsset[mesh.MeshCachedAsset](s.Assets, meshComponent.ID)
 		if err != nil {
-			s.Logger.Error(err)
-			continue
+			return err
 		}
 
 		var materialComponent material.Material
@@ -74,16 +68,16 @@ func (s *RenderSystem) Update(args frames.FrameEvent) {
 		for _, materialID := range materialComponent.IDs {
 			materialAsset, err := assets.GetAsset[material.MaterialCachedAsset](s.Assets, materialID)
 			if err != nil {
-				s.Logger.Error(err)
-				continue
+				return err
 			}
 
 			if err := materialAsset.UseForEntity(s.World, entity); err != nil {
-				s.Logger.Error(err)
-				continue
+				return err
 			}
 
 			meshAsset.VAO().Draw()
 		}
 	}
+
+	return nil
 }

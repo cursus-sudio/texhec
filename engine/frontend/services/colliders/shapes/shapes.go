@@ -10,20 +10,23 @@ import (
 // ray
 
 type ray struct {
-	pos      mgl32.Vec3
-	rotation mgl32.Quat // or Vec3 is also good because ray doesn't have orientation only direction
+	transform.Transform
 }
 
 type Ray struct{ ray }
 
 func (s ray) Apply(t transform.Transform) colliders.Shape {
-	return Ray{ray{s.pos.Add(t.Pos), s.rotation.Mul(t.Rotation)}}
+	return Ray{ray{s.Transform.Merge(t)}}
 }
 
-func (s ray) Position() mgl32.Vec3 { return s.pos }
+func (s ray) Position() mgl32.Vec3 { return s.Pos }
 
 func NewRay(pos mgl32.Vec3, rotation mgl32.Quat) Ray {
-	return Ray{ray{pos, rotation}}
+	return Ray{ray{
+		transform.NewTransform().
+			SetPos(pos).
+			SetRotation(rotation),
+	}}
 }
 
 // func rayRayHandler(s1 Ray, s2 Ray) colliders.Collision {

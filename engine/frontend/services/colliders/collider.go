@@ -2,16 +2,12 @@ package colliders
 
 type ColliderLayer []Shape
 
-type Collider interface {
-	Layers() []ColliderLayer
-}
+type Collider struct{ collider }
 
 type collider struct {
-	layers []ColliderLayer
+	Layers []ColliderLayer
 }
 
-func (collider *collider) Layers() []ColliderLayer { return collider.layers }
-
 func NewCollider(layers ...ColliderLayer) Collider {
-	return &collider{layers: layers}
+	return Collider{collider{Layers: layers}}
 }

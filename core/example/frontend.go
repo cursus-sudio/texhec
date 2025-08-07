@@ -23,27 +23,44 @@ import (
 )
 
 func AddShared(c ioc.Dic, b scenes.SceneBuilder) {
-	b.OnLoad(func(sm scenes.SceneManager, s scenes.Scene, b events.Builder) {
-		quitSytem := inputssystem.NewQuitSystem(
-			ioc.Get[runtime.Runtime](c),
-		)
+	quitSytem := inputssystem.NewQuitSystem(
+		ioc.Get[runtime.Runtime](c),
+	)
 
+	b.OnLoad(func(sm scenes.SceneManager, s scenes.Scene, b events.Builder) {
 		events.Listen(b, func(e sdl.QuitEvent) {
 			quitSytem.Listen(e)
 		})
 	})
 
 	b.OnLoad(func(sm scenes.SceneManager, s scenes.Scene, b events.Builder) {
+		logger := ioc.Get[logger.Logger](c)
 		events.Listen(b, func(e sdl.KeyboardEvent) {
-			ioc.Get[logger.Logger](c).Info(fmt.Sprintf("keyboard event is %v\nkey is %v\n", e, e.Keysym))
+			logger.Info(fmt.Sprintf("keyboard event is %v\nkey is %v\n", e, e.Keysym))
 		})
 
 		events.Listen(b, func(e sdl.KeyboardEvent) {
 			if e.Keysym.Sym == sdl.K_q {
-				ioc.Get[logger.Logger](c).Info("quiting program due to pressing 'Q'")
+				logger.Info("quiting program due to pressing 'Q'")
 				ioc.Get[runtime.Runtime](c).Stop()
 			}
-			ioc.Get[logger.Logger](c).Info(fmt.Sprintf("keyboard event is %v\nkey is %v\n", e, e.Keysym.Sym))
+			if e.Keysym.Sym == sdl.K_ESCAPE {
+				logger.Info("quiting program due to pressing 'ESC'")
+				ioc.Get[runtime.Runtime](c).Stop()
+			}
+			if e.State == sdl.PRESSED && e.Keysym.Sym == sdl.K_f {
+				logger.Info("toggling screen size due to pressing 'F'")
+				window := ioc.Get[window.Api](c)
+				flags := window.Window().GetFlags()
+				if flags&sdl.WINDOW_FULLSCREEN_DESKTOP == sdl.WINDOW_FULLSCREEN_DESKTOP {
+					window.Window().SetFullscreen(0)
+				} else {
+					window.Window().SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
+				}
+				// window.Window().SetFullscreen(window.Window().)
+				// ioc.Get[runtime.Runtime](c).Stop()
+			}
+			logger.Info(fmt.Sprintf("keyboard event is %v\nkey is %v\n", e, e.Keysym.Sym))
 		})
 	})
 }
@@ -62,17 +79,21 @@ func NewSharedDomain(c ioc.Dic, world ecs.World, b events.Builder) SharedSystems
 	}
 	return SharedSystems{
 		inputsSystem: inputssystem.NewInputsSystem(ioc.Get[inputs.Api](c)),
-		renderSystem: render.NewRenderSystem(world, ioc.Get[assets.Assets](c), ioc.Get[logger.Logger](c)),
+		renderSystem: render.NewRenderSystem(world, ioc.Get[assets.Assets](c)),
 		flushSystem:  render.NewFlushSystem(ioc.Get[window.Api](c)),
 	}
 }
 
-func (s SharedSystems) BeforeDomain(args frames.FrameEvent) {
+func (s SharedSystems) BeforeDomain(args frames.FrameEvent) error {
 	s.inputsSystem.Update(args)
+	return nil
 }
-func (s SharedSystems) AfterDomain(args frames.FrameEvent) {
-	s.renderSystem.Update(args)
+func (s SharedSystems) AfterDomain(args frames.FrameEvent) error {
+	if err := s.renderSystem.Update(args); err != nil {
+		return err
+	}
 	s.flushSystem.Update(args)
+	return nil
 }
 
 var scene1Id = scenes.NewSceneId("main scene")
@@ -95,13 +116,16 @@ func AddSceneOne(b ioc.Builder) {
 				ioc.Get[backendconnection.Backend](c).Connection(),
 				ioc.Get[console.Console](c),
 			)
+
 			toggleSystem := NewToggledSystem(sceneManager, world, scene2Id, time.Second)
 
 			events.Listen(b, func(e frames.FrameEvent) {
 				sharedSystems.BeforeDomain(e)
 				someSystem.Update(e)
 				toggleSystem.Update(e)
-				sharedSystems.AfterDomain(e)
+				if err := sharedSystems.AfterDomain(e); err != nil {
+					panic(err)
+				}
 			})
 		})
 		return sceneBuilder
@@ -136,7 +160,9 @@ func AddSceneTwo(b ioc.Builder) {
 				sharedSystems.BeforeDomain(e)
 				someSystem.Update(e)
 				// toggleSystem.Update(e)
-				sharedSystems.AfterDomain(e)
+				if err := sharedSystems.AfterDomain(e); err != nil {
+					panic(err)
+				}
 			})
 		})
 

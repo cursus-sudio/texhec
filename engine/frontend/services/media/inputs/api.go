@@ -117,6 +117,9 @@ func (i *api) Poll() {
 		case *sdl.WindowEvent:
 			e = *event.(*sdl.WindowEvent)
 			break
+		case *sdl.TouchFingerEvent:
+			e = *event.(*sdl.TouchFingerEvent)
+			break
 		default:
 			i.logger.Error(errors.Join(
 				ErrNotHandledInput,

@@ -1,8 +1,6 @@
 package click
 
-type ClickCollider struct {
-}
-
 type OnClick struct {
-	EmitEvents []any
+	LeftClickEvents  []any
+	RightClickEvents []any
 }

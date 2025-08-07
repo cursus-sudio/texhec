@@ -3,6 +3,7 @@ package projection
 import (
 	"frontend/engine/components/transform"
 	"frontend/services/colliders/shapes"
+	"frontend/services/graphics/camera"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -24,8 +25,8 @@ func (p Perspective) Mat4() mgl32.Mat4 {
 func (p Perspective) ViewMat4(cameraTransform transform.Transform) mgl32.Mat4 {
 	return mgl32.LookAtV(
 		cameraTransform.Pos,
-		cameraTransform.Pos.Add(cameraTransform.Rotation.Rotate(transform.Foward)),
-		transform.Up,
+		cameraTransform.Pos.Add(cameraTransform.Rotation.Rotate(camera.Forward)),
+		camera.Up,
 	)
 }
 

@@ -17,8 +17,8 @@ func (Pkg) Register(b ioc.Builder) {
 		colliders.AddHandler(b, ellipsoid2DEllipsoid2DHandler)
 		colliders.AddHandler(b, rect2DEllipse2DHandler)
 		colliders.AddHandler(b, rect2DRect2DHandler)
-		colliders.AddHandler(b, rect2DRayHandler)
-		colliders.AddHandler(b, ellipse2DRayHandler)
+		// colliders.AddHandler(b, rect2DRayHandler)
+		// colliders.AddHandler(b, ellipse2DRayHandler)
 		// colliders.AddHandler(b, rayRayHandler) // this is not implemented and there should be no reason to use it
 		// implement ray - ellipsoid2d and rect2d handlers
 		return b

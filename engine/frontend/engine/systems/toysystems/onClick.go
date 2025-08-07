@@ -1,40 +1,48 @@
-package inputs
+package toysystems
 
 import (
 	"frontend/engine/components/projection"
 	"frontend/engine/components/transform"
 	"frontend/services/colliders/shapes"
+	"frontend/services/console"
 	"frontend/services/ecs"
+	"frontend/services/graphics/camera"
 	"frontend/services/media/window"
-
-	"github.com/go-gl/mathgl/mgl32"
-	"github.com/veandco/go-sdl2/sdl"
 )
 
-type OnClickSystem[Projection projection.Projection] struct {
+type ShootRayEvent struct{ X, Y int }
+
+func NewShootRayEvent(x, y int) ShootRayEvent {
+	return ShootRayEvent{X: x, Y: y}
+}
+
+type ShootRaySystem[Projection projection.Projection] struct {
 	world          ecs.World
 	window         window.Api
+	console        console.Console
 	distFromCamera float32
 	getEntity      func() ecs.EntityId
 }
 
-func NewOnClickSystem[Projection projection.Projection](
+func NewShootRaySystem[Projection projection.Projection](
 	world ecs.World,
 	window window.Api,
+	console console.Console,
 	distFromCamera float32,
 	getEntity func() ecs.EntityId,
-) OnClickSystem[Projection] {
-	return OnClickSystem[Projection]{
+) ShootRaySystem[Projection] {
+	return ShootRaySystem[Projection]{
 		world:          world,
 		window:         window,
+		console:        console,
 		distFromCamera: distFromCamera,
 		getEntity:      func() ecs.EntityId { return getEntity() },
 	}
 }
 
-func (system *OnClickSystem[Projection]) Listen(args sdl.MouseMotionEvent) error {
-	var ray shapes.Ray
+func (system *ShootRaySystem[Projection]) Listen(args ShootRayEvent) error {
 	var cameraTransform transform.Transform
+	var proj Projection
 
 	{
 		cameras := system.world.GetEntitiesWithComponents(ecs.GetComponentPointerType((*Projection)(nil)))
@@ -42,20 +50,18 @@ func (system *OnClickSystem[Projection]) Listen(args sdl.MouseMotionEvent) error
 			return projection.ErrWorldShouldHaveOneProjection
 		}
 		camera := cameras[0]
-		var proj Projection
 		if err := system.world.GetComponent(camera, &proj); err != nil {
 			return err
 		}
 		if err := system.world.GetComponent(camera, &cameraTransform); err != nil {
 			return err
 		}
-		mousePos := mgl32.Vec2{float32(args.X), float32(args.Y)}
-		w, h := system.window.Window().GetSize()
+	}
 
-		mousePos = mgl32.Vec2{
-			(2*float32(args.X)/float32(w) - 1),
-			-(2*float32(args.Y)/float32(h) - 1),
-		}
+	var ray shapes.Ray
+
+	{
+		mousePos := system.window.NormalizeMouseClick(int(args.X), int(args.Y))
 		ray = proj.ShootRay(cameraTransform, mousePos)
 	}
 
@@ -65,18 +71,17 @@ func (system *OnClickSystem[Projection]) Listen(args sdl.MouseMotionEvent) error
 		if err := system.world.GetComponent(entity, &trans); err != nil {
 			return err
 		}
-		rotation := ray.Rotation
-		trans = trans.
-			SetPos(ray.Pos.
-				Add(rotation.Rotate(transform.Up).Mul(trans.Size.Y() / 2)).
-				// Add(rotation.Rotate(transform.Fo).Mul(trans.Size.Y() / 2)).
-				// Add(rotation.Rotate(transform.Up).Mul(trans.Size.Z() / 2)).
-				Add(cameraTransform.Rotation.Rotate(transform.Foward).Mul(system.distFromCamera)).
-				// Add(cameraTransform.Rotation.Rotate(transform.Up).Mul(system.distFromCamera)).
-				Add(mgl32.Vec3{0, 0, 0}),
-			).
-			SetRotation(rotation)
-		system.world.SaveComponent(entity, trans)
+
+		pos := ray.Pos
+		// moves ray so it isn't centered
+		pos = pos.Add(ray.Rotation().Rotate(camera.Forward).Mul(trans.Size.Z() / 2))
+		// moves in front of camera
+		pos = pos.Add(cameraTransform.Rotation.Rotate(camera.Forward).Mul(system.distFromCamera))
+
+		system.world.SaveComponent(entity, trans.
+			SetPos(pos).
+			SetRotation(ray.Rotation()),
+		)
 	}
 
 	return nil

@@ -292,181 +292,181 @@ func rect2DEllipse2DHandler(s1 Rect2D, s2 Ellipsoid2D) colliders.Collision {
 	return colliders.NewCollision(intersection)
 }
 
-func rect2DRayHandler(s1 Rect2D, s2 Ray) colliders.Collision {
-	rect := s1
-	rayOrigin := s2.Pos
-	rayDirection := s2.Rotation.Rotate(mgl32.Vec3{0, 1, 0}).Normalize()
-
-	if rayDirection.LenSqr() < 1e-6 {
-		return nil
-	}
-
-	inverseRectRotation := rect.Rotation.Inverse()
-	localRayOrigin := inverseRectRotation.Rotate(rayOrigin.Sub(rect.Pos))
-	localRayDirection := inverseRectRotation.Rotate(rayDirection)
-
-	halfWidth := rect.Size[0] / 2
-	halfHeight := rect.Size[1] / 2
-	minBounds := mgl32.Vec3{-halfWidth, -halfHeight, 0}
-	maxBounds := mgl32.Vec3{halfWidth, halfHeight, 0}
-
-	tEntry := float32(math.Inf(-1))
-	tExit := float32(math.Inf(1))
-
-	var normalEntry mgl32.Vec3
-
-	for i := 0; i < 2; i++ {
-		if mgl32.Abs(localRayDirection[i]) < 1e-6 {
-			if localRayOrigin[i] < minBounds[i] || localRayOrigin[i] > maxBounds[i] {
-				return nil
-			}
-		} else {
-			invDir := 1.0 / localRayDirection[i]
-			tNear := (minBounds[i] - localRayOrigin[i]) * invDir
-			tFar := (maxBounds[i] - localRayOrigin[i]) * invDir
-
-			if tNear > tFar {
-				tNear, tFar = tFar, tNear
-			}
-
-			if tNear > tEntry {
-				tEntry = tNear
-				normalEntry = mgl32.Vec3{}
-				if invDir < 0 {
-					normalEntry[i] = 1.0
-				} else {
-					normalEntry[i] = -1.0
-				}
-			}
-			tExit = min(tExit, tFar)
-
-			if tEntry > tExit {
-				return nil
-			}
-		}
-	}
-
-	if tExit < 0 {
-		return nil
-	}
-
-	var hitT float32
-	var finalLocalNormal mgl32.Vec3
-
-	if tEntry < 0 {
-		hitT = tExit
-		finalLocalNormal = normalEntry.Mul(-1)
-	} else {
-		hitT = tEntry
-		finalLocalNormal = normalEntry
-	}
-
-	localContactPoint := localRayOrigin.Add(localRayDirection.Mul(hitT))
-
-	worldContactPointRect := rect.Pos.Add(rect.Rotation.Rotate(localContactPoint))
-	worldContactPointRay := rayOrigin.Add(rayDirection.Mul(hitT))
-
-	worldNormal := rect.Rotation.Rotate(finalLocalNormal).Normalize()
-
-	penetrationDepth := float32(0)
-
-	intersection := colliders.NewIntersection(
-		worldContactPointRect,
-		worldContactPointRay,
-		worldNormal,
-		penetrationDepth,
-	)
-
-	return colliders.NewCollision(intersection)
-}
-
-func ellipse2DRayHandler(s1 Ellipsoid2D, s2 Ray) colliders.Collision {
-	circle := s1
-	ray := s2
-
-	circlePos := circle.Pos
-	circleRadius := circle.R()
-
-	rayPos := ray.Pos
-	rayDir := ray.Rotation.Rotate(mgl32.Vec3{0, 1, 0}).Normalize()
-
-	// Remove the Z-coordinate checks
-	// The original code checked for Z-plane alignment, which is not desired for 2D collision with Z as an index.
-	// if mgl32.Abs(rayDir.Z()) < 1e-6 {
-	//     if mgl32.Abs(rayPos.Z()-circlePos.Z()) > 1e-6 {
-	//         return nil
-	//     }
-	// } else {
-	//     tPlane := (circlePos.Z() - rayPos.Z()) / rayDir.Z()
-	//     if tPlane < 0 {
-	//         return nil
-	//     }
-	// }
-
-	circlePos2D := mgl32.Vec2{circlePos.X(), circlePos.Y()}
-	rayPos2D := mgl32.Vec2{rayPos.X(), rayPos.Y()}
-	rayDir2D := mgl32.Vec2{rayDir.X(), rayDir.Y()}
-
-	m2D := rayPos2D.Sub(circlePos2D)
-
-	if rayDir2D.LenSqr() < 1e-6 {
-		if m2D.LenSqr() <= circleRadius*circleRadius {
-			normal2D := m2D.Normalize()
-			contactPoint3D := mgl32.Vec3{rayPos2D.X(), rayPos2D.Y(), circlePos.Z()}
-			normal3D := mgl32.Vec3{normal2D.X(), normal2D.Y(), 0}
-
-			intersection := colliders.NewIntersection(
-				contactPoint3D,
-				contactPoint3D,
-				normal3D,
-				0,
-			)
-			return colliders.NewCollision(intersection)
-		}
-		return nil
-	}
-	a := rayDir2D.Dot(rayDir2D)
-	b := 2 * m2D.Dot(rayDir2D)
-	c := m2D.Dot(m2D) - circleRadius*circleRadius
-
-	discriminant := b*b - 4*a*c
-
-	if discriminant < 0 {
-		return nil
-	}
-
-	sqrtDiscriminant := float32(math.Sqrt(float64(discriminant)))
-	t1 := (-b - sqrtDiscriminant) / (2 * a)
-	t2 := (-b + sqrtDiscriminant) / (2 * a)
-
-	var finalT float32 = -1.0
-
-	if t1 >= 0 {
-		finalT = t1
-	}
-
-	if t2 >= 0 {
-		if finalT < 0 || t2 < finalT {
-			finalT = t2
-		}
-	}
-
-	if finalT < 0 {
-		return nil
-	}
-
-	intersectionPoint2D := rayPos2D.Add(rayDir2D.Mul(finalT))
-	intersectionPoint3D := mgl32.Vec3{intersectionPoint2D.X(), intersectionPoint2D.Y(), circlePos.Z()}
-
-	normal2D := intersectionPoint2D.Sub(circlePos2D).Normalize()
-	normal3D := mgl32.Vec3{normal2D.X(), normal2D.Y(), 0}
-
-	intersection := colliders.NewIntersection(
-		intersectionPoint3D,
-		intersectionPoint3D,
-		normal3D,
-		0,
-	)
-
-	return colliders.NewCollision(intersection)
-}
+// func rect2DRayHandler(s1 Rect2D, s2 Ray) colliders.Collision {
+// 	rect := s1
+// 	rayOrigin := s2.Pos
+// 	rayDirection := s2.Rotation.Rotate(mgl32.Vec3{0, 1, 0}).Normalize()
+//
+// 	if rayDirection.LenSqr() < 1e-6 {
+// 		return nil
+// 	}
+//
+// 	inverseRectRotation := rect.Rotation.Inverse()
+// 	localRayOrigin := inverseRectRotation.Rotate(rayOrigin.Sub(rect.Pos))
+// 	localRayDirection := inverseRectRotation.Rotate(rayDirection)
+//
+// 	halfWidth := rect.Size[0] / 2
+// 	halfHeight := rect.Size[1] / 2
+// 	minBounds := mgl32.Vec3{-halfWidth, -halfHeight, 0}
+// 	maxBounds := mgl32.Vec3{halfWidth, halfHeight, 0}
+//
+// 	tEntry := float32(math.Inf(-1))
+// 	tExit := float32(math.Inf(1))
+//
+// 	var normalEntry mgl32.Vec3
+//
+// 	for i := 0; i < 2; i++ {
+// 		if mgl32.Abs(localRayDirection[i]) < 1e-6 {
+// 			if localRayOrigin[i] < minBounds[i] || localRayOrigin[i] > maxBounds[i] {
+// 				return nil
+// 			}
+// 		} else {
+// 			invDir := 1.0 / localRayDirection[i]
+// 			tNear := (minBounds[i] - localRayOrigin[i]) * invDir
+// 			tFar := (maxBounds[i] - localRayOrigin[i]) * invDir
+//
+// 			if tNear > tFar {
+// 				tNear, tFar = tFar, tNear
+// 			}
+//
+// 			if tNear > tEntry {
+// 				tEntry = tNear
+// 				normalEntry = mgl32.Vec3{}
+// 				if invDir < 0 {
+// 					normalEntry[i] = 1.0
+// 				} else {
+// 					normalEntry[i] = -1.0
+// 				}
+// 			}
+// 			tExit = min(tExit, tFar)
+//
+// 			if tEntry > tExit {
+// 				return nil
+// 			}
+// 		}
+// 	}
+//
+// 	if tExit < 0 {
+// 		return nil
+// 	}
+//
+// 	var hitT float32
+// 	var finalLocalNormal mgl32.Vec3
+//
+// 	if tEntry < 0 {
+// 		hitT = tExit
+// 		finalLocalNormal = normalEntry.Mul(-1)
+// 	} else {
+// 		hitT = tEntry
+// 		finalLocalNormal = normalEntry
+// 	}
+//
+// 	localContactPoint := localRayOrigin.Add(localRayDirection.Mul(hitT))
+//
+// 	worldContactPointRect := rect.Pos.Add(rect.Rotation.Rotate(localContactPoint))
+// 	worldContactPointRay := rayOrigin.Add(rayDirection.Mul(hitT))
+//
+// 	worldNormal := rect.Rotation.Rotate(finalLocalNormal).Normalize()
+//
+// 	penetrationDepth := float32(0)
+//
+// 	intersection := colliders.NewIntersection(
+// 		worldContactPointRect,
+// 		worldContactPointRay,
+// 		worldNormal,
+// 		penetrationDepth,
+// 	)
+//
+// 	return colliders.NewCollision(intersection)
+// }
+//
+// func ellipse2DRayHandler(s1 Ellipsoid2D, s2 Ray) colliders.Collision {
+// 	circle := s1
+// 	ray := s2
+//
+// 	circlePos := circle.Pos
+// 	circleRadius := circle.R()
+//
+// 	rayPos := ray.Pos
+// 	rayDir := ray.Rotation.Rotate(mgl32.Vec3{0, 1, 0}).Normalize()
+//
+// 	// Remove the Z-coordinate checks
+// 	// The original code checked for Z-plane alignment, which is not desired for 2D collision with Z as an index.
+// 	// if mgl32.Abs(rayDir.Z()) < 1e-6 {
+// 	//     if mgl32.Abs(rayPos.Z()-circlePos.Z()) > 1e-6 {
+// 	//         return nil
+// 	//     }
+// 	// } else {
+// 	//     tPlane := (circlePos.Z() - rayPos.Z()) / rayDir.Z()
+// 	//     if tPlane < 0 {
+// 	//         return nil
+// 	//     }
+// 	// }
+//
+// 	circlePos2D := mgl32.Vec2{circlePos.X(), circlePos.Y()}
+// 	rayPos2D := mgl32.Vec2{rayPos.X(), rayPos.Y()}
+// 	rayDir2D := mgl32.Vec2{rayDir.X(), rayDir.Y()}
+//
+// 	m2D := rayPos2D.Sub(circlePos2D)
+//
+// 	if rayDir2D.LenSqr() < 1e-6 {
+// 		if m2D.LenSqr() <= circleRadius*circleRadius {
+// 			normal2D := m2D.Normalize()
+// 			contactPoint3D := mgl32.Vec3{rayPos2D.X(), rayPos2D.Y(), circlePos.Z()}
+// 			normal3D := mgl32.Vec3{normal2D.X(), normal2D.Y(), 0}
+//
+// 			intersection := colliders.NewIntersection(
+// 				contactPoint3D,
+// 				contactPoint3D,
+// 				normal3D,
+// 				0,
+// 			)
+// 			return colliders.NewCollision(intersection)
+// 		}
+// 		return nil
+// 	}
+// 	a := rayDir2D.Dot(rayDir2D)
+// 	b := 2 * m2D.Dot(rayDir2D)
+// 	c := m2D.Dot(m2D) - circleRadius*circleRadius
+//
+// 	discriminant := b*b - 4*a*c
+//
+// 	if discriminant < 0 {
+// 		return nil
+// 	}
+//
+// 	sqrtDiscriminant := float32(math.Sqrt(float64(discriminant)))
+// 	t1 := (-b - sqrtDiscriminant) / (2 * a)
+// 	t2 := (-b + sqrtDiscriminant) / (2 * a)
+//
+// 	var finalT float32 = -1.0
+//
+// 	if t1 >= 0 {
+// 		finalT = t1
+// 	}
+//
+// 	if t2 >= 0 {
+// 		if finalT < 0 || t2 < finalT {
+// 			finalT = t2
+// 		}
+// 	}
+//
+// 	if finalT < 0 {
+// 		return nil
+// 	}
+//
+// 	intersectionPoint2D := rayPos2D.Add(rayDir2D.Mul(finalT))
+// 	intersectionPoint3D := mgl32.Vec3{intersectionPoint2D.X(), intersectionPoint2D.Y(), circlePos.Z()}
+//
+// 	normal2D := intersectionPoint2D.Sub(circlePos2D).Normalize()
+// 	normal3D := mgl32.Vec3{normal2D.X(), normal2D.Y(), 0}
+//
+// 	intersection := colliders.NewIntersection(
+// 		intersectionPoint3D,
+// 		intersectionPoint3D,
+// 		normal3D,
+// 		0,
+// 	)
+//
+// 	return colliders.NewCollision(intersection)
+// }

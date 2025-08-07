@@ -3,6 +3,8 @@ package shapes
 import (
 	"frontend/engine/components/transform"
 	"frontend/services/colliders"
+	"frontend/services/graphics/camera"
+	"math"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -10,22 +12,29 @@ import (
 // ray
 
 type ray struct {
-	transform.Transform
+	Pos       mgl32.Vec3
+	Direction mgl32.Vec3
 }
 
 type Ray struct{ ray }
 
 func (s ray) Apply(t transform.Transform) colliders.Shape {
-	return Ray{ray{s.Transform.Merge(t)}}
+	return Ray{ray{Pos: s.Pos.Add(t.Pos), Direction: t.Rotation.Rotate(s.Direction)}}
 }
 
 func (s ray) Position() mgl32.Vec3 { return s.Pos }
 
-func NewRay(pos mgl32.Vec3, rotation mgl32.Quat) Ray {
+func (s ray) Rotation() mgl32.Quat {
+	axis := camera.Forward.Cross(s.Direction).Normalize()
+	angle := float32(math.Acos(float64(camera.Forward.Dot(s.Direction))))
+
+	return mgl32.QuatRotate(angle, axis)
+}
+
+func NewRay(pos mgl32.Vec3, rotation mgl32.Vec3) Ray {
 	return Ray{ray{
-		transform.NewTransform().
-			SetPos(pos).
-			SetRotation(rotation),
+		Pos:       pos,
+		Direction: rotation,
 	}}
 }
 

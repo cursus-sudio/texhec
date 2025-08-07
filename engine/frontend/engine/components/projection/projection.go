@@ -3,31 +3,24 @@ package projection
 import (
 	"frontend/engine/components/transform"
 	"frontend/services/colliders/shapes"
-	"math"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
 
 type Projection interface {
 	Mat4() mgl32.Mat4
+	ViewMat4(transform.Transform) mgl32.Mat4
 	ShootRay(
 		cameraTransform transform.Transform,
 		mousePos mgl32.Vec2,
 	) shapes.Ray
 }
 
-func vec3ToQuat(vector mgl32.Vec3) mgl32.Quat {
-	axis := transform.Foward.Cross(vector).Normalize()
-	angle := float32(math.Acos(float64(transform.Foward.Dot(vector))))
-
-	return mgl32.QuatRotate(angle, axis)
-}
-
 func RayDirection(
 	projectionMatrix mgl32.Mat4,
 	viewMatrix mgl32.Mat4,
 	mousePos mgl32.Vec2,
-) (NearWorld mgl32.Vec4, Direction mgl32.Quat) {
+) (NearWorld mgl32.Vec4, Direction mgl32.Vec3) {
 	invViewProjection := projectionMatrix.Mul4(viewMatrix).Inv()
 
 	nearClip := mgl32.Vec4{mousePos.X(), mousePos.Y(), -1, 1}
@@ -45,10 +38,7 @@ func RayDirection(
 		farWorld[2] - nearWorld[2],
 	}.Normalize()
 
-	rotation := vec3ToQuat(direction).Inverse()
-	rotation = rotation.Mul(mgl32.QuatRotate(mgl32.DegToRad(90), mgl32.Vec3{-1, 0, 0}))
-
-	return nearWorld, rotation
+	return nearWorld, direction
 }
 
 func ShootRay(

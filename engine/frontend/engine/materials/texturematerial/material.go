@@ -12,7 +12,6 @@ import (
 	"frontend/services/media/window"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
-	"github.com/go-gl/mathgl/mgl32"
 )
 
 type locations struct {
@@ -21,25 +20,23 @@ type locations struct {
 	Projection int32 `uniform:"projection"`
 }
 
-type textureMaterialServices[Projection any] struct {
+type textureMaterialServices[Projection projection.Projection] struct {
 	window        window.Api
 	assetsService assets.Assets
 	locations     locations
-	getProjection func(Projection) mgl32.Mat4
 }
 
-type textureMaterial[Projection any] struct {
+type textureMaterial[Projection projection.Projection] struct {
 	vertSource, fragSource string
 	services               *textureMaterialServices[Projection]
 	parameters             []program.Parameter
 }
 
-func newTextureMaterial[Projection any](
+func newTextureMaterial[Projection projection.Projection](
 	vertSource, fragSource string,
 	window window.Api,
 	assetsService assets.Assets,
 	parameters []program.Parameter,
-	getProjection func(Projection) mgl32.Mat4,
 ) textureMaterial[Projection] {
 	return textureMaterial[Projection]{
 		vertSource: vertSource,
@@ -47,7 +44,6 @@ func newTextureMaterial[Projection any](
 		services: &textureMaterialServices[Projection]{
 			window:        window,
 			assetsService: assetsService,
-			getProjection: getProjection,
 		},
 		parameters: parameters,
 	}
@@ -65,46 +61,41 @@ func (m *textureMaterialServices[Projection]) onFrame(world ecs.World, p program
 		return projection.ErrWorldShouldHaveOneProjection
 	}
 
-	{
-		var projectionComponent Projection
-		if err := world.GetComponent(cameraEntities[0], &projectionComponent); err != nil {
-			return err
-		}
-		projection := m.getProjection(projectionComponent)
-		gl.UniformMatrix4fv(locations.Projection, 1, false, &projection[0])
+	var projectionComponent Projection
+	if err := world.GetComponent(cameraEntities[0], &projectionComponent); err != nil {
+		return err
+	}
+	projection := projectionComponent.Mat4()
+	gl.UniformMatrix4fv(locations.Projection, 1, false, &projection[0])
+
+	var transformComponent transform.Transform
+	if err := world.GetComponent(cameraEntities[0], &transformComponent); err != nil {
+		return errors.Join(errors.New("camera misses transform component"), err)
 	}
 
-	{
-		var transformComponent transform.Transform
-		if err := world.GetComponent(cameraEntities[0], &transformComponent); err != nil {
-			return errors.Join(errors.New("camera misses transform component"), err)
-		}
+	// position := mgl32.Translate3D(
+	// 	transformComponent.Pos.X(),
+	// 	transformComponent.Pos.Y(),
+	// 	transformComponent.Pos.Z(),
+	// )
+	//
+	// rotation := transformComponent.Rotation.Mat4()
+	//
+	// matrices := []mgl32.Mat4{
+	// 	position,
+	// 	rotation,
+	// }
+	// var camera mgl32.Mat4
+	// for i, matrix := range matrices {
+	// 	if i == 0 {
+	// 		camera = matrix
+	// 		continue
+	// 	}
+	// 	camera = camera.Mul4(matrix)
+	// }
+	camera := projectionComponent.ViewMat4(transformComponent)
 
-		position := mgl32.Translate3D(
-			transformComponent.Pos.X(),
-			transformComponent.Pos.Y(),
-			transformComponent.Pos.Z(),
-		)
-
-		rotation := transformComponent.Rotation.
-			// Mul(mgl32.QuatRotate(mgl32.DegToRad(180), mgl32.Vec3{0, 1, 0})).
-			Mat4()
-
-		matrices := []mgl32.Mat4{
-			position,
-			rotation,
-		}
-		var camera mgl32.Mat4
-		for i, matrix := range matrices {
-			if i == 0 {
-				camera = matrix
-				continue
-			}
-			camera = camera.Mul4(matrix)
-		}
-
-		gl.UniformMatrix4fv(locations.Camera, 1, false, &camera[0])
-	}
+	gl.UniformMatrix4fv(locations.Camera, 1, false, &camera[0])
 	return nil
 }
 

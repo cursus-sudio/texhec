@@ -6,7 +6,6 @@ import (
 	"frontend/services/assets"
 	"frontend/services/media/window"
 
-	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -33,24 +32,22 @@ type x struct{}
 func (Pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b assets.AssetsStorageBuilder) assets.AssetsStorageBuilder {
 		b.RegisterAsset(TextureMaterial3D, func() (assets.StorageAsset, error) {
-			material := newTextureMaterial(
+			material := newTextureMaterial[projection.Perspective](
 				vertSource,
 				fragSource,
 				ioc.Get[window.Api](c),
 				ioc.Get[assets.Assets](c),
 				nil,
-				func(component projection.Perspective) mgl32.Mat4 { return component.Mat4() },
 			)
 			return material.Material(), nil
 		})
 		b.RegisterAsset(TextureMaterial2D, func() (assets.StorageAsset, error) {
-			material := newTextureMaterial(
+			material := newTextureMaterial[projection.Ortho](
 				vertSource,
 				fragSource,
 				ioc.Get[window.Api](c),
 				ioc.Get[assets.Assets](c),
 				nil,
-				func(component projection.Ortho) mgl32.Mat4 { return component.Mat4() },
 			)
 			return material.Material(), nil
 		})

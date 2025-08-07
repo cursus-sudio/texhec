@@ -1,10 +1,12 @@
 package window
 
 import (
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
 type Api interface {
+	NormalizeMouseClick(x, y int) mgl32.Vec2
 	Window() *sdl.Window
 	Ctx() sdl.GLContext
 }
@@ -24,5 +26,12 @@ func newApi(
 	}
 }
 
+func (api api) NormalizeMouseClick(x, y int) mgl32.Vec2 {
+	w, h := api.Window().GetSize()
+	return mgl32.Vec2{
+		(2*float32(x)/float32(w) - 1),
+		-(2*float32(y)/float32(h) - 1),
+	}
+}
 func (api api) Window() *sdl.Window { return api.window }
 func (api api) Ctx() sdl.GLContext  { return nil }

@@ -36,10 +36,7 @@ func AddShared(c ioc.Dic, b scenes.SceneBuilder) {
 	b.OnLoad(func(sm scenes.SceneManager, s scenes.Scene, b events.Builder) {
 		logger := ioc.Get[logger.Logger](c)
 		events.Listen(b, func(e sdl.KeyboardEvent) {
-			logger.Info(fmt.Sprintf("keyboard event is %v\nkey is %v\n", e, e.Keysym))
-		})
-
-		events.Listen(b, func(e sdl.KeyboardEvent) {
+			logger.Info(fmt.Sprintf("keyboard event is %v; key is %v", e, e.Keysym.Sym))
 			if e.Keysym.Sym == sdl.K_q {
 				logger.Info("quiting program due to pressing 'Q'")
 				ioc.Get[runtime.Runtime](c).Stop()
@@ -57,10 +54,7 @@ func AddShared(c ioc.Dic, b scenes.SceneBuilder) {
 				} else {
 					window.Window().SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
 				}
-				// window.Window().SetFullscreen(window.Window().)
-				// ioc.Get[runtime.Runtime](c).Stop()
 			}
-			logger.Info(fmt.Sprintf("keyboard event is %v\nkey is %v\n", e, e.Keysym.Sym))
 		})
 	})
 }

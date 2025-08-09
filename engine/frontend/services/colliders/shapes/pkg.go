@@ -2,6 +2,7 @@ package shapes
 
 import (
 	"frontend/services/colliders"
+	"frontend/services/console"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -14,11 +15,14 @@ func Package() Pkg {
 
 func (Pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b colliders.ColliderServiceBuilder) colliders.ColliderServiceBuilder {
-		colliders.AddHandler(b, ellipsoid2DEllipsoid2DHandler)
-		colliders.AddHandler(b, rect2DEllipse2DHandler)
-		colliders.AddHandler(b, rect2DRect2DHandler)
-		// colliders.AddHandler(b, rect2DRayHandler)
-		// colliders.AddHandler(b, ellipse2DRayHandler)
+		cs := newCollidersService(
+			ioc.Get[console.Console](c),
+		)
+		colliders.AddHandler(b, cs.ellipsoid2DEllipsoid2DHandler)
+		colliders.AddHandler(b, cs.rect2DEllipse2DHandler)
+		colliders.AddHandler(b, cs.rect2DRect2DHandler)
+		colliders.AddHandler(b, cs.rect2DRayHandler)
+		colliders.AddHandler(b, cs.ellipse2DRayHandler)
 		// colliders.AddHandler(b, rayRayHandler) // this is not implemented and there should be no reason to use it
 		// implement ray - ellipsoid2d and rect2d handlers
 		return b

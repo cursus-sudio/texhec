@@ -22,6 +22,7 @@ type ShootRaySystem[Projection projection.Projection] struct {
 	console        console.Console
 	distFromCamera float32
 	getEntity      func() ecs.EntityId
+	shootRay       func(shapes.Ray)
 }
 
 func NewShootRaySystem[Projection projection.Projection](
@@ -30,6 +31,7 @@ func NewShootRaySystem[Projection projection.Projection](
 	console console.Console,
 	distFromCamera float32,
 	getEntity func() ecs.EntityId,
+	shootRay func(shapes.Ray),
 ) ShootRaySystem[Projection] {
 	return ShootRaySystem[Projection]{
 		world:          world,
@@ -37,6 +39,7 @@ func NewShootRaySystem[Projection projection.Projection](
 		console:        console,
 		distFromCamera: distFromCamera,
 		getEntity:      func() ecs.EntityId { return getEntity() },
+		shootRay:       shootRay,
 	}
 }
 
@@ -50,10 +53,10 @@ func (system *ShootRaySystem[Projection]) Listen(args ShootRayEvent) error {
 			return projection.ErrWorldShouldHaveOneProjection
 		}
 		camera := cameras[0]
-		if err := system.world.GetComponent(camera, &proj); err != nil {
+		if err := system.world.GetComponents(camera, &proj); err != nil {
 			return err
 		}
-		if err := system.world.GetComponent(camera, &cameraTransform); err != nil {
+		if err := system.world.GetComponents(camera, &cameraTransform); err != nil {
 			return err
 		}
 	}
@@ -63,12 +66,13 @@ func (system *ShootRaySystem[Projection]) Listen(args ShootRayEvent) error {
 	{
 		mousePos := system.window.NormalizeMouseClick(int(args.X), int(args.Y))
 		ray = proj.ShootRay(cameraTransform, mousePos)
+		system.shootRay(ray)
 	}
 
 	{
 		entity := system.getEntity()
 		var trans transform.Transform
-		if err := system.world.GetComponent(entity, &trans); err != nil {
+		if err := system.world.GetComponents(entity, &trans); err != nil {
 			return err
 		}
 

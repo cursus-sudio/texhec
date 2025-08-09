@@ -41,17 +41,19 @@ func (components *componentsImpl) SaveComponent(entityId EntityId, component Com
 	return nil
 }
 
-func (components *componentsImpl) GetComponent(entityId EntityId, componentPointer any) error {
-	componentType := GetComponentPointerType(componentPointer)
-	entity, ok := components.entityComponents[entityId]
-	if !ok {
-		return ErrEntityDoNotExists
+func (components *componentsImpl) GetComponents(entityId EntityId, componentsPointers ...any) error {
+	for _, componentPointer := range componentsPointers {
+		componentType := GetComponentPointerType(componentPointer)
+		entity, ok := components.entityComponents[entityId]
+		if !ok {
+			return ErrEntityDoNotExists
+		}
+		componentValue, ok := entity[componentType]
+		if !ok {
+			return ErrComponentDoNotExists
+		}
+		components.ChangeTo(componentPointer, *componentValue)
 	}
-	componentValue, ok := entity[componentType]
-	if !ok {
-		return ErrComponentDoNotExists
-	}
-	components.ChangeTo(componentPointer, *componentValue)
 	return nil
 }
 

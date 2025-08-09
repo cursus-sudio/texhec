@@ -23,46 +23,27 @@ func NewRenderSystem(
 	}
 }
 
-func (s *RenderSystem) Update(args frames.FrameEvent) error {
-	materials := map[assets.AssetID]material.MaterialCachedAsset{}
-	for _, entity := range s.World.GetEntitiesWithComponents(
-		ecs.GetComponentType(material.Material{}),
-	) {
-		var materialComponent material.Material
-		if err := s.World.GetComponent(entity, &materialComponent); err != nil {
-			continue
-		}
-		for _, materialID := range materialComponent.IDs {
-			materialAsset, err := assets.GetAsset[material.MaterialCachedAsset](s.Assets, materialID)
-			if err != nil {
-				return err
-			}
-			materials[materialID] = materialAsset
-		}
-	}
+type renderableEntity struct {
+	Id   ecs.EntityId
+	Mesh mesh.MeshCachedAsset
+}
 
-	for _, material := range materials {
-		if err := material.OnFrame(s.World); err != nil {
-			return err
-		}
-	}
+type renderable struct {
+	Material material.MaterialCachedAsset
+	Entities []renderableEntity
+}
+
+func (s *RenderSystem) Update(args frames.FrameEvent) error {
+	renderables := map[assets.AssetID]renderable{}
 
 	renderableEntities := s.World.GetEntitiesWithComponents(
 		ecs.GetComponentType(mesh.Mesh{}),
 		ecs.GetComponentType(material.Material{}),
 	)
-	for _, entity := range renderableEntities {
-		var meshComponent mesh.Mesh
-		if err := s.World.GetComponent(entity, &meshComponent); err != nil {
-			continue
-		}
-		meshAsset, err := assets.GetAsset[mesh.MeshCachedAsset](s.Assets, meshComponent.ID)
-		if err != nil {
-			return err
-		}
 
+	for _, entity := range renderableEntities {
 		var materialComponent material.Material
-		if err := s.World.GetComponent(entity, &materialComponent); err != nil {
+		if err := s.World.GetComponents(entity, &materialComponent); err != nil {
 			continue
 		}
 		for _, materialID := range materialComponent.IDs {
@@ -71,11 +52,38 @@ func (s *RenderSystem) Update(args frames.FrameEvent) error {
 				return err
 			}
 
-			if err := materialAsset.UseForEntity(s.World, entity); err != nil {
+			var meshComponent mesh.Mesh
+			if err := s.World.GetComponents(entity, &meshComponent); err != nil {
+				continue
+			}
+
+			meshAsset, err := assets.GetAsset[mesh.MeshCachedAsset](s.Assets, meshComponent.ID)
+			if err != nil {
 				return err
 			}
 
-			meshAsset.VAO().Draw()
+			if existing, ok := renderables[materialID]; ok {
+				existing.Entities = append(existing.Entities, renderableEntity{entity, meshAsset})
+				renderables[materialID] = existing
+			} else {
+				renderables[materialID] = renderable{
+					materialAsset,
+					[]renderableEntity{{entity, meshAsset}},
+				}
+			}
+		}
+	}
+
+	for _, material := range renderables {
+		if err := material.Material.OnFrame(s.World); err != nil {
+			return err
+		}
+
+		for _, entity := range material.Entities {
+			if err := material.Material.UseForEntity(s.World, entity.Id); err != nil {
+				return err
+			}
+			entity.Mesh.VAO().Draw()
 		}
 	}
 

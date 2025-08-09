@@ -7,6 +7,7 @@ import (
 
 type Api interface {
 	NormalizeMouseClick(x, y int) mgl32.Vec2
+	GetMousePos() (x, y int)
 	Window() *sdl.Window
 	Ctx() sdl.GLContext
 }
@@ -32,6 +33,10 @@ func (api api) NormalizeMouseClick(x, y int) mgl32.Vec2 {
 		(2*float32(x)/float32(w) - 1),
 		-(2*float32(y)/float32(h) - 1),
 	}
+}
+func (api api) GetMousePos() (int, int) {
+	x, y, _ := sdl.GetMouseState()
+	return int(x), int(y)
 }
 func (api api) Window() *sdl.Window { return api.window }
 func (api api) Ctx() sdl.GLContext  { return nil }

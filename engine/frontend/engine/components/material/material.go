@@ -1,10 +1,15 @@
 package material
 
 import (
+	"errors"
 	"frontend/services/assets"
 	"frontend/services/ecs"
 	"frontend/services/graphics/program"
 	"frontend/services/graphics/shader"
+)
+
+var (
+	ErrHaveToCallOnFrame error = errors.New("has to call on frame")
 )
 
 type Material struct {

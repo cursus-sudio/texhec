@@ -16,7 +16,7 @@ func TestComponents(t *testing.T) {
 	secondComponent := Component{Counter: 8}
 
 	componentType := ecs.GetComponentType(component)
-	if err := world.GetComponent(ecs.EntityId{}, &componentType); err != ecs.ErrEntityDoNotExists {
+	if err := world.GetComponents(ecs.EntityId{}, &componentType); err != ecs.ErrEntityDoNotExists {
 		t.Errorf("when retrieving component from not existing entity do not got ErrEntityDoNotExists error")
 	}
 
@@ -30,7 +30,7 @@ func TestComponents(t *testing.T) {
 	}
 
 	retrievedComponent := Component{}
-	if err := world.GetComponent(entityId, &retrievedComponent); err != nil {
+	if err := world.GetComponents(entityId, &retrievedComponent); err != nil {
 		t.Errorf("unexpected error when retrieving component")
 	}
 
@@ -46,7 +46,7 @@ func TestComponents(t *testing.T) {
 		t.Errorf("when saving component got unexpected error")
 	}
 
-	if err := world.GetComponent(entityId, &retrievedComponent); err != nil {
+	if err := world.GetComponents(entityId, &retrievedComponent); err != nil {
 		t.Errorf("unexpected error when retrieving component")
 	}
 
@@ -56,14 +56,14 @@ func TestComponents(t *testing.T) {
 
 	world.RemoveComponent(entityId, componentType)
 
-	if err := world.GetComponent(entityId, &retrievedComponent); err != ecs.ErrComponentDoNotExists {
+	if err := world.GetComponents(entityId, &retrievedComponent); err != ecs.ErrComponentDoNotExists {
 		t.Errorf("retrieving removed component didn't return ecs.ErrComponentDoNotExists")
 	}
 
 	world.SaveComponent(entityId, component)
 	world.RemoveEntity(entityId)
 
-	if err := world.GetComponent(entityId, &retrievedComponent); err != ecs.ErrEntityDoNotExists {
+	if err := world.GetComponents(entityId, &retrievedComponent); err != ecs.ErrEntityDoNotExists {
 		t.Errorf("retrieving component from removed entity didn't return ecs.ErrEntityDoNotExists")
 	}
 }

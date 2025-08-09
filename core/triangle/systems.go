@@ -24,16 +24,12 @@ func (s *ChangeTransformOverTimeSystem) Update(args frames.FrameEvent) {
 		ecs.GetComponentType(transform.Transform{}),
 	) {
 		var changeTransformOverTimeComponent ChangeTransformOverTimeComponent
-		if err := s.World.GetComponent(entity, &changeTransformOverTimeComponent); err != nil {
+		var transformComponent transform.Transform
+		if err := s.World.GetComponents(entity, &changeTransformOverTimeComponent, &transformComponent); err != nil {
 			continue
 		}
 		changeTransformOverTimeComponent.T += args.Delta
 		t := changeTransformOverTimeComponent.T
-
-		var transformComponent transform.Transform
-		if err := s.World.GetComponent(entity, &transformComponent); err != nil {
-			continue
-		}
 
 		radians := mgl32.DegToRad(float32(t.Seconds()) * 100)
 		rotation := mgl32.QuatIdent().

@@ -31,10 +31,10 @@ func (s ray) Rotation() mgl32.Quat {
 	return mgl32.QuatRotate(angle, axis)
 }
 
-func NewRay(pos mgl32.Vec3, rotation mgl32.Vec3) Ray {
+func NewRay(pos mgl32.Vec3, direction mgl32.Vec3) Ray {
 	return Ray{ray{
 		Pos:       pos,
-		Direction: rotation,
+		Direction: direction.Normalize(),
 	}}
 }
 

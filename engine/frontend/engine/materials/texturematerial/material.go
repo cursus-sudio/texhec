@@ -12,18 +12,11 @@ import (
 	"frontend/services/media/window"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type locations struct {
-	Model      int32 `uniform:"model"`
-	Camera     int32 `uniform:"camera"`
-	Projection int32 `uniform:"projection"`
-}
-
-type textureMaterialServices[Projection projection.Projection] struct {
-	window        window.Api
-	assetsService assets.Assets
-	locations     locations
+	Mvp int32 `uniform:"mvp"`
 }
 
 type textureMaterial[Projection projection.Projection] struct {
@@ -49,60 +42,61 @@ func newTextureMaterial[Projection projection.Projection](
 	}
 }
 
-func (m *textureMaterialServices[Projection]) onFrame(world ecs.World, p program.Program) error {
-	locations, err := program.GetProgramLocations[locations](p)
-	if err != nil {
-		return err
-	}
+func (m *textureMaterial[Projection]) Material() material.MaterialStorageAsset {
+	return material.NewMaterialStorageAsset(
+		m.vertSource,
+		m.fragSource,
+		m.services.onFrame,
+		m.services.useForEntity,
+		m.parameters,
+	)
+}
 
+//
+
+type textureMaterialServices[Projection projection.Projection] struct {
+	window        window.Api
+	assetsService assets.Assets
+	locations     locations
+
+	mvp *mgl32.Mat4
+}
+
+func (m *textureMaterialServices[Projection]) onFrame(world ecs.World, _ program.Program) error {
 	var projectionZero Projection
 	cameraEntities := world.GetEntitiesWithComponents(ecs.GetComponentType(projectionZero))
 	if len(cameraEntities) != 1 {
 		return projection.ErrWorldShouldHaveOneProjection
 	}
+	camera := cameraEntities[0]
 
 	var projectionComponent Projection
-	if err := world.GetComponent(cameraEntities[0], &projectionComponent); err != nil {
+	if err := world.GetComponents(camera, &projectionComponent); err != nil {
 		return err
 	}
-	projection := projectionComponent.Mat4()
-	gl.UniformMatrix4fv(locations.Projection, 1, false, &projection[0])
 
-	var transformComponent transform.Transform
-	if err := world.GetComponent(cameraEntities[0], &transformComponent); err != nil {
+	var cameraTransformComponent transform.Transform
+	if err := world.GetComponents(cameraEntities[0], &cameraTransformComponent); err != nil {
 		return errors.Join(errors.New("camera misses transform component"), err)
 	}
 
-	// position := mgl32.Translate3D(
-	// 	transformComponent.Pos.X(),
-	// 	transformComponent.Pos.Y(),
-	// 	transformComponent.Pos.Z(),
-	// )
-	//
-	// rotation := transformComponent.Rotation.Mat4()
-	//
-	// matrices := []mgl32.Mat4{
-	// 	position,
-	// 	rotation,
-	// }
-	// var camera mgl32.Mat4
-	// for i, matrix := range matrices {
-	// 	if i == 0 {
-	// 		camera = matrix
-	// 		continue
-	// 	}
-	// 	camera = camera.Mul4(matrix)
-	// }
-	camera := projectionComponent.ViewMat4(transformComponent)
+	projectionMat4 := projectionComponent.Mat4()
+	cameraTransformMat4 := projectionComponent.ViewMat4(cameraTransformComponent)
 
-	gl.UniformMatrix4fv(locations.Camera, 1, false, &camera[0])
+	mvp := projectionMat4.Mul4(cameraTransformMat4)
+	m.mvp = &mvp
+
 	return nil
 }
 
 func (m *textureMaterialServices[Projection]) useForEntity(world ecs.World, p program.Program, entityId ecs.EntityId) error {
+	if m.mvp == nil {
+		return material.ErrHaveToCallOnFrame
+	}
+
 	// texture
 	var textureComponent texture.Texture
-	if err := world.GetComponent(entityId, &textureComponent); err != nil {
+	if err := world.GetComponents(entityId, &textureComponent); err != nil {
 		return err
 	}
 	textureAsset, err := assets.GetAsset[texture.TextureCachedAsset](m.assetsService, textureComponent.ID)
@@ -112,7 +106,7 @@ func (m *textureMaterialServices[Projection]) useForEntity(world ecs.World, p pr
 
 	// transform
 	var transformComponent transform.Transform
-	if err := world.GetComponent(entityId, &transformComponent); err != nil {
+	if err := world.GetComponents(entityId, &transformComponent); err != nil {
 		return err
 	}
 
@@ -123,18 +117,9 @@ func (m *textureMaterialServices[Projection]) useForEntity(world ecs.World, p pr
 	}
 
 	model := transformComponent.Mat4()
-	gl.UniformMatrix4fv(locations.Model, 1, false, &model[0])
+	mvp := m.mvp.Mul4(model)
+	gl.UniformMatrix4fv(locations.Mvp, 1, false, &mvp[0])
 
 	textureAsset.Texture().Use()
 	return nil
-}
-
-func (m *textureMaterial[Projection]) Material() material.MaterialStorageAsset {
-	return material.NewMaterialStorageAsset(
-		m.vertSource,
-		m.fragSource,
-		m.services.onFrame,
-		m.services.useForEntity,
-		m.parameters,
-	)
 }

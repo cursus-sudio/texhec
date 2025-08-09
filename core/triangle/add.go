@@ -2,6 +2,7 @@ package triangle
 
 import (
 	_ "embed"
+	"fmt"
 	"frontend/engine/components/material"
 	"frontend/engine/components/mesh"
 	"frontend/engine/components/projection"
@@ -9,12 +10,15 @@ import (
 	"frontend/engine/components/transform"
 	"frontend/engine/materials/texturematerial"
 	inputssystem "frontend/engine/systems/inputs"
-	"frontend/engine/systems/toysystems"
+	"frontend/engine/systems/mouseray"
 	"frontend/services/assets"
+	"frontend/services/colliders"
+	"frontend/services/colliders/shapes"
 	"frontend/services/console"
 	"frontend/services/ecs"
 	"frontend/services/frames"
 	"frontend/services/media/window"
+	"shared/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/events"
@@ -29,6 +33,8 @@ const (
 )
 
 func AddToWorld(c ioc.Dic, world ecs.World, b events.Builder) {
+	events.Listen(b, inputssystem.NewResizeSystem().Listen)
+
 	{
 		width, height := ioc.Get[window.Api](c).Window().GetSize()
 		camera := world.NewEntity()
@@ -63,50 +69,160 @@ func AddToWorld(c ioc.Dic, world ecs.World, b events.Builder) {
 	// 	world.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
 	// 	world.SaveComponent(entity, material.NewMaterial(
 	// 		texturematerial.TextureMaterial3D,
-	// 		// texturematerial.TextureMaterial2D,
+	// 		texturematerial.TextureMaterial2D,
 	// 	))
 	// 	world.SaveComponent(entity, texture.NewTexture(TextureAssetID))
 	// 	world.SaveComponent(entity, ChangeTransformOverTimeComponent{})
-	// 	events.Listen(b, (&ChangeTransformOverTimeSystem{World: world}).Update)
+	// 	// events.Listen(b, (&ChangeTransformOverTimeSystem{World: world}).Update)
 	// }
 
-	events.Listen(b, inputssystem.NewResizeSystem().Listen)
+	type OnHover struct{ Events []any }
+	{
+		planeEntity := world.NewEntity()
+
+		world.SaveComponent(planeEntity, transform.NewTransform().
+			SetPos([3]float32{0, 0, 0}).
+			SetSize([3]float32{100, 100, 0}))
+		world.SaveComponent(planeEntity, mesh.NewMesh(MeshAssetID))
+		world.SaveComponent(planeEntity, material.NewMaterial(texturematerial.TextureMaterial2D))
+		world.SaveComponent(planeEntity, texture.NewTexture(TextureAssetID))
+		world.SaveComponent(planeEntity, colliders.NewCollider([]colliders.Shape{
+			shapes.NewRect2D(transform.NewTransform().SetSize([3]float32{1, 1})),
+		}))
+
+		type Shit struct{}
+		world.SaveComponent(planeEntity, OnHover{Events: []any{Shit{}}})
+		events.Listen(b, func(e Shit) {
+			ioc.Get[console.Console](c).Print("damn it really got pressed\n")
+		})
+	}
 
 	{
-		entity := world.NewEntity()
-
-		world.SaveComponent(entity, transform.NewTransform().
-			SetPos(mgl32.Vec3{0, 0, 100}).
-			SetSize(mgl32.Vec3{20, 20, 10000}))
-		world.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
-		world.SaveComponent(entity, material.NewMaterial(texturematerial.TextureMaterial3D))
-		// world.SaveComponent(entity, material.NewMaterial(texturematerial.TextureMaterial2D))
-		world.SaveComponent(entity, texture.NewTexture(TextureAssetID))
-
-		onClickSystem := toysystems.NewShootRaySystem[projection.Perspective](
-			// onClickSystem := inputssystem.NewOnClickSystem[projection.Ortho](
+		system := mouseray.NewCameraRaySystem[projection.Ortho](
 			world,
+			ioc.Get[colliders.ColliderService](c),
 			ioc.Get[window.Api](c),
-			ioc.Get[console.Console](c),
-			100,
-			func() ecs.EntityId { return entity },
+			b.Events(),
+			[]ecs.ComponentType{},
 		)
-
-		events.Listen(b, func(event toysystems.ShootRayEvent) {
-			if err := onClickSystem.Listen(event); err != nil {
-				panic(err)
+		var hoversOver *ecs.EntityId
+		events.Listen(b, func(event mouseray.RayChangedTargetEvent[projection.Ortho]) {
+			hoversOver = event.EntityID
+		})
+		events.Listen(b, func(event frames.FrameEvent) {
+			if hoversOver == nil {
+				ioc.Get[console.Console](c).Print("hovers over nothing\n")
+				return
+			}
+			ioc.Get[console.Console](c).Print(fmt.Sprintf("hovers over %v\n", *hoversOver))
+			var onClick OnHover
+			if err := world.GetComponents(*hoversOver, &onClick); err != nil {
+				return
+			}
+			for _, event := range onClick.Events {
+				events.EmitAny(b.Events(), event)
 			}
 		})
-	}
-
-	{
-		events.Listen(b, func(event sdl.MouseButtonEvent) {
-			events.Emit(
-				b.Events(),
-				toysystems.NewShootRayEvent(int(event.X), int(event.Y)),
-			)
+		events.Listen(b, func(e mouseray.ShootRayEvent[projection.Ortho]) {
+			if err := system.Listen(e); err != nil {
+				ioc.Get[logger.Logger](c).Error(err)
+			}
+		})
+		events.Listen(b, func(e sdl.MouseMotionEvent) {
+			events.Emit(b.Events(), mouseray.NewShootRayEvent[projection.Ortho]())
+		})
+		events.Listen(b, func(e sdl.KeyboardEvent) {
+			events.Emit(b.Events(), mouseray.NewShootRayEvent[projection.Ortho]())
 		})
 	}
+
+	// {
+	// 	newRay := func(materialAsset assets.AssetID) ecs.EntityId {
+	// 		rayEntity := world.NewEntity()
+	// 		world.SaveComponent(rayEntity, transform.NewTransform().
+	// 			SetPos(mgl32.Vec3{0, 0, 100}).
+	// 			SetSize(mgl32.Vec3{20, 20, 10000}))
+	// 		world.SaveComponent(rayEntity, mesh.NewMesh(MeshAssetID))
+	// 		world.SaveComponent(rayEntity, material.NewMaterial(materialAsset))
+	// 		world.SaveComponent(rayEntity, texture.NewTexture(TextureAssetID))
+	// 		return rayEntity
+	// 	}
+	//
+	// 	rayEntity := newRay(texturematerial.TextureMaterial2D)
+	// 	ray := shapes.NewRay(mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
+	//
+	// 	// shootRaySystem := toysystems.NewShootRaySystem[projection.Perspective](
+	// 	shootRaySystem := toysystems.NewShootRaySystem[projection.Ortho](
+	// 		world,
+	// 		ioc.Get[window.Api](c),
+	// 		ioc.Get[console.Console](c),
+	// 		100,
+	// 		func() ecs.EntityId { return rayEntity },
+	// 		func(shootRay shapes.Ray) { ray = shootRay },
+	// 	)
+	//
+	// 	events.Listen(b, func(event frames.FrameEvent) {
+	// 		// services
+	// 		collider := ioc.Get[colliders.ColliderService](c)
+	// 		logger := ioc.Get[logger.Logger](c)
+	// 		eventsManager := ioc.Get[events.Events](c)
+	//
+	// 		// ray collider
+	// 		rayCollider := colliders.NewCollider([]colliders.Shape{ray})
+	//
+	// 		// all other colliders
+	// 		entities := world.GetEntitiesWithComponents(
+	// 			ecs.GetComponentType(transform.Transform{}),
+	// 			ecs.GetComponentType(colliders.Collider{}),
+	// 			ecs.GetComponentType(OnClick{}),
+	// 		)
+	// 		for _, entity := range entities {
+	// 			var (
+	// 				transform      transform.Transform
+	// 				entityCollider colliders.Collider
+	// 				onClick        OnClick
+	// 			)
+	// 			if err := world.GetComponents(entity,
+	// 				&entityCollider,
+	// 				&transform,
+	// 				&onClick,
+	// 			); err != nil {
+	// 				continue
+	// 			}
+	// 			entityCollider = entityCollider.Apply(transform)
+	//
+	// 			collision, err := collider.Collides(rayCollider, entityCollider)
+	// 			if err != nil {
+	// 				logger.Error(err)
+	// 				continue
+	// 			}
+	// 			if collision == nil {
+	// 				continue
+	// 			}
+	// 			for _, event := range onClick.Events {
+	// 				events.EmitAny(eventsManager, event)
+	// 			}
+	// 		}
+	// 	})
+	//
+	// 	events.Listen(b, func(event toysystems.ShootRayEvent) {
+	// 		if err := shootRaySystem.Listen(event); err != nil {
+	// 			panic(err)
+	// 		}
+	// 	})
+	// }
+	//
+	// {
+	// 	isDown := false
+	// 	events.Listen(b, func(event sdl.MouseButtonEvent) {
+	// 		isDown = event.State == sdl.PRESSED
+	// 	})
+	// 	events.Listen(b, func(event sdl.MouseMotionEvent) {
+	// 		if isDown {
+	// 			events.Emit(b.Events(), toysystems.NewShootRayEvent(int(event.X), int(event.Y)))
+	// 		}
+	// 	})
+	// }
 
 	{
 		wPressed := false
@@ -134,7 +250,7 @@ func AddToWorld(c ioc.Dic, world ecs.World, b events.Builder) {
 			}
 			camera := cameras[0]
 			var cameraTransform transform.Transform
-			if err := world.GetComponent(camera, &cameraTransform); err != nil {
+			if err := world.GetComponents(camera, &cameraTransform); err != nil {
 				return err
 			}
 			rotation := cameraTransform.Rotation

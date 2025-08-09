@@ -67,7 +67,7 @@ func (system *toggleSystem) Update(args frames.FrameEvent) {
 		ecs.GetComponentType(someComponent{}),
 	) {
 		component := someComponent{}
-		if err := system.World.GetComponent(entity, &component); err != nil {
+		if err := system.World.GetComponents(entity, &component); err != nil {
 			continue
 		}
 		if component.PastTime < system.ToggleTreshold {
@@ -111,7 +111,7 @@ func (system *someSystem) Update(args frames.FrameEvent) {
 
 	for _, entity := range system.World.GetEntitiesWithComponents(ecs.GetComponentType(someComponent{})) {
 		component := someComponent{}
-		if err := system.World.GetComponent(entity, &component); err != nil {
+		if err := system.World.GetComponents(entity, &component); err != nil {
 			continue
 		}
 		component.PastTime += args.Delta
@@ -137,12 +137,17 @@ func (system *someSystem) Update(args frames.FrameEvent) {
 		}
 	}
 
-	text += "entities found: {\n"
-	for _, entity := range system.World.GetEntities() {
-		text += fmt.Sprintf(" - %s\n", entity)
+	entities := system.World.GetEntities()
+	entitiesLen := len(entities)
+	if entitiesLen < 10 {
+		text += "entities found: {\n"
+		for _, entity := range system.World.GetEntities() {
+			text += fmt.Sprintf(" - %s\n", entity)
+		}
+		text += "}\n"
+		text += "\n"
 	}
-	text += "}\n"
-	text += "\n"
+	text += fmt.Sprintf("there are %d entities\n", entitiesLen)
 
 	system.Console.Print(text)
 	system.Console.Flush()

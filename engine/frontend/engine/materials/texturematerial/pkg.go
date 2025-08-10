@@ -2,7 +2,6 @@ package texturematerial
 
 import (
 	_ "embed"
-	"frontend/engine/components/projection"
 	"frontend/services/assets"
 	"frontend/services/media/window"
 
@@ -22,8 +21,7 @@ func Package() Pkg {
 }
 
 var (
-	TextureMaterial2D assets.AssetID = "materials/texturematerial2d"
-	TextureMaterial3D assets.AssetID = "materials/texturematerial3d"
+	TextureMaterial assets.AssetID = "materials/texturematerial"
 )
 
 type X[T ~struct{}] struct{}
@@ -31,18 +29,8 @@ type x struct{}
 
 func (Pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b assets.AssetsStorageBuilder) assets.AssetsStorageBuilder {
-		b.RegisterAsset(TextureMaterial3D, func() (assets.StorageAsset, error) {
-			material := newTextureMaterial[projection.Perspective](
-				vertSource,
-				fragSource,
-				ioc.Get[window.Api](c),
-				ioc.Get[assets.Assets](c),
-				nil,
-			)
-			return material.Material(), nil
-		})
-		b.RegisterAsset(TextureMaterial2D, func() (assets.StorageAsset, error) {
-			material := newTextureMaterial[projection.Ortho](
+		b.RegisterAsset(TextureMaterial, func() (assets.StorageAsset, error) {
+			material := newTextureMaterial(
 				vertSource,
 				fragSource,
 				ioc.Get[window.Api](c),

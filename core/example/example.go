@@ -58,9 +58,9 @@ func NewToggledSystem(
 	}
 }
 
-func (system *toggleSystem) Update(args frames.FrameEvent) {
+func (system *toggleSystem) Update(args frames.FrameEvent) error {
 	if system.Toggled {
-		return
+		return nil
 	}
 
 	for _, entity := range system.World.GetEntitiesWithComponents(
@@ -71,12 +71,13 @@ func (system *toggleSystem) Update(args frames.FrameEvent) {
 			continue
 		}
 		if component.PastTime < system.ToggleTreshold {
-			return
+			return nil
 		}
 	}
 
 	system.SceneManager.LoadScene(system.Scene2)
 	system.Toggled = true
+	return nil
 }
 
 //
@@ -104,7 +105,7 @@ func NewSomeSystem(
 	}
 }
 
-func (system *someSystem) Update(args frames.FrameEvent) {
+func (system *someSystem) Update(args frames.FrameEvent) error {
 	format := "02-01-2006 15:04:05"
 	text := "----------------------------------------------------------------\n"
 	text += fmt.Sprintf("now %s\n", time.Now().Format(format))
@@ -151,6 +152,7 @@ func (system *someSystem) Update(args frames.FrameEvent) {
 
 	system.Console.Print(text)
 	system.Console.Flush()
+	return nil
 }
 
 //

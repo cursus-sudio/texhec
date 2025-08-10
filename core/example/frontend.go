@@ -3,10 +3,15 @@ package example
 import (
 	"core/triangle"
 	"fmt"
+	"frontend/engine/components/mouse"
+	"frontend/engine/components/projection"
 	inputssystem "frontend/engine/systems/inputs"
+	"frontend/engine/systems/mergedsystems"
+	"frontend/engine/systems/mouseray"
 	"frontend/engine/systems/render"
 	"frontend/services/assets"
 	"frontend/services/backendconnection"
+	"frontend/services/colliders"
 	"frontend/services/console"
 	"frontend/services/ecs"
 	"frontend/services/frames"
@@ -65,11 +70,46 @@ type SharedSystems struct {
 	flushSystem  render.FlushSystem
 }
 
-func NewSharedDomain(c ioc.Dic, world ecs.World, b events.Builder) SharedSystems {
-	triangle.AddToWorld(c, world, b)
+func NewSharedDomain(
+	c ioc.Dic,
+	world ecs.World,
+	b events.Builder,
+	frameSystem mergedsystems.MergedSystems[frames.FrameEvent],
+) SharedSystems {
+	triangle.AddToWorld(c, world, b, frameSystem)
 	for i := 0; i < 1; i++ {
 		entity := world.NewEntity()
 		world.SaveComponent(entity, newSomeComponent())
+	}
+
+	{
+		cameraRaySystem := mouseray.NewCameraRaySystem(
+			world,
+			ioc.Get[colliders.ColliderService](c),
+			ioc.Get[window.Api](c),
+			b.Events(),
+			[]ecs.ComponentType{ecs.GetComponentType(projection.Ortho{}), ecs.GetComponentType(projection.Perspective{})},
+			[]ecs.ComponentType{ecs.GetComponentType(mouse.MouseEvents{})},
+		)
+		shootRaySystem := mergedsystems.NewMergedSystems[mouseray.ShootRayEvent](func(err error) {
+			ioc.Get[logger.Logger](c).Error(err)
+		})
+		shootRaySystem.AddSystems(cameraRaySystem.Listen)
+		events.Listen(b, shootRaySystem.Listen)
+
+		hoverSystem := inputssystem.NewHoverSystem(world, b.Events())
+		events.Listen(b, hoverSystem.Listen)
+
+		clickSystem := inputssystem.NewClickSystem(world, b.Events())
+		events.Listen(b, clickSystem.Listen)
+
+		events.Listen(b, func(event sdl.MouseMotionEvent) {
+			events.Emit(b.Events(), mouseray.NewShootRayEvent())
+		})
+		events.Listen(b, func(event sdl.KeyboardEvent) {
+			events.Emit(b.Events(), mouseray.NewShootRayEvent())
+		})
+		events.Listen(b, inputssystem.NewResizeSystem().Listen)
 	}
 	return SharedSystems{
 		inputsSystem: inputssystem.NewInputsSystem(ioc.Get[inputs.Api](c)),
@@ -102,25 +142,25 @@ func AddSceneOne(b ioc.Builder) {
 		AddShared(c, sceneBuilder)
 		sceneBuilder.OnLoad(func(sceneManager scenes.SceneManager, s scenes.Scene, b events.Builder) {
 			world := ecs.World(ioc.Get[SceneOneWorld](c))
-			sharedSystems := NewSharedDomain(c, world, b)
-
 			someSystem := NewSomeSystem(
 				sceneManager,
 				world,
 				ioc.Get[backendconnection.Backend](c).Connection(),
 				ioc.Get[console.Console](c),
 			)
-
 			toggleSystem := NewToggledSystem(sceneManager, world, scene2Id, time.Second)
 
-			events.Listen(b, func(e frames.FrameEvent) {
-				sharedSystems.BeforeDomain(e)
-				someSystem.Update(e)
-				toggleSystem.Update(e)
-				if err := sharedSystems.AfterDomain(e); err != nil {
-					panic(err)
-				}
+			frameSystem := mergedsystems.NewMergedSystems[frames.FrameEvent](func(err error) {
+				ioc.Get[logger.Logger](c).Error(err)
 			})
+			sharedSystems := NewSharedDomain(c, world, b, frameSystem)
+			frameSystem.AddSystems(
+				sharedSystems.BeforeDomain,
+				someSystem.Update,
+				toggleSystem.Update,
+				sharedSystems.AfterDomain,
+			)
+			events.Listen(b, frameSystem.Listen)
 		})
 		return sceneBuilder
 	})
@@ -140,7 +180,9 @@ func AddSceneTwo(b ioc.Builder) {
 		AddShared(c, sceneBuilder)
 		sceneBuilder.OnLoad(func(sceneManager scenes.SceneManager, s scenes.Scene, b events.Builder) {
 			var world ecs.World = ioc.Get[SceneTwoWorld](c)
-			sharedSystems := NewSharedDomain(c, world, b)
+			frameSystem := mergedsystems.NewMergedSystems[frames.FrameEvent](func(err error) {
+				ioc.Get[logger.Logger](c).Error(err)
+			})
 
 			someSystem := NewSomeSystem(
 				sceneManager,
@@ -148,16 +190,15 @@ func AddSceneTwo(b ioc.Builder) {
 				ioc.Get[backendconnection.Backend](c).Connection(),
 				ioc.Get[console.Console](c),
 			)
+			sharedSystems := NewSharedDomain(c, world, b, frameSystem)
 			// toggleSystem := NewToggledSystem(sceneManager, world, scene1Id, time.Second*3)
+			frameSystem.AddSystems(
+				sharedSystems.BeforeDomain,
+				someSystem.Update,
+				sharedSystems.AfterDomain,
+			)
 
-			events.Listen(b, func(e frames.FrameEvent) {
-				sharedSystems.BeforeDomain(e)
-				someSystem.Update(e)
-				// toggleSystem.Update(e)
-				if err := sharedSystems.AfterDomain(e); err != nil {
-					panic(err)
-				}
-			})
+			events.Listen(b, frameSystem.Listen)
 		})
 
 		return sceneBuilder

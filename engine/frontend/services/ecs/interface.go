@@ -58,6 +58,7 @@ type componentsInterface interface {
 	// - ErrComponentDoNotExists
 	// - ErrEntityDoNotExists
 	GetComponents(entityId EntityId, componentsPointers ...any) error
+	GetComponentByType(entityId EntityId, componentType ComponentType) (any, error)
 	RemoveComponent(EntityId, ComponentType)
 
 	// returns entities with all listed component types

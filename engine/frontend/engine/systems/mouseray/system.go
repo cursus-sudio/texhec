@@ -12,39 +12,44 @@ import (
 	"github.com/ogiusek/events"
 )
 
-type ShootRayEvent[Projection projection.Projection] struct{}
+type ShootRayEvent struct{}
 
-func NewShootRayEvent[Projection projection.Projection]() ShootRayEvent[Projection] {
-	return ShootRayEvent[Projection]{}
+func NewShootRayEvent() ShootRayEvent {
+	return ShootRayEvent{}
 }
 
-type RayChangedTargetEvent[Projection projection.Projection] struct {
-	EntityID *ecs.EntityId
+type RayChangedTargetEvent struct {
+	ProjectionType ecs.ComponentType
+	EntityID       *ecs.EntityId
 }
 
-type CameraRaySystem[Projection projection.Projection] struct {
+type CameraRaySystem struct {
 	world                  ecs.World
 	collider               colliders.ColliderService
 	window                 window.Api
 	events                 events.Events
 	requiredComponentTypes []ecs.ComponentType
 
-	hoversOverEntity *ecs.EntityId
+	projectionTypes   []ecs.ComponentType
+	hoversOverEntites map[ecs.ComponentType]ecs.EntityId
 }
 
-func NewCameraRaySystem[Projection projection.Projection](
+func NewCameraRaySystem(
 	world ecs.World,
 	collider colliders.ColliderService,
 	window window.Api,
 	events events.Events,
+	cameraProjections []ecs.ComponentType,
 	requiredComponentTypes []ecs.ComponentType,
-) CameraRaySystem[Projection] {
-	return CameraRaySystem[Projection]{
+) CameraRaySystem {
+	return CameraRaySystem{
 		world:                  world,
 		collider:               collider,
 		window:                 window,
 		events:                 events,
+		projectionTypes:        cameraProjections,
 		requiredComponentTypes: requiredComponentTypes,
+		hoversOverEntites:      map[ecs.ComponentType]ecs.EntityId{},
 	}
 }
 
@@ -53,108 +58,118 @@ func getDist(x1, x2 mgl32.Vec3) float32 {
 	return pow2(x1[0]-x2[0]) + pow2(x1[1]-x2[1]) + pow2(x1[2]-x2[2])
 }
 
-type object[Projection projection.Projection] struct {
+type object struct {
 	Dist     float32
 	EntityID ecs.EntityId
 }
 
-func (s *CameraRaySystem[Projection]) Listen(args ShootRayEvent[Projection]) error {
-	var cameraTransform transform.Transform
-	var ray shapes.Ray
-	{
-		var proj Projection
-		cameras := s.world.GetEntitiesWithComponents(
-			ecs.GetComponentPointerType((*Projection)(nil)),
+func (s *CameraRaySystem) Listen(args ShootRayEvent) error {
+	for _, projectionType := range s.projectionTypes {
+		var cameraTransform transform.Transform
+		var ray shapes.Ray
+		{
+			cameras := s.world.GetEntitiesWithComponents(projectionType)
+			if len(cameras) != 1 {
+				return projection.ErrWorldShouldHaveOneProjection
+			}
+			camera := cameras[0]
+			if err := s.world.GetComponents(camera, &cameraTransform); err != nil {
+				return err
+			}
+			anyProj, err := s.world.GetComponentByType(camera, projectionType)
+			if err != nil {
+				return err
+			}
+			proj, ok := anyProj.(projection.Projection)
+			if !ok {
+				return projection.ErrExpectedUsedProjectionToImplementProjection
+			}
+
+			mousePos := s.window.NormalizeMouseClick(s.window.GetMousePos())
+			ray = proj.ShootRay(cameraTransform, mousePos)
+		}
+
+		rayCollider := colliders.NewCollider([]colliders.Shape{ray})
+
+		entities := s.world.GetEntitiesWithComponents(
+			append(
+				s.requiredComponentTypes,
+				ecs.GetComponentType(transform.Transform{}),
+				ecs.GetComponentType(colliders.Collider{}),
+				ecs.GetComponentType(projection.UsedProjection{}),
+			)...,
 		)
-		if len(cameras) != 1 {
-			return projection.ErrWorldShouldHaveOneProjection
-		}
-		camera := cameras[0]
-		if err := s.world.GetComponents(camera, &proj, &cameraTransform); err != nil {
-			return err
-		}
-
-		// s.window.
-		mousePos := s.window.NormalizeMouseClick(s.window.GetMousePos())
-		ray = proj.ShootRay(cameraTransform, mousePos)
-	}
-
-	rayCollider := colliders.NewCollider([]colliders.Shape{ray})
-
-	entities := s.world.GetEntitiesWithComponents(
-		append(
-			s.requiredComponentTypes,
-			ecs.GetComponentType(transform.Transform{}),
-			ecs.GetComponentType(colliders.Collider{}),
-		)...,
-	)
-	nearestObject := (*object[Projection])(nil)
-	for _, entity := range entities {
-		var (
-			entityTransform transform.Transform
-			entityCollider  colliders.Collider
-		)
-		if err := s.world.GetComponents(entity,
-			&entityCollider,
-			&entityTransform,
-		); err != nil {
-			continue
-		}
-		entityCollider = entityCollider.Apply(entityTransform)
-
-		collision, err := s.collider.Collides(rayCollider, entityCollider)
-		if err != nil {
-			return err
-		}
-		if collision == nil {
-			continue
-		}
-
-		var minDist float32 = -1
-
-		for _, intersection := range collision.Intersections() {
-			dist := getDist(cameraTransform.Pos, intersection.PointOnB())
-			if minDist < 0 {
-				minDist = dist
+		nearestObject := (*object)(nil)
+		for _, entity := range entities {
+			var (
+				entityTransform transform.Transform
+				entityCollider  colliders.Collider
+				usedProjection  projection.UsedProjection
+			)
+			if err := s.world.GetComponents(entity,
+				&entityCollider,
+				&entityTransform,
+				&usedProjection,
+			); err != nil || usedProjection.ProjectionComponent != projectionType {
 				continue
 			}
-			minDist = min(minDist, dist)
-		}
+			entityCollider = entityCollider.Apply(entityTransform)
 
-		if minDist < 0 {
-			minDist = getDist(cameraTransform.Pos, entityTransform.Pos)
-		}
+			collision, err := s.collider.Collides(rayCollider, entityCollider)
+			if err != nil {
+				return err
+			}
+			if collision == nil {
+				continue
+			}
 
-		current := object[Projection]{
-			Dist:     minDist,
-			EntityID: entity,
-		}
+			var minDist float32 = -1
 
-		if nearestObject == nil {
+			for _, intersection := range collision.Intersections() {
+				dist := getDist(cameraTransform.Pos, intersection.PointOnB())
+				if minDist < 0 {
+					minDist = dist
+					continue
+				}
+				minDist = min(minDist, dist)
+			}
+
+			if minDist < 0 {
+				minDist = getDist(cameraTransform.Pos, entityTransform.Pos)
+			}
+
+			current := object{
+				Dist:     minDist,
+				EntityID: entity,
+			}
+
+			if nearestObject == nil {
+				nearestObject = &current
+				continue
+			}
+
+			if current.Dist > nearestObject.Dist {
+				continue
+			}
+
 			nearestObject = &current
-			continue
+
 		}
 
-		if current.Dist > nearestObject.Dist {
-			continue
+		if nearestObject != nil {
+			hoversOverEntity, _ := s.hoversOverEntites[projectionType]
+			if hoversOverEntity == nearestObject.EntityID {
+				continue
+			}
+
+			s.hoversOverEntites[projectionType] = nearestObject.EntityID
+			event := RayChangedTargetEvent{ProjectionType: projectionType, EntityID: &nearestObject.EntityID}
+			events.Emit(s.events, event)
+		} else if _, ok := s.hoversOverEntites[projectionType]; ok {
+			delete(s.hoversOverEntites, projectionType)
+			event := RayChangedTargetEvent{ProjectionType: projectionType, EntityID: nil}
+			events.Emit(s.events, event)
 		}
-
-		nearestObject = &current
-
-	}
-
-	if nearestObject != nil {
-		if s.hoversOverEntity != nil && *s.hoversOverEntity == nearestObject.EntityID {
-			return nil
-		}
-
-		s.hoversOverEntity = &nearestObject.EntityID
-		event := RayChangedTargetEvent[Projection]{EntityID: &nearestObject.EntityID}
-		events.Emit(s.events, event)
-	} else if s.hoversOverEntity != nil {
-		s.hoversOverEntity = nil
-		event := RayChangedTargetEvent[Projection]{EntityID: nil}
-		events.Emit(s.events, event)
 	}
 
 	return nil

@@ -56,6 +56,17 @@ func (components *componentsImpl) GetComponents(entityId EntityId, componentsPoi
 	}
 	return nil
 }
+func (components *componentsImpl) GetComponentByType(entityId EntityId, componentType ComponentType) (any, error) {
+	entity, ok := components.entityComponents[entityId]
+	if !ok {
+		return nil, ErrEntityDoNotExists
+	}
+	componentValue, ok := entity[componentType]
+	if !ok {
+		return nil, ErrComponentDoNotExists
+	}
+	return *componentValue, nil
+}
 
 func (components *componentsImpl) RemoveComponent(entityId EntityId, componentType ComponentType) {
 	delete(components.entityComponents[entityId], componentType)

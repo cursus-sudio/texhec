@@ -19,22 +19,22 @@ type locations struct {
 	Mvp int32 `uniform:"mvp"`
 }
 
-type textureMaterial[Projection projection.Projection] struct {
+type textureMaterial struct {
 	vertSource, fragSource string
-	services               *textureMaterialServices[Projection]
+	services               *textureMaterialServices
 	parameters             []program.Parameter
 }
 
-func newTextureMaterial[Projection projection.Projection](
+func newTextureMaterial(
 	vertSource, fragSource string,
 	window window.Api,
 	assetsService assets.Assets,
 	parameters []program.Parameter,
-) textureMaterial[Projection] {
-	return textureMaterial[Projection]{
+) textureMaterial {
+	return textureMaterial{
 		vertSource: vertSource,
 		fragSource: fragSource,
-		services: &textureMaterialServices[Projection]{
+		services: &textureMaterialServices{
 			window:        window,
 			assetsService: assetsService,
 		},
@@ -42,7 +42,7 @@ func newTextureMaterial[Projection projection.Projection](
 	}
 }
 
-func (m *textureMaterial[Projection]) Material() material.MaterialStorageAsset {
+func (m *textureMaterial) Material() material.MaterialStorageAsset {
 	return material.NewMaterialStorageAsset(
 		m.vertSource,
 		m.fragSource,
@@ -54,44 +54,48 @@ func (m *textureMaterial[Projection]) Material() material.MaterialStorageAsset {
 
 //
 
-type textureMaterialServices[Projection projection.Projection] struct {
+type textureMaterialServices struct {
 	window        window.Api
 	assetsService assets.Assets
 	locations     locations
 
-	mvp *mgl32.Mat4
+	projectionsMvp map[ecs.ComponentType]mgl32.Mat4
 }
 
-func (m *textureMaterialServices[Projection]) onFrame(world ecs.World, _ program.Program) error {
-	var projectionZero Projection
-	cameraEntities := world.GetEntitiesWithComponents(ecs.GetComponentType(projectionZero))
-	if len(cameraEntities) != 1 {
-		return projection.ErrWorldShouldHaveOneProjection
-	}
-	camera := cameraEntities[0]
-
-	var projectionComponent Projection
-	if err := world.GetComponents(camera, &projectionComponent); err != nil {
-		return err
-	}
-
-	var cameraTransformComponent transform.Transform
-	if err := world.GetComponents(cameraEntities[0], &cameraTransformComponent); err != nil {
-		return errors.Join(errors.New("camera misses transform component"), err)
-	}
-
-	projectionMat4 := projectionComponent.Mat4()
-	cameraTransformMat4 := projectionComponent.ViewMat4(cameraTransformComponent)
-
-	mvp := projectionMat4.Mul4(cameraTransformMat4)
-	m.mvp = &mvp
-
+func (m *textureMaterialServices) onFrame(world ecs.World, _ program.Program) error {
+	m.projectionsMvp = map[ecs.ComponentType]mgl32.Mat4{}
 	return nil
 }
 
-func (m *textureMaterialServices[Projection]) useForEntity(world ecs.World, p program.Program, entityId ecs.EntityId) error {
-	if m.mvp == nil {
-		return material.ErrHaveToCallOnFrame
+func (m *textureMaterialServices) useForEntity(world ecs.World, p program.Program, entityId ecs.EntityId) error {
+	var usedProjection projection.UsedProjection
+	if err := world.GetComponents(entityId, &usedProjection); err != nil {
+		return err
+	}
+
+	mvp, ok := m.projectionsMvp[usedProjection.ProjectionComponent]
+	if !ok {
+		cameraEntities := world.GetEntitiesWithComponents(usedProjection.ProjectionComponent)
+		if len(cameraEntities) != 1 {
+			return projection.ErrWorldShouldHaveOneProjection
+		}
+		camera := cameraEntities[0]
+
+		projectionComponent, err := usedProjection.GetCameraProjection(world, camera)
+		if err != nil {
+			return err
+		}
+
+		var cameraTransformComponent transform.Transform
+		if err := world.GetComponents(camera, &cameraTransformComponent); err != nil {
+			return errors.Join(errors.New("camera misses transform component"), err)
+		}
+
+		projectionMat4 := projectionComponent.Mat4()
+		cameraTransformMat4 := projectionComponent.ViewMat4(cameraTransformComponent)
+
+		mvp = projectionMat4.Mul4(cameraTransformMat4)
+		m.projectionsMvp[usedProjection.ProjectionComponent] = mvp
 	}
 
 	// texture
@@ -117,7 +121,7 @@ func (m *textureMaterialServices[Projection]) useForEntity(world ecs.World, p pr
 	}
 
 	model := transformComponent.Mat4()
-	mvp := m.mvp.Mul4(model)
+	mvp = mvp.Mul4(model)
 	gl.UniformMatrix4fv(locations.Mvp, 1, false, &mvp[0])
 
 	textureAsset.Texture().Use()

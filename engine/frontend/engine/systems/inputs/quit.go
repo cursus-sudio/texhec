@@ -7,17 +7,17 @@ import (
 )
 
 type QuitSystem struct {
-	Runtime runtime.Runtime
+	runtime runtime.Runtime
 }
 
 func NewQuitSystem(
 	runtime runtime.Runtime,
 ) QuitSystem {
 	return QuitSystem{
-		Runtime: runtime,
+		runtime: runtime,
 	}
 }
 
 func (system *QuitSystem) Listen(args sdl.QuitEvent) {
-	system.Runtime.Stop()
+	system.runtime.Stop()
 }

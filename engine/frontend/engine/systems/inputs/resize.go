@@ -5,8 +5,7 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-type ResizeSystem struct {
-}
+type ResizeSystem struct{}
 
 func NewResizeSystem() ResizeSystem {
 	return ResizeSystem{}

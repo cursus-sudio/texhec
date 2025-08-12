@@ -8,18 +8,18 @@ import (
 )
 
 type FlushSystem struct {
-	Window window.Api
+	window window.Api
 }
 
 func NewFlushSystem(
 	window window.Api,
 ) FlushSystem {
 	return FlushSystem{
-		Window: window,
+		window: window,
 	}
 }
 
 func (s *FlushSystem) Update(args frames.FrameEvent) {
-	s.Window.Window().GLSwap()
+	s.window.Window().GLSwap()
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }

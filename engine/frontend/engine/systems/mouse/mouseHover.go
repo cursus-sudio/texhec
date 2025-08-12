@@ -1,8 +1,7 @@
-package inputs
+package mouse
 
 import (
 	"frontend/engine/components/mouse"
-	"frontend/engine/systems/mouseray"
 	"frontend/services/ecs"
 
 	"github.com/ogiusek/events"
@@ -34,7 +33,7 @@ func (s *HoverSystem) handleMouseLeave(entity ecs.EntityId) {
 	}
 }
 
-func (s *HoverSystem) Listen(event mouseray.RayChangedTargetEvent) {
+func (s *HoverSystem) Listen(event RayChangedTargetEvent) {
 	if entity, ok := s.targets[event.ProjectionType]; ok {
 		s.handleMouseLeave(entity)
 	}

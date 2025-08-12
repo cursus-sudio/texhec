@@ -1,4 +1,4 @@
-package inputs
+package mouse
 
 import (
 	"frontend/engine/components/mouse"
@@ -9,19 +9,25 @@ import (
 )
 
 type ClickSystem struct {
-	world  ecs.World
-	events events.Events
+	world   ecs.World
+	events  events.Events
+	clickOn uint8
 }
 
-func NewClickSystem(world ecs.World, events events.Events) ClickSystem {
+func NewClickSystem(
+	world ecs.World,
+	events events.Events,
+	clickOn uint8,
+) ClickSystem {
 	return ClickSystem{
-		world:  world,
-		events: events,
+		world:   world,
+		events:  events,
+		clickOn: clickOn,
 	}
 }
 
 func (s ClickSystem) Listen(event sdl.MouseButtonEvent) {
-	if event.State == sdl.RELEASED {
+	if event.State != s.clickOn {
 		return
 	}
 	entities := s.world.GetEntitiesWithComponents(
@@ -38,20 +44,16 @@ func (s ClickSystem) Listen(event sdl.MouseButtonEvent) {
 
 		switch event.Button {
 		case sdl.BUTTON_LEFT:
+			eventsToEmit = mouseEvents.LeftClickEvents
 			switch event.Clicks {
-			case 1:
-				eventsToEmit = mouseEvents.LeftClickEvents
-				break
 			case 2:
 				eventsToEmit = mouseEvents.DoubleLeftClickEvents
 				break
 			}
 			break
 		case sdl.BUTTON_RIGHT:
+			eventsToEmit = mouseEvents.RightClickEvents
 			switch event.Clicks {
-			case 1:
-				eventsToEmit = mouseEvents.RightClickEvents
-				break
 			case 2:
 				eventsToEmit = mouseEvents.DoubleRightClickEvents
 				break

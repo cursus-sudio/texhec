@@ -9,7 +9,7 @@ import (
 )
 
 type ErrorLogger struct {
-	Logger logger.Logger
+	logger logger.Logger
 }
 
 func NewErrorLogger() ErrorLogger {
@@ -31,6 +31,6 @@ var glErrorStrings = map[uint32]string{
 
 func (logger *ErrorLogger) Update(args frames.FrameEvent) {
 	if glErr := gl.GetError(); glErr != gl.NO_ERROR {
-		logger.Logger.Error(fmt.Errorf("opengl error: %x %s\n", glErr, glErrorStrings[glErr]))
+		logger.logger.Error(fmt.Errorf("opengl error: %x %s\n", glErr, glErrorStrings[glErr]))
 	}
 }

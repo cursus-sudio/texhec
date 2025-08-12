@@ -6,7 +6,7 @@ import (
 )
 
 type InputsSystem struct {
-	Inputs inputs.Api
+	inputs inputs.Api
 }
 
 func NewInputsSystem(
@@ -16,5 +16,5 @@ func NewInputsSystem(
 }
 
 func (system *InputsSystem) Update(args frames.FrameEvent) {
-	system.Inputs.Poll()
+	system.inputs.Poll()
 }

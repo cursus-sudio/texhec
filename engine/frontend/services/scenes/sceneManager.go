@@ -1,7 +1,5 @@
 package scenes
 
-import "github.com/ogiusek/events"
-
 type SceneManagerBuilder interface {
 	AddScene(Scene) SceneManagerBuilder
 	MakeActive(SceneId) SceneManagerBuilder
@@ -40,16 +38,16 @@ func (b *sceneManagerBuilder) Build() SceneManager {
 		panic(ErrNoActiveScene.Error())
 	}
 	id := *b.currentScene
-	scene, ok := b.scenes[id]
+	_, ok := b.scenes[id]
 	if !ok {
 		panic(ErrSceneDoNotExists.Error())
 	}
 
 	manager := &sceneManager{
-		scenes:         b.scenes,
-		currentSceneId: id,
+		scenes:             b.scenes,
+		currentSceneId:     id,
+		loadedCurrentScene: false,
 	}
-	manager.events = scene.Load(manager)
 	return manager
 }
 
@@ -61,9 +59,8 @@ type SceneManager interface {
 	// - ErrSceneAlreadyExists
 	// AddScene(Scene) error
 
-	// can panic when no scene is loaded
 	CurrentScene() SceneId
-	CurrentSceneEvents() events.Events
+	CurrentSceneCtx() SceneCtx
 
 	// this method returns error:
 	// - ErrSceneDoNotExists
@@ -72,7 +69,7 @@ type SceneManager interface {
 
 type sceneManager struct {
 	scenes             map[SceneId]Scene
-	events             events.Events
+	activeSceneCtx     SceneCtx
 	loadedCurrentScene bool
 	currentSceneId     SceneId
 }
@@ -81,11 +78,11 @@ func (sceneManager *sceneManager) CurrentScene() SceneId {
 	return sceneManager.currentSceneId
 }
 
-func (sceneManager *sceneManager) CurrentSceneEvents() events.Events {
+func (sceneManager *sceneManager) CurrentSceneCtx() SceneCtx {
 	if !sceneManager.loadedCurrentScene {
 		sceneManager.LoadScene(sceneManager.currentSceneId)
 	}
-	return sceneManager.events
+	return sceneManager.activeSceneCtx
 }
 
 func (sceneManager *sceneManager) LoadScene(sceneId SceneId) error {
@@ -93,13 +90,17 @@ func (sceneManager *sceneManager) LoadScene(sceneId SceneId) error {
 	if !ok {
 		return ErrSceneDoNotExists
 	}
+
+	// load
+	sceneManager.currentSceneId = sceneId
+	ctx := loadedScene.Load()
+	sceneManager.loadedCurrentScene = true
+	sceneManager.activeSceneCtx = ctx
+
+	// unload
 	if sceneManager.loadedCurrentScene {
 		sceneManager.scenes[sceneManager.currentSceneId].Unload()
 	}
 
-	sceneManager.currentSceneId = sceneId
-	e := loadedScene.Load(sceneManager)
-	sceneManager.loadedCurrentScene = true
-	sceneManager.events = e
 	return nil
 }

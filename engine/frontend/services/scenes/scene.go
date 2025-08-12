@@ -1,6 +1,41 @@
 package scenes
 
-import "github.com/ogiusek/events"
+import (
+	"frontend/services/ecs"
+
+	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
+)
+
+//
+
+const (
+	_ ioc.Order = iota
+
+	LoadFirst
+
+	// load world
+	LoadWorld
+
+	// load event listeners
+	LoadBeforeDomain
+	_
+	_
+	_
+
+	LoadDomain
+	_
+	_
+	_
+
+	LoadAfterDomain
+	_
+	_
+	_
+
+	// call events affecting world state
+	LoadInitialEvents
+)
 
 //
 
@@ -14,43 +49,75 @@ func NewSceneId(sceneId string) SceneId {
 
 //
 
+type sceneCtx struct {
+	World         ecs.World
+	EventsBuilder events.Builder
+	Events        events.Events
+}
+
+type SceneCtx struct{ *sceneCtx }
+
+func NewSceneCtx(world ecs.World, eventsBuilder events.Builder) SceneCtx {
+	return SceneCtx{&sceneCtx{
+		world,
+		eventsBuilder,
+		eventsBuilder.Events(),
+	}}
+}
+
+//
+
 type SceneBuilder interface {
-	// load func(SceneManager, Scene) events.Events
-	// Load(func(SceneManager, ))
-	OnLoad(func(SceneManager, Scene, events.Builder))
-	OnUnload(func(Scene))
+	OnLoad(func(ctx SceneCtx)) SceneBuilder
+	OnUnload(func(ctx SceneCtx)) SceneBuilder
 	Build(id SceneId) Scene
 }
 
 type sceneBuilder struct {
-	onLoad   []func(SceneManager, Scene, events.Builder)
-	onUnload []func(Scene)
+	onLoad   []func(SceneCtx)
+	onUnload []func(SceneCtx)
 }
 
 func NewSceneBuilder() SceneBuilder {
 	return &sceneBuilder{}
 }
 
-func (b *sceneBuilder) OnLoad(listener func(SceneManager, Scene, events.Builder)) {
+func (b *sceneBuilder) OnLoad(listener func(SceneCtx)) SceneBuilder {
 	b.onLoad = append(b.onLoad, listener)
+	return b
 }
 
-func (b *sceneBuilder) OnUnload(listener func(Scene)) {
+func (b *sceneBuilder) OnUnload(listener func(SceneCtx)) SceneBuilder {
 	b.onUnload = append(b.onUnload, listener)
+	return b
 }
 
 func (n *sceneBuilder) Build(sceneId SceneId) Scene {
-	onLoad := func(manager SceneManager, s Scene) events.Events {
-		b := events.NewBuilder()
-		for _, listener := range n.onLoad {
-			listener(manager, s, b)
+	var ctxPtr *SceneCtx
+	onUnload := func() {
+		if ctxPtr == nil {
+			return
 		}
-		return b.Build()
-	}
-	onUnload := func(s Scene) {
+		ctx := *ctxPtr
 		for _, listener := range n.onUnload {
-			listener(s)
+			listener(ctx)
 		}
+		ctxPtr = nil
+	}
+	onLoad := func() SceneCtx {
+		if ctxPtr != nil {
+			return *ctxPtr
+		}
+
+		ctx := NewSceneCtx(
+			ecs.NewWorld(),
+			events.NewBuilder(),
+		)
+		for _, listener := range n.onLoad {
+			listener(ctx)
+		}
+		ctxPtr = &ctx
+		return ctx
 	}
 	return newScene(sceneId, onLoad, onUnload)
 }
@@ -60,20 +127,20 @@ func (n *sceneBuilder) Build(sceneId SceneId) Scene {
 type Scene interface {
 	Id() SceneId
 
-	Load(SceneManager) events.Events
+	Load() SceneCtx
 	Unload()
 }
 
 type scene struct {
 	id       SceneId
-	onLoad   func(SceneManager, Scene) events.Events
-	onUnload func(Scene)
+	onLoad   func() SceneCtx
+	onUnload func()
 }
 
 func newScene(
 	id SceneId,
-	onLoad func(SceneManager, Scene) events.Events,
-	onUnload func(Scene),
+	onLoad func() SceneCtx,
+	onUnload func(),
 ) Scene {
 	return &scene{
 		id:       id,
@@ -86,5 +153,5 @@ func (scene *scene) Id() SceneId {
 	return scene.id
 }
 
-func (scene *scene) Load(manager SceneManager) events.Events { return scene.onLoad(manager, scene) }
-func (scene *scene) Unload()                                 { scene.onUnload(scene) }
+func (scene *scene) Load() SceneCtx { return scene.onLoad() }
+func (scene *scene) Unload()        { scene.onUnload() }

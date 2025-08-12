@@ -9,8 +9,8 @@ import (
 )
 
 type RenderSystem struct {
-	World  ecs.World
-	Assets assets.Assets
+	world  ecs.World
+	assets assets.Assets
 }
 
 func NewRenderSystem(
@@ -18,8 +18,8 @@ func NewRenderSystem(
 	assets assets.Assets,
 ) RenderSystem {
 	return RenderSystem{
-		World:  world,
-		Assets: assets,
+		world:  world,
+		assets: assets,
 	}
 }
 
@@ -36,28 +36,28 @@ type renderable struct {
 func (s *RenderSystem) Update(args frames.FrameEvent) error {
 	renderables := map[assets.AssetID]renderable{}
 
-	renderableEntities := s.World.GetEntitiesWithComponents(
+	renderableEntities := s.world.GetEntitiesWithComponents(
 		ecs.GetComponentType(mesh.Mesh{}),
 		ecs.GetComponentType(material.Material{}),
 	)
 
 	for _, entity := range renderableEntities {
 		var materialComponent material.Material
-		if err := s.World.GetComponents(entity, &materialComponent); err != nil {
+		if err := s.world.GetComponents(entity, &materialComponent); err != nil {
 			continue
 		}
 		for _, materialID := range materialComponent.IDs {
-			materialAsset, err := assets.GetAsset[material.MaterialCachedAsset](s.Assets, materialID)
+			materialAsset, err := assets.GetAsset[material.MaterialCachedAsset](s.assets, materialID)
 			if err != nil {
 				return err
 			}
 
 			var meshComponent mesh.Mesh
-			if err := s.World.GetComponents(entity, &meshComponent); err != nil {
+			if err := s.world.GetComponents(entity, &meshComponent); err != nil {
 				continue
 			}
 
-			meshAsset, err := assets.GetAsset[mesh.MeshCachedAsset](s.Assets, meshComponent.ID)
+			meshAsset, err := assets.GetAsset[mesh.MeshCachedAsset](s.assets, meshComponent.ID)
 			if err != nil {
 				return err
 			}
@@ -75,12 +75,12 @@ func (s *RenderSystem) Update(args frames.FrameEvent) error {
 	}
 
 	for _, material := range renderables {
-		if err := material.Material.OnFrame(s.World); err != nil {
+		if err := material.Material.OnFrame(s.world); err != nil {
 			return err
 		}
 
 		for _, entity := range material.Entities {
-			if err := material.Material.UseForEntity(s.World, entity.Id); err != nil {
+			if err := material.Material.UseForEntity(s.world, entity.Id); err != nil {
 				return err
 			}
 			entity.Mesh.VAO().Draw()

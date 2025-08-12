@@ -25,7 +25,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b events.Builder) events.Builder {
 		events.ListenToAll(b, func(a any) {
 			m := ioc.Get[SceneManager](c)
-			events.EmitAny(m.CurrentSceneEvents(), a)
+			events.EmitAny(m.CurrentSceneCtx().Events, a)
 		})
 		return b
 	})

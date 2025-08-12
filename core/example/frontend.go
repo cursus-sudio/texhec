@@ -2,20 +2,18 @@ package example
 
 import (
 	"core/triangle"
-	"fmt"
 	"frontend/engine/components/mouse"
 	"frontend/engine/components/projection"
-	inputssystem "frontend/engine/systems/inputs"
-	"frontend/engine/systems/mergedsystems"
-	"frontend/engine/systems/mouseray"
+	"frontend/engine/systems/inputs"
+	mousesystem "frontend/engine/systems/mouse"
+	"frontend/engine/systems/projections"
 	"frontend/engine/systems/render"
 	"frontend/services/assets"
 	"frontend/services/backendconnection"
 	"frontend/services/colliders"
 	"frontend/services/console"
 	"frontend/services/ecs"
-	"frontend/services/frames"
-	"frontend/services/media/inputs"
+	inputsmedia "frontend/services/media/inputs"
 	"frontend/services/media/window"
 	"frontend/services/scenes"
 	"shared/services/logger"
@@ -27,141 +25,150 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-func AddShared(c ioc.Dic, b scenes.SceneBuilder) {
-	quitSytem := inputssystem.NewQuitSystem(
-		ioc.Get[runtime.Runtime](c),
-	)
-
-	b.OnLoad(func(sm scenes.SceneManager, s scenes.Scene, b events.Builder) {
-		events.Listen(b, func(e sdl.QuitEvent) {
-			quitSytem.Listen(e)
+func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
+	ioc.WrapService(b, scenes.LoadFirst, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
+		b.OnLoad(func(ctx scenes.SceneCtx) {
+			events.GlobalErrHandler(ctx.EventsBuilder, func(err error) { ioc.Get[logger.Logger](c).Error(err) })
 		})
+		return b
 	})
-
-	b.OnLoad(func(sm scenes.SceneManager, s scenes.Scene, b events.Builder) {
-		logger := ioc.Get[logger.Logger](c)
-		events.Listen(b, func(e sdl.KeyboardEvent) {
-			logger.Info(fmt.Sprintf("keyboard event is %v; key is %v", e, e.Keysym.Sym))
-			if e.Keysym.Sym == sdl.K_q {
-				logger.Info("quiting program due to pressing 'Q'")
-				ioc.Get[runtime.Runtime](c).Stop()
-			}
-			if e.Keysym.Sym == sdl.K_ESCAPE {
-				logger.Info("quiting program due to pressing 'ESC'")
-				ioc.Get[runtime.Runtime](c).Stop()
-			}
-			if e.State == sdl.PRESSED && e.Keysym.Sym == sdl.K_f {
-				logger.Info("toggling screen size due to pressing 'F'")
-				window := ioc.Get[window.Api](c)
-				flags := window.Window().GetFlags()
-				if flags&sdl.WINDOW_FULLSCREEN_DESKTOP == sdl.WINDOW_FULLSCREEN_DESKTOP {
-					window.Window().SetFullscreen(0)
-				} else {
-					window.Window().SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
-				}
-			}
-		})
-	})
-}
-
-type SharedSystems struct {
-	inputsSystem inputssystem.InputsSystem
-	renderSystem render.RenderSystem
-	flushSystem  render.FlushSystem
-}
-
-func NewSharedDomain(
-	c ioc.Dic,
-	world ecs.World,
-	b events.Builder,
-	frameSystem mergedsystems.MergedSystems[frames.FrameEvent],
-) SharedSystems {
-	triangle.AddToWorld(c, world, b, frameSystem)
-	for i := 0; i < 1; i++ {
-		entity := world.NewEntity()
-		world.SaveComponent(entity, newSomeComponent())
-	}
-
-	{
-		cameraRaySystem := mouseray.NewCameraRaySystem(
-			world,
-			ioc.Get[colliders.ColliderService](c),
-			ioc.Get[window.Api](c),
-			b.Events(),
-			[]ecs.ComponentType{ecs.GetComponentType(projection.Ortho{}), ecs.GetComponentType(projection.Perspective{})},
-			[]ecs.ComponentType{ecs.GetComponentType(mouse.MouseEvents{})},
+	ioc.WrapService(b, scenes.LoadBeforeDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
+		quitSytem := inputs.NewQuitSystem(
+			ioc.Get[runtime.Runtime](c),
 		)
-		shootRaySystem := mergedsystems.NewMergedSystems[mouseray.ShootRayEvent](func(err error) {
-			ioc.Get[logger.Logger](c).Error(err)
+
+		b.OnLoad(func(ctx scenes.SceneCtx) {
+			events.Listen(ctx.EventsBuilder, func(e sdl.QuitEvent) {
+				quitSytem.Listen(e)
+			})
 		})
-		shootRaySystem.AddSystems(cameraRaySystem.Listen)
-		events.Listen(b, shootRaySystem.Listen)
 
-		hoverSystem := inputssystem.NewHoverSystem(world, b.Events())
-		events.Listen(b, hoverSystem.Listen)
+		b.OnLoad(func(ctx scenes.SceneCtx) {
+			logger := ioc.Get[logger.Logger](c)
 
-		clickSystem := inputssystem.NewClickSystem(world, b.Events())
-		events.Listen(b, clickSystem.Listen)
-
-		events.Listen(b, func(event sdl.MouseMotionEvent) {
-			events.Emit(b.Events(), mouseray.NewShootRayEvent())
+			events.Listen(ctx.EventsBuilder, func(e sdl.KeyboardEvent) {
+				// logger.Info(fmt.Sprintf("keyboard event is %v; key is %v", e, e.Keysym.Sym))
+				if e.Keysym.Sym == sdl.K_q {
+					logger.Info("quiting program due to pressing 'Q'")
+					ioc.Get[runtime.Runtime](c).Stop()
+				}
+				if e.Keysym.Sym == sdl.K_ESCAPE {
+					logger.Info("quiting program due to pressing 'ESC'")
+					ioc.Get[runtime.Runtime](c).Stop()
+				}
+				if e.State == sdl.PRESSED && e.Keysym.Sym == sdl.K_f {
+					logger.Info("toggling screen size due to pressing 'F'")
+					window := ioc.Get[window.Api](c)
+					flags := window.Window().GetFlags()
+					if flags&sdl.WINDOW_FULLSCREEN_DESKTOP == sdl.WINDOW_FULLSCREEN_DESKTOP {
+						window.Window().SetFullscreen(0)
+					} else {
+						window.Window().SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
+					}
+				}
+			})
 		})
-		events.Listen(b, func(event sdl.KeyboardEvent) {
-			events.Emit(b.Events(), mouseray.NewShootRayEvent())
-		})
-		events.Listen(b, inputssystem.NewResizeSystem().Listen)
-	}
-	return SharedSystems{
-		inputsSystem: inputssystem.NewInputsSystem(ioc.Get[inputs.Api](c)),
-		renderSystem: render.NewRenderSystem(world, ioc.Get[assets.Assets](c)),
-		flushSystem:  render.NewFlushSystem(ioc.Get[window.Api](c)),
-	}
-}
+		return b
+	})
 
-func (s SharedSystems) BeforeDomain(args frames.FrameEvent) error {
-	s.inputsSystem.Update(args)
-	return nil
-}
-func (s SharedSystems) AfterDomain(args frames.FrameEvent) error {
-	if err := s.renderSystem.Update(args); err != nil {
-		return err
-	}
-	s.flushSystem.Update(args)
-	return nil
+	ioc.WrapService(b, scenes.LoadWorld, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
+		b.OnLoad(func(ctx scenes.SceneCtx) {
+			for i := 0; i < 1; i++ {
+				entity := ctx.World.NewEntity()
+				ctx.World.SaveComponent(entity, newSomeComponent())
+			}
+		})
+		return b
+	})
+
+	ioc.WrapService(b, scenes.LoadBeforeDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
+		b.OnLoad(func(ctx scenes.SceneCtx) {
+			cameraRaySystem := mousesystem.NewCameraRaySystem(
+				ctx.World,
+				ioc.Get[colliders.ColliderService](c),
+				ioc.Get[window.Api](c),
+				ctx.Events,
+				[]ecs.ComponentType{ecs.GetComponentType(projection.Ortho{}), ecs.GetComponentType(projection.Perspective{})},
+				[]ecs.ComponentType{ecs.GetComponentType(mouse.MouseEvents{})},
+			)
+			events.Listen(ctx.EventsBuilder, func(event mousesystem.ShootRayEvent) {
+				if err := cameraRaySystem.Listen(event); err != nil {
+					ioc.Get[logger.Logger](c).Error(err)
+				}
+			})
+
+			hoverSystem := mousesystem.NewHoverSystem(ctx.World, ctx.Events)
+			events.Listen(ctx.EventsBuilder, hoverSystem.Listen)
+
+			clickSystem := mousesystem.NewClickSystem(ctx.World, ctx.Events, sdl.RELEASED)
+			events.Listen(ctx.EventsBuilder, clickSystem.Listen)
+
+			events.Listen(ctx.EventsBuilder, func(event sdl.MouseMotionEvent) {
+				events.Emit(ctx.Events, mousesystem.NewShootRayEvent())
+			})
+			events.Listen(ctx.EventsBuilder, func(event sdl.KeyboardEvent) {
+				events.Emit(ctx.Events, mousesystem.NewShootRayEvent())
+			})
+			events.Listen(ctx.EventsBuilder, inputs.NewResizeSystem().Listen)
+
+			resizeCameraSystem := projections.NewUpdateProjectionsSystem(ctx.World, ioc.Get[window.Api](c))
+			events.Listen(ctx.EventsBuilder, resizeCameraSystem.Listen)
+			events.Listen(ctx.EventsBuilder, func(e sdl.WindowEvent) {
+				if e.Event == sdl.WINDOWEVENT_RESIZED {
+					events.Emit(ctx.Events, projections.NewUpdateProjectionsEvent())
+				}
+			})
+		})
+		return b
+	})
+
+	ioc.WrapService(b, scenes.LoadBeforeDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
+		b.OnLoad(func(ctx scenes.SceneCtx) {
+			inputsSystem := inputs.NewInputsSystem(ioc.Get[inputsmedia.Api](c))
+			events.Listen(ctx.EventsBuilder, inputsSystem.Update)
+		})
+		return b
+	})
+
+	triangle.AddToWorld[SceneBuilder](b)
+
+	ioc.WrapService(b, scenes.LoadDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
+		b.OnLoad(func(ctx scenes.SceneCtx) {
+			someSystem := NewSomeSystem(
+				ioc.Get[scenes.SceneManager](c),
+				ctx.World,
+				ioc.Get[backendconnection.Backend](c).Connection(),
+				ioc.Get[console.Console](c),
+			)
+			events.ListenE(ctx.EventsBuilder, someSystem.Update)
+		})
+		return b
+	})
+
+	ioc.WrapService(b, scenes.LoadAfterDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
+		b.OnLoad(func(ctx scenes.SceneCtx) {
+			renderSystem := render.NewRenderSystem(ctx.World, ioc.Get[assets.Assets](c))
+			events.ListenE(ctx.EventsBuilder, renderSystem.Update)
+
+			flushSystem := render.NewFlushSystem(ioc.Get[window.Api](c))
+			events.Listen(ctx.EventsBuilder, flushSystem.Update)
+		})
+		return b
+	})
 }
 
 var scene1Id = scenes.NewSceneId("main scene")
 
 type SceneOneBuilder scenes.SceneBuilder
-type SceneOneWorld ecs.World
 
 func AddSceneOne(b ioc.Builder) {
-	ioc.RegisterTransient(b, func(c ioc.Dic) SceneOneBuilder { return scenes.NewSceneBuilder() })
-	ioc.RegisterTransient(b, func(c ioc.Dic) SceneOneWorld { return ecs.NewWorld() })
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, sceneBuilder SceneOneBuilder) SceneOneBuilder {
-		AddShared(c, sceneBuilder)
-		sceneBuilder.OnLoad(func(sceneManager scenes.SceneManager, s scenes.Scene, b events.Builder) {
-			world := ecs.World(ioc.Get[SceneOneWorld](c))
-			someSystem := NewSomeSystem(
-				sceneManager,
-				world,
-				ioc.Get[backendconnection.Backend](c).Connection(),
-				ioc.Get[console.Console](c),
-			)
-			toggleSystem := NewToggledSystem(sceneManager, world, scene2Id, time.Second)
-
-			frameSystem := mergedsystems.NewMergedSystems[frames.FrameEvent](func(err error) {
-				ioc.Get[logger.Logger](c).Error(err)
-			})
-			sharedSystems := NewSharedDomain(c, world, b, frameSystem)
-			frameSystem.AddSystems(
-				sharedSystems.BeforeDomain,
-				someSystem.Update,
-				toggleSystem.Update,
-				sharedSystems.AfterDomain,
-			)
-			events.Listen(b, frameSystem.Listen)
-		})
+	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneOneBuilder { return scenes.NewSceneBuilder() })
+	AddShared[SceneOneBuilder](b)
+	ioc.WrapService(b, scenes.LoadDomain, func(c ioc.Dic, sceneBuilder SceneOneBuilder) SceneOneBuilder {
+		// sceneBuilder.OnLoad(func(ctx scenes.SceneCtx) {
+		// 	toggleSystem := NewToggledSystem(ioc.Get[scenes.SceneManager](c), ctx.World, scene2Id, time.Second)
+		// 	events.ListenE(ctx.EventsBuilder, toggleSystem.Update)
+		// })
 		return sceneBuilder
 	})
 }
@@ -171,36 +178,15 @@ func AddSceneOne(b ioc.Builder) {
 var scene2Id = scenes.NewSceneId("main scene 2")
 
 type SceneTwoBuilder scenes.SceneBuilder
-type SceneTwoWorld ecs.World
 
 func AddSceneTwo(b ioc.Builder) {
-	ioc.RegisterTransient(b, func(c ioc.Dic) SceneTwoBuilder { return scenes.NewSceneBuilder() })
-	ioc.RegisterTransient(b, func(c ioc.Dic) SceneTwoWorld { return ecs.NewWorld() })
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, sceneBuilder SceneTwoBuilder) SceneTwoBuilder {
-		AddShared(c, sceneBuilder)
-		sceneBuilder.OnLoad(func(sceneManager scenes.SceneManager, s scenes.Scene, b events.Builder) {
-			var world ecs.World = ioc.Get[SceneTwoWorld](c)
-			frameSystem := mergedsystems.NewMergedSystems[frames.FrameEvent](func(err error) {
-				ioc.Get[logger.Logger](c).Error(err)
-			})
-
-			someSystem := NewSomeSystem(
-				sceneManager,
-				world,
-				ioc.Get[backendconnection.Backend](c).Connection(),
-				ioc.Get[console.Console](c),
-			)
-			sharedSystems := NewSharedDomain(c, world, b, frameSystem)
-			// toggleSystem := NewToggledSystem(sceneManager, world, scene1Id, time.Second*3)
-			frameSystem.AddSystems(
-				sharedSystems.BeforeDomain,
-				someSystem.Update,
-				sharedSystems.AfterDomain,
-			)
-
-			events.Listen(b, frameSystem.Listen)
+	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneTwoBuilder { return scenes.NewSceneBuilder() })
+	AddShared[SceneTwoBuilder](b)
+	ioc.WrapService(b, scenes.LoadDomain, func(c ioc.Dic, sceneBuilder SceneTwoBuilder) SceneTwoBuilder {
+		sceneBuilder.OnLoad(func(ctx scenes.SceneCtx) {
+			toggleSystem := NewToggledSystem(ioc.Get[scenes.SceneManager](c), ctx.World, scene1Id, time.Second)
+			events.ListenE(ctx.EventsBuilder, toggleSystem.Update)
 		})
-
 		return sceneBuilder
 	})
 }

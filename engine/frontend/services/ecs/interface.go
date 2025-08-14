@@ -7,18 +7,18 @@ import (
 
 // entities
 
-type EntityId struct {
+type EntityID struct {
 	id string
 }
 
-func (entityId EntityId) Ok() bool { return entityId.id != "" }
+func (entityId EntityID) Ok() bool { return entityId.id != "" }
 
 type entitiesInterface interface {
-	NewEntity() EntityId
-	RemoveEntity(EntityId)
+	NewEntity() EntityID
+	RemoveEntity(EntityID)
 
-	GetEntities() []EntityId
-	EntityExists(EntityId) bool
+	GetEntities() []EntityID
+	EntityExists(EntityID) bool
 }
 
 // components
@@ -53,16 +53,36 @@ var (
 type componentsInterface interface {
 	// can return:
 	// - ErrEntityDoNotExists
-	SaveComponent(EntityId, Component) error // upsert (create or update)
+	SaveComponent(EntityID, Component) error // upsert (create or update)
 	// can return:
 	// - ErrComponentDoNotExists
 	// - ErrEntityDoNotExists
-	GetComponents(entityId EntityId, componentsPointers ...any) error
-	GetComponentByType(entityId EntityId, componentType ComponentType) (any, error)
-	RemoveComponent(EntityId, ComponentType)
+	GetComponent(entityId EntityID, componentType ComponentType) (Component, error)
+	RemoveComponent(EntityID, ComponentType)
 
 	// returns entities with all listed component types
-	GetEntitiesWithComponents(...ComponentType) []EntityId
+	GetEntitiesWithComponents(...ComponentType) []EntityID
+}
+
+func GetComponent[WantedComponent Component](w World, entity EntityID) (WantedComponent, error) {
+	var zero WantedComponent
+	component, err := w.GetComponent(entity, GetComponentType(zero))
+	if err != nil {
+		return zero, err
+	}
+	return component.(WantedComponent), nil
+}
+
+func GetComponents(w World, entity EntityID, wantedComponents ...*Component) error {
+	for _, component := range wantedComponents {
+		componentType := GetComponentType(*component)
+		var err error
+		*component, err = w.GetComponent(entity, componentType)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // world

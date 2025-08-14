@@ -10,22 +10,22 @@ import (
 type HoverSystem struct {
 	world   ecs.World
 	events  events.Events
-	targets map[ecs.ComponentType]ecs.EntityId
+	targets map[ecs.ComponentType]ecs.EntityID
 }
 
 func NewHoverSystem(world ecs.World, events events.Events) HoverSystem {
 	return HoverSystem{
 		world:   world,
 		events:  events,
-		targets: map[ecs.ComponentType]ecs.EntityId{},
+		targets: map[ecs.ComponentType]ecs.EntityID{},
 	}
 }
 
-func (s *HoverSystem) handleMouseLeave(entity ecs.EntityId) {
+func (s *HoverSystem) handleMouseLeave(entity ecs.EntityID) {
 	s.world.RemoveComponent(entity, ecs.GetComponentType(mouse.Hovered{}))
 
-	var mouseEvents mouse.MouseEvents
-	if err := s.world.GetComponents(entity, &mouseEvents); err != nil {
+	mouseEvents, err := ecs.GetComponent[mouse.MouseEvents](s.world, entity)
+	if err != nil {
 		return
 	}
 	for _, event := range mouseEvents.MouseLeaveEvents {
@@ -43,8 +43,9 @@ func (s *HoverSystem) Listen(event RayChangedTargetEvent) {
 	}
 	s.targets[event.ProjectionType] = *event.EntityID
 	entity := *event.EntityID
-	var mouseEvents mouse.MouseEvents
-	if err := s.world.GetComponents(entity, &mouseEvents); err != nil {
+
+	mouseEvents, err := ecs.GetComponent[mouse.MouseEvents](s.world, entity)
+	if err != nil {
 		return
 	}
 	s.world.SaveComponent(entity, mouse.Hovered{})

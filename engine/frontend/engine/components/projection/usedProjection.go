@@ -18,8 +18,8 @@ func NewUsedProjection[P Projection]() UsedProjection {
 	return UsedProjection{ProjectionComponent: ecs.GetComponentType(pZero)}
 }
 
-func (usedProjection UsedProjection) GetCameraProjection(world ecs.World, camera ecs.EntityId) (Projection, error) {
-	anyProj, err := world.GetComponentByType(camera, usedProjection.ProjectionComponent)
+func (usedProjection UsedProjection) GetCameraProjection(world ecs.World, camera ecs.EntityID) (Projection, error) {
+	anyProj, err := world.GetComponent(camera, usedProjection.ProjectionComponent)
 	if err != nil {
 		return nil, err
 	}

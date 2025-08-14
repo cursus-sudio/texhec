@@ -57,7 +57,7 @@ func (a *assets) Release(ids ...AssetID) {
 }
 
 var (
-	ErrAssetHasDifferentType error = errors.New("asset if not of requested type")
+	ErrAssetHasDifferentType error = errors.New("asset is not of requested type")
 )
 
 func GetAsset[Asset any](assets Assets, assetID AssetID) (Asset, error) {

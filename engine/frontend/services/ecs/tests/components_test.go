@@ -15,12 +15,11 @@ func TestComponents(t *testing.T) {
 	component := Component{Counter: 7}
 	secondComponent := Component{Counter: 8}
 
-	componentType := ecs.GetComponentType(component)
-	if err := world.GetComponents(ecs.EntityId{}, &componentType); err != ecs.ErrEntityDoNotExists {
+	if _, err := ecs.GetComponent[Component](world, ecs.EntityID{}); err != ecs.ErrEntityDoNotExists {
 		t.Errorf("when retrieving component from not existing entity do not got ErrEntityDoNotExists error")
 	}
 
-	if err := world.SaveComponent(ecs.EntityId{}, component); err != ecs.ErrEntityDoNotExists {
+	if err := world.SaveComponent(ecs.EntityID{}, component); err != ecs.ErrEntityDoNotExists {
 		t.Errorf("when trying to save component on not existing entity do not got ErrEntityDoNotExists error")
 	}
 
@@ -29,16 +28,13 @@ func TestComponents(t *testing.T) {
 		t.Errorf("when trying to save component on existing entity got unexpected error")
 	}
 
-	retrievedComponent := Component{}
-	if err := world.GetComponents(entityId, &retrievedComponent); err != nil {
+	if retrievedComponent, err := ecs.GetComponent[Component](world, entityId); err != nil {
 		t.Errorf("unexpected error when retrieving component")
-	}
-
-	if retrievedComponent != component {
+	} else if retrievedComponent != component {
 		t.Errorf("retrieved component isn't equal to saved component")
 	}
 
-	if err := world.SaveComponent(ecs.EntityId{}, secondComponent); err != ecs.ErrEntityDoNotExists {
+	if err := world.SaveComponent(ecs.EntityID{}, secondComponent); err != ecs.ErrEntityDoNotExists {
 		t.Errorf("when trying to save existing component on not existing entity do not got ErrEntityDoNotExists error")
 	}
 
@@ -46,24 +42,22 @@ func TestComponents(t *testing.T) {
 		t.Errorf("when saving component got unexpected error")
 	}
 
-	if err := world.GetComponents(entityId, &retrievedComponent); err != nil {
+	if retrievedComponent, err := ecs.GetComponent[Component](world, entityId); err != nil {
 		t.Errorf("unexpected error when retrieving component")
-	}
-
-	if retrievedComponent != secondComponent {
+	} else if retrievedComponent != secondComponent {
 		t.Errorf("retrieved component isn't equal to saved component")
 	}
 
-	world.RemoveComponent(entityId, componentType)
+	world.RemoveComponent(entityId, ecs.GetComponentType(Component{}))
 
-	if err := world.GetComponents(entityId, &retrievedComponent); err != ecs.ErrComponentDoNotExists {
+	if _, err := ecs.GetComponent[Component](world, entityId); err != ecs.ErrComponentDoNotExists {
 		t.Errorf("retrieving removed component didn't return ecs.ErrComponentDoNotExists")
 	}
 
 	world.SaveComponent(entityId, component)
 	world.RemoveEntity(entityId)
 
-	if err := world.GetComponents(entityId, &retrievedComponent); err != ecs.ErrEntityDoNotExists {
+	if _, err := ecs.GetComponent[Component](world, entityId); err != ecs.ErrEntityDoNotExists {
 		t.Errorf("retrieving component from removed entity didn't return ecs.ErrEntityDoNotExists")
 	}
 }

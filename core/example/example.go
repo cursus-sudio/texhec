@@ -58,7 +58,7 @@ func NewToggledSystem(
 	}
 }
 
-func (system *toggleSystem) Update(args frames.FrameEvent) error {
+func (system *toggleSystem) Listen(args frames.FrameEvent) error {
 	if system.Toggled {
 		return nil
 	}
@@ -66,8 +66,8 @@ func (system *toggleSystem) Update(args frames.FrameEvent) error {
 	for _, entity := range system.World.GetEntitiesWithComponents(
 		ecs.GetComponentType(someComponent{}),
 	) {
-		component := someComponent{}
-		if err := system.World.GetComponents(entity, &component); err != nil {
+		component, err := ecs.GetComponent[someComponent](system.World, entity)
+		if err != nil {
 			continue
 		}
 		if component.PastTime < system.ToggleTreshold {
@@ -105,14 +105,15 @@ func NewSomeSystem(
 	}
 }
 
-func (system *someSystem) Update(args frames.FrameEvent) error {
-	format := "02-01-2006 15:04:05"
+var format = "02-01-2006 15:04:05"
+
+func (system *someSystem) Listen(args frames.FrameEvent) error {
 	text := "----------------------------------------------------------------\n"
 	text += fmt.Sprintf("now %s\n", time.Now().Format(format))
 
 	for _, entity := range system.World.GetEntitiesWithComponents(ecs.GetComponentType(someComponent{})) {
-		component := someComponent{}
-		if err := system.World.GetComponents(entity, &component); err != nil {
+		component, err := ecs.GetComponent[someComponent](system.World, entity)
+		if err != nil {
 			continue
 		}
 		component.PastTime += args.Delta
@@ -124,6 +125,7 @@ func (system *someSystem) Update(args frames.FrameEvent) error {
 		text += fmt.Sprintf("current frame %d\n", component.Frame)
 		// text += fmt.Sprintf("time in game %d\n", int(component.PastTime.Seconds()))
 		text += fmt.Sprintf("time in game %f\n", component.PastTime.Seconds())
+		text += fmt.Sprintf("avg fps %f\n", float64(component.Frame)/component.PastTime.Seconds())
 	}
 	text += "\n"
 

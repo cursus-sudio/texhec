@@ -23,17 +23,12 @@ func NewRenderSystem(
 	}
 }
 
-type renderableEntity struct {
-	Id   ecs.EntityId
-	Mesh mesh.MeshCachedAsset
-}
-
 type renderable struct {
 	Material material.MaterialCachedAsset
-	Entities []renderableEntity
+	Entities []ecs.EntityID
 }
 
-func (s *RenderSystem) Update(args frames.FrameEvent) error {
+func (s *RenderSystem) Listen(args frames.FrameEvent) error {
 	renderables := map[assets.AssetID]renderable{}
 
 	renderableEntities := s.world.GetEntitiesWithComponents(
@@ -42,48 +37,29 @@ func (s *RenderSystem) Update(args frames.FrameEvent) error {
 	)
 
 	for _, entity := range renderableEntities {
-		var materialComponent material.Material
-		if err := s.world.GetComponents(entity, &materialComponent); err != nil {
+		materialComponent, err := ecs.GetComponent[material.Material](s.world, entity)
+		if err != nil {
 			continue
 		}
-		for _, materialID := range materialComponent.IDs {
-			materialAsset, err := assets.GetAsset[material.MaterialCachedAsset](s.assets, materialID)
-			if err != nil {
-				return err
-			}
+		materialAsset, err := assets.GetAsset[material.MaterialCachedAsset](s.assets, materialComponent.ID)
+		if err != nil {
+			return err
+		}
 
-			var meshComponent mesh.Mesh
-			if err := s.world.GetComponents(entity, &meshComponent); err != nil {
-				continue
-			}
-
-			meshAsset, err := assets.GetAsset[mesh.MeshCachedAsset](s.assets, meshComponent.ID)
-			if err != nil {
-				return err
-			}
-
-			if existing, ok := renderables[materialID]; ok {
-				existing.Entities = append(existing.Entities, renderableEntity{entity, meshAsset})
-				renderables[materialID] = existing
-			} else {
-				renderables[materialID] = renderable{
-					materialAsset,
-					[]renderableEntity{{entity, meshAsset}},
-				}
+		if existing, ok := renderables[materialComponent.ID]; ok {
+			existing.Entities = append(existing.Entities, entity)
+			renderables[materialComponent.ID] = existing
+		} else {
+			renderables[materialComponent.ID] = renderable{
+				materialAsset,
+				[]ecs.EntityID{entity},
 			}
 		}
 	}
 
 	for _, material := range renderables {
-		if err := material.Material.OnFrame(s.world); err != nil {
+		if err := material.Material.Render(s.world, material.Entities); err != nil {
 			return err
-		}
-
-		for _, entity := range material.Entities {
-			if err := material.Material.UseForEntity(s.world, entity.Id); err != nil {
-				return err
-			}
-			entity.Mesh.VAO().Draw()
 		}
 	}
 

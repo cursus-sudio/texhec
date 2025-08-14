@@ -48,7 +48,8 @@ func (asset *meshStorageAsset) Cache() (assets.CachedAsset, error) {
 	ebo.SetIndices(asset.Indicies())
 
 	vao := vao.NewVAO(vbo, ebo)
-	return &meshCachedAsset{vao: vao}, nil
+	var mesh MeshCachedAsset = &meshCachedAsset{vao: vao}
+	return mesh, nil
 }
 
 //

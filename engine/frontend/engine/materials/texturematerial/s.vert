@@ -1,14 +1,20 @@
-#version 330
+#version 460 core
 
 uniform mat4 mvp;
 
-in vec3 vertPos;
-in vec2 vertTexCoord;
+in vec3 pos;
+in vec2 texCoord;
 
-out vec2 fragTexCoord;
+out VS {
+    vec2 texCoord;
+    flat int id;
+} fs;
 
 void main() {
-    fragTexCoord = vertTexCoord;
+    int id = gl_DrawID;
+    fs.id = id;
 
-    gl_Position = mvp * vec4(vertPos, 1);
+    fs.texCoord = texCoord;
+
+    gl_Position = mvp * vec4(pos, 1);
 }

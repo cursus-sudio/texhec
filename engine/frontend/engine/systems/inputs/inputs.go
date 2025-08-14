@@ -15,6 +15,6 @@ func NewInputsSystem(
 	return InputsSystem{inputs}
 }
 
-func (system *InputsSystem) Update(args frames.FrameEvent) {
+func (system *InputsSystem) Listen(args frames.FrameEvent) {
 	system.inputs.Poll()
 }

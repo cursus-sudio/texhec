@@ -9,6 +9,8 @@ import (
 
 type VAO interface {
 	ID() uint32
+	VBO() vbo.VBO
+	EBO() ebo.EBO
 	Release()
 	Draw()
 }
@@ -36,6 +38,9 @@ func NewVAO(VBO vbo.VBO, EBO ebo.EBO) VAO {
 }
 
 func (vao *vao) ID() uint32 { return vao.id }
+
+func (vao *vao) VBO() vbo.VBO { return vao.vbo }
+func (vao *vao) EBO() ebo.EBO { return vao.ebo }
 
 func (vao *vao) ReleaseVAO() {
 	gl.DeleteVertexArrays(1, &vao.id)

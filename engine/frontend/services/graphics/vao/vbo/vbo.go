@@ -42,6 +42,7 @@ func (vbo *vbo) Configure() {
 	gl.VertexAttribPointerWithOffset(0, 3, gl.FLOAT, false,
 		int32(unsafe.Sizeof(Vertex{})), uintptr(unsafe.Offsetof(Vertex{}.Pos)))
 	gl.EnableVertexAttribArray(0)
+
 	gl.VertexAttribPointerWithOffset(1, 2, gl.FLOAT, false,
 		int32(unsafe.Sizeof(Vertex{})), uintptr(unsafe.Offsetof(Vertex{}.TexturePos)))
 	gl.EnableVertexAttribArray(1)

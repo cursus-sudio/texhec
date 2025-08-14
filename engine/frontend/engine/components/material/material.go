@@ -5,7 +5,6 @@ import (
 	"frontend/services/assets"
 	"frontend/services/ecs"
 	"frontend/services/graphics/program"
-	"frontend/services/graphics/shader"
 )
 
 var (
@@ -13,112 +12,66 @@ var (
 )
 
 type Material struct {
-	IDs []assets.AssetID
+	ID assets.AssetID
 }
 
-func NewMaterial(id ...assets.AssetID) Material {
-	return Material{IDs: id}
+func NewMaterial(id assets.AssetID) Material {
+	return Material{ID: id}
 }
 
 type MaterialStorageAsset interface {
 	assets.StorageAsset
-	// shaders
-	VertexShader() string
-	FragmentShader() string
-	// - space for more shaders (use for them *string because they are optional)
-
-	// to set uniforms
-	// - camera
-	// - lights
-	OnFrame() func(world ecs.World, program program.Program) error
-	// - position
-	// - reflection
-	UseForEntity() func(world ecs.World, program program.Program, entityId ecs.EntityId) error
-
-	// flags (parameters)
-	Parameters() []program.Parameter
+	Program() (program.Program, error)
+	Render(world ecs.World, program program.Program, entities []ecs.EntityID) error
 }
 
 type materialStorageAsset struct {
-	vertexShader   string
-	fragmentShader string
-
-	onFrame      func(world ecs.World, program program.Program) error
-	useForEntity func(world ecs.World, program program.Program, entityId ecs.EntityId) error
-
-	parameters []program.Parameter
+	program func() (program.Program, error)
+	render  func(world ecs.World, program program.Program, entities []ecs.EntityID) error
 }
 
 func NewMaterialStorageAsset(
-	vertexShader, fragmentShader string,
-	onFrame func(world ecs.World, p program.Program) error,
-	useForEntity func(world ecs.World, p program.Program, entityId ecs.EntityId) error,
-	parameters []program.Parameter,
+	program func() (program.Program, error),
+	render func(ecs.World, program.Program, []ecs.EntityID) error,
 ) MaterialStorageAsset {
 	return &materialStorageAsset{
-		vertexShader:   vertexShader,
-		fragmentShader: fragmentShader,
-		onFrame:        onFrame,
-		useForEntity:   useForEntity,
-		parameters:     parameters,
+		program: program,
+		render:  render,
 	}
 }
 
-func (a *materialStorageAsset) VertexShader() string   { return a.vertexShader }
-func (a *materialStorageAsset) FragmentShader() string { return a.fragmentShader }
-func (a *materialStorageAsset) OnFrame() func(world ecs.World, program program.Program) error {
-	return a.onFrame
+func (a *materialStorageAsset) Program() (program.Program, error) {
+	return a.program()
 }
-func (a *materialStorageAsset) UseForEntity() func(world ecs.World, program program.Program, entityId ecs.EntityId) error {
-	return a.useForEntity
+func (a *materialStorageAsset) Render(world ecs.World, program program.Program, entities []ecs.EntityID) error {
+	return a.render(world, program, entities)
 }
-func (a *materialStorageAsset) Parameters() []program.Parameter { return a.parameters }
 
 func (a *materialStorageAsset) Cache() (assets.CachedAsset, error) {
-	vert, err := shader.NewShader(a.vertexShader, shader.VertexShader)
+	p, err := a.Program()
 	if err != nil {
 		return nil, err
 	}
-	frag, err := shader.NewShader(a.fragmentShader, shader.FragmentShader)
-	if err != nil {
-		return nil, err
-	}
-	p, err := program.NewProgram(vert, frag, a.Parameters())
-	if err != nil {
-		vert.Release()
-		frag.Release()
-		return nil, err
-	}
-	vert.Release()
-	frag.Release()
 	var cached MaterialCachedAsset = &materialCachedAsset{
-		program:    p,
-		onFrame:    a.onFrame,
-		drawEntity: a.useForEntity,
+		program: p,
+		render:  a.Render,
 	}
 	return cached, nil
 }
 
 type MaterialCachedAsset interface {
 	assets.CachedAsset
-	OnFrame(world ecs.World) error
-	UseForEntity(world ecs.World, entityId ecs.EntityId) error
+	Render(world ecs.World, entities []ecs.EntityID) error
 }
 
 type materialCachedAsset struct {
-	program    program.Program
-	onFrame    func(world ecs.World, program program.Program) error
-	drawEntity func(world ecs.World, program program.Program, entityId ecs.EntityId) error
+	program program.Program
+	render  func(world ecs.World, program program.Program, entities []ecs.EntityID) error
 }
 
-func (a *materialCachedAsset) OnFrame(world ecs.World) error {
+func (a *materialCachedAsset) Render(world ecs.World, entities []ecs.EntityID) error {
 	a.program.Use()
-	return a.onFrame(world, a.program)
-}
-
-func (a *materialCachedAsset) UseForEntity(world ecs.World, entityId ecs.EntityId) error {
-	a.program.Use()
-	return a.drawEntity(world, a.program, entityId)
+	return a.render(world, a.program, entities)
 }
 
 func (a *materialCachedAsset) Release() {

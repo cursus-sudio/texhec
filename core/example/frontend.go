@@ -125,7 +125,7 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadBeforeDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			inputsSystem := inputs.NewInputsSystem(ioc.Get[inputsmedia.Api](c))
-			events.Listen(ctx.EventsBuilder, inputsSystem.Update)
+			events.Listen(ctx.EventsBuilder, inputsSystem.Listen)
 		})
 		return b
 	})
@@ -140,7 +140,7 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				ioc.Get[backendconnection.Backend](c).Connection(),
 				ioc.Get[console.Console](c),
 			)
-			events.ListenE(ctx.EventsBuilder, someSystem.Update)
+			events.ListenE(ctx.EventsBuilder, someSystem.Listen)
 		})
 		return b
 	})
@@ -148,10 +148,10 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadAfterDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			renderSystem := render.NewRenderSystem(ctx.World, ioc.Get[assets.Assets](c))
-			events.ListenE(ctx.EventsBuilder, renderSystem.Update)
+			events.ListenE(ctx.EventsBuilder, renderSystem.Listen)
 
 			flushSystem := render.NewFlushSystem(ioc.Get[window.Api](c))
-			events.Listen(ctx.EventsBuilder, flushSystem.Update)
+			events.Listen(ctx.EventsBuilder, flushSystem.Listen)
 		})
 		return b
 	})
@@ -185,7 +185,7 @@ func AddSceneTwo(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadDomain, func(c ioc.Dic, sceneBuilder SceneTwoBuilder) SceneTwoBuilder {
 		sceneBuilder.OnLoad(func(ctx scenes.SceneCtx) {
 			toggleSystem := NewToggledSystem(ioc.Get[scenes.SceneManager](c), ctx.World, scene1Id, time.Second)
-			events.ListenE(ctx.EventsBuilder, toggleSystem.Update)
+			events.ListenE(ctx.EventsBuilder, toggleSystem.Listen)
 		})
 		return sceneBuilder
 	})

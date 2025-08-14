@@ -23,9 +23,12 @@ func (s *ChangeTransformOverTimeSystem) Update(args frames.FrameEvent) {
 		ecs.GetComponentType(ChangeTransformOverTimeComponent{}),
 		ecs.GetComponentType(transform.Transform{}),
 	) {
-		var changeTransformOverTimeComponent ChangeTransformOverTimeComponent
-		var transformComponent transform.Transform
-		if err := s.World.GetComponents(entity, &changeTransformOverTimeComponent, &transformComponent); err != nil {
+		changeTransformOverTimeComponent, err := ecs.GetComponent[ChangeTransformOverTimeComponent](s.World, entity)
+		if err != nil {
+			continue
+		}
+		transformComponent, err := ecs.GetComponent[transform.Transform](s.World, entity)
+		if err != nil {
 			continue
 		}
 		changeTransformOverTimeComponent.T += args.Delta

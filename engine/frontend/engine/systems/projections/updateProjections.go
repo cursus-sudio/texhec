@@ -38,10 +38,8 @@ func (s UpdateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
 	aspectRatio := w / h
 
 	for _, entity := range s.world.GetEntitiesWithComponents(ecs.GetComponentType(projection.DynamicPerspective{})) {
-		var (
-			resizePerspective projection.DynamicPerspective
-		)
-		if err := s.world.GetComponents(entity, &resizePerspective); err != nil {
+		resizePerspective, err := ecs.GetComponent[projection.DynamicPerspective](s.world, entity)
+		if err != nil {
 			continue
 		}
 		perspective := projection.NewPerspective(
@@ -51,10 +49,8 @@ func (s UpdateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
 		s.world.SaveComponent(entity, perspective)
 	}
 	for _, entity := range s.world.GetEntitiesWithComponents(ecs.GetComponentType(projection.DynamicOrtho{})) {
-		var (
-			resizeOrtho projection.DynamicOrtho
-		)
-		if err := s.world.GetComponents(entity, &resizeOrtho); err != nil {
+		resizeOrtho, err := ecs.GetComponent[projection.DynamicOrtho](s.world, entity)
+		if err != nil {
 			continue
 		}
 		ortho := projection.NewOrtho(

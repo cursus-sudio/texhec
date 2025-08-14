@@ -20,7 +20,7 @@ func NewShootRayEvent() ShootRayEvent {
 
 type RayChangedTargetEvent struct {
 	ProjectionType ecs.ComponentType
-	EntityID       *ecs.EntityId
+	EntityID       *ecs.EntityID
 }
 
 type CameraRaySystem struct {
@@ -31,7 +31,7 @@ type CameraRaySystem struct {
 	requiredComponentTypes []ecs.ComponentType
 
 	projectionTypes   []ecs.ComponentType
-	hoversOverEntites map[ecs.ComponentType]ecs.EntityId
+	hoversOverEntites map[ecs.ComponentType]ecs.EntityID
 }
 
 func NewCameraRaySystem(
@@ -49,7 +49,7 @@ func NewCameraRaySystem(
 		events:                 events,
 		projectionTypes:        cameraProjections,
 		requiredComponentTypes: requiredComponentTypes,
-		hoversOverEntites:      map[ecs.ComponentType]ecs.EntityId{},
+		hoversOverEntites:      map[ecs.ComponentType]ecs.EntityID{},
 	}
 }
 
@@ -60,10 +60,16 @@ func getDist(x1, x2 mgl32.Vec3) float32 {
 
 type object struct {
 	Dist     float32
-	EntityID ecs.EntityId
+	EntityID ecs.EntityID
 }
 
 func (s *CameraRaySystem) Listen(args ShootRayEvent) error {
+	requiredEntitiesComponents := append(
+		s.requiredComponentTypes,
+		ecs.GetComponentType(transform.Transform{}),
+		ecs.GetComponentType(colliders.Collider{}),
+		ecs.GetComponentType(projection.UsedProjection{}),
+	)
 	for _, projectionType := range s.projectionTypes {
 		var cameraTransform transform.Transform
 		var ray shapes.Ray
@@ -73,10 +79,12 @@ func (s *CameraRaySystem) Listen(args ShootRayEvent) error {
 				return projection.ErrWorldShouldHaveOneProjection
 			}
 			camera := cameras[0]
-			if err := s.world.GetComponents(camera, &cameraTransform); err != nil {
+			var err error
+			cameraTransform, err = ecs.GetComponent[transform.Transform](s.world, camera)
+			if err != nil {
 				return err
 			}
-			anyProj, err := s.world.GetComponentByType(camera, projectionType)
+			anyProj, err := s.world.GetComponent(camera, projectionType)
 			if err != nil {
 				return err
 			}
@@ -91,26 +99,15 @@ func (s *CameraRaySystem) Listen(args ShootRayEvent) error {
 
 		rayCollider := colliders.NewCollider([]colliders.Shape{ray})
 
-		entities := s.world.GetEntitiesWithComponents(
-			append(
-				s.requiredComponentTypes,
-				ecs.GetComponentType(transform.Transform{}),
-				ecs.GetComponentType(colliders.Collider{}),
-				ecs.GetComponentType(projection.UsedProjection{}),
-			)...,
-		)
+		entities := s.world.GetEntitiesWithComponents(requiredEntitiesComponents...)
 		nearestObject := (*object)(nil)
 		for _, entity := range entities {
-			var (
-				entityTransform transform.Transform
-				entityCollider  colliders.Collider
-				usedProjection  projection.UsedProjection
-			)
-			if err := s.world.GetComponents(entity,
-				&entityCollider,
-				&entityTransform,
-				&usedProjection,
-			); err != nil || usedProjection.ProjectionComponent != projectionType {
+			entityTransform, err := ecs.GetComponent[transform.Transform](s.world, entity)
+			if err != nil {
+				continue
+			}
+			entityCollider, err := ecs.GetComponent[colliders.Collider](s.world, entity)
+			if err != nil {
 				continue
 			}
 			entityCollider = entityCollider.Apply(entityTransform)

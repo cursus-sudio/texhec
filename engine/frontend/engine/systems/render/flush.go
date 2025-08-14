@@ -19,7 +19,7 @@ func NewFlushSystem(
 	}
 }
 
-func (s *FlushSystem) Update(args frames.FrameEvent) {
+func (s *FlushSystem) Listen(args frames.FrameEvent) {
 	s.window.Window().GLSwap()
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }

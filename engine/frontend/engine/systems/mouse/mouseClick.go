@@ -14,6 +14,7 @@ type ClickSystem struct {
 	clickOn uint8
 }
 
+// use sdl.PRESSED or sdl.RELEASED or clickOn
 func NewClickSystem(
 	world ecs.World,
 	events events.Events,
@@ -36,7 +37,8 @@ func (s ClickSystem) Listen(event sdl.MouseButtonEvent) {
 	)
 	for _, entity := range entities {
 		var mouseEvents mouse.MouseEvents
-		if err := s.world.GetComponents(entity, &mouseEvents); err != nil {
+		mouseEvents, err := ecs.GetComponent[mouse.MouseEvents](s.world, entity)
+		if err != nil {
 			continue
 		}
 

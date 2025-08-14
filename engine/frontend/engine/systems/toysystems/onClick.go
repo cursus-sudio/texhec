@@ -21,7 +21,7 @@ type ShootRaySystem[Projection projection.Projection] struct {
 	window         window.Api
 	console        console.Console
 	distFromCamera float32
-	getEntity      func() ecs.EntityId
+	getEntity      func() ecs.EntityID
 	shootRay       func(shapes.Ray)
 }
 
@@ -30,7 +30,7 @@ func NewShootRaySystem[Projection projection.Projection](
 	window window.Api,
 	console console.Console,
 	distFromCamera float32,
-	getEntity func() ecs.EntityId,
+	getEntity func() ecs.EntityID,
 	shootRay func(shapes.Ray),
 ) ShootRaySystem[Projection] {
 	return ShootRaySystem[Projection]{
@@ -38,27 +38,24 @@ func NewShootRaySystem[Projection projection.Projection](
 		window:         window,
 		console:        console,
 		distFromCamera: distFromCamera,
-		getEntity:      func() ecs.EntityId { return getEntity() },
+		getEntity:      func() ecs.EntityID { return getEntity() },
 		shootRay:       shootRay,
 	}
 }
 
 func (system *ShootRaySystem[Projection]) Listen(args ShootRayEvent) error {
-	var cameraTransform transform.Transform
-	var proj Projection
-
-	{
-		cameras := system.world.GetEntitiesWithComponents(ecs.GetComponentPointerType((*Projection)(nil)))
-		if len(cameras) != 1 {
-			return projection.ErrWorldShouldHaveOneProjection
-		}
-		camera := cameras[0]
-		if err := system.world.GetComponents(camera, &proj); err != nil {
-			return err
-		}
-		if err := system.world.GetComponents(camera, &cameraTransform); err != nil {
-			return err
-		}
+	cameras := system.world.GetEntitiesWithComponents(ecs.GetComponentPointerType((*Projection)(nil)))
+	if len(cameras) != 1 {
+		return projection.ErrWorldShouldHaveOneProjection
+	}
+	cameraEntity := cameras[0]
+	cameraTransform, err := ecs.GetComponent[transform.Transform](system.world, cameraEntity)
+	if err != nil {
+		return err
+	}
+	proj, err := ecs.GetComponent[Projection](system.world, cameraEntity)
+	if err != nil {
+		return err
 	}
 
 	var ray shapes.Ray
@@ -71,8 +68,8 @@ func (system *ShootRaySystem[Projection]) Listen(args ShootRayEvent) error {
 
 	{
 		entity := system.getEntity()
-		var trans transform.Transform
-		if err := system.world.GetComponents(entity, &trans); err != nil {
+		trans, err := ecs.GetComponent[transform.Transform](system.world, entity)
+		if err != nil {
 			return err
 		}
 

@@ -120,8 +120,8 @@ func frontendDic(
 			windowapi.Package(window, ctx),
 		),
 		ecs.Package(),
-		frames.Package(60),
-		// frames.Package(10000),
+		// frames.Package(60),
+		frames.Package(10000),
 		scenes.Package(),
 		frontendscopes.Package(),
 

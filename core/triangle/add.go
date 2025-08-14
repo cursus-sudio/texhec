@@ -58,60 +58,68 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 	})
 
 	ioc.WrapService(b, scenes.LoadDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
-		b.OnLoad(func(ctx scenes.SceneCtx) { // cube
-			entity := ctx.World.NewEntity()
-			ctx.World.SaveComponent(entity, transform.NewTransform().
-				SetPos(mgl32.Vec3{0, 0, 300}).
-				SetSize(mgl32.Vec3{100, 100, 100}))
-			ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
-			ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
-			// world.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
-			ctx.World.SaveComponent(entity, material.NewMaterial(texturematerial.TextureMaterial))
-			ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
-			ctx.World.SaveComponent(entity, ChangeTransformOverTimeComponent{})
-		})
+		// b.OnLoad(func(ctx scenes.SceneCtx) { // cube
+		// 	entity := ctx.World.NewEntity()
+		// 	ctx.World.SaveComponent(entity, transform.NewTransform().
+		// 		SetPos(mgl32.Vec3{0, 0, 300}).
+		// 		SetSize(mgl32.Vec3{100, 100, 100}))
+		// 	ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
+		// 	// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
+		// 	ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
+		// 	ctx.World.SaveComponent(entity, material.NewMaterial(texturematerial.TextureMaterial))
+		// 	ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
+		// 	ctx.World.SaveComponent(entity, ChangeTransformOverTimeComponent{})
+		// })
 
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			events.Listen(ctx.EventsBuilder, (&ChangeTransformOverTimeSystem{World: ctx.World}).Update)
 		})
 
 		b.OnLoad(func(ctx scenes.SceneCtx) {
+			type Marked struct{}
+
 			type OnHoveredDomainEvent struct{}
 			type OnClickDomainEvent struct{}
 
-			rectEntity := ctx.World.NewEntity()
-			ctx.World.SaveComponent(rectEntity, transform.NewTransform().
-				SetPos([3]float32{0, 0, 0}).
-				SetSize([3]float32{100, 100, 0}))
-			ctx.World.SaveComponent(rectEntity, mesh.NewMesh(MeshAssetID))
-			ctx.World.SaveComponent(rectEntity, projection.NewUsedProjection[projection.Ortho]())
-			// world.SaveComponent(rectEntity, projection.NewUsedProjection[projection.Perspective]())
-			ctx.World.SaveComponent(rectEntity, material.NewMaterial(texturematerial.TextureMaterial))
-			ctx.World.SaveComponent(rectEntity, texture.NewTexture(TextureAssetID))
-			ctx.World.SaveComponent(rectEntity, mouse.NewMouseEvents().
-				AddLeftClickEvents(OnClickDomainEvent{}),
-			)
-			ctx.World.SaveComponent(rectEntity, colliders.NewCollider([]colliders.Shape{
-				shapes.NewRect2D(transform.NewTransform().SetSize([3]float32{1, 1}))}))
+			{
+				events.Listen(ctx.EventsBuilder, func(e OnHoveredDomainEvent) {
+					ioc.Get[console.Console](c).Print("damn it really is hovered\n")
+				})
 
-			events.Listen(ctx.EventsBuilder, func(e OnHoveredDomainEvent) {
-				ioc.Get[console.Console](c).Print("damn it really is hovered\n")
-			})
+				events.Listen(ctx.EventsBuilder, func(e OnClickDomainEvent) {
+					ioc.Get[console.Console](c).PrintPermanent("damn it really is clicked\n")
+				})
 
-			events.Listen(ctx.EventsBuilder, func(fe frames.FrameEvent) {
-				hovered, _ := ctx.World.GetComponentByType(rectEntity, ecs.GetComponentType(mouse.Hovered{}))
-				if hovered == nil {
-					return
-				}
-				ioc.Get[console.Console](c).Print("emit on frame should we not get one\n")
-				events.Emit(ctx.Events, OnHoveredDomainEvent{})
-			})
+				events.Listen(ctx.EventsBuilder, func(fe frames.FrameEvent) {
+					entities := ctx.World.GetEntitiesWithComponents(
+						ecs.GetComponentType(Marked{}),
+						ecs.GetComponentType(mouse.Hovered{}),
+					)
+					for range entities {
+						events.Emit(ctx.Events, OnHoveredDomainEvent{})
+					}
+				})
+			}
 
-			events.Emit(ctx.Events, OnClickDomainEvent{})
-
-			events.Listen(ctx.EventsBuilder, func(e OnClickDomainEvent) {
-				ioc.Get[console.Console](c).PrintPermanent("damn it really is clicked\n")
-			})
+			rows := 100
+			cols := 100
+			for i := 0; i < rows*cols; i++ {
+				row := i / cols
+				col := i % cols
+				entity := ctx.World.NewEntity()
+				ctx.World.SaveComponent(entity, transform.NewTransform().
+					SetPos([3]float32{float32(col) * 101, float32(row) * 101, 0}).
+					SetSize([3]float32{100, 100, 0}))
+				ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
+				// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
+				ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
+				ctx.World.SaveComponent(entity, material.NewMaterial(texturematerial.TextureMaterial))
+				ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
+				ctx.World.SaveComponent(entity, Marked{})
+				ctx.World.SaveComponent(entity, mouse.NewMouseEvents().AddLeftClickEvents(OnClickDomainEvent{}))
+				ctx.World.SaveComponent(entity, colliders.NewCollider([]colliders.Shape{
+					shapes.NewRect2D(transform.NewTransform().SetSize([3]float32{1, 1}))}))
+			}
 		})
 
 		b.OnLoad(func(ctx scenes.SceneCtx) {
@@ -140,8 +148,8 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 					return projection.ErrWorldShouldHaveOneProjection
 				}
 				camera := cameras[0]
-				var cameraTransform transform.Transform
-				if err := ctx.World.GetComponents(camera, &cameraTransform); err != nil {
+				cameraTransform, err := ecs.GetComponent[transform.Transform](ctx.World, camera)
+				if err != nil {
 					return err
 				}
 				rotation := cameraTransform.Rotation

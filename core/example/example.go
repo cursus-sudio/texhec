@@ -41,6 +41,7 @@ type toggleSystem struct {
 	Toggled        bool
 	Scene2         scenes.SceneId
 	ToggleTreshold time.Duration
+	LiveQuery      ecs.LiveQuery
 }
 
 func NewToggledSystem(
@@ -49,12 +50,16 @@ func NewToggledSystem(
 	scene2 scenes.SceneId,
 	toggleTreshold time.Duration,
 ) toggleSystem {
+	liveQuery := world.GetEntitiesWithComponentsQuery(nil,
+		ecs.GetComponentType(someComponent{}),
+	)
 	return toggleSystem{
 		SceneManager:   sceneManager,
 		World:          world,
 		Toggled:        false,
 		Scene2:         scene2,
 		ToggleTreshold: toggleTreshold,
+		LiveQuery:      liveQuery,
 	}
 }
 
@@ -63,9 +68,7 @@ func (system *toggleSystem) Listen(args frames.FrameEvent) error {
 		return nil
 	}
 
-	for _, entity := range system.World.GetEntitiesWithComponents(
-		ecs.GetComponentType(someComponent{}),
-	) {
+	for _, entity := range system.LiveQuery.Entities() {
 		component, err := ecs.GetComponent[someComponent](system.World, entity)
 		if err != nil {
 			continue
@@ -89,6 +92,7 @@ type someSystem struct {
 	World        ecs.World
 	Backend      connection.Connection
 	Console      console.Console
+	LiveQuery    ecs.LiveQuery
 }
 
 func NewSomeSystem(
@@ -97,11 +101,13 @@ func NewSomeSystem(
 	backend connection.Connection,
 	console console.Console,
 ) someSystem {
+	liveQuery := world.GetEntitiesWithComponentsQuery(nil, ecs.GetComponentType(someComponent{}))
 	return someSystem{
 		SceneManager: sceneMagener,
 		World:        world,
 		Backend:      backend,
 		Console:      console,
+		LiveQuery:    liveQuery,
 	}
 }
 
@@ -111,7 +117,7 @@ func (system *someSystem) Listen(args frames.FrameEvent) error {
 	text := "----------------------------------------------------------------\n"
 	text += fmt.Sprintf("now %s\n", time.Now().Format(format))
 
-	for _, entity := range system.World.GetEntitiesWithComponents(ecs.GetComponentType(someComponent{})) {
+	for _, entity := range system.LiveQuery.Entities() {
 		component, err := ecs.GetComponent[someComponent](system.World, entity)
 		if err != nil {
 			continue

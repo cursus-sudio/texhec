@@ -72,7 +72,8 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		// })
 
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			events.Listen(ctx.EventsBuilder, (&ChangeTransformOverTimeSystem{World: ctx.World}).Update)
+			system := NewChangeTransformOverTimeSystem(ctx.World)
+			events.Listen(ctx.EventsBuilder, system.Update)
 		})
 
 		b.OnLoad(func(ctx scenes.SceneCtx) {
@@ -90,19 +91,19 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 					ioc.Get[console.Console](c).PrintPermanent("damn it really is clicked\n")
 				})
 
+				liveQuery := ctx.World.GetEntitiesWithComponentsQuery(nil,
+					ecs.GetComponentType(Marked{}),
+					ecs.GetComponentType(mouse.Hovered{}),
+				)
 				events.Listen(ctx.EventsBuilder, func(fe frames.FrameEvent) {
-					entities := ctx.World.GetEntitiesWithComponents(
-						ecs.GetComponentType(Marked{}),
-						ecs.GetComponentType(mouse.Hovered{}),
-					)
-					for range entities {
+					for range liveQuery.Entities() {
 						events.Emit(ctx.Events, OnHoveredDomainEvent{})
 					}
 				})
 			}
 
-			rows := 100
-			cols := 100
+			rows := 10
+			cols := 10
 			for i := 0; i < rows*cols; i++ {
 				row := i / cols
 				col := i % cols
@@ -128,6 +129,9 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			aPressed := false
 			sPressed := false
 			dPressed := false
+			camerasQuery := ctx.World.GetEntitiesWithComponentsQuery(nil,
+				ecs.GetComponentType(projection.Perspective{}),
+			)
 
 			moveCameraSystem := func(event frames.FrameEvent) error {
 				xAxis := 0
@@ -143,7 +147,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 					yAxis = -1
 				}
 
-				cameras := ctx.World.GetEntitiesWithComponents(ecs.GetComponentType(projection.Perspective{}))
+				cameras := camerasQuery.Entities()
 				if len(cameras) != 1 {
 					return projection.ErrWorldShouldHaveOneProjection
 				}

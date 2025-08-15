@@ -11,15 +11,69 @@ import (
 type RenderSystem struct {
 	world  ecs.World
 	assets assets.Assets
+
+	renderables map[assets.AssetID]*renderable
 }
 
 func NewRenderSystem(
 	world ecs.World,
-	assets assets.Assets,
+	assetsService assets.Assets,
 ) RenderSystem {
+	renderedEntities := map[ecs.EntityID]assets.AssetID{}
+	renderables := map[assets.AssetID]*renderable{}
+
+	onAdd := func(entities []ecs.EntityID) {
+		for _, entity := range entities {
+			materialComponent, err := ecs.GetComponent[material.Material](world, entity)
+			if err != nil {
+				continue
+			}
+			materialAsset, err := assets.GetAsset[material.MaterialCachedAsset](assetsService, materialComponent.ID)
+			if err != nil {
+				continue
+			}
+
+			renderedEntities[entity] = materialComponent.ID
+			if existing, ok := renderables[materialComponent.ID]; ok {
+				existing.Entities = append(existing.Entities, entity)
+			} else {
+				renderables[materialComponent.ID] = &renderable{
+					materialAsset,
+					[]ecs.EntityID{entity},
+				}
+			}
+		}
+	}
+	onRemove := func(entities []ecs.EntityID) {
+		for _, entity := range entities {
+			assetID, ok := renderedEntities[entity]
+			if !ok {
+				continue
+			}
+			renderable, ok := renderables[assetID]
+			if !ok {
+				continue
+			}
+			newEntities := make([]ecs.EntityID, 0)
+			for _, renderedEntity := range renderable.Entities {
+				if renderedEntity != entity {
+					newEntities = append(newEntities, renderedEntity)
+				}
+			}
+		}
+	}
+
+	world.GetEntitiesWithComponentsQuery(
+		ecs.NewQuery(onAdd, onRemove),
+		ecs.GetComponentType(mesh.Mesh{}),
+		ecs.GetComponentType(material.Material{}),
+	)
+
 	return RenderSystem{
 		world:  world,
-		assets: assets,
+		assets: assetsService,
+
+		renderables: renderables,
 	}
 }
 
@@ -29,35 +83,7 @@ type renderable struct {
 }
 
 func (s *RenderSystem) Listen(args frames.FrameEvent) error {
-	renderables := map[assets.AssetID]renderable{}
-
-	renderableEntities := s.world.GetEntitiesWithComponents(
-		ecs.GetComponentType(mesh.Mesh{}),
-		ecs.GetComponentType(material.Material{}),
-	)
-
-	for _, entity := range renderableEntities {
-		materialComponent, err := ecs.GetComponent[material.Material](s.world, entity)
-		if err != nil {
-			continue
-		}
-		materialAsset, err := assets.GetAsset[material.MaterialCachedAsset](s.assets, materialComponent.ID)
-		if err != nil {
-			return err
-		}
-
-		if existing, ok := renderables[materialComponent.ID]; ok {
-			existing.Entities = append(existing.Entities, entity)
-			renderables[materialComponent.ID] = existing
-		} else {
-			renderables[materialComponent.ID] = renderable{
-				materialAsset,
-				[]ecs.EntityID{entity},
-			}
-		}
-	}
-
-	for _, material := range renderables {
+	for _, material := range s.renderables {
 		if err := material.Material.Render(s.world, material.Entities); err != nil {
 			return err
 		}

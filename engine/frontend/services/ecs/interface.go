@@ -50,6 +50,27 @@ var (
 	ErrEntityDoNotExists    error = errors.New("entity do not exists")
 )
 
+type Query interface {
+	AddEntities([]EntityID)
+	RemoveEntities([]EntityID)
+}
+
+type queryImpl struct {
+	addEntity    func([]EntityID)
+	removeEntity func([]EntityID)
+}
+
+func NewQuery(onAdd func([]EntityID), onRemove func([]EntityID)) Query {
+	return queryImpl{onAdd, onRemove}
+}
+
+type LiveQuery interface {
+	Entities() []EntityID
+}
+
+func (q queryImpl) AddEntities(entities []EntityID)    { q.addEntity(entities) }
+func (q queryImpl) RemoveEntities(entities []EntityID) { q.removeEntity(entities) }
+
 type componentsInterface interface {
 	// can return:
 	// - ErrEntityDoNotExists
@@ -62,6 +83,9 @@ type componentsInterface interface {
 
 	// returns entities with all listed component types
 	GetEntitiesWithComponents(...ComponentType) []EntityID
+
+	// modifies query
+	GetEntitiesWithComponentsQuery(Query, ...ComponentType) LiveQuery
 }
 
 func GetComponent[WantedComponent Component](w World, entity EntityID) (WantedComponent, error) {
@@ -71,18 +95,6 @@ func GetComponent[WantedComponent Component](w World, entity EntityID) (WantedCo
 		return zero, err
 	}
 	return component.(WantedComponent), nil
-}
-
-func GetComponents(w World, entity EntityID, wantedComponents ...*Component) error {
-	for _, component := range wantedComponents {
-		componentType := GetComponentType(*component)
-		var err error
-		*component, err = w.GetComponent(entity, componentType)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // world

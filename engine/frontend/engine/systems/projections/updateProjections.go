@@ -20,12 +20,20 @@ func NewUpdateProjectionsEvent() UpdateProjectionsEvent {
 type UpdateProjetionsSystem struct {
 	world  ecs.World
 	window window.Api
+
+	perspectivesQuery ecs.LiveQuery
+	orthoQuery        ecs.LiveQuery
 }
 
 func NewUpdateProjectionsSystem(world ecs.World, window window.Api) UpdateProjetionsSystem {
+	perspectiveQuery := world.GetEntitiesWithComponentsQuery(nil, ecs.GetComponentType(projection.DynamicPerspective{}))
+	orthoQuery := world.GetEntitiesWithComponentsQuery(nil, ecs.GetComponentType(projection.DynamicOrtho{}))
 	return UpdateProjetionsSystem{
 		world:  world,
 		window: window,
+
+		perspectivesQuery: perspectiveQuery,
+		orthoQuery:        orthoQuery,
 	}
 }
 
@@ -36,8 +44,7 @@ func (s UpdateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
 		w, h = float32(width), float32(height)
 	}
 	aspectRatio := w / h
-
-	for _, entity := range s.world.GetEntitiesWithComponents(ecs.GetComponentType(projection.DynamicPerspective{})) {
+	for _, entity := range s.perspectivesQuery.Entities() {
 		resizePerspective, err := ecs.GetComponent[projection.DynamicPerspective](s.world, entity)
 		if err != nil {
 			continue
@@ -48,7 +55,7 @@ func (s UpdateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
 		)
 		s.world.SaveComponent(entity, perspective)
 	}
-	for _, entity := range s.world.GetEntitiesWithComponents(ecs.GetComponentType(projection.DynamicOrtho{})) {
+	for _, entity := range s.orthoQuery.Entities() {
 		resizeOrtho, err := ecs.GetComponent[projection.DynamicOrtho](s.world, entity)
 		if err != nil {
 			continue

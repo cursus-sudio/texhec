@@ -23,6 +23,7 @@ type ShootRaySystem[Projection projection.Projection] struct {
 	distFromCamera float32
 	getEntity      func() ecs.EntityID
 	shootRay       func(shapes.Ray)
+	camerasQuery   ecs.LiveQuery
 }
 
 func NewShootRaySystem[Projection projection.Projection](
@@ -33,6 +34,7 @@ func NewShootRaySystem[Projection projection.Projection](
 	getEntity func() ecs.EntityID,
 	shootRay func(shapes.Ray),
 ) ShootRaySystem[Projection] {
+	camerasLiveQuery := world.GetEntitiesWithComponentsQuery(nil, ecs.GetComponentPointerType((*Projection)(nil)))
 	return ShootRaySystem[Projection]{
 		world:          world,
 		window:         window,
@@ -40,11 +42,12 @@ func NewShootRaySystem[Projection projection.Projection](
 		distFromCamera: distFromCamera,
 		getEntity:      func() ecs.EntityID { return getEntity() },
 		shootRay:       shootRay,
+		camerasQuery:   camerasLiveQuery,
 	}
 }
 
 func (system *ShootRaySystem[Projection]) Listen(args ShootRayEvent) error {
-	cameras := system.world.GetEntitiesWithComponents(ecs.GetComponentPointerType((*Projection)(nil)))
+	cameras := system.camerasQuery.Entities()
 	if len(cameras) != 1 {
 		return projection.ErrWorldShouldHaveOneProjection
 	}

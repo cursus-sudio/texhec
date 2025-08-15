@@ -15,14 +15,25 @@ type ChangeTransformOverTimeComponent struct {
 }
 
 type ChangeTransformOverTimeSystem struct {
-	World ecs.World
+	World     ecs.World
+	LiveQuery ecs.LiveQuery
+}
+
+func NewChangeTransformOverTimeSystem(
+	world ecs.World,
+) *ChangeTransformOverTimeSystem {
+	liveQuery := world.GetEntitiesWithComponentsQuery(nil,
+		ecs.GetComponentType(ChangeTransformOverTimeComponent{}),
+		ecs.GetComponentType(transform.Transform{}),
+	)
+	return &ChangeTransformOverTimeSystem{
+		World:     world,
+		LiveQuery: liveQuery,
+	}
 }
 
 func (s *ChangeTransformOverTimeSystem) Update(args frames.FrameEvent) {
-	for _, entity := range s.World.GetEntitiesWithComponents(
-		ecs.GetComponentType(ChangeTransformOverTimeComponent{}),
-		ecs.GetComponentType(transform.Transform{}),
-	) {
+	for _, entity := range s.LiveQuery.Entities() {
 		changeTransformOverTimeComponent, err := ecs.GetComponent[ChangeTransformOverTimeComponent](s.World, entity)
 		if err != nil {
 			continue

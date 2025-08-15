@@ -1,31 +1,17 @@
 package ecs
 
-import (
-	"strings"
-)
-
-type queryKey string
-
-func newQuerykey(slice []ComponentType) queryKey {
-	var r strings.Builder
-	// reserved 10 characters per element for better performance
-	r.Grow(10 * len(slice))
-	for _, e := range slice {
-		r.WriteString(e.componentType.String())
-		r.WriteString(",")
-	}
-	return queryKey(r.String())
+type liveQuery struct {
+	dependencies   map[ComponentType]any // this is faster []ComponentType
+	entities       map[EntityID]any      // this is faster []EntityID
+	cachedEntities []EntityID
+	query          Query
 }
 
-//
-
-type query struct {
-	Dependencies map[ComponentType]any // this is faster []ComponentType
-	Entities     map[EntityID]any      // this is faster []EntityID
-	CachedRes    []EntityID
-}
-
-func newQuery(componentTypes []ComponentType, res []EntityID) *query {
+func newLiveQuery(
+	componentTypes []ComponentType,
+	res []EntityID,
+	queryListner Query,
+) *liveQuery {
 	dependencies := make(map[ComponentType]any, len(componentTypes))
 	for _, componentType := range componentTypes {
 		dependencies[componentType] = nil
@@ -34,37 +20,48 @@ func newQuery(componentTypes []ComponentType, res []EntityID) *query {
 	for _, entity := range res {
 		entities[entity] = nil
 	}
-	return &query{dependencies, entities, nil}
+	return &liveQuery{dependencies, entities, nil, queryListner}
 }
 
-func (query *query) RemoveEntity(entity EntityID) {
-	delete(query.Entities, entity)
-	query.CachedRes = nil
+func (query *liveQuery) RemoveEntity(entity EntityID) {
+	_, ok := query.entities[entity]
+	if !ok {
+		return
+	}
+	delete(query.entities, entity)
+	query.cachedEntities = nil
+	if query.query != nil {
+		query.query.RemoveEntities([]EntityID{entity})
+	}
 }
 
-func (query *query) RemoveComponent(entity EntityID, componentType ComponentType) {
-	_, ok := query.Dependencies[componentType]
+func (query *liveQuery) RemoveComponent(entity EntityID, componentType ComponentType) {
+	_, ok := query.dependencies[componentType]
 	if !ok {
 		return
 	}
 	query.RemoveEntity(entity)
 }
 
-func (query *query) AddEntity(entity EntityID) {
-	query.Entities[entity] = nil
-	query.CachedRes = append(query.CachedRes, entity)
+func (query *liveQuery) AddEntities(entities []EntityID) {
+	for _, entity := range entities {
+		query.entities[entity] = nil
+	}
+	query.cachedEntities = append(query.cachedEntities, entities...)
+	if query.query != nil {
+		query.query.AddEntities(entities)
+	}
 }
 
-func (query *query) Res() []EntityID {
-	if query.CachedRes != nil {
-		return query.CachedRes
+func (query *liveQuery) Entities() []EntityID {
+	if query.cachedEntities == nil {
+		entities := make([]EntityID, 0, len(query.entities))
+		for entity := range query.entities {
+			entities = append(entities, entity)
+		}
+		query.cachedEntities = entities
 	}
-	res := make([]EntityID, 0, len(query.Entities))
-	for entity := range query.Entities {
-		res = append(res, entity)
-	}
-	query.CachedRes = res
-	return res
+	return query.cachedEntities
 }
 
 //
@@ -72,7 +69,7 @@ func (query *query) Res() []EntityID {
 type componentsImpl struct {
 	entityComponents map[EntityID]map[ComponentType]*Component
 	componentEntity  map[ComponentType]map[EntityID]*Component
-	cachedQueries    map[queryKey]*query
+	cachedQueries    []*liveQuery
 
 	shouldDie bool
 }
@@ -82,7 +79,7 @@ func newComponents() *componentsImpl {
 		entityComponents: make(map[EntityID]map[ComponentType]*Component),
 		componentEntity:  make(map[ComponentType]map[EntityID]*Component),
 
-		cachedQueries: make(map[queryKey]*query),
+		cachedQueries: make([]*liveQuery, 0),
 	}
 }
 
@@ -92,8 +89,8 @@ func (components *componentsImpl) SaveComponent(entityId EntityID, component Com
 		return ErrEntityDoNotExists
 	}
 
-	entityHadComponent := components.componentEntity[componentType] != nil
-	if !entityHadComponent {
+	_, entityHadComponent := components.entityComponents[entityId][componentType]
+	if components.componentEntity[componentType] == nil {
 		components.componentEntity[componentType] = make(map[EntityID]*Component)
 	}
 
@@ -105,21 +102,23 @@ func (components *componentsImpl) SaveComponent(entityId EntityID, component Com
 	}
 	// manage cache
 	for _, query := range components.cachedQueries {
-		_, ok := query.Dependencies[componentType]
+		_, ok := query.dependencies[componentType]
 		if !ok {
 			continue
 		}
-		dependenciesNeeded := len(query.Dependencies)
-	entityDependencies:
-		for componentType := range components.entityComponents[entityId] {
-			if _, ok := query.Dependencies[componentType]; !ok {
+		dependenciesNeeded := len(query.dependencies)
+		entityComponents := components.entityComponents[entityId]
+		for componentType := range entityComponents {
+			if _, ok := query.dependencies[componentType]; !ok {
 				continue
 			}
 			dependenciesNeeded--
 			if dependenciesNeeded == 0 {
-				query.AddEntity(entityId)
-				break entityDependencies
+				break
 			}
+		}
+		if dependenciesNeeded == 0 {
+			query.AddEntities([]EntityID{entityId})
 		}
 	}
 
@@ -170,11 +169,6 @@ func (components *componentsImpl) GetEntitiesWithComponents(componentTypes ...Co
 		return nil
 	}
 
-	queryKey := newQuerykey(componentTypes)
-	if res, ok := components.cachedQueries[queryKey]; ok {
-		return res.Res()
-	}
-
 	firstType := componentTypes[0]
 	entitiesMap, ok := components.componentEntity[firstType]
 	if !ok || len(entitiesMap) == 0 {
@@ -207,7 +201,16 @@ func (components *componentsImpl) GetEntitiesWithComponents(componentTypes ...Co
 	for entity := range intersection {
 		entitiesSlice = append(entitiesSlice, entity)
 	}
-	components.cachedQueries[queryKey] = newQuery(componentTypes, entitiesSlice)
 
 	return entitiesSlice
+}
+
+func (components *componentsImpl) GetEntitiesWithComponentsQuery(query Query, componentTypes ...ComponentType) LiveQuery {
+	entities := components.GetEntitiesWithComponents(componentTypes...)
+	if query != nil && len(entities) != 0 {
+		query.AddEntities(entities)
+	}
+	queryRes := newLiveQuery(componentTypes, entities, query)
+	components.cachedQueries = append(components.cachedQueries, queryRes)
+	return queryRes
 }

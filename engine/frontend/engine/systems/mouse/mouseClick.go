@@ -21,7 +21,7 @@ func NewClickSystem(
 	events events.Events,
 	clickOn uint8,
 ) ClickSystem {
-	liveQuery := world.GetEntitiesWithComponentsQuery(
+	liveQuery := world.QueryEntitiesWithComponents(
 		ecs.GetComponentType(mouse.Hovered{}),
 		ecs.GetComponentType(mouse.MouseEvents{}),
 	)

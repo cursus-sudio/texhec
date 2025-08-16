@@ -63,7 +63,7 @@ func NewRenderSystem(
 		}
 	}
 
-	liveQuery := world.GetEntitiesWithComponentsQuery(
+	liveQuery := world.QueryEntitiesWithComponents(
 		ecs.GetComponentType(mesh.Mesh{}),
 		ecs.GetComponentType(material.Material{}),
 	)

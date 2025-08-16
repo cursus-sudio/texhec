@@ -34,7 +34,7 @@ func NewShootRaySystem[Projection projection.Projection](
 	getEntity func() ecs.EntityID,
 	shootRay func(shapes.Ray),
 ) ShootRaySystem[Projection] {
-	camerasLiveQuery := world.GetEntitiesWithComponentsQuery(ecs.GetComponentPointerType((*Projection)(nil)))
+	camerasLiveQuery := world.QueryEntitiesWithComponents(ecs.GetComponentPointerType((*Projection)(nil)))
 	return ShootRaySystem[Projection]{
 		world:          world,
 		window:         window,

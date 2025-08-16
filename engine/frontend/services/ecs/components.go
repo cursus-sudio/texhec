@@ -247,7 +247,7 @@ func (components *componentsImpl) GetEntitiesWithComponents(componentTypes ...Co
 	return entitiesSlice
 }
 
-func (components *componentsImpl) GetEntitiesWithComponentsQuery(componentTypes ...ComponentType) LiveQuery {
+func (components *componentsImpl) QueryEntitiesWithComponents(componentTypes ...ComponentType) LiveQuery {
 	key := newQueryKey(componentTypes)
 	if query, ok := components.cachedQueries[key]; ok {
 		return query

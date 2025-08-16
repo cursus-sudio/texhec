@@ -50,7 +50,7 @@ func NewToggledSystem(
 	scene2 scenes.SceneId,
 	toggleTreshold time.Duration,
 ) toggleSystem {
-	liveQuery := world.GetEntitiesWithComponentsQuery(ecs.GetComponentType(someComponent{}))
+	liveQuery := world.QueryEntitiesWithComponents(ecs.GetComponentType(someComponent{}))
 	return toggleSystem{
 		SceneManager:   sceneManager,
 		World:          world,
@@ -102,7 +102,7 @@ func NewSomeSystem(
 	backend connection.Connection,
 	console console.Console,
 ) someSystem {
-	liveQuery := world.GetEntitiesWithComponentsQuery(ecs.GetComponentType(someComponent{}))
+	liveQuery := world.QueryEntitiesWithComponents(ecs.GetComponentType(someComponent{}))
 	return someSystem{
 		SceneManager: sceneMagener,
 		World:        world,

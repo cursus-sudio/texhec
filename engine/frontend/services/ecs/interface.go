@@ -71,7 +71,7 @@ type componentsInterface interface {
 
 	// returns for with all listed component types
 	// the same live query should be returned for the same input
-	GetEntitiesWithComponentsQuery(...ComponentType) LiveQuery
+	QueryEntitiesWithComponents(...ComponentType) LiveQuery
 }
 
 func GetComponent[WantedComponent Component](w World, entity EntityID) (WantedComponent, error) {

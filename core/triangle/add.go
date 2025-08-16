@@ -34,8 +34,8 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			camera := ctx.World.NewEntity()
 			ctx.World.SaveComponent(camera, transform.NewTransform().
-				SetPos(mgl32.Vec3{0, 0, -100}).
-				SetRotation(mgl32.QuatRotate(mgl32.DegToRad(180), mgl32.Vec3{1, 0, 0})),
+				SetPos(mgl32.Vec3{0, 0, 100}).
+				SetRotation(mgl32.QuatIdent()),
 			)
 			ctx.World.SaveComponent(camera, projection.NewDynamicOrtho(
 				-1000,
@@ -112,8 +112,8 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 					SetPos([3]float32{float32(col) * 101, float32(row) * 101, 0}).
 					SetSize([3]float32{100, 100, 0}))
 				ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
-				// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
-				ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
+				ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
+				// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
 				ctx.World.SaveComponent(entity, material.NewMaterial(texturematerial.TextureMaterial))
 				ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
 				ctx.World.SaveComponent(entity, Marked{})
@@ -136,15 +136,15 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			moveCameraSystem := func(event frames.FrameEvent) error {
 				xAxis := 0
 				if dPressed {
-					xAxis = 1
-				} else if aPressed {
 					xAxis = -1
+				} else if aPressed {
+					xAxis = 1
 				}
 				yAxis := 0
 				if wPressed {
-					yAxis = 1
-				} else if sPressed {
 					yAxis = -1
+				} else if sPressed {
+					yAxis = 1
 				}
 
 				cameras := camerasQuery.Entities()

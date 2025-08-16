@@ -88,19 +88,13 @@ func (query *liveQuery) RemoveEntity(entity EntityID) {
 	}
 }
 
-func (query *liveQuery) RemoveComponent(entity EntityID, componentType ComponentType) {
-	_, ok := query.dependencies[componentType]
-	if !ok {
-		return
-	}
-	query.RemoveEntity(entity)
-}
-
 func (query *liveQuery) AddEntities(entities []EntityID) {
 	for _, entity := range entities {
 		query.entities[entity] = nil
 	}
-	query.cachedEntities = append(query.cachedEntities, entities...)
+	if query.cachedEntities != nil {
+		query.cachedEntities = append(query.cachedEntities, entities...)
+	}
 	for _, listener := range query.onAdd {
 		listener(entities)
 	}
@@ -111,9 +105,9 @@ func (query *liveQuery) AddEntities(entities []EntityID) {
 type componentsImpl struct {
 	entityComponents map[EntityID]map[ComponentType]*Component
 	componentEntity  map[ComponentType]map[EntityID]*Component
-	cachedQueries    map[queryKey]*liveQuery
 
-	shouldDie bool
+	cachedQueries    map[queryKey]*liveQuery
+	dependentQueries map[ComponentType][]*liveQuery
 }
 
 func newComponents() *componentsImpl {
@@ -121,7 +115,8 @@ func newComponents() *componentsImpl {
 		entityComponents: make(map[EntityID]map[ComponentType]*Component),
 		componentEntity:  make(map[ComponentType]map[EntityID]*Component),
 
-		cachedQueries: make(map[queryKey]*liveQuery, 0),
+		cachedQueries:    make(map[queryKey]*liveQuery, 0),
+		dependentQueries: make(map[ComponentType][]*liveQuery, 0),
 	}
 }
 
@@ -143,11 +138,8 @@ func (components *componentsImpl) SaveComponent(entityId EntityID, component Com
 		return nil
 	}
 	// manage cache
-	for _, query := range components.cachedQueries {
-		_, ok := query.dependencies[componentType]
-		if !ok {
-			continue
-		}
+	dependentQueries, _ := components.dependentQueries[componentType]
+	for _, query := range dependentQueries {
 		dependenciesNeeded := len(query.dependencies)
 		entityComponents := components.entityComponents[entityId]
 		for componentType := range entityComponents {
@@ -183,8 +175,9 @@ func (components *componentsImpl) RemoveComponent(entityId EntityID, componentTy
 	delete(components.entityComponents[entityId], componentType)
 	delete(components.componentEntity[componentType], entityId)
 	// manage cache
-	for _, query := range components.cachedQueries {
-		query.RemoveComponent(entityId, componentType)
+	dependentQueries, _ := components.dependentQueries[componentType]
+	for _, query := range dependentQueries {
+		query.RemoveEntity(entityId)
 	}
 }
 
@@ -253,7 +246,12 @@ func (components *componentsImpl) QueryEntitiesWithComponents(componentTypes ...
 		return query
 	}
 	entities := components.GetEntitiesWithComponents(componentTypes...)
-	queryRes := newLiveQuery(componentTypes, entities)
-	components.cachedQueries[key] = queryRes
-	return queryRes
+	query := newLiveQuery(componentTypes, entities)
+	components.cachedQueries[key] = query
+	for _, componentType := range componentTypes {
+		dependentQueries, _ := components.dependentQueries[componentType]
+		dependentQueries = append(dependentQueries, query)
+		components.dependentQueries[componentType] = dependentQueries
+	}
+	return query
 }

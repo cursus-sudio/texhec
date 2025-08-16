@@ -33,11 +33,10 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		return b
 	})
 	ioc.WrapService(b, scenes.LoadBeforeDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
-		quitSytem := inputs.NewQuitSystem(
-			ioc.Get[runtime.Runtime](c),
-		)
-
 		b.OnLoad(func(ctx scenes.SceneCtx) {
+			quitSytem := inputs.NewQuitSystem(
+				ioc.Get[runtime.Runtime](c),
+			)
 			events.Listen(ctx.EventsBuilder, func(e sdl.QuitEvent) {
 				quitSytem.Listen(e)
 			})
@@ -186,6 +185,43 @@ func AddSceneTwo(b ioc.Builder) {
 		sceneBuilder.OnLoad(func(ctx scenes.SceneCtx) {
 			toggleSystem := NewToggledSystem(ioc.Get[scenes.SceneManager](c), ctx.World, scene1Id, time.Second)
 			events.ListenE(ctx.EventsBuilder, toggleSystem.Listen)
+		})
+		return sceneBuilder
+	})
+}
+
+var scene3Id = scenes.NewSceneId("main scene 3")
+
+type SceneThreeBuilder scenes.SceneBuilder
+
+func AddSceneThree(b ioc.Builder) {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneThreeBuilder { return scenes.NewSceneBuilder() })
+	ioc.WrapService(b, scenes.LoadDomain, func(c ioc.Dic, sceneBuilder SceneThreeBuilder) SceneThreeBuilder {
+		sceneBuilder.OnLoad(func(ctx scenes.SceneCtx) {
+			quitSytem := inputs.NewQuitSystem(
+				ioc.Get[runtime.Runtime](c),
+			)
+			events.Listen(ctx.EventsBuilder, func(e sdl.QuitEvent) {
+				quitSytem.Listen(e)
+			})
+		})
+		sceneBuilder.OnLoad(func(ctx scenes.SceneCtx) {
+			for i := 0; i < 1000000; i++ {
+				ctx.World.NewEntity()
+			}
+		})
+		sceneBuilder.OnLoad(func(ctx scenes.SceneCtx) {
+			inputsSystem := inputs.NewInputsSystem(ioc.Get[inputsmedia.Api](c))
+			events.Listen(ctx.EventsBuilder, inputsSystem.Listen)
+		})
+		sceneBuilder.OnLoad(func(ctx scenes.SceneCtx) {
+			someSystem := NewSomeSystem(
+				ioc.Get[scenes.SceneManager](c),
+				ctx.World,
+				ioc.Get[backendconnection.Backend](c).Connection(),
+				ioc.Get[console.Console](c),
+			)
+			events.ListenE(ctx.EventsBuilder, someSystem.Listen)
 		})
 		return sceneBuilder
 	})

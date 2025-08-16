@@ -64,7 +64,8 @@ func (m *textureMaterialServices) render(world ecs.World, p program.Program, ent
 
 		mvp, ok := projectionsMvp[usedProjection.ProjectionComponent]
 		if !ok {
-			cameraEntities := world.GetEntitiesWithComponents(usedProjection.ProjectionComponent)
+			query := world.GetEntitiesWithComponentsQuery(usedProjection.ProjectionComponent)
+			cameraEntities := query.Entities()
 			if len(cameraEntities) != 1 {
 				return projection.ErrWorldShouldHaveOneProjection
 			}

@@ -26,8 +26,8 @@ type UpdateProjetionsSystem struct {
 }
 
 func NewUpdateProjectionsSystem(world ecs.World, window window.Api) UpdateProjetionsSystem {
-	perspectiveQuery := world.GetEntitiesWithComponentsQuery(nil, ecs.GetComponentType(projection.DynamicPerspective{}))
-	orthoQuery := world.GetEntitiesWithComponentsQuery(nil, ecs.GetComponentType(projection.DynamicOrtho{}))
+	perspectiveQuery := world.GetEntitiesWithComponentsQuery(ecs.GetComponentType(projection.DynamicPerspective{}))
+	orthoQuery := world.GetEntitiesWithComponentsQuery(ecs.GetComponentType(projection.DynamicOrtho{}))
 	return UpdateProjetionsSystem{
 		world:  world,
 		window: window,

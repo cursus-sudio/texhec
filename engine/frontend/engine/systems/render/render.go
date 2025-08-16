@@ -63,11 +63,12 @@ func NewRenderSystem(
 		}
 	}
 
-	world.GetEntitiesWithComponentsQuery(
-		ecs.NewQuery(onAdd, onRemove),
+	liveQuery := world.GetEntitiesWithComponentsQuery(
 		ecs.GetComponentType(mesh.Mesh{}),
 		ecs.GetComponentType(material.Material{}),
 	)
+	liveQuery.OnAdd(onAdd)
+	liveQuery.OnRemove(onRemove)
 
 	return RenderSystem{
 		world:  world,

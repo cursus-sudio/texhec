@@ -45,7 +45,6 @@ func NewCameraRaySystem(
 	requiredComponentTypes []ecs.ComponentType,
 ) CameraRaySystem {
 	liveQuery := world.GetEntitiesWithComponentsQuery(
-		nil,
 		append(
 			requiredComponentTypes,
 			ecs.GetComponentType(transform.Transform{}),
@@ -91,7 +90,8 @@ func (s *CameraRaySystem) Listen(args ShootRayEvent) error {
 	for _, projectionType := range s.projectionTypes {
 		var cameraTransform transform.Transform
 		var ray shapes.Ray
-		cameras := s.world.GetEntitiesWithComponents(projectionType)
+		query := s.world.GetEntitiesWithComponentsQuery(projectionType)
+		cameras := query.Entities()
 		if len(cameras) != 1 {
 			return projection.ErrWorldShouldHaveOneProjection
 		}

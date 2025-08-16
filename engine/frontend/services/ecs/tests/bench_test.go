@@ -69,6 +69,6 @@ func BenchmarkGetEntitiesWithComponent(b *testing.B) {
 
 	componentType := ecs.GetComponentType(RequiredComponent{})
 	for i := 0; i < b.N; i++ {
-		world.GetEntitiesWithComponents(componentType)
+		world.GetEntitiesWithComponentsQuery(componentType)
 	}
 }

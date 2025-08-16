@@ -22,7 +22,7 @@ type ChangeTransformOverTimeSystem struct {
 func NewChangeTransformOverTimeSystem(
 	world ecs.World,
 ) *ChangeTransformOverTimeSystem {
-	liveQuery := world.GetEntitiesWithComponentsQuery(nil,
+	liveQuery := world.GetEntitiesWithComponentsQuery(
 		ecs.GetComponentType(ChangeTransformOverTimeComponent{}),
 		ecs.GetComponentType(transform.Transform{}),
 	)

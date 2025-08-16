@@ -1,16 +1,43 @@
 package ecs
 
+import (
+	"sort"
+	"strings"
+)
+
+type queryKey string
+
+func newQueryKey(components []ComponentType) queryKey {
+	resultLen := 0
+	elements := make([]string, len(components))
+	for i, component := range components {
+		element := component.componentType.String()
+		resultLen += len(element) + 1
+		elements[i] = element
+	}
+	sort.Strings(elements)
+	builder := strings.Builder{}
+	builder.Grow(resultLen)
+	for _, element := range elements {
+		builder.WriteString(element)
+		builder.WriteString(",")
+	}
+	return queryKey(builder.String())
+}
+
+//
+
 type liveQuery struct {
 	dependencies   map[ComponentType]any // this is faster []ComponentType
 	entities       map[EntityID]any      // this is faster []EntityID
 	cachedEntities []EntityID
-	query          Query
+	onRemove       []func([]EntityID)
+	onAdd          []func([]EntityID)
 }
 
 func newLiveQuery(
 	componentTypes []ComponentType,
 	res []EntityID,
-	queryListner Query,
 ) *liveQuery {
 	dependencies := make(map[ComponentType]any, len(componentTypes))
 	for _, componentType := range componentTypes {
@@ -20,8 +47,33 @@ func newLiveQuery(
 	for _, entity := range res {
 		entities[entity] = nil
 	}
-	return &liveQuery{dependencies, entities, nil, queryListner}
+	return &liveQuery{
+		dependencies: dependencies,
+		entities:     entities,
+	}
 }
+
+func (query *liveQuery) OnAdd(listener func([]EntityID)) {
+	listener(query.Entities())
+	query.onAdd = append(query.onAdd, listener)
+}
+
+func (query *liveQuery) OnRemove(listener func([]EntityID)) {
+	query.onRemove = append(query.onRemove, listener)
+}
+
+func (query *liveQuery) Entities() []EntityID {
+	if query.cachedEntities == nil {
+		entities := make([]EntityID, 0, len(query.entities))
+		for entity := range query.entities {
+			entities = append(entities, entity)
+		}
+		query.cachedEntities = entities
+	}
+	return query.cachedEntities
+}
+
+//
 
 func (query *liveQuery) RemoveEntity(entity EntityID) {
 	_, ok := query.entities[entity]
@@ -30,8 +82,9 @@ func (query *liveQuery) RemoveEntity(entity EntityID) {
 	}
 	delete(query.entities, entity)
 	query.cachedEntities = nil
-	if query.query != nil {
-		query.query.RemoveEntities([]EntityID{entity})
+	rmArgs := []EntityID{entity}
+	for _, listener := range query.onRemove {
+		listener(rmArgs)
 	}
 }
 
@@ -48,20 +101,9 @@ func (query *liveQuery) AddEntities(entities []EntityID) {
 		query.entities[entity] = nil
 	}
 	query.cachedEntities = append(query.cachedEntities, entities...)
-	if query.query != nil {
-		query.query.AddEntities(entities)
+	for _, listener := range query.onAdd {
+		listener(entities)
 	}
-}
-
-func (query *liveQuery) Entities() []EntityID {
-	if query.cachedEntities == nil {
-		entities := make([]EntityID, 0, len(query.entities))
-		for entity := range query.entities {
-			entities = append(entities, entity)
-		}
-		query.cachedEntities = entities
-	}
-	return query.cachedEntities
 }
 
 //
@@ -69,7 +111,7 @@ func (query *liveQuery) Entities() []EntityID {
 type componentsImpl struct {
 	entityComponents map[EntityID]map[ComponentType]*Component
 	componentEntity  map[ComponentType]map[EntityID]*Component
-	cachedQueries    []*liveQuery
+	cachedQueries    map[queryKey]*liveQuery
 
 	shouldDie bool
 }
@@ -79,7 +121,7 @@ func newComponents() *componentsImpl {
 		entityComponents: make(map[EntityID]map[ComponentType]*Component),
 		componentEntity:  make(map[ComponentType]map[EntityID]*Component),
 
-		cachedQueries: make([]*liveQuery, 0),
+		cachedQueries: make(map[queryKey]*liveQuery, 0),
 	}
 }
 
@@ -205,12 +247,13 @@ func (components *componentsImpl) GetEntitiesWithComponents(componentTypes ...Co
 	return entitiesSlice
 }
 
-func (components *componentsImpl) GetEntitiesWithComponentsQuery(query Query, componentTypes ...ComponentType) LiveQuery {
-	entities := components.GetEntitiesWithComponents(componentTypes...)
-	if query != nil && len(entities) != 0 {
-		query.AddEntities(entities)
+func (components *componentsImpl) GetEntitiesWithComponentsQuery(componentTypes ...ComponentType) LiveQuery {
+	key := newQueryKey(componentTypes)
+	if query, ok := components.cachedQueries[key]; ok {
+		return query
 	}
-	queryRes := newLiveQuery(componentTypes, entities, query)
-	components.cachedQueries = append(components.cachedQueries, queryRes)
+	entities := components.GetEntitiesWithComponents(componentTypes...)
+	queryRes := newLiveQuery(componentTypes, entities)
+	components.cachedQueries[key] = queryRes
 	return queryRes
 }

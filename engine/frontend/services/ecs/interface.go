@@ -50,26 +50,14 @@ var (
 	ErrEntityDoNotExists    error = errors.New("entity do not exists")
 )
 
-type Query interface {
-	AddEntities([]EntityID)
-	RemoveEntities([]EntityID)
-}
-
-type queryImpl struct {
-	addEntity    func([]EntityID)
-	removeEntity func([]EntityID)
-}
-
-func NewQuery(onAdd func([]EntityID), onRemove func([]EntityID)) Query {
-	return queryImpl{onAdd, onRemove}
-}
-
 type LiveQuery interface {
+	// on listener add all entities are passed to it
+	OnAdd(func([]EntityID))
+
+	OnRemove(func([]EntityID))
+
 	Entities() []EntityID
 }
-
-func (q queryImpl) AddEntities(entities []EntityID)    { q.addEntity(entities) }
-func (q queryImpl) RemoveEntities(entities []EntityID) { q.removeEntity(entities) }
 
 type componentsInterface interface {
 	// can return:
@@ -81,11 +69,9 @@ type componentsInterface interface {
 	GetComponent(entityId EntityID, componentType ComponentType) (Component, error)
 	RemoveComponent(EntityID, ComponentType)
 
-	// returns entities with all listed component types
-	GetEntitiesWithComponents(...ComponentType) []EntityID
-
-	// modifies query
-	GetEntitiesWithComponentsQuery(Query, ...ComponentType) LiveQuery
+	// returns for with all listed component types
+	// the same live query should be returned for the same input
+	GetEntitiesWithComponentsQuery(...ComponentType) LiveQuery
 }
 
 func GetComponent[WantedComponent Component](w World, entity EntityID) (WantedComponent, error) {

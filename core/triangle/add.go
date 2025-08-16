@@ -91,7 +91,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 					ioc.Get[console.Console](c).PrintPermanent("damn it really is clicked\n")
 				})
 
-				liveQuery := ctx.World.GetEntitiesWithComponentsQuery(nil,
+				liveQuery := ctx.World.GetEntitiesWithComponentsQuery(
 					ecs.GetComponentType(Marked{}),
 					ecs.GetComponentType(mouse.Hovered{}),
 				)
@@ -102,8 +102,8 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				})
 			}
 
-			rows := 10
-			cols := 10
+			rows := 100
+			cols := 100
 			for i := 0; i < rows*cols; i++ {
 				row := i / cols
 				col := i % cols
@@ -129,7 +129,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			aPressed := false
 			sPressed := false
 			dPressed := false
-			camerasQuery := ctx.World.GetEntitiesWithComponentsQuery(nil,
+			camerasQuery := ctx.World.GetEntitiesWithComponentsQuery(
 				ecs.GetComponentType(projection.Perspective{}),
 			)
 

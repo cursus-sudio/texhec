@@ -50,9 +50,7 @@ func NewToggledSystem(
 	scene2 scenes.SceneId,
 	toggleTreshold time.Duration,
 ) toggleSystem {
-	liveQuery := world.GetEntitiesWithComponentsQuery(nil,
-		ecs.GetComponentType(someComponent{}),
-	)
+	liveQuery := world.GetEntitiesWithComponentsQuery(ecs.GetComponentType(someComponent{}))
 	return toggleSystem{
 		SceneManager:   sceneManager,
 		World:          world,
@@ -93,6 +91,9 @@ type someSystem struct {
 	Backend      connection.Connection
 	Console      console.Console
 	LiveQuery    ecs.LiveQuery
+
+	Mutex sync.Mutex
+	Fps   int
 }
 
 func NewSomeSystem(
@@ -101,7 +102,7 @@ func NewSomeSystem(
 	backend connection.Connection,
 	console console.Console,
 ) someSystem {
-	liveQuery := world.GetEntitiesWithComponentsQuery(nil, ecs.GetComponentType(someComponent{}))
+	liveQuery := world.GetEntitiesWithComponentsQuery(ecs.GetComponentType(someComponent{}))
 	return someSystem{
 		SceneManager: sceneMagener,
 		World:        world,
@@ -114,6 +115,15 @@ func NewSomeSystem(
 var format = "02-01-2006 15:04:05"
 
 func (system *someSystem) Listen(args frames.FrameEvent) error {
+	go func() {
+		system.Mutex.Lock()
+		system.Fps++
+		system.Mutex.Unlock()
+		time.Sleep(time.Second)
+		system.Mutex.Lock()
+		system.Fps--
+		system.Mutex.Unlock()
+	}()
 	text := "----------------------------------------------------------------\n"
 	text += fmt.Sprintf("now %s\n", time.Now().Format(format))
 
@@ -133,6 +143,7 @@ func (system *someSystem) Listen(args frames.FrameEvent) error {
 		text += fmt.Sprintf("time in game %f\n", component.PastTime.Seconds())
 		text += fmt.Sprintf("avg fps %f\n", float64(component.Frame)/component.PastTime.Seconds())
 	}
+	text += fmt.Sprintf("fps %d\n", system.Fps)
 	text += "\n"
 
 	if system.Backend == nil {

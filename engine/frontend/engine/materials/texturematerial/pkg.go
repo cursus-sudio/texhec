@@ -28,7 +28,7 @@ var (
 
 func (Pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b assets.AssetsStorageBuilder) assets.AssetsStorageBuilder {
-		b.RegisterAsset(TextureMaterial, func() (assets.StorageAsset, error) {
+		b.RegisterAsset(TextureMaterial, func() (any, error) {
 			material := newTextureMaterial(
 				func() (program.Program, error) {
 					vert, err := shader.NewShader(vertSource, shader.VertexShader)
@@ -50,7 +50,7 @@ func (Pkg) Register(b ioc.Builder) {
 					return p, nil
 				},
 				ioc.Get[window.Api](c),
-				ioc.Get[assets.Assets](c),
+				ioc.Get[assets.AssetsStorage](c),
 			)
 			return material.Material(), nil
 		})

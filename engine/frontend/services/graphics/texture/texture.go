@@ -1,7 +1,7 @@
 package texture
 
 import (
-	"io"
+	"image"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
@@ -16,8 +16,8 @@ type texture struct {
 	id uint32
 }
 
-func NewTexture(file io.Reader) (Texture, error) {
-	t, err := newTexture(file)
+func NewTexture(img image.Image) (Texture, error) {
+	t, err := newTexture(img)
 	return &texture{
 		id: t,
 	}, err

@@ -25,14 +25,14 @@ func (Pkg) Register(b ioc.Builder) {
 		return s
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) CachedAssets {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) AssetsCache {
 		return NewCachedAssets()
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) Assets {
 		return &assets{
 			assetStorage: ioc.Get[AssetsStorage](c),
-			cachedAssets: ioc.Get[CachedAssets](c),
+			cachedAssets: ioc.Get[AssetsCache](c),
 		}
 	})
 }

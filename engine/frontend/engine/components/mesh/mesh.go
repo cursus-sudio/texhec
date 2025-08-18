@@ -2,7 +2,6 @@ package mesh
 
 import (
 	"frontend/services/assets"
-	"frontend/services/graphics/vao"
 	"frontend/services/graphics/vao/ebo"
 	"frontend/services/graphics/vao/vbo"
 )
@@ -18,7 +17,6 @@ func NewMesh(id assets.AssetID) Mesh {
 //
 
 type MeshStorageAsset interface {
-	assets.StorageAsset
 	Verticies() []vbo.Vertex
 	Indicies() []ebo.Index
 }
@@ -40,28 +38,3 @@ func NewMeshStorageAsset(
 
 func (asset *meshStorageAsset) Verticies() []vbo.Vertex { return asset.verticies }
 func (asset *meshStorageAsset) Indicies() []ebo.Index   { return asset.indicies }
-func (asset *meshStorageAsset) Cache() (assets.CachedAsset, error) {
-	vbo := vbo.NewVBO()
-	vbo.SetVertices(asset.Verticies())
-
-	ebo := ebo.NewEBO()
-	ebo.SetIndices(asset.Indicies())
-
-	vao := vao.NewVAO(vbo, ebo)
-	var mesh MeshCachedAsset = &meshCachedAsset{vao: vao}
-	return mesh, nil
-}
-
-//
-
-type MeshCachedAsset interface {
-	assets.CachedAsset
-	VAO() vao.VAO
-}
-
-type meshCachedAsset struct {
-	vao vao.VAO
-}
-
-func (asset *meshCachedAsset) VAO() vao.VAO { return asset.vao }
-func (asset *meshCachedAsset) Release()     { asset.vao.Release() }

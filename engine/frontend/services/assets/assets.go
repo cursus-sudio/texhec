@@ -7,6 +7,14 @@ import (
 	"shared/utils/httperrors"
 )
 
+var (
+	ErrStoredAssetIsntCachable error = errors.New("stored asset isn't cachable")
+)
+
+type CachableAsset interface {
+	Cache() (CachedAsset, error)
+}
+
 type AssetID string
 
 type Assets interface {
@@ -16,12 +24,13 @@ type Assets interface {
 
 type assets struct {
 	assetStorage AssetsStorage
-	cachedAssets CachedAssets
+	cachedAssets AssetsCache
+	// cachers      map[reflect.Type]func(any) (CachedAsset, error)
 }
 
 func NewAssets(
 	storage AssetsStorage,
-	cached CachedAssets,
+	cached AssetsCache,
 ) Assets {
 	return &assets{
 		assetStorage: storage,
@@ -40,9 +49,21 @@ func (a *assets) Get(id AssetID) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	cached, err := stored.Cache()
-	if err != nil {
-		return nil, err
+	var cached CachedAsset
+	if cachedAsset, ok := stored.(CachedAsset); ok {
+		cached = cachedAsset
+	} else if cachableAsset, ok := stored.(CachableAsset); ok {
+		cached, err = cachableAsset.Cache()
+		if err != nil {
+			return nil, err
+		}
+		// } else if cacher, ok := a.cachers[reflect.TypeOf(stored)]; ok {
+		// 	cached, err = cacher(stored)
+		// 	if err != nil {
+		// 		return nil, err
+		// 	}
+	} else {
+		return nil, ErrStoredAssetIsntCachable
 	}
 	if err := a.cachedAssets.Set(id, cached); err != nil {
 		return nil, err

@@ -2,7 +2,7 @@ package assets
 
 // its just a general asset type for assets which do not use game engine at all and are just golang objects
 type GoAsset interface {
-	StorageAsset
+	// CachableAsset
 	CachedAsset
 }
 
@@ -14,5 +14,4 @@ func NewGoAsset(asset GoAsset) GoAsset {
 	return &goAsset{asset: asset}
 }
 
-func (a goAsset) Release()                    {}
-func (a goAsset) Cache() (CachedAsset, error) { return a.asset, nil }
+func (a goAsset) Release() {}

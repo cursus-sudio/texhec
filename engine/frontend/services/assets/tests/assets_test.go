@@ -24,7 +24,7 @@ const assetID = "asset"
 func TestAssets(t *testing.T) {
 	storageBuilder := assets.NewAssetsStorageBuilder()
 	fetched := false
-	storageBuilder.RegisterAsset(assetID, func() (assets.StorageAsset, error) {
+	storageBuilder.RegisterAsset(assetID, func() (any, error) {
 		fetched = true
 		return &storageAsset{}, nil
 	})

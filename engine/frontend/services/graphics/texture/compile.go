@@ -4,19 +4,11 @@ import (
 	"fmt"
 	"image"
 	"image/draw"
-	_ "image/jpeg"
-	_ "image/png"
-	"io"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
-func newTexture(imgFile io.Reader) (uint32, error) {
-	img, _, err := image.Decode(imgFile)
-	if err != nil {
-		return 0, err
-	}
-
+func newTexture(img image.Image) (uint32, error) {
 	rgba := image.NewRGBA(img.Bounds())
 	if rgba.Stride != rgba.Rect.Size().X*4 {
 		return 0, fmt.Errorf("unsupported stride")

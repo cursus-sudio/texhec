@@ -1,6 +1,7 @@
 package assets
 
 import (
+	"reflect"
 	"shared/utils/httperrors"
 	"sync"
 )
@@ -9,18 +10,19 @@ type CachedAsset interface {
 	Release()
 }
 
-type CachedAssets interface {
+type AssetsCache interface {
 	Get(id AssetID) (any, error)             // 404
 	Set(id AssetID, asset CachedAsset) error // 409
 	Delete(id AssetID)
 }
 
 type cachedAssets struct {
-	mutex  sync.Mutex
-	assets map[AssetID]CachedAsset
+	mutex   sync.Mutex
+	cachers map[reflect.Type]func(any) (CachedAsset, error)
+	assets  map[AssetID]CachedAsset
 }
 
-func NewCachedAssets() CachedAssets {
+func NewCachedAssets() AssetsCache {
 	return &cachedAssets{
 		mutex:  sync.Mutex{},
 		assets: map[AssetID]CachedAsset{},

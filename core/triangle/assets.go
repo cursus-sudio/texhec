@@ -8,13 +8,15 @@ import (
 	"frontend/services/assets"
 	"frontend/services/graphics/vao/ebo"
 	"frontend/services/graphics/vao/vbo"
+	"image"
+	_ "image/png"
 
 	"github.com/ogiusek/ioc/v2"
 )
 
 func registerAssets(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b assets.AssetsStorageBuilder) assets.AssetsStorageBuilder {
-		b.RegisterAsset(MeshAssetID, func() (assets.StorageAsset, error) {
+		b.RegisterAsset(MeshAssetID, func() (any, error) {
 			vertices := []vbo.Vertex{
 				// Front face
 				{Pos: [3]float32{1, 1, 1}, TexturePos: [2]float32{0, 0}},
@@ -51,8 +53,13 @@ func registerAssets(b ioc.Builder) {
 			asset := mesh.NewMeshStorageAsset(vertices, indices)
 			return asset, nil
 		})
-		b.RegisterAsset(TextureAssetID, func() (assets.StorageAsset, error) {
-			asset := texture.NewTextureStorageAsset(bytes.NewBuffer(textureSource))
+		b.RegisterAsset(TextureAssetID, func() (any, error) {
+			imgFile := bytes.NewBuffer(textureSource)
+			img, _, err := image.Decode(imgFile)
+			if err != nil {
+				return nil, err
+			}
+			asset := texture.NewTextureStorageAsset(img)
 			return asset, nil
 		})
 		return b

@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	ErrEveryFieldHasToBeLocation error = errors.New("every field has to be location")
-	ErrInvalidLocation           error = errors.New("invalid location")
+	ErrNotALocation    error = errors.New("expected 'int32' for location")
+	ErrInvalidLocation error = errors.New("invalid location")
 )
 
 type Parameter struct {
@@ -55,11 +55,15 @@ func createLocations(t reflect.Type, program uint32) (any, error) {
 		fieldValue := val.Field(i)
 		uniformName := field.Tag.Get("uniform")
 
-		if field.Type.Kind() != reflect.Int32 || uniformName == "" {
+		if uniformName == "" {
+			continue
+		}
+
+		if field.Type.Kind() != reflect.Int32 {
 			err := errors.Join(
-				ErrEveryFieldHasToBeLocation,
+				ErrNotALocation,
 				fmt.Errorf(
-					"field \"%s.%s\" either isn't int32 or misses `uniform` struct tag with name",
+					"field \"%s.%s\" isn't int32",
 					typ.String(),
 					field.Name,
 				),

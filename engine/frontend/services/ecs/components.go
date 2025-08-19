@@ -32,6 +32,7 @@ type liveQuery struct {
 	entities       map[EntityID]any      // this is faster []EntityID
 	cachedEntities []EntityID
 	onRemove       []func([]EntityID)
+	onChange       []func([]EntityID)
 	onAdd          []func([]EntityID)
 }
 
@@ -56,6 +57,10 @@ func newLiveQuery(
 func (query *liveQuery) OnAdd(listener func([]EntityID)) {
 	listener(query.Entities())
 	query.onAdd = append(query.onAdd, listener)
+}
+
+func (query *liveQuery) OnChange(listener func([]EntityID)) {
+	query.onChange = append(query.onChange, listener)
 }
 
 func (query *liveQuery) OnRemove(listener func([]EntityID)) {
@@ -120,28 +125,33 @@ func newComponents() *componentsImpl {
 	}
 }
 
-func (components *componentsImpl) SaveComponent(entityId EntityID, component Component) error {
+func (components *componentsImpl) SaveComponent(entityID EntityID, component Component) error {
 	componentType := GetComponentType(component)
-	if components.entityComponents[entityId] == nil {
+	if components.entityComponents[entityID] == nil {
 		return ErrEntityDoNotExists
 	}
 
-	_, entityHadComponent := components.entityComponents[entityId][componentType]
+	_, entityHadComponent := components.entityComponents[entityID][componentType]
 	if components.componentEntity[componentType] == nil {
 		components.componentEntity[componentType] = make(map[EntityID]*Component)
 	}
 
-	components.entityComponents[entityId][componentType] = &component
-	components.componentEntity[componentType][entityId] = &component
+	components.entityComponents[entityID][componentType] = &component
+	components.componentEntity[componentType][entityID] = &component
 
+	dependentQueries, _ := components.dependentQueries[componentType]
 	if entityHadComponent {
+		for _, query := range dependentQueries {
+			for _, listener := range query.onChange {
+				listener([]EntityID{entityID})
+			}
+		}
 		return nil
 	}
 	// manage cache
-	dependentQueries, _ := components.dependentQueries[componentType]
 	for _, query := range dependentQueries {
 		dependenciesNeeded := len(query.dependencies)
-		entityComponents := components.entityComponents[entityId]
+		entityComponents := components.entityComponents[entityID]
 		for componentType := range entityComponents {
 			if _, ok := query.dependencies[componentType]; !ok {
 				continue
@@ -152,7 +162,7 @@ func (components *componentsImpl) SaveComponent(entityId EntityID, component Com
 			}
 		}
 		if dependenciesNeeded == 0 {
-			query.AddEntities([]EntityID{entityId})
+			query.AddEntities([]EntityID{entityID})
 		}
 	}
 

@@ -53,7 +53,7 @@ var (
 type LiveQuery interface {
 	// on listener add all entities are passed to it
 	OnAdd(func([]EntityID))
-
+	OnChange(func([]EntityID))
 	OnRemove(func([]EntityID))
 
 	Entities() []EntityID

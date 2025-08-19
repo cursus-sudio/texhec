@@ -12,7 +12,7 @@ type VAO interface {
 	VBO() vbo.VBO
 	EBO() ebo.EBO
 	Release()
-	Draw()
+	Use()
 }
 
 type vao struct {
@@ -52,8 +52,6 @@ func (vao *vao) Release() {
 	vao.ReleaseVAO()
 }
 
-func (vao *vao) Draw() {
+func (vao *vao) Use() {
 	gl.BindVertexArray(vao.id)
-	gl.DrawElementsWithOffset(gl.TRIANGLES, int32(vao.ebo.Len()), gl.UNSIGNED_INT, 0)
-	gl.BindVertexArray(0)
 }

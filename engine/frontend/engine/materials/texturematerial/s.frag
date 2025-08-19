@@ -1,25 +1,20 @@
 #version 460 core
 
-// layout(std430, binding = 1) buffer TexLayerData {
-buffer TexLayerData {
-    int layer[];
-};
-
-uniform sampler2D tex;
-// uniform sampler2DArray texs;
-
 in VS {
-    vec2 texCoord;
-    flat int id;
+    vec2 textureCoord;
+    flat int drawID;
 } fs;
 
-out vec4 color;
+layout(std430, binding = 1) buffer ModelTexData {
+    int texturesIDs[];
+};
+
+layout(binding = 0) uniform sampler2DArray texs;
+
+out vec4 fragColor;
 
 void main() {
-    color = texture(tex, fs.texCoord);
-
-    // vec3 texCoord = vec3(fs.texCoord, layer[fs.id]);
-    // color = texture(texs, texCoord);
-
-    // color = vec4(1, 1, 0, 1);
+    int textureID = texturesIDs[fs.drawID];
+    vec3 base = texture(texs, vec3(fs.textureCoord, float(textureID))).rgb;
+    fragColor = vec4(base, 1.0);
 }

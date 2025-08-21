@@ -7,7 +7,7 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
-type Buffer[Stored any] interface {
+type Buffer[Stored comparable] interface {
 	ID() uint32
 	Data() []Stored
 	Add(elements ...Stored)
@@ -17,8 +17,8 @@ type Buffer[Stored any] interface {
 	Flush()
 }
 
-type buffer[Stored any] struct {
-	mutex  *sync.Mutex
+type buffer[Stored comparable] struct {
+	mutex  sync.Locker
 	target uint32
 	usage  uint32
 	buffer uint32
@@ -28,7 +28,7 @@ type buffer[Stored any] struct {
 	bufferLen int
 }
 
-func NewBuffer[Stored any](
+func NewBuffer[Stored comparable](
 	target uint32, // gl.SHADER_STORAGE_BUFFER / gl.DRAW_INDIRECT_BUFFER
 	usage uint32, // gl.STATIC_DRAW / gl.DYNAMIC_DRAW
 	bufferID uint32,
@@ -42,7 +42,7 @@ func NewBuffer[Stored any](
 
 		elementSize:   int(reflect.TypeFor[Stored]().Size()),
 		TrackingArray: NewThreadSafeTrackingArray[Stored](mutex),
-		bufferLen:     1,
+		bufferLen:     0,
 	}
 }
 
@@ -52,7 +52,11 @@ func (s *buffer[Stored]) Data() []Stored { return s.TrackingArray.Get() }
 
 func (s *buffer[Stored]) CheckBufferSize() bool {
 	resizedBuffer := false
-	for len(s.TrackingArray.Get())*2 < s.bufferLen && s.bufferLen > 1 {
+	if s.bufferLen == 0 {
+		resizedBuffer = true
+		s.bufferLen = 1
+	}
+	for len(s.TrackingArray.Get())*2 < s.bufferLen-1 && s.bufferLen > 1 {
 		resizedBuffer = true
 		s.bufferLen /= 2
 	}
@@ -65,7 +69,7 @@ func (s *buffer[Stored]) CheckBufferSize() bool {
 
 func (s *buffer[Stored]) Flush() {
 	changes := s.TrackingArray.Changes()
-	defer s.TrackingArray.ClearChanges()
+	s.TrackingArray.ClearChanges()
 
 	if len(changes) == 0 {
 		return
@@ -89,10 +93,10 @@ func (s *buffer[Stored]) Flush() {
 			size += 1
 			continue
 		}
-		gl.BufferSubData(s.target, offset, size*s.elementSize, gl.Ptr(arr[offset]))
+		gl.BufferSubData(s.target, offset*s.elementSize, size*s.elementSize, gl.Ptr(arr[offset:offset+size]))
 		offset = changed
 		size = 1
 	}
-	gl.BufferSubData(s.target, offset, size*s.elementSize, gl.Ptr(arr[offset]))
+	gl.BufferSubData(s.target, offset*s.elementSize, size*s.elementSize, gl.Ptr(arr[offset:offset+size]))
 	gl.BindBuffer(s.target, 0)
 }

@@ -3,6 +3,7 @@ package texturematerial
 import (
 	"frontend/engine/components/material"
 	"frontend/services/assets"
+	"frontend/services/console"
 	"frontend/services/graphics/program"
 	"frontend/services/media/window"
 )
@@ -16,12 +17,14 @@ func newTextureMaterial(
 	program func() (program.Program, error),
 	window window.Api,
 	assetsStorage assets.AssetsStorage,
+	console console.Console,
 ) textureMaterial {
 	return textureMaterial{
 		program: program,
 		services: &textureMaterialServices{
 			window:        window,
 			assetsStorage: assetsStorage,
+			console:       console,
 			renderCache:   &renderCache{},
 		},
 	}

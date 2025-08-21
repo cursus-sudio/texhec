@@ -3,6 +3,7 @@ package texturematerial
 import (
 	_ "embed"
 	"frontend/services/assets"
+	"frontend/services/console"
 	"frontend/services/graphics/program"
 	"frontend/services/graphics/shader"
 	"frontend/services/media/window"
@@ -51,6 +52,7 @@ func (Pkg) Register(b ioc.Builder) {
 				},
 				ioc.Get[window.Api](c),
 				ioc.Get[assets.AssetsStorage](c),
+				ioc.Get[console.Console](c),
 			)
 			return material.Material(), nil
 		})

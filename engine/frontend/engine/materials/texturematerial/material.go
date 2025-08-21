@@ -2,14 +2,13 @@ package texturematerial
 
 import (
 	"errors"
-	"frontend/engine/components/mesh"
 	meshcomponent "frontend/engine/components/mesh"
 	"frontend/engine/components/projection"
-	"frontend/engine/components/texture"
 	texturecomponent "frontend/engine/components/texture"
 	"frontend/engine/components/transform"
 	"frontend/engine/materials/texturematerial/arrays"
 	"frontend/services/assets"
+	"frontend/services/console"
 	"frontend/services/ecs"
 	"frontend/services/graphics/program"
 	"frontend/services/graphics/vao"
@@ -17,6 +16,7 @@ import (
 	"frontend/services/graphics/vao/vbo"
 	"frontend/services/media/window"
 	"image"
+	"sync"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
@@ -34,14 +34,15 @@ type locations struct {
 
 type renderCache struct {
 	cachedForWorld ecs.World
-	// entitiesLiveQuery ecs.LiveQuery
 
-	//
+	mutex    *sync.RWMutex
+	setFence bool
+	fence    uintptr
 
 	entities        arrays.IndexTracker[ecs.EntityID]
 	modelBuffer     arrays.Buffer[mgl32.Mat4]
-	modelProjBuffer arrays.Buffer[int]
-	modelTexBuffer  arrays.Buffer[int]
+	modelProjBuffer arrays.Buffer[int32]
+	modelTexBuffer  arrays.Buffer[int32]
 	cmdBuffer       arrays.Buffer[DrawElementsIndirectCommand]
 	// currently there is 1 entity 1 command
 	// TODO add instancing
@@ -49,8 +50,8 @@ type renderCache struct {
 	projBuffer arrays.Buffer[mgl32.Mat4]
 
 	// for modelCmdBuffer and modelTexBuffer
-	meshes   map[assets.AssetID]int
-	textures map[assets.AssetID]int
+	meshes   map[assets.AssetID]int32
+	textures map[assets.AssetID]int32
 
 	// render data
 	mesh    vao.VAO
@@ -58,13 +59,14 @@ type renderCache struct {
 
 	packedMesh []MeshRange
 
-	projections map[ecs.ComponentType]int
+	projections map[ecs.ComponentType]int32
 }
 
 type textureMaterialServices struct {
 	window        window.Api
 	assetsStorage assets.AssetsStorage
 	locations     locations
+	console       console.Console
 
 	*renderCache
 }
@@ -77,23 +79,24 @@ func (m *textureMaterialServices) cleanUp() {
 	m.mesh.Release()
 	m.mesh = nil
 	m.packedMesh = nil
-	m.meshes = map[assets.AssetID]int{}
+	m.meshes = map[assets.AssetID]int32{}
 
 	gl.DeleteTextures(1, &m.texture)
 	m.texture = 0
-	m.textures = map[assets.AssetID]int{}
+	m.textures = map[assets.AssetID]int32{}
 }
 
 func (m *textureMaterialServices) init(world ecs.World, p program.Program) error {
 	m.cachedForWorld = world
 	m.mesh = nil
 	m.packedMesh = nil
-	m.meshes = map[assets.AssetID]int{}
+	m.meshes = map[assets.AssetID]int32{}
 
+	m.mutex = &sync.RWMutex{}
 	m.texture = 0
-	m.textures = map[assets.AssetID]int{}
+	m.textures = map[assets.AssetID]int32{}
 
-	m.projections = map[ecs.ComponentType]int{
+	m.projections = map[ecs.ComponentType]int32{
 		ecs.GetComponentType(projection.Ortho{}):       0,
 		ecs.GetComponentType(projection.Perspective{}): 1,
 	}
@@ -127,7 +130,7 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 					return ErrTexturesHaveToShareSize
 				}
 				images[i] = image
-				m.textures[assetID] = i
+				m.textures[assetID] = int32(i)
 			}
 			m.texture = CreateTexs(w, h, images)
 			texLoc := gl.GetUniformLocation(p.ID(), gl.Str("texs\x00"))
@@ -146,7 +149,7 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 					meshAsset.Indicies(),
 				}
 				meshes[i] = mesh
-				m.meshes[assetID] = i
+				m.meshes[assetID] = int32(i)
 			}
 			packedMesh := Pack(meshes...)
 
@@ -177,7 +180,7 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 
 		gl.GenBuffers(1, &buffer)
 		gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, buffer)
-		m.modelTexBuffer = arrays.NewBuffer[int](
+		m.modelTexBuffer = arrays.NewBuffer[int32](
 			gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
 
 		gl.GenBuffers(1, &buffer)
@@ -187,7 +190,7 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 
 		gl.GenBuffers(1, &buffer)
 		gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 3, buffer)
-		m.modelProjBuffer = arrays.NewBuffer[int](
+		m.modelProjBuffer = arrays.NewBuffer[int32](
 			gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
 
 		// proj buffer
@@ -195,22 +198,35 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 		gl.GenBuffers(1, &buffer)
 		gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 4, buffer)
 		m.projBuffer = arrays.NewBuffer[mgl32.Mat4](
-			gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
+			gl.SHADER_STORAGE_BUFFER, gl.STATIC_DRAW, buffer)
+	}
+	for i := 0; i < 3; i++ {
+		m.projBuffer.Add(mgl32.Ident4())
 	}
 
 	for projectionType, projectionIndex := range m.projections {
-		m.projBuffer.Add(mgl32.Ident4())
+		query := world.QueryEntitiesWithComponents(
+			projectionType,
+			ecs.GetComponentType(transform.Transform{}),
+		)
 
-		onChange := func(entities []ecs.EntityID) {
+		onChange := func(_ []ecs.EntityID) {
+			m.mutex.Lock()
+			defer m.mutex.Unlock()
+			entities := query.Entities()
 			if len(entities) != 1 {
 				return // projection.ErrWorldShouldHaveOneProjection
 			}
 			camera := entities[0]
 
-			usedProjection := projection.UsedProjection{ProjectionComponent: projectionType}
-			projectionComponent, err := usedProjection.GetCameraProjection(world, camera)
+			anyProj, err := world.GetComponent(camera, projectionType)
 			if err != nil {
 				return // err
+			}
+
+			projectionComponent, ok := anyProj.(projection.Projection)
+			if !ok {
+				return // projection.ErrExpectedUsedProjectionToImplementProjection
 			}
 
 			cameraTransformComponent, err := ecs.GetComponent[transform.Transform](world, camera)
@@ -222,9 +238,8 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 			cameraTransformMat4 := projectionComponent.ViewMat4(cameraTransformComponent)
 
 			mvp := projectionMat4.Mul4(cameraTransformMat4)
-			m.projBuffer.Set(projectionIndex, mvp)
+			m.projBuffer.Set(int(projectionIndex), mvp)
 		}
-		query := world.QueryEntitiesWithComponents(projectionType)
 		query.OnAdd(onChange)
 		query.OnChange(onChange)
 	}
@@ -238,14 +253,16 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 			ecs.GetComponentType(texturecomponent.Texture{}),
 		)
 		onChange := func(entities []ecs.EntityID) {
-			for i, entity := range entities {
+			m.mutex.Lock()
+			defer m.mutex.Unlock()
+			for _, entity := range entities {
 				transformComponent, err := ecs.GetComponent[transform.Transform](world, entity)
 				if err != nil {
 					continue
 				}
 				model := transformComponent.Mat4()
 
-				textureComponent, err := ecs.GetComponent[texture.Texture](world, entity)
+				textureComponent, err := ecs.GetComponent[texturecomponent.Texture](world, entity)
 				if err != nil {
 					continue
 				}
@@ -254,7 +271,7 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 					continue
 				}
 
-				meshComponent, err := ecs.GetComponent[mesh.Mesh](world, entity)
+				meshComponent, err := ecs.GetComponent[meshcomponent.Mesh](world, entity)
 				if err != nil {
 					continue
 				}
@@ -266,7 +283,6 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 				if !ok {
 					continue
 				}
-				cmd := NewDrawElementsIndirectCommand(meshRange, 1, uint32(i))
 
 				usedProjection, err := ecs.GetComponent[projection.UsedProjection](world, entity)
 				if err != nil {
@@ -279,6 +295,7 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 
 				index, ok := m.entities.GetIndex(entity)
 				if !ok {
+					cmd := NewDrawElementsIndirectCommand(meshRange, 1, uint32(len(m.entities.Get())))
 					m.entities.Add(entity)
 					m.cmdBuffer.Add(cmd)
 					m.modelTexBuffer.Add(textureIndex)
@@ -286,6 +303,7 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 					m.modelProjBuffer.Add(projectionIndex)
 					continue
 				}
+				cmd := NewDrawElementsIndirectCommand(meshRange, 1, uint32(index))
 				m.cmdBuffer.Set(index, cmd)
 				m.modelTexBuffer.Set(index, textureIndex)
 				m.modelBuffer.Set(index, model)
@@ -293,6 +311,8 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 			}
 		}
 		onRemove := func(entities []ecs.EntityID) {
+			m.mutex.Lock()
+			defer m.mutex.Unlock()
 			for _, entity := range entities {
 				index, ok := m.entities.GetIndex(entity)
 				if !ok {
@@ -322,17 +342,32 @@ func (m *textureMaterialServices) render(world ecs.World, p program.Program) err
 		}
 	}
 
-	m.cmdBuffer.Flush()
-	m.modelTexBuffer.Flush()
-	m.modelBuffer.Flush()
-	m.modelProjBuffer.Flush()
-	m.projBuffer.Flush()
+	if m.setFence {
+		m.setFence = false
+		gl.ClientWaitSync(m.fence, gl.SYNC_FLUSH_COMMANDS_BIT, gl.TIMEOUT_IGNORED)
+		gl.DeleteSync(m.fence)
+	}
+
+	{
+		m.mutex.Lock()
+
+		m.cmdBuffer.Flush()
+		m.modelTexBuffer.Flush()
+		m.modelBuffer.Flush()
+		m.modelProjBuffer.Flush()
+		m.projBuffer.Flush()
+
+		m.mutex.Unlock()
+	}
 
 	p.Use()
 	m.mesh.Use()
 	gl.BindTexture(gl.TEXTURE_2D_ARRAY, m.texture)
 	gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, m.cmdBuffer.ID())
 	gl.MultiDrawElementsIndirect(gl.TRIANGLES, gl.UNSIGNED_INT, nil, int32(len(m.cmdBuffer.Data())), 0)
+
+	m.fence = gl.FenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0)
+	m.setFence = true
 
 	return nil
 }

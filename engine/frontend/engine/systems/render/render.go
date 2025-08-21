@@ -49,7 +49,7 @@ func NewRenderSystem(
 
 			materialAsset, err := assets.GetAsset[material.MaterialCachedAsset](assetsService, assetID)
 			if err != nil {
-				liveMaterials[assetID] = nil
+				delete(liveMaterials, assetID)
 				continue
 			}
 

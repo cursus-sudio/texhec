@@ -1,6 +1,6 @@
 #version 460 core
 
-in VS {
+in FS {
     vec2 textureCoord;
     flat int drawID;
 } fs;

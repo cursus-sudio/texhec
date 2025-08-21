@@ -4,37 +4,39 @@ layout(location = 0) in vec3 pos;
 layout(location = 1) in vec2 textureCoord;
 
 layout(std430, binding = 2) buffer ModelData {
-    mat4 model[];
+    mat4 models[];
 };
 
 layout(std430, binding = 3) buffer ModelProjectionData {
-    int modelProjection[];
+    int modelProjections[];
 };
 
 layout(std430, binding = 4) buffer ProjectionData {
-    mat4 projections[];
+    mat4 viewProjections[2];
 };
 
-out VS {
+out FS {
     vec2 textureCoord;
     flat int drawID;
-} vs;
+} fs;
 
 void main() {
     int id = gl_BaseInstance + gl_InstanceID;
-    vs.drawID = id;
+    // int id = gl_DrawID;
+    fs.drawID = id;
 
     //
 
-    vs.textureCoord = textureCoord;
+    fs.textureCoord = textureCoord;
 
     //
 
-    int modelProj = modelProjection[id];
-    mat4 proj = projections[modelProj];
+    int modelProjection = modelProjections[id];
 
-    mat4 M = model[id];
-    vec4 wpos = M * vec4(pos, 1.0);
+    mat4 viewProjection = viewProjections[modelProjection];
 
-    gl_Position = proj * wpos;
+    mat4 model = models[id];
+    // vec4 modelPos = model * vec4(pos, 1);
+
+    gl_Position = viewProjection * model * vec4(pos, 1);
 }

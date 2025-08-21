@@ -10,7 +10,7 @@ var (
 	ErrOutOfBounds error = errors.New("out of bounds")
 )
 
-type TrackingArray[Stored any] interface {
+type TrackingArray[Stored comparable] interface {
 	Get() []Stored
 	Add(elements ...Stored)
 	Set(index int, e Stored) error
@@ -20,12 +20,12 @@ type TrackingArray[Stored any] interface {
 	ClearChanges()
 }
 
-type array[Stored any] struct {
+type array[Stored comparable] struct {
 	data    []Stored
 	changes map[int]struct{}
 }
 
-func NewArray[Stored any]() TrackingArray[Stored] {
+func NewArray[Stored comparable]() TrackingArray[Stored] {
 	return &array[Stored]{
 		changes: map[int]struct{}{},
 	}
@@ -43,6 +43,9 @@ func (s *array[Stored]) Add(elements ...Stored) {
 func (s *array[Stored]) Set(index int, e Stored) error {
 	if len(s.data) <= index {
 		return ErrOutOfBounds
+	}
+	if s.data[index] == e {
+		return nil
 	}
 	s.changes[index] = struct{}{}
 	s.data[index] = e
@@ -81,21 +84,23 @@ func (s *array[Stored]) ClearChanges() { s.changes = make(map[int]struct{}) }
 
 //
 
-type threadSafeArr[Stored any] struct {
-	mutex *sync.Mutex
+type threadSafeArr[Stored comparable] struct {
+	mutex sync.Locker
 	TrackingArray[Stored]
 }
 
-func NewThreadSafeTrackingArray[Stored any](mutex *sync.Mutex) TrackingArray[Stored] {
+func NewThreadSafeTrackingArray[Stored comparable](mutex sync.Locker) TrackingArray[Stored] {
 	return &threadSafeArr[Stored]{
 		mutex:         mutex,
 		TrackingArray: NewArray[Stored](),
 	}
 }
 
-func (arr *threadSafeArr[Stored]) Get() []Stored {
-	return arr.TrackingArray.Get()
-}
+//	func (arr *threadSafeArr[Stored]) Get() []Stored {
+//		arr.mutex.Lock()
+//		defer arr.mutex.Unlock()
+//		return arr.TrackingArray.Get()
+//	}
 func (arr *threadSafeArr[Stored]) Add(elements ...Stored) {
 	arr.mutex.Lock()
 	defer arr.mutex.Unlock()

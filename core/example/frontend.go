@@ -91,6 +91,7 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				[]ecs.ComponentType{ecs.GetComponentType(mouse.MouseEvents{})},
 			)
 			events.Listen(ctx.EventsBuilder, func(event mousesystem.ShootRayEvent) {
+				return
 				if err := cameraRaySystem.Listen(event); err != nil {
 					ioc.Get[logger.Logger](c).Error(err)
 				}

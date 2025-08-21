@@ -35,9 +35,7 @@ type locations struct {
 type renderCache struct {
 	cachedForWorld ecs.World
 
-	mutex    *sync.RWMutex
-	setFence bool
-	fence    uintptr
+	mutex *sync.RWMutex
 
 	entities        arrays.IndexTracker[ecs.EntityID]
 	modelBuffer     arrays.Buffer[mgl32.Mat4]
@@ -342,12 +340,6 @@ func (m *textureMaterialServices) render(world ecs.World, p program.Program) err
 		}
 	}
 
-	if m.setFence {
-		m.setFence = false
-		gl.ClientWaitSync(m.fence, gl.SYNC_FLUSH_COMMANDS_BIT, gl.TIMEOUT_IGNORED)
-		gl.DeleteSync(m.fence)
-	}
-
 	{
 		m.mutex.Lock()
 
@@ -365,9 +357,6 @@ func (m *textureMaterialServices) render(world ecs.World, p program.Program) err
 	gl.BindTexture(gl.TEXTURE_2D_ARRAY, m.texture)
 	gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, m.cmdBuffer.ID())
 	gl.MultiDrawElementsIndirect(gl.TRIANGLES, gl.UNSIGNED_INT, nil, int32(len(m.cmdBuffer.Data())), 0)
-
-	m.fence = gl.FenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0)
-	m.setFence = true
 
 	return nil
 }

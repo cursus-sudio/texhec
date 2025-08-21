@@ -5,11 +5,16 @@ import (
 	"frontend/services/assets"
 	"frontend/services/ecs"
 	"frontend/services/frames"
+
+	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
 type RenderSystem struct {
 	world  ecs.World
 	assets assets.Assets
+
+	setFence bool
+	fence    uintptr
 
 	materials map[assets.AssetID]material.MaterialCachedAsset
 }
@@ -73,11 +78,19 @@ type renderable struct {
 }
 
 func (s *RenderSystem) Listen(args frames.FrameEvent) error {
+	if s.setFence {
+		s.setFence = false
+		gl.ClientWaitSync(s.fence, gl.SYNC_FLUSH_COMMANDS_BIT, gl.TIMEOUT_IGNORED)
+		gl.DeleteSync(s.fence)
+	}
 	for _, material := range s.materials {
 		if err := material.Render(s.world); err != nil {
 			return err
 		}
 	}
+
+	s.fence = gl.FenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0)
+	s.setFence = true
 
 	return nil
 }

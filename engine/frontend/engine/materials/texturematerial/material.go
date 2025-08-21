@@ -6,10 +6,10 @@ import (
 	"frontend/engine/components/projection"
 	texturecomponent "frontend/engine/components/texture"
 	"frontend/engine/components/transform"
-	"frontend/engine/materials/texturematerial/arrays"
 	"frontend/services/assets"
 	"frontend/services/console"
 	"frontend/services/ecs"
+	"frontend/services/graphics/buffers"
 	"frontend/services/graphics/program"
 	"frontend/services/graphics/vao"
 	"frontend/services/graphics/vao/ebo"
@@ -37,15 +37,15 @@ type renderCache struct {
 
 	mutex *sync.RWMutex
 
-	entities        arrays.IndexTracker[ecs.EntityID]
-	modelBuffer     arrays.Buffer[mgl32.Mat4]
-	modelProjBuffer arrays.Buffer[int32]
-	modelTexBuffer  arrays.Buffer[int32]
-	cmdBuffer       arrays.Buffer[DrawElementsIndirectCommand]
+	entities        buffers.IndexTracker[ecs.EntityID]
+	modelBuffer     buffers.Buffer[mgl32.Mat4]
+	modelProjBuffer buffers.Buffer[int32]
+	modelTexBuffer  buffers.Buffer[int32]
+	cmdBuffer       buffers.Buffer[DrawElementsIndirectCommand]
 	// currently there is 1 entity 1 command
 	// TODO add instancing
 
-	projBuffer arrays.Buffer[mgl32.Mat4]
+	projBuffer buffers.Buffer[mgl32.Mat4]
 
 	// for modelCmdBuffer and modelTexBuffer
 	meshes   map[assets.AssetID]int32
@@ -168,34 +168,34 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 
 		// model buffer
 
-		m.entities = arrays.NewIndexTracker(
-			arrays.NewArray[ecs.EntityID](),
+		m.entities = buffers.NewIndexTracker(
+			buffers.NewArray[ecs.EntityID](),
 		)
 
 		gl.GenBuffers(1, &buffer)
-		m.cmdBuffer = arrays.NewBuffer[DrawElementsIndirectCommand](
+		m.cmdBuffer = buffers.NewBuffer[DrawElementsIndirectCommand](
 			gl.DRAW_INDIRECT_BUFFER, gl.DYNAMIC_DRAW, buffer)
 
 		gl.GenBuffers(1, &buffer)
 		gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, buffer)
-		m.modelTexBuffer = arrays.NewBuffer[int32](
+		m.modelTexBuffer = buffers.NewBuffer[int32](
 			gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
 
 		gl.GenBuffers(1, &buffer)
 		gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 2, buffer)
-		m.modelBuffer = arrays.NewBuffer[mgl32.Mat4](
+		m.modelBuffer = buffers.NewBuffer[mgl32.Mat4](
 			gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
 
 		gl.GenBuffers(1, &buffer)
 		gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 3, buffer)
-		m.modelProjBuffer = arrays.NewBuffer[int32](
+		m.modelProjBuffer = buffers.NewBuffer[int32](
 			gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
 
 		// proj buffer
 
 		gl.GenBuffers(1, &buffer)
 		gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 4, buffer)
-		m.projBuffer = arrays.NewBuffer[mgl32.Mat4](
+		m.projBuffer = buffers.NewBuffer[mgl32.Mat4](
 			gl.SHADER_STORAGE_BUFFER, gl.STATIC_DRAW, buffer)
 	}
 	for i := 0; i < 3; i++ {

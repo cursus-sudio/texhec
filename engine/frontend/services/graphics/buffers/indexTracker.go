@@ -1,4 +1,4 @@
-package arrays
+package buffers
 
 type IndexTracker[Stored comparable] interface {
 	Get() []Stored

@@ -8,6 +8,7 @@ import (
 	"frontend/engine/components/transform"
 	"frontend/services/assets"
 	"frontend/services/console"
+	"frontend/services/datastructures"
 	"frontend/services/ecs"
 	"frontend/services/graphics/buffers"
 	"frontend/services/graphics/program"
@@ -37,7 +38,7 @@ type renderCache struct {
 
 	mutex *sync.RWMutex
 
-	entities        buffers.IndexTracker[ecs.EntityID]
+	entities        datastructures.Set[ecs.EntityID]
 	modelBuffer     buffers.Buffer[mgl32.Mat4]
 	modelProjBuffer buffers.Buffer[int32]
 	modelTexBuffer  buffers.Buffer[int32]
@@ -73,15 +74,33 @@ func (m *textureMaterialServices) cleanUp() {
 	if m.cachedForWorld == nil {
 		return
 	}
+	//
+
+	m.mutex = &sync.RWMutex{}
+
 	m.cachedForWorld = nil
 	m.mesh.Release()
 	m.mesh = nil
 	m.packedMesh = nil
 	m.meshes = map[assets.AssetID]int32{}
 
+	m.modelBuffer.Release()
+	m.modelProjBuffer.Release()
+	m.modelTexBuffer.Release()
+	m.cmdBuffer.Release()
+	m.projBuffer.Release()
+	m.entities = nil
+	m.modelBuffer = nil
+	m.modelProjBuffer = nil
+	m.modelTexBuffer = nil
+	m.cmdBuffer = nil
+	m.projBuffer = nil
+
 	gl.DeleteTextures(1, &m.texture)
 	m.texture = 0
 	m.textures = map[assets.AssetID]int32{}
+
+	m.projections = map[ecs.ComponentType]int32{}
 }
 
 func (m *textureMaterialServices) init(world ecs.World, p program.Program) error {
@@ -168,9 +187,7 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 
 		// model buffer
 
-		m.entities = buffers.NewIndexTracker(
-			buffers.NewArray[ecs.EntityID](),
-		)
+		m.entities = datastructures.NewSet[ecs.EntityID]()
 
 		gl.GenBuffers(1, &buffer)
 		m.cmdBuffer = buffers.NewBuffer[DrawElementsIndirectCommand](
@@ -249,6 +266,7 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 			ecs.GetComponentType(projection.UsedProjection{}),
 			ecs.GetComponentType(transform.Transform{}),
 			ecs.GetComponentType(texturecomponent.Texture{}),
+			ecs.GetComponentType(projection.Visible{}),
 		)
 		onChange := func(entities []ecs.EntityID) {
 			m.mutex.Lock()

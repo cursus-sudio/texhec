@@ -80,6 +80,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			ctx.World.SaveComponent(entity, ChangeTransformOverTimeComponent{})
 		})
 		b.OnLoad(func(ctx scenes.SceneCtx) {
+			projections.NewOcclusionSystem(ctx.World)
 			system := NewChangeTransformOverTimeSystem(ctx.World)
 			events.Listen(ctx.EventsBuilder, system.Update)
 		})

@@ -1,7 +1,9 @@
 package buffers
 
 import (
+	"frontend/services/datastructures"
 	"reflect"
+	"sort"
 	"sync"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -13,6 +15,7 @@ type Buffer[Stored comparable] interface {
 	Add(elements ...Stored)
 	Set(index int, e Stored) error
 	Remove(indices ...int) error
+	Release()
 
 	Flush()
 }
@@ -24,7 +27,7 @@ type buffer[Stored comparable] struct {
 	buffer uint32
 
 	elementSize int
-	TrackingArray[Stored]
+	datastructures.TrackingArray[Stored]
 	bufferLen int
 }
 
@@ -41,7 +44,7 @@ func NewBuffer[Stored comparable](
 		buffer: bufferID,
 
 		elementSize:   int(reflect.TypeFor[Stored]().Size()),
-		TrackingArray: NewThreadSafeTrackingArray[Stored](mutex),
+		TrackingArray: datastructures.NewThreadSafeTrackingArray[Stored](mutex),
 		bufferLen:     0,
 	}
 }
@@ -67,6 +70,10 @@ func (s *buffer[Stored]) CheckBufferSize() bool {
 	return resizedBuffer
 }
 
+func (s *buffer[Stored]) Release() {
+	gl.DeleteBuffers(1, &s.buffer)
+}
+
 func (s *buffer[Stored]) Flush() {
 	changes := s.TrackingArray.Changes()
 	s.TrackingArray.ClearChanges()
@@ -85,10 +92,17 @@ func (s *buffer[Stored]) Flush() {
 
 	gl.BindBuffer(s.target, s.buffer)
 
-	var offset int = changes[0]
+	orderedChanges := make([]int, 0, len(changes))
+	for index := range changes {
+		orderedChanges = append(orderedChanges, index)
+	}
+
+	sort.Ints(orderedChanges)
+
+	var offset int = orderedChanges[0]
 	var size int = 1
 
-	for _, changed := range changes[1:] {
+	for _, changed := range orderedChanges[1:] {
 		if changed == offset+size {
 			size += 1
 			continue

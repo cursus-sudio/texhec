@@ -1,6 +1,7 @@
 package ecs
 
 import (
+	"frontend/services/datastructures"
 	"sort"
 	"strings"
 )
@@ -28,12 +29,11 @@ func newQueryKey(components []ComponentType) queryKey {
 //
 
 type liveQuery struct {
-	dependencies   map[ComponentType]any // this is faster []ComponentType
-	entities       map[EntityID]any      // this is faster []EntityID
-	cachedEntities []EntityID
-	onRemove       []func([]EntityID)
-	onChange       []func([]EntityID)
-	onAdd          []func([]EntityID)
+	dependencies map[ComponentType]any // this is faster []ComponentType
+	entities     datastructures.Set[EntityID]
+	onRemove     []func([]EntityID)
+	onChange     []func([]EntityID)
+	onAdd        []func([]EntityID)
 }
 
 func newLiveQuery(
@@ -44,9 +44,9 @@ func newLiveQuery(
 	for _, componentType := range componentTypes {
 		dependencies[componentType] = nil
 	}
-	entities := make(map[EntityID]any, len(res))
+	entities := datastructures.NewSet[EntityID]()
 	for _, entity := range res {
-		entities[entity] = nil
+		entities.Add(entity)
 	}
 	return &liveQuery{
 		dependencies: dependencies,
@@ -68,25 +68,17 @@ func (query *liveQuery) OnRemove(listener func([]EntityID)) {
 }
 
 func (query *liveQuery) Entities() []EntityID {
-	if query.cachedEntities == nil {
-		entities := make([]EntityID, 0, len(query.entities))
-		for entity := range query.entities {
-			entities = append(entities, entity)
-		}
-		query.cachedEntities = entities
-	}
-	return query.cachedEntities
+	return query.entities.Get()
 }
 
 //
 
 func (query *liveQuery) RemoveEntity(entity EntityID) {
-	_, ok := query.entities[entity]
+	index, ok := query.entities.GetIndex(entity)
 	if !ok {
 		return
 	}
-	delete(query.entities, entity)
-	query.cachedEntities = nil
+	query.entities.Remove(index)
 	rmArgs := []EntityID{entity}
 	for _, listener := range query.onRemove {
 		listener(rmArgs)
@@ -94,12 +86,7 @@ func (query *liveQuery) RemoveEntity(entity EntityID) {
 }
 
 func (query *liveQuery) AddEntities(entities []EntityID) {
-	for _, entity := range entities {
-		query.entities[entity] = nil
-	}
-	if query.cachedEntities != nil {
-		query.cachedEntities = append(query.cachedEntities, entities...)
-	}
+	query.entities.Add(entities...)
 	for _, listener := range query.onAdd {
 		listener(entities)
 	}

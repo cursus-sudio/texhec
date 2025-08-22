@@ -1,4 +1,4 @@
-package buffers
+package datastructures
 
 import (
 	"errors"
@@ -16,44 +16,48 @@ type TrackingArray[Stored comparable] interface {
 	Set(index int, e Stored) error
 	Remove(indices ...int) error
 
-	Changes() []int
+	Changes() map[int]Stored
 	ClearChanges()
 }
 
-type array[Stored comparable] struct {
+type trackingArray[Stored comparable] struct {
 	data    []Stored
-	changes map[int]struct{}
+	changes map[int]Stored // original
 }
 
-func NewArray[Stored comparable]() TrackingArray[Stored] {
-	return &array[Stored]{
-		changes: map[int]struct{}{},
+func NewTrackingArray[Stored comparable]() TrackingArray[Stored] {
+	return &trackingArray[Stored]{
+		changes: map[int]Stored{},
 	}
 }
 
-func (s *array[Stored]) Get() []Stored { return s.data }
+func (s *trackingArray[Stored]) Get() []Stored { return s.data }
 
-func (s *array[Stored]) Add(elements ...Stored) {
+func (s *trackingArray[Stored]) Add(elements ...Stored) {
 	for i := 0; i < len(elements); i++ {
-		s.changes[i+len(s.data)] = struct{}{}
+		var zero Stored
+		s.changes[i+len(s.data)] = zero
 	}
 	s.data = append(s.data, elements...)
 }
 
-func (s *array[Stored]) Set(index int, e Stored) error {
+func (s *trackingArray[Stored]) Set(index int, e Stored) error {
 	if len(s.data) <= index {
 		return ErrOutOfBounds
 	}
+	original := s.data[index]
 	if s.data[index] == e {
 		return nil
 	}
-	s.changes[index] = struct{}{}
+	if _, ok := s.changes[index]; !ok {
+		s.changes[index] = original
+	}
 	s.data[index] = e
 
 	return nil
 }
 
-func (s *array[Stored]) Remove(indices ...int) error {
+func (s *trackingArray[Stored]) Remove(indices ...int) error {
 	for _, index := range indices {
 		if index >= len(s.data) {
 			return ErrOutOfBounds
@@ -62,8 +66,17 @@ func (s *array[Stored]) Remove(indices ...int) error {
 
 	sort.Slice(indices, func(i, j int) bool { return indices[i] > indices[j] })
 	for _, index := range indices {
-		s.changes[index] = struct{}{}
-		s.changes[len(s.data)-1] = struct{}{}
+		indexOriginal, ok := s.changes[index]
+		if !ok {
+			indexOriginal = s.data[index]
+		}
+		lastOriginal, ok := s.changes[len(s.data)-1]
+		if !ok {
+			lastOriginal = s.data[len(s.data)-1]
+		}
+		s.changes[index], s.changes[len(s.data)-1] = indexOriginal, lastOriginal
+
+		// s.changes[index], s.changes[len(s.data)-1] = s.data[len(s.data)-1], s.data[index]
 
 		s.data[index] = s.data[len(s.data)-1]
 		s.data = s.data[:len(s.data)-1]
@@ -71,16 +84,11 @@ func (s *array[Stored]) Remove(indices ...int) error {
 	return nil
 }
 
-func (s *array[Stored]) Changes() []int {
-	changes := make([]int, 0, len(s.changes))
-	for k := range s.changes {
-		changes = append(changes, k)
-	}
-	sort.Ints(changes)
-	return changes
+func (s *trackingArray[Stored]) Changes() map[int]Stored {
+	return s.changes
 }
 
-func (s *array[Stored]) ClearChanges() { s.changes = make(map[int]struct{}) }
+func (s *trackingArray[Stored]) ClearChanges() { s.changes = map[int]Stored{} }
 
 //
 
@@ -92,7 +100,7 @@ type threadSafeArr[Stored comparable] struct {
 func NewThreadSafeTrackingArray[Stored comparable](mutex sync.Locker) TrackingArray[Stored] {
 	return &threadSafeArr[Stored]{
 		mutex:         mutex,
-		TrackingArray: NewArray[Stored](),
+		TrackingArray: NewTrackingArray[Stored](),
 	}
 }
 
@@ -117,7 +125,7 @@ func (arr *threadSafeArr[Stored]) Remove(indices ...int) error {
 	return arr.TrackingArray.Remove(indices...)
 }
 
-func (arr *threadSafeArr[Stored]) Changes() []int {
+func (arr *threadSafeArr[Stored]) Changes() map[int]Stored {
 	arr.mutex.Lock()
 	return arr.TrackingArray.Changes()
 }

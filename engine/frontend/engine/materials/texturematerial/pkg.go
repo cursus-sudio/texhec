@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"frontend/services/assets"
 	"frontend/services/console"
+	"frontend/services/ecs"
 	"frontend/services/graphics/program"
 	"frontend/services/graphics/shader"
 	"frontend/services/media/window"
@@ -17,17 +18,23 @@ var vertSource string
 //go:embed s.frag
 var fragSource string
 
-type Pkg struct{}
+type Pkg struct {
+	entitiesQueryAdditionalArguments []ecs.ComponentType
+}
 
-func Package() Pkg {
-	return Pkg{}
+func Package(
+	entitiesQueryAdditionalArguments []ecs.ComponentType,
+) Pkg {
+	return Pkg{
+		entitiesQueryAdditionalArguments: entitiesQueryAdditionalArguments,
+	}
 }
 
 var (
 	TextureMaterial assets.AssetID = "materials/texturematerial"
 )
 
-func (Pkg) Register(b ioc.Builder) {
+func (pkg Pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b assets.AssetsStorageBuilder) assets.AssetsStorageBuilder {
 		b.RegisterAsset(TextureMaterial, func() (any, error) {
 			material := newTextureMaterial(
@@ -53,6 +60,7 @@ func (Pkg) Register(b ioc.Builder) {
 				ioc.Get[window.Api](c),
 				ioc.Get[assets.AssetsStorage](c),
 				ioc.Get[console.Console](c),
+				pkg.entitiesQueryAdditionalArguments,
 			)
 			return material.Material(), nil
 		})

@@ -2,6 +2,7 @@ package triangle
 
 import (
 	_ "embed"
+	"fmt"
 	"frontend/engine/components/material"
 	"frontend/engine/components/mesh"
 	"frontend/engine/components/mouse"
@@ -86,48 +87,50 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		})
 
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			type Marked struct{}
-
-			type OnHoveredDomainEvent struct{}
-			type OnClickDomainEvent struct{}
+			type OnHoveredDomainEvent struct {
+				entity   ecs.EntityID
+				row, col int
+			}
+			type OnClickDomainEvent struct {
+				entity   ecs.EntityID
+				row, col int
+			}
 
 			{
 				events.Listen(ctx.EventsBuilder, func(e OnHoveredDomainEvent) {
-					ioc.Get[console.Console](c).Print("damn it really is hovered\n")
+					ioc.Get[console.Console](c).Print(
+						fmt.Sprintf("damn it really is hovered %v (%d, %d)\n", e.entity, e.col, e.row),
+					)
 				})
 
 				events.Listen(ctx.EventsBuilder, func(e OnClickDomainEvent) {
-					ioc.Get[console.Console](c).PrintPermanent("damn it really is clicked\n")
-				})
-
-				liveQuery := ctx.World.QueryEntitiesWithComponents(
-					ecs.GetComponentType(Marked{}),
-					ecs.GetComponentType(mouse.Hovered{}),
-				)
-				events.Listen(ctx.EventsBuilder, func(fe frames.FrameEvent) {
-					for range liveQuery.Entities() {
-						events.Emit(ctx.Events, OnHoveredDomainEvent{})
-					}
+					ioc.Get[console.Console](c).PrintPermanent(
+						fmt.Sprintf("damn it really is clicked %v (%d, %d)\n", e.entity, e.col, e.row),
+					)
 				})
 			}
 
 			rows := 100
 			cols := 1000
+			var size float32 = 100
+			var gap float32 = 0
 			for i := 0; i < rows*cols; i++ {
 				row := i / cols
 				col := i % cols
 				entity := ctx.World.NewEntity()
 				ctx.World.SaveComponent(entity, transform.NewTransform().
-					SetPos([3]float32{float32(col) * 101, float32(row) * 101, 0}).
-					SetSize([3]float32{100, 100, 1}))
+					SetPos([3]float32{float32(col) * (size + gap), float32(row) * (size + gap), 0}).
+					SetSize([3]float32{size, size, 1}))
 				ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
 				ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
 				// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
 				// ctx.World.SaveComponent(entity, material.NewMaterial(texturematerial.TextureMaterial))
 				ctx.World.SaveComponent(entity, texturematerial.TextureMaterialComponent{})
 				ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
-				ctx.World.SaveComponent(entity, Marked{})
-				ctx.World.SaveComponent(entity, mouse.NewMouseEvents().AddLeftClickEvents(OnClickDomainEvent{}))
+				ctx.World.SaveComponent(entity, mouse.NewMouseEvents().
+					AddLeftClickEvents(OnClickDomainEvent{entity, row, col}).
+					AddMouseHoverEvents(OnHoveredDomainEvent{entity, row, col}),
+				)
 				ctx.World.SaveComponent(entity, colliders.NewCollider([]colliders.Shape{
 					shapes.NewRect2D(transform.NewTransform().SetSize([3]float32{1, 1}))}))
 			}
@@ -146,15 +149,15 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			moveCameraSystem := func(event frames.FrameEvent) error {
 				xAxis := 0
 				if dPressed {
-					xAxis = -1
-				} else if aPressed {
 					xAxis = 1
+				} else if aPressed {
+					xAxis = -1
 				}
 				yAxis := 0
 				if wPressed {
-					yAxis = -1
-				} else if sPressed {
 					yAxis = 1
+				} else if sPressed {
+					yAxis = -1
 				}
 
 				cameras := camerasQuery.Entities()
@@ -166,11 +169,18 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				if err != nil {
 					return err
 				}
-				rotation := cameraTransform.Rotation
-				mul := 100 * float32(event.Delta.Seconds())
-				rotation = rotation.Mul(mgl32.QuatRotate(mgl32.DegToRad(mul*float32(xAxis)), mgl32.Vec3{0, 1, 0}))
-				rotation = rotation.Mul(mgl32.QuatRotate(mgl32.DegToRad(mul*float32(yAxis)), mgl32.Vec3{-1, 0, 0}))
-				cameraTransform.Rotation = rotation
+				{
+					pos := cameraTransform.Pos
+					mul := 1000 * float32(event.Delta.Seconds())
+					pos[0] += mul * float32(xAxis)
+					pos[1] += mul * float32(yAxis)
+					cameraTransform.Pos = pos
+				}
+				// rotation := cameraTransform.Rotation
+				// mul := 100 * float32(event.Delta.Seconds())
+				// rotation = rotation.Mul(mgl32.QuatRotate(mgl32.DegToRad(mul*float32(xAxis)), mgl32.Vec3{0, 1, 0}))
+				// rotation = rotation.Mul(mgl32.QuatRotate(mgl32.DegToRad(mul*float32(yAxis)), mgl32.Vec3{-1, 0, 0}))
+				// cameraTransform.Rotation = rotation
 
 				if err := ctx.World.SaveComponent(camera, cameraTransform); err != nil {
 					return err

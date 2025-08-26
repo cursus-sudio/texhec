@@ -9,8 +9,12 @@ type MouseEvents struct {
 	DoubleLeftClickEvents  []any
 	RightClickEvents       []any
 	DoubleRightClickEvents []any
-	MouseEnterEvents       []any
-	MouseLeaveEvents       []any
+
+	MouseEnterEvents []any
+	MouseLeaveEvents []any
+
+	// hover event is triggered every frame object is hovered
+	HoverEvent []any
 }
 
 func NewMouseEvents() MouseEvents {
@@ -23,8 +27,11 @@ func (component MouseEvents) Clone() MouseEvents {
 		DoubleLeftClickEvents:  component.DoubleLeftClickEvents,
 		RightClickEvents:       component.RightClickEvents,
 		DoubleRightClickEvents: component.DoubleRightClickEvents,
-		MouseEnterEvents:       component.MouseEnterEvents,
-		MouseLeaveEvents:       component.MouseLeaveEvents,
+
+		MouseEnterEvents: component.MouseEnterEvents,
+		MouseLeaveEvents: component.MouseLeaveEvents,
+
+		HoverEvent: component.HoverEvent,
 	}
 }
 
@@ -61,5 +68,11 @@ func (component MouseEvents) AddMouseEnterEvents(events ...any) MouseEvents {
 func (component MouseEvents) AddMouseLeaveEvents(events ...any) MouseEvents {
 	r := component.Clone()
 	r.MouseLeaveEvents = append(r.MouseLeaveEvents, events...)
+	return r
+}
+
+func (component MouseEvents) AddMouseHoverEvents(events ...any) MouseEvents {
+	r := component.Clone()
+	r.HoverEvent = append(r.HoverEvent, events...)
 	return r
 }

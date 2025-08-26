@@ -4,6 +4,7 @@ import (
 	"frontend/engine/components/material"
 	"frontend/services/assets"
 	"frontend/services/console"
+	"frontend/services/ecs"
 	"frontend/services/graphics/program"
 	"frontend/services/media/window"
 )
@@ -18,6 +19,7 @@ func newTextureMaterial(
 	window window.Api,
 	assetsStorage assets.AssetsStorage,
 	console console.Console,
+	entitiesQueryAdditionalArguments []ecs.ComponentType,
 ) textureMaterial {
 	return textureMaterial{
 		program: program,
@@ -25,7 +27,10 @@ func newTextureMaterial(
 			window:        window,
 			assetsStorage: assetsStorage,
 			console:       console,
-			renderCache:   &renderCache{},
+
+			entitiesQueryAdditionalArguments: entitiesQueryAdditionalArguments,
+
+			renderCache: &renderCache{},
 		},
 	}
 }

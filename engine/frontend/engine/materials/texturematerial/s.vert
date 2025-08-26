@@ -21,8 +21,8 @@ out FS {
 } fs;
 
 void main() {
-    int id = gl_BaseInstance + gl_InstanceID;
-    // int id = gl_DrawID;
+    // int id = gl_BaseInstance + gl_InstanceID;
+    int id = gl_DrawID;
     fs.drawID = id;
 
     //

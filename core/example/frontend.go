@@ -88,10 +88,9 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				ioc.Get[window.Api](c),
 				ctx.Events,
 				[]ecs.ComponentType{ecs.GetComponentType(projection.Ortho{}), ecs.GetComponentType(projection.Perspective{})},
-				[]ecs.ComponentType{ecs.GetComponentType(mouse.MouseEvents{})},
+				[]ecs.ComponentType{ecs.GetComponentType(projection.Visible{}), ecs.GetComponentType(mouse.MouseEvents{})},
 			)
 			events.Listen(ctx.EventsBuilder, func(event mousesystem.ShootRayEvent) {
-				return
 				if err := cameraRaySystem.Listen(event); err != nil {
 					ioc.Get[logger.Logger](c).Error(err)
 				}
@@ -99,6 +98,9 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 
 			hoverSystem := mousesystem.NewHoverSystem(ctx.World, ctx.Events)
 			events.Listen(ctx.EventsBuilder, hoverSystem.Listen)
+
+			hoverEventsSystem := mousesystem.NewHoverEventsSystem(ctx.World, ctx.Events)
+			events.Listen(ctx.EventsBuilder, hoverEventsSystem.Listen)
 
 			clickSystem := mousesystem.NewClickSystem(ctx.World, ctx.Events, sdl.RELEASED)
 			events.Listen(ctx.EventsBuilder, clickSystem.Listen)

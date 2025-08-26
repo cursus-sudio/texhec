@@ -3,29 +3,31 @@ package ecs
 import (
 	"fmt"
 	"frontend/services/datastructures"
+	"sync"
 )
 
 // type entity any
 
 type entitiesImpl struct {
-	components *componentsImpl
-	counter    int
+	counter int
 
 	existingEntities datastructures.Set[EntityID]
+	mutex            *sync.RWMutex
 	// existingEntities map[EntityID]entity
 	// cachedEntities []EntityID
 }
 
-func newEntities(components *componentsImpl) *entitiesImpl {
+func newEntities(mutex *sync.RWMutex) *entitiesImpl {
 	return &entitiesImpl{
-		components:       components,
 		counter:          0,
 		existingEntities: datastructures.NewSet[EntityID](),
+		mutex:            mutex,
 		// existingEntities: make(map[EntityID]entity),
 	}
 }
 
 func (entitiesStorage *entitiesImpl) NewEntity() EntityID {
+	entitiesStorage.mutex.Lock()
 	// can later switch this to guid
 	index := entitiesStorage.counter
 	entitiesStorage.counter += 1
@@ -33,41 +35,21 @@ func (entitiesStorage *entitiesImpl) NewEntity() EntityID {
 		id: fmt.Sprintf("%d", index),
 	}
 	entitiesStorage.existingEntities.Add(id)
-	// entitiesStorage.existingEntities[id] = nil
-	entitiesStorage.components.AddEntity(id)
-	// if entitiesStorage.cachedEntities != nil {
-	// 	entitiesStorage.cachedEntities = append(entitiesStorage.cachedEntities, id)
-	// }
 	return id
 }
 
-func (entities *entitiesImpl) RemoveEntity(entityId EntityID) {
-	if index, ok := entities.existingEntities.GetIndex(entityId); ok {
-		entities.existingEntities.Remove(index)
-		// i2, ok2 := entities.existingEntities.GetIndex(entityId)
-		// if ok2 {
-		// 	panic(fmt.Sprintf("i1 %d; i2 %d; ok2 %t;", index, i2, ok2))
-		// }
-		entities.components.RemoveEntity(entityId)
-	}
-	// delete(entities.existingEntities, entityId)
-	// entities.cachedEntities = nil
+func (entitiesStorage *entitiesImpl) RemoveEntity(entityId EntityID) {
+	entitiesStorage.mutex.Lock()
+	entitiesStorage.existingEntities.RemoveElements(entityId)
 }
 
 func (entitiesStorage *entitiesImpl) GetEntities() []EntityID {
+	entitiesStorage.mutex.RLocker().Lock()
+	defer entitiesStorage.mutex.RLocker().Unlock()
 	return entitiesStorage.existingEntities.Get()
-	// if entitiesStorage.cachedEntities == nil {
-	// 	entities := make([]EntityID, 0, len(entitiesStorage.existingEntities))
-	// 	for entityId := range entitiesStorage.existingEntities {
-	// 		entities = append(entities, entityId)
-	// 	}
-	// 	entitiesStorage.cachedEntities = entities
-	// }
-	// return entitiesStorage.cachedEntities
 }
 
-func (entities *entitiesImpl) EntityExists(entityId EntityID) bool {
-	_, ok := entities.existingEntities.GetIndex(entityId)
-	// _, ok := entities.existingEntities[entityId]
+func (entitiesStorage *entitiesImpl) EntityExists(entityId EntityID) bool {
+	_, ok := entitiesStorage.existingEntities.GetIndex(entityId)
 	return ok
 }

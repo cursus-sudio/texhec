@@ -7,6 +7,7 @@ type Set[Stored comparable] interface {
 	Add(elements ...Stored)
 	Set(index int, e Stored) error
 	Remove(indices ...int) error
+	RemoveElements(elements ...Stored)
 }
 
 type set[Stored comparable] struct {
@@ -28,16 +29,20 @@ func (s *set[Stored]) UpdateIndices() {
 	}
 	elements := s.TrackingArray.Get()
 	s.TrackingArray.ClearChanges()
-	for index, original := range changes {
-		delete(s.indices, original)
-		if index < len(elements) {
-			element := elements[index]
-			s.indices[element] = index
+	for _, original := range changes {
+		if original.From != nil {
+			key := *original.From
+			delete(s.indices, key)
+		}
+		if original.Index < len(elements) {
+			element := elements[original.Index]
+			s.indices[element] = original.Index
 		}
 	}
 }
 
 func (s *set[Stored]) GetStored(index int) (Stored, bool) {
+	s.UpdateIndices()
 	elements := s.TrackingArray.Get()
 	if len(elements) <= index {
 		var zero Stored
@@ -50,4 +55,27 @@ func (s *set[Stored]) GetIndex(e Stored) (int, bool) {
 	s.UpdateIndices()
 	i, ok := s.indices[e]
 	return i, ok
+}
+
+func (s *set[Stored]) Add(elements ...Stored) {
+	elementsToAdd := make([]Stored, 0, len(elements))
+	for _, element := range elements {
+		_, ok := s.GetIndex(element)
+		if !ok {
+			elementsToAdd = append(elementsToAdd, element)
+		}
+	}
+	s.TrackingArray.Add(elementsToAdd...)
+}
+
+func (s *set[Stored]) RemoveElements(elements ...Stored) {
+	indices := make([]int, 0, len(elements))
+	for _, element := range elements {
+		index, ok := s.GetIndex(element)
+		if !ok {
+			continue
+		}
+		indices = append(indices, index)
+	}
+	s.Remove(indices...)
 }

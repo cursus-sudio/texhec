@@ -51,10 +51,10 @@ type aabb struct {
 	Min, Max mgl32.Vec3
 }
 
-type AABB struct{ *aabb }
+type AABB struct{ aabb }
 
 func NewAABB(min, max mgl32.Vec3) AABB {
-	return AABB{&aabb{Min: min, Max: max}}
+	return AABB{aabb{Min: min, Max: max}}
 }
 
 func (t Transform) ToAABB() AABB {

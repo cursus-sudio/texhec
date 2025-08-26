@@ -11,7 +11,7 @@ import (
 
 type Buffer[Stored comparable] interface {
 	ID() uint32
-	Data() []Stored
+	Get() []Stored
 	Add(elements ...Stored)
 	Set(index int, e Stored) error
 	Remove(indices ...int) error
@@ -51,9 +51,9 @@ func NewBuffer[Stored comparable](
 
 func (s *buffer[Stored]) ID() uint32 { return s.buffer }
 
-func (s *buffer[Stored]) Data() []Stored { return s.TrackingArray.Get() }
-
 func (s *buffer[Stored]) CheckBufferSize() bool {
+	// s.bufferLen = len(s.TrackingArray.Get())
+	// return true
 	resizedBuffer := false
 	if s.bufferLen == 0 {
 		resizedBuffer = true
@@ -82,35 +82,28 @@ func (s *buffer[Stored]) Flush() {
 		return
 	}
 
+	gl.BindBuffer(s.target, s.buffer)
+	defer gl.BindBuffer(s.target, 0)
+
 	arr := s.TrackingArray.Get()
 	if resized := s.CheckBufferSize(); resized {
-		gl.BindBuffer(s.target, s.buffer)
 		gl.BufferData(s.target, s.bufferLen*s.elementSize, gl.Ptr(arr), s.usage)
-		gl.BindBuffer(s.target, 0)
 		return
 	}
 
-	gl.BindBuffer(s.target, s.buffer)
+	sort.Slice(changes, func(i, j int) bool { return changes[i].Index > changes[j].Index })
 
-	orderedChanges := make([]int, 0, len(changes))
-	for index := range changes {
-		orderedChanges = append(orderedChanges, index)
-	}
-
-	sort.Ints(orderedChanges)
-
-	var offset int = orderedChanges[0]
+	var offset int = changes[0].Index
 	var size int = 1
 
-	for _, changed := range orderedChanges[1:] {
-		if changed == offset+size {
+	for _, changed := range changes[1:] {
+		if changed.Index == offset+size {
 			size += 1
 			continue
 		}
 		gl.BufferSubData(s.target, offset*s.elementSize, size*s.elementSize, gl.Ptr(arr[offset:offset+size]))
-		offset = changed
+		offset = changed.Index
 		size = 1
 	}
 	gl.BufferSubData(s.target, offset*s.elementSize, size*s.elementSize, gl.Ptr(arr[offset:offset+size]))
-	gl.BindBuffer(s.target, 0)
 }

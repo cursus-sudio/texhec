@@ -37,6 +37,8 @@ type renderCache struct {
 	cachedForWorld ecs.World
 
 	mutex *sync.RWMutex
+	world ecs.World
+	query ecs.LiveQuery
 
 	entities        datastructures.Set[ecs.EntityID]
 	modelBuffer     buffers.Buffer[mgl32.Mat4]
@@ -67,6 +69,8 @@ type textureMaterialServices struct {
 	locations     locations
 	console       console.Console
 
+	entitiesQueryAdditionalArguments []ecs.ComponentType
+
 	*renderCache
 }
 
@@ -77,6 +81,8 @@ func (m *textureMaterialServices) cleanUp() {
 	//
 
 	m.mutex = &sync.RWMutex{}
+	m.query = nil
+	m.world = nil
 
 	m.cachedForWorld = nil
 	m.mesh.Release()
@@ -110,6 +116,18 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 	m.meshes = map[assets.AssetID]int32{}
 
 	m.mutex = &sync.RWMutex{}
+	m.query = world.QueryEntitiesWithComponents(
+		append(
+			m.entitiesQueryAdditionalArguments,
+			ecs.GetComponentType(TextureMaterialComponent{}),
+			ecs.GetComponentType(transform.Transform{}),
+			ecs.GetComponentType(projection.UsedProjection{}),
+			ecs.GetComponentType(meshcomponent.Mesh{}),
+			ecs.GetComponentType(texturecomponent.Texture{}),
+		)...,
+	)
+	m.world = world
+
 	m.texture = 0
 	m.textures = map[assets.AssetID]int32{}
 
@@ -260,14 +278,6 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 	}
 
 	{
-		query := world.QueryEntitiesWithComponents(
-			ecs.GetComponentType(TextureMaterialComponent{}),
-			ecs.GetComponentType(meshcomponent.Mesh{}),
-			ecs.GetComponentType(projection.UsedProjection{}),
-			ecs.GetComponentType(transform.Transform{}),
-			ecs.GetComponentType(texturecomponent.Texture{}),
-			ecs.GetComponentType(projection.Visible{}),
-		)
 		onChange := func(entities []ecs.EntityID) {
 			m.mutex.Lock()
 			defer m.mutex.Unlock()
@@ -311,7 +321,8 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 
 				index, ok := m.entities.GetIndex(entity)
 				if !ok {
-					cmd := NewDrawElementsIndirectCommand(meshRange, 1, uint32(len(m.entities.Get())))
+					// cmd := NewDrawElementsIndirectCommand(meshRange, 1, uint32(len(m.entities.Get())))
+					cmd := NewDrawElementsIndirectCommand(meshRange, 1, 0)
 					m.entities.Add(entity)
 					m.cmdBuffer.Add(cmd)
 					m.modelTexBuffer.Add(textureIndex)
@@ -319,7 +330,8 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 					m.modelProjBuffer.Add(projectionIndex)
 					continue
 				}
-				cmd := NewDrawElementsIndirectCommand(meshRange, 1, uint32(index))
+				// cmd := NewDrawElementsIndirectCommand(meshRange, 1, uint32(index))
+				cmd := NewDrawElementsIndirectCommand(meshRange, 1, 0)
 				m.cmdBuffer.Set(index, cmd)
 				m.modelTexBuffer.Set(index, textureIndex)
 				m.modelBuffer.Set(index, model)
@@ -329,6 +341,7 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 		onRemove := func(entities []ecs.EntityID) {
 			m.mutex.Lock()
 			defer m.mutex.Unlock()
+			// indices := []int{}
 			for _, entity := range entities {
 				index, ok := m.entities.GetIndex(entity)
 				if !ok {
@@ -339,11 +352,19 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 				m.modelTexBuffer.Remove(index)
 				m.modelBuffer.Remove(index)
 				m.modelProjBuffer.Remove(index)
+				// indices = append(indices, index)
 			}
+			// m.entities.Remove(indices...)
+			// m.cmdBuffer.Remove(indices...)
+			// m.modelTexBuffer.Remove(indices...)
+			// m.modelBuffer.Remove(indices...)
+			// m.modelProjBuffer.Remove(indices...)
+
 		}
-		query.OnAdd(onChange)
-		query.OnChange(onChange)
-		query.OnRemove(onRemove)
+
+		m.query.OnAdd(onChange)
+		m.query.OnChange(onChange)
+		m.query.OnRemove(onRemove)
 	}
 
 	return nil
@@ -374,7 +395,7 @@ func (m *textureMaterialServices) render(world ecs.World, p program.Program) err
 	m.mesh.Use()
 	gl.BindTexture(gl.TEXTURE_2D_ARRAY, m.texture)
 	gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, m.cmdBuffer.ID())
-	gl.MultiDrawElementsIndirect(gl.TRIANGLES, gl.UNSIGNED_INT, nil, int32(len(m.cmdBuffer.Data())), 0)
+	gl.MultiDrawElementsIndirect(gl.TRIANGLES, gl.UNSIGNED_INT, nil, int32(len(m.cmdBuffer.Get())), 0)
 
 	return nil
 }

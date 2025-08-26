@@ -11,6 +11,8 @@ type EntityID struct {
 	id string
 }
 
+func NewEntityID(id string) EntityID { return EntityID{id} }
+
 func (entityId EntityID) Ok() bool { return entityId.id != "" }
 
 type entitiesInterface interface {
@@ -51,7 +53,7 @@ var (
 )
 
 type LiveQuery interface {
-	// on listener add all entities are passed to it
+	// on add listener add all entities are passed to it
 	OnAdd(func([]EntityID))
 	OnChange(func([]EntityID))
 	OnRemove(func([]EntityID))

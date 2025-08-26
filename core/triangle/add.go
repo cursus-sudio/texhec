@@ -110,7 +110,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				})
 			}
 
-			rows := 100
+			rows := 1000
 			cols := 100
 			var size float32 = 100
 			var gap float32 = 0

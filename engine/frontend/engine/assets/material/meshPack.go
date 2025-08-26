@@ -5,8 +5,6 @@ import (
 	"frontend/services/graphics/vao/ebo"
 )
 
-var vertexByteSize int = 8 * 4
-
 type MeshRange struct {
 	firstIndex  uint32
 	indexCount  uint32
@@ -23,21 +21,19 @@ func (r *MeshRange) DrawCommand(instanceCount uint32, firstInstance uint32) grap
 	)
 }
 
-type Mesh struct {
+type Mesh[Vertex any] struct {
 	verts []Vertex
 	idx   []ebo.Index
 }
 
-type PackedMesh struct {
+type PackedMesh[Vertex any] struct {
 	vertices []Vertex
 	indices  []ebo.Index
 	ranges   []MeshRange
 }
 
-var indexByteSize int = 4
-
-func Pack(meshes ...Mesh) PackedMesh {
-	p := PackedMesh{}
+func Pack[Vertex any](meshes ...Mesh[Vertex]) PackedMesh[Vertex] {
+	p := PackedMesh[Vertex]{}
 	for _, m := range meshes {
 		var firstVertex = uint32(len(p.vertices))
 		var firstIndex = uint32(len(p.indices))

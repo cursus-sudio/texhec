@@ -3,10 +3,10 @@ package material
 import (
 	"frontend/engine/components/material"
 	"frontend/services/assets"
-	"frontend/services/console"
 	"frontend/services/ecs"
 	"frontend/services/graphics/program"
 	"frontend/services/media/window"
+	"shared/services/logger"
 )
 
 type textureMaterial struct {
@@ -18,7 +18,7 @@ func newTextureMaterial(
 	program func() (program.Program, error),
 	window window.Api,
 	assetsStorage assets.AssetsStorage,
-	console console.Console,
+	logger logger.Logger,
 	entitiesQueryAdditionalArguments []ecs.ComponentType,
 ) textureMaterial {
 	return textureMaterial{
@@ -26,7 +26,7 @@ func newTextureMaterial(
 		services: &materialCache{
 			window:        window,
 			assetsStorage: assetsStorage,
-			console:       console,
+			logger:        logger,
 
 			entitiesQueryAdditionalArguments: entitiesQueryAdditionalArguments,
 

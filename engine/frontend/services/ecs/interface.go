@@ -29,6 +29,8 @@ type ComponentType struct {
 	componentType reflect.Type
 }
 
+func (t *ComponentType) String() string { return t.componentType.String() }
+
 func NewComponentType(componentType reflect.Type) ComponentType {
 	return ComponentType{componentType: componentType}
 }

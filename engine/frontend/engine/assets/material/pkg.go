@@ -3,11 +3,11 @@ package material
 import (
 	_ "embed"
 	"frontend/services/assets"
-	"frontend/services/console"
 	"frontend/services/ecs"
 	"frontend/services/graphics/program"
 	"frontend/services/graphics/shader"
 	"frontend/services/media/window"
+	"shared/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -59,7 +59,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 				},
 				ioc.Get[window.Api](c),
 				ioc.Get[assets.AssetsStorage](c),
-				ioc.Get[console.Console](c),
+				ioc.Get[logger.Logger](c),
 				pkg.entitiesQueryAdditionalArguments,
 			)
 			return material.Material(), nil

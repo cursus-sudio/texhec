@@ -341,24 +341,19 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 		onRemove := func(entities []ecs.EntityID) {
 			m.mutex.Lock()
 			defer m.mutex.Unlock()
-			// indices := []int{}
+			indices := []int{}
 			for _, entity := range entities {
 				index, ok := m.entities.GetIndex(entity)
 				if !ok {
 					continue
 				}
-				m.entities.Remove(index)
-				m.cmdBuffer.Remove(index)
-				m.modelTexBuffer.Remove(index)
-				m.modelBuffer.Remove(index)
-				m.modelProjBuffer.Remove(index)
-				// indices = append(indices, index)
+				indices = append(indices, index)
 			}
-			// m.entities.Remove(indices...)
-			// m.cmdBuffer.Remove(indices...)
-			// m.modelTexBuffer.Remove(indices...)
-			// m.modelBuffer.Remove(indices...)
-			// m.modelProjBuffer.Remove(indices...)
+			m.entities.Remove(indices...)
+			m.cmdBuffer.Remove(indices...)
+			m.modelTexBuffer.Remove(indices...)
+			m.modelBuffer.Remove(indices...)
+			m.modelProjBuffer.Remove(indices...)
 
 		}
 

@@ -10,11 +10,11 @@ import (
 	"frontend/services/console"
 	"frontend/services/datastructures"
 	"frontend/services/ecs"
+	"frontend/services/graphics"
 	"frontend/services/graphics/buffers"
 	"frontend/services/graphics/program"
 	"frontend/services/graphics/vao"
 	"frontend/services/graphics/vao/ebo"
-	"frontend/services/graphics/vao/vbo"
 	"frontend/services/media/window"
 	"image"
 	"sync"
@@ -38,7 +38,7 @@ type materialWorldCache struct {
 	modelBuffer     buffers.Buffer[mgl32.Mat4]
 	modelProjBuffer buffers.Buffer[int32]
 	modelTexBuffer  buffers.Buffer[int32]
-	cmdBuffer       buffers.Buffer[DrawElementsIndirectCommand]
+	cmdBuffer       buffers.Buffer[graphics.DrawElementsIndirectCommand]
 	// currently there is 1 entity 1 command
 	// TODO add instancing
 
@@ -168,7 +168,7 @@ func (m *materialCache) init(world ecs.World, p program.Program) error {
 		{
 			meshes := make([]Mesh, len(worldComponent.Meshes))
 			for i, assetID := range worldComponent.Meshes {
-				meshAsset, err := assets.StorageGet[meshcomponent.MeshStorageAsset](m.assetsStorage, assetID)
+				meshAsset, err := assets.StorageGet[meshcomponent.MeshStorageAsset[Vertex]](m.assetsStorage, assetID)
 				if err != nil {
 					continue
 				}
@@ -181,7 +181,7 @@ func (m *materialCache) init(world ecs.World, p program.Program) error {
 			}
 			packedMesh := Pack(meshes...)
 
-			vbo := vbo.NewVBO()
+			vbo := NewVBO()
 			vbo.SetVertices(packedMesh.vertices)
 
 			ebo := ebo.NewEBO()
@@ -201,7 +201,7 @@ func (m *materialCache) init(world ecs.World, p program.Program) error {
 		m.entities = datastructures.NewSet[ecs.EntityID]()
 
 		gl.GenBuffers(1, &buffer)
-		m.cmdBuffer = buffers.NewBuffer[DrawElementsIndirectCommand](
+		m.cmdBuffer = buffers.NewBuffer[graphics.DrawElementsIndirectCommand](
 			gl.DRAW_INDIRECT_BUFFER, gl.DYNAMIC_DRAW, buffer)
 
 		gl.GenBuffers(1, &buffer)
@@ -312,10 +312,11 @@ func (m *materialCache) init(world ecs.World, p program.Program) error {
 					continue
 				}
 
+				cmd := meshRange.DrawCommand(1, 0)
+
 				index, ok := m.entities.GetIndex(entity)
 				if !ok {
 					// cmd := NewDrawElementsIndirectCommand(meshRange, 1, uint32(len(m.entities.Get())))
-					cmd := NewDrawElementsIndirectCommand(meshRange, 1, 0)
 					m.entities.Add(entity)
 					m.cmdBuffer.Add(cmd)
 					m.modelTexBuffer.Add(textureIndex)
@@ -324,7 +325,6 @@ func (m *materialCache) init(world ecs.World, p program.Program) error {
 					continue
 				}
 				// cmd := NewDrawElementsIndirectCommand(meshRange, 1, uint32(index))
-				cmd := NewDrawElementsIndirectCommand(meshRange, 1, 0)
 				m.cmdBuffer.Set(index, cmd)
 				m.modelTexBuffer.Set(index, textureIndex)
 				m.modelBuffer.Set(index, model)

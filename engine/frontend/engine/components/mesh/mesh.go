@@ -3,7 +3,6 @@ package mesh
 import (
 	"frontend/services/assets"
 	"frontend/services/graphics/vao/ebo"
-	"frontend/services/graphics/vao/vbo"
 )
 
 type Mesh struct {
@@ -16,25 +15,25 @@ func NewMesh(id assets.AssetID) Mesh {
 
 //
 
-type MeshStorageAsset interface {
-	Verticies() []vbo.Vertex
+type MeshStorageAsset[Vertex any] interface {
+	Verticies() []Vertex
 	Indicies() []ebo.Index
 }
 
-type meshStorageAsset struct {
-	verticies []vbo.Vertex
+type meshStorageAsset[Vertex any] struct {
+	verticies []Vertex
 	indicies  []ebo.Index
 }
 
-func NewMeshStorageAsset(
-	verticies []vbo.Vertex,
+func NewMeshStorageAsset[Vertex any](
+	verticies []Vertex,
 	indicies []ebo.Index,
-) MeshStorageAsset {
-	return &meshStorageAsset{
+) MeshStorageAsset[Vertex] {
+	return &meshStorageAsset[Vertex]{
 		verticies: verticies,
 		indicies:  indicies,
 	}
 }
 
-func (asset *meshStorageAsset) Verticies() []vbo.Vertex { return asset.verticies }
-func (asset *meshStorageAsset) Indicies() []ebo.Index   { return asset.indicies }
+func (asset *meshStorageAsset[Vertex]) Verticies() []Vertex   { return asset.verticies }
+func (asset *meshStorageAsset[Vertex]) Indicies() []ebo.Index { return asset.indicies }

@@ -1,4 +1,4 @@
-package material
+package graphics
 
 // DrawElementsIndirectCommand must match GL spec layout
 // typedef struct {
@@ -17,22 +17,18 @@ type DrawElementsIndirectCommand struct {
 	FirstInstance uint32 // Corresponds to GLuint baseInstance
 }
 
-type MeshRange struct {
-	firstIndex  uint32
-	indexCount  uint32
-	firstVertex uint32
-}
-
 func NewDrawElementsIndirectCommand(
-	meshRange MeshRange,
+	indexCount uint32,
 	instanceCount uint32,
+	firstIndex uint32,
+	firstVertex uint32,
 	firstInstance uint32,
 ) DrawElementsIndirectCommand {
 	cmd := DrawElementsIndirectCommand{
-		IndexCount:    meshRange.indexCount,
+		IndexCount:    indexCount,
 		InstanceCount: instanceCount,
-		FirstIndex:    meshRange.firstIndex,
-		FirstVertex:   meshRange.firstVertex,
+		FirstIndex:    firstIndex,
+		FirstVertex:   firstVertex,
 		FirstInstance: firstInstance,
 	}
 	return cmd

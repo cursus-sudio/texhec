@@ -21,8 +21,6 @@ func CreateTexs(w, h int, imgs []image.Image) uint32 {
 			rgbaImg = image.NewRGBA(img.Bounds())
 			draw.Draw(rgbaImg, rgbaImg.Bounds(), img, image.Point{}, draw.Src)
 		}
-		// rgbaImg := image.NewRGBA(img.Bounds())
-		// draw.Draw(rgbaImg, rgbaImg.Bounds(), img, image.Point{}, draw.Src)
 
 		gl.TexSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, int32(i), int32(w), int32(h), 1, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(rgbaImg.Pix))
 	}

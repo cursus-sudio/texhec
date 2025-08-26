@@ -1,24 +1,35 @@
 package material
 
 import (
+	"frontend/services/graphics"
 	"frontend/services/graphics/vao/ebo"
-	"frontend/services/graphics/vao/vbo"
 )
-
-type Vertex struct {
-	Pos        [3]float32
-	TexturePos [2]float32
-}
 
 var vertexByteSize int = 8 * 4
 
+type MeshRange struct {
+	firstIndex  uint32
+	indexCount  uint32
+	firstVertex uint32
+}
+
+func (r *MeshRange) DrawCommand(instanceCount uint32, firstInstance uint32) graphics.DrawElementsIndirectCommand {
+	return graphics.NewDrawElementsIndirectCommand(
+		r.indexCount,
+		instanceCount,
+		r.firstIndex,
+		r.firstVertex,
+		firstInstance,
+	)
+}
+
 type Mesh struct {
-	verts []vbo.Vertex
+	verts []Vertex
 	idx   []ebo.Index
 }
 
 type PackedMesh struct {
-	vertices []vbo.Vertex
+	vertices []Vertex
 	indices  []ebo.Index
 	ranges   []MeshRange
 }

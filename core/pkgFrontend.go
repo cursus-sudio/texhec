@@ -9,8 +9,8 @@ import (
 	"core/triangle"
 	"errors"
 	"fmt"
+	"frontend/engine/assets/material"
 	"frontend/engine/components/projection"
-	"frontend/engine/materials/texturematerial"
 	frontendapi "frontend/services/api"
 	frontendtcp "frontend/services/api/tcp"
 	"frontend/services/assets"
@@ -126,7 +126,7 @@ func frontendDic(
 		scenes.Package(),
 		frontendscopes.Package(),
 
-		texturematerial.Package(
+		material.Package(
 			[]ecs.ComponentType{
 				ecs.GetComponentType(projection.Visible{}),
 			},

@@ -1,4 +1,4 @@
-package texturematerial
+package material
 
 import (
 	_ "embed"
@@ -31,12 +31,12 @@ func Package(
 }
 
 var (
-	TextureMaterial assets.AssetID = "materials/texturematerial"
+	Material assets.AssetID = "materials/texturematerial"
 )
 
 func (pkg Pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b assets.AssetsStorageBuilder) assets.AssetsStorageBuilder {
-		b.RegisterAsset(TextureMaterial, func() (any, error) {
+		b.RegisterAsset(Material, func() (any, error) {
 			material := newTextureMaterial(
 				func() (program.Program, error) {
 					vert, err := shader.NewShader(vertSource, shader.VertexShader)

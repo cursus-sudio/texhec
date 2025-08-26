@@ -1,4 +1,4 @@
-package texturematerial
+package material
 
 import (
 	"image"

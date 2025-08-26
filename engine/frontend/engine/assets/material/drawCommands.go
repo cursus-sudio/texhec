@@ -1,4 +1,4 @@
-package texturematerial
+package material
 
 // DrawElementsIndirectCommand must match GL spec layout
 // typedef struct {

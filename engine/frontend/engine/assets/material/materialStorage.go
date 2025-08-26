@@ -1,4 +1,4 @@
-package texturematerial
+package material
 
 import (
 	"frontend/engine/components/material"
@@ -11,7 +11,7 @@ import (
 
 type textureMaterial struct {
 	program  func() (program.Program, error)
-	services *textureMaterialServices
+	services *materialCache
 }
 
 func newTextureMaterial(
@@ -23,14 +23,14 @@ func newTextureMaterial(
 ) textureMaterial {
 	return textureMaterial{
 		program: program,
-		services: &textureMaterialServices{
+		services: &materialCache{
 			window:        window,
 			assetsStorage: assetsStorage,
 			console:       console,
 
 			entitiesQueryAdditionalArguments: entitiesQueryAdditionalArguments,
 
-			renderCache: &renderCache{},
+			materialWorldCache: &materialWorldCache{},
 		},
 	}
 }

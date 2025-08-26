@@ -52,22 +52,12 @@ func NewBuffer[Stored comparable](
 func (s *buffer[Stored]) ID() uint32 { return s.buffer }
 
 func (s *buffer[Stored]) CheckBufferSize() bool {
-	// s.bufferLen = len(s.TrackingArray.Get())
-	// return true
-	resizedBuffer := false
-	if s.bufferLen == 0 {
-		resizedBuffer = true
-		s.bufferLen = 1
+	elementsCount := len(s.TrackingArray.Get())
+	if s.bufferLen != elementsCount {
+		s.bufferLen = elementsCount
+		return true
 	}
-	for len(s.TrackingArray.Get())*2 < s.bufferLen-1 && s.bufferLen > 1 {
-		resizedBuffer = true
-		s.bufferLen /= 2
-	}
-	for len(s.TrackingArray.Get()) > s.bufferLen {
-		resizedBuffer = true
-		s.bufferLen *= 2
-	}
-	return resizedBuffer
+	return false
 }
 
 func (s *buffer[Stored]) Release() {

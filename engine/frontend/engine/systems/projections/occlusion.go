@@ -109,17 +109,6 @@ type OcclusionSystem struct {
 }
 
 func NewOcclusionSystem(world ecs.World) *OcclusionSystem {
-	// {
-	// 	q := world.QueryEntitiesWithComponents(ecs.GetComponentType(transform.Transform{}))
-	// 	makeVisible := func(ei []ecs.EntityID) {
-	// 		for _, entity := range ei {
-	// 			world.SaveComponent(entity, projection.Visible{})
-	// 		}
-	// 	}
-	// 	q.OnAdd(makeVisible)
-	// 	return nil
-	// }
-
 	// orthoEntities := datastructures.NewSet[ecs.EntityID]()
 	perspectiveEntities := datastructures.NewSet[ecs.EntityID]()
 

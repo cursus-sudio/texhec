@@ -2,7 +2,7 @@ package triangle
 
 import (
 	_ "embed"
-	"frontend/engine/materials/texturematerial"
+	"frontend/engine/assets/material"
 	"frontend/services/assets"
 	"github.com/ogiusek/ioc/v2"
 	appruntime "shared/services/runtime"
@@ -26,7 +26,7 @@ func (FrontendPkg) Register(b ioc.Builder) {
 			assets.Release(
 				MeshAssetID,
 				TextureAssetID,
-				texturematerial.TextureMaterial,
+				material.Material,
 			)
 		})
 		return b

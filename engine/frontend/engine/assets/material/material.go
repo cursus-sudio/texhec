@@ -1,4 +1,4 @@
-package texturematerial
+package material
 
 import (
 	"errors"
@@ -27,13 +27,7 @@ var (
 	ErrTexturesHaveToShareSize error = errors.New("all textures have to match size")
 )
 
-//
-
-type locations struct {
-	// Mvp int32 `uniform:"mvp"`
-}
-
-type renderCache struct {
+type materialWorldCache struct {
 	cachedForWorld ecs.World
 
 	mutex *sync.RWMutex
@@ -63,18 +57,17 @@ type renderCache struct {
 	projections map[ecs.ComponentType]int32
 }
 
-type textureMaterialServices struct {
+type materialCache struct {
 	window        window.Api
 	assetsStorage assets.AssetsStorage
-	locations     locations
 	console       console.Console
 
 	entitiesQueryAdditionalArguments []ecs.ComponentType
 
-	*renderCache
+	*materialWorldCache
 }
 
-func (m *textureMaterialServices) cleanUp() {
+func (m *materialCache) cleanUp() {
 	if m.cachedForWorld == nil {
 		return
 	}
@@ -109,7 +102,7 @@ func (m *textureMaterialServices) cleanUp() {
 	m.projections = map[ecs.ComponentType]int32{}
 }
 
-func (m *textureMaterialServices) init(world ecs.World, p program.Program) error {
+func (m *materialCache) init(world ecs.World, p program.Program) error {
 	m.cachedForWorld = world
 	m.mesh = nil
 	m.packedMesh = nil
@@ -365,7 +358,7 @@ func (m *textureMaterialServices) init(world ecs.World, p program.Program) error
 	return nil
 }
 
-func (m *textureMaterialServices) render(world ecs.World, p program.Program) error {
+func (m *materialCache) render(world ecs.World, p program.Program) error {
 	reCache := m.cachedForWorld != world
 	if reCache {
 		m.cleanUp()

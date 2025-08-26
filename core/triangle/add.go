@@ -3,13 +3,13 @@ package triangle
 import (
 	_ "embed"
 	"fmt"
+	texturematerial "frontend/engine/assets/material"
 	"frontend/engine/components/material"
 	"frontend/engine/components/mesh"
 	"frontend/engine/components/mouse"
 	"frontend/engine/components/projection"
 	"frontend/engine/components/texture"
 	"frontend/engine/components/transform"
-	"frontend/engine/materials/texturematerial"
 	"frontend/engine/systems/projections"
 	"frontend/services/assets"
 	"frontend/services/colliders"
@@ -61,25 +61,25 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			entity := ctx.World.NewEntity()
-			ctx.World.SaveComponent(entity, material.NewMaterial(texturematerial.TextureMaterial))
+			ctx.World.SaveComponent(entity, material.NewMaterial(texturematerial.Material))
 			ctx.World.SaveComponent(entity, texturematerial.NewWorldTextureMaterialComponent(
 				[]assets.AssetID{TextureAssetID},
 				[]assets.AssetID{MeshAssetID},
 			))
 		})
 
-		b.OnLoad(func(ctx scenes.SceneCtx) { // cube
-			entity := ctx.World.NewEntity()
-			ctx.World.SaveComponent(entity, transform.NewTransform().
-				SetPos(mgl32.Vec3{0, 0, -300}).
-				SetSize(mgl32.Vec3{100, 100, 100}))
-			ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
-			ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
-			// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
-			ctx.World.SaveComponent(entity, texturematerial.TextureMaterialComponent{})
-			ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
-			ctx.World.SaveComponent(entity, ChangeTransformOverTimeComponent{})
-		})
+		// b.OnLoad(func(ctx scenes.SceneCtx) { // cube
+		// 	entity := ctx.World.NewEntity()
+		// 	ctx.World.SaveComponent(entity, transform.NewTransform().
+		// 		SetPos(mgl32.Vec3{0, 0, -300}).
+		// 		SetSize(mgl32.Vec3{100, 100, 100}))
+		// 	ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
+		// 	ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
+		// 	// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
+		// 	ctx.World.SaveComponent(entity, texturematerial.TextureMaterialComponent{})
+		// 	ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
+		// 	ctx.World.SaveComponent(entity, ChangeTransformOverTimeComponent{})
+		// })
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			projections.NewOcclusionSystem(ctx.World)
 			system := NewChangeTransformOverTimeSystem(ctx.World)
@@ -111,7 +111,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			}
 
 			rows := 100
-			cols := 1000
+			cols := 100
 			var size float32 = 100
 			var gap float32 = 0
 			for i := 0; i < rows*cols; i++ {

@@ -103,6 +103,8 @@ type RegisterType struct {
 	registerType reflect.Type
 }
 
+func (t *RegisterType) String() string { return t.registerType.String() }
+
 type Register any
 
 func GetRegisterType(register Register) RegisterType {

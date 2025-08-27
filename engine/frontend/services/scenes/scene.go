@@ -93,23 +93,13 @@ func (b *sceneBuilder) OnUnload(listener func(SceneCtx)) SceneBuilder {
 }
 
 func (n *sceneBuilder) Build(sceneId SceneId) Scene {
-	var ctxPtr *SceneCtx
-	onUnload := func() {
-		if ctxPtr == nil {
-			return
-		}
-		ctx := *ctxPtr
+	onUnload := func(ctx SceneCtx) {
 		for _, listener := range n.onUnload {
 			listener(ctx)
 		}
 		ctx.World.CleanUp()
-		ctxPtr = nil
 	}
 	onLoad := func() SceneCtx {
-		if ctxPtr != nil {
-			return *ctxPtr
-		}
-
 		ctx := NewSceneCtx(
 			ecs.NewWorld(),
 			events.NewBuilder(),
@@ -117,7 +107,6 @@ func (n *sceneBuilder) Build(sceneId SceneId) Scene {
 		for _, listener := range n.onLoad {
 			listener(ctx)
 		}
-		ctxPtr = &ctx
 		return ctx
 	}
 	return newScene(sceneId, onLoad, onUnload)
@@ -129,19 +118,19 @@ type Scene interface {
 	Id() SceneId
 
 	Load() SceneCtx
-	Unload()
+	Unload(ctx SceneCtx)
 }
 
 type scene struct {
 	id       SceneId
 	onLoad   func() SceneCtx
-	onUnload func()
+	onUnload func(SceneCtx)
 }
 
 func newScene(
 	id SceneId,
 	onLoad func() SceneCtx,
-	onUnload func(),
+	onUnload func(SceneCtx),
 ) Scene {
 	return &scene{
 		id:       id,
@@ -154,5 +143,5 @@ func (scene *scene) Id() SceneId {
 	return scene.id
 }
 
-func (scene *scene) Load() SceneCtx { return scene.onLoad() }
-func (scene *scene) Unload()        { scene.onUnload() }
+func (scene *scene) Load() SceneCtx      { return scene.onLoad() }
+func (scene *scene) Unload(ctx SceneCtx) { scene.onUnload(ctx) }

@@ -91,6 +91,12 @@ func (sceneManager *sceneManager) LoadScene(sceneId SceneId) error {
 		return ErrSceneDoNotExists
 	}
 
+	var unloadedScene Scene
+	previousCtx := sceneManager.activeSceneCtx
+	if sceneManager.loadedCurrentScene {
+		unloadedScene = sceneManager.scenes[sceneManager.currentSceneId]
+	}
+
 	// load
 	sceneManager.currentSceneId = sceneId
 	ctx := loadedScene.Load()
@@ -98,8 +104,8 @@ func (sceneManager *sceneManager) LoadScene(sceneId SceneId) error {
 	sceneManager.activeSceneCtx = ctx
 
 	// unload
-	if sceneManager.loadedCurrentScene {
-		sceneManager.scenes[sceneManager.currentSceneId].Unload()
+	if unloadedScene != nil {
+		unloadedScene.Unload(previousCtx)
 	}
 
 	return nil

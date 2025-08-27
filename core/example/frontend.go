@@ -166,10 +166,10 @@ type SceneOneBuilder scenes.SceneBuilder
 func AddSceneOne(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneOneBuilder { return scenes.NewSceneBuilder() })
 	AddShared[SceneOneBuilder](b)
-	ioc.WrapService(b, scenes.LoadDomain, func(c ioc.Dic, sceneBuilder SceneOneBuilder) SceneOneBuilder {
+	ioc.WrapService(b, scenes.LoadAfterDomain, func(c ioc.Dic, sceneBuilder SceneOneBuilder) SceneOneBuilder {
 		// sceneBuilder.OnLoad(func(ctx scenes.SceneCtx) {
-		// 	toggleSystem := NewToggledSystem(ioc.Get[scenes.SceneManager](c), ctx.World, scene2Id, time.Second)
-		// 	events.ListenE(ctx.EventsBuilder, toggleSystem.Update)
+		// 	toggleSystem := NewToggledSystem(ioc.Get[scenes.SceneManager](c), ctx.World, scene1Id, time.Second)
+		// 	events.ListenE(ctx.EventsBuilder, toggleSystem.Listen)
 		// })
 		return sceneBuilder
 	})
@@ -184,7 +184,7 @@ type SceneTwoBuilder scenes.SceneBuilder
 func AddSceneTwo(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneTwoBuilder { return scenes.NewSceneBuilder() })
 	AddShared[SceneTwoBuilder](b)
-	ioc.WrapService(b, scenes.LoadDomain, func(c ioc.Dic, sceneBuilder SceneTwoBuilder) SceneTwoBuilder {
+	ioc.WrapService(b, scenes.LoadAfterDomain, func(c ioc.Dic, sceneBuilder SceneTwoBuilder) SceneTwoBuilder {
 		sceneBuilder.OnLoad(func(ctx scenes.SceneCtx) {
 			toggleSystem := NewToggledSystem(ioc.Get[scenes.SceneManager](c), ctx.World, scene1Id, time.Second)
 			events.ListenE(ctx.EventsBuilder, toggleSystem.Listen)

@@ -1,13 +1,15 @@
 package ecs
 
 import (
+	"errors"
+	"fmt"
 	"frontend/services/datastructures"
 	"sync"
 )
 
 type registryImpl struct {
 	cleanableTypes datastructures.Set[RegisterType]
-	cleanables     datastructures.Set[Cleanable]
+	cleanables     datastructures.Array[Cleanable]
 	registry       map[RegisterType]Register
 	mutex          *sync.RWMutex
 }
@@ -15,7 +17,7 @@ type registryImpl struct {
 func newRegistry(mutex *sync.RWMutex) *registryImpl {
 	return &registryImpl{
 		cleanableTypes: datastructures.NewSet[RegisterType](),
-		cleanables:     datastructures.NewSet[Cleanable](),
+		cleanables:     datastructures.NewArray[Cleanable](),
 		registry:       map[RegisterType]Register{},
 		mutex:          mutex,
 	}
@@ -44,8 +46,10 @@ func (r *registryImpl) GetRegister(registerType RegisterType) (Register, error) 
 	defer r.mutex.RLocker().Unlock()
 	value, ok := r.registry[registerType]
 	if !ok {
-		var zero Register
-		return zero, ErrRegisterNotFound
+		return nil, errors.Join(
+			ErrRegisterNotFound,
+			fmt.Errorf("haven't found register \"%s\" of type", registerType.String()),
+		)
 	}
 	return value, nil
 }

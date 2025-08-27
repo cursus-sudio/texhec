@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"frontend/engine/assets/material"
+	"frontend/engine/components/projection"
 	frontendapi "frontend/services/api"
 	frontendtcp "frontend/services/api/tcp"
 	"frontend/services/assets"
@@ -127,7 +128,7 @@ func frontendDic(
 
 		material.Package(
 			[]ecs.ComponentType{
-				// ecs.GetComponentType(projection.Visible{}),
+				ecs.GetComponentType(projection.Visible{}),
 			},
 			// []ecs.ComponentType{ecs.GetComponentType(transform.Transform{})},
 			// []ecs.ComponentType{},

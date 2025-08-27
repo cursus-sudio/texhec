@@ -62,24 +62,24 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			entity := ctx.World.NewEntity()
 			ctx.World.SaveComponent(entity, material.NewMaterial(texturematerial.Material))
-			ctx.World.SaveComponent(entity, texturematerial.NewWorldTextureMaterialComponent(
+			ctx.World.SaveRegister(texturematerial.NewWorldMeshesAndTextures(
 				[]assets.AssetID{TextureAssetID},
 				[]assets.AssetID{MeshAssetID},
 			))
 		})
 
-		// b.OnLoad(func(ctx scenes.SceneCtx) { // cube
-		// 	entity := ctx.World.NewEntity()
-		// 	ctx.World.SaveComponent(entity, transform.NewTransform().
-		// 		SetPos(mgl32.Vec3{0, 0, -300}).
-		// 		SetSize(mgl32.Vec3{100, 100, 100}))
-		// 	ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
-		// 	ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
-		// 	// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
-		// 	ctx.World.SaveComponent(entity, texturematerial.TextureMaterialComponent{})
-		// 	ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
-		// 	ctx.World.SaveComponent(entity, ChangeTransformOverTimeComponent{})
-		// })
+		b.OnLoad(func(ctx scenes.SceneCtx) { // cube
+			entity := ctx.World.NewEntity()
+			ctx.World.SaveComponent(entity, transform.NewTransform().
+				SetPos(mgl32.Vec3{0, 0, -300}).
+				SetSize(mgl32.Vec3{100, 100, 100}))
+			ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
+			ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
+			// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
+			ctx.World.SaveComponent(entity, texturematerial.TextureMaterialComponent{})
+			ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
+			ctx.World.SaveComponent(entity, ChangeTransformOverTimeComponent{})
+		})
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			projections.NewOcclusionSystem(ctx.World)
 			system := NewChangeTransformOverTimeSystem(ctx.World)
@@ -110,7 +110,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				})
 			}
 
-			rows := 1000
+			rows := 100
 			cols := 100
 			var size float32 = 100
 			var gap float32 = 0
@@ -124,7 +124,6 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
 				ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
 				// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
-				// ctx.World.SaveComponent(entity, material.NewMaterial(texturematerial.TextureMaterial))
 				ctx.World.SaveComponent(entity, texturematerial.TextureMaterialComponent{})
 				ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
 				ctx.World.SaveComponent(entity, mouse.NewMouseEvents().

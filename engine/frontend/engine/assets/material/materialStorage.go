@@ -29,8 +29,6 @@ func newTextureMaterial(
 			logger:        logger,
 
 			entitiesQueryAdditionalArguments: entitiesQueryAdditionalArguments,
-
-			materialWorldCache: &materialWorldCache{},
 		},
 	}
 }

@@ -3,16 +3,16 @@ package material
 import "frontend/services/assets"
 
 // this component says which materials are used. this allows to cache world effectively
-type WorldTextureMaterialComponent struct {
+type WorldMeshesAndTextures struct {
 	Textures []assets.AssetID
 	Meshes   []assets.AssetID
 }
 
-func NewWorldTextureMaterialComponent(
+func NewWorldMeshesAndTextures(
 	textures []assets.AssetID,
 	meshes []assets.AssetID,
-) WorldTextureMaterialComponent {
-	return WorldTextureMaterialComponent{
+) WorldMeshesAndTextures {
+	return WorldMeshesAndTextures{
 		Textures: textures,
 		Meshes:   meshes,
 	}

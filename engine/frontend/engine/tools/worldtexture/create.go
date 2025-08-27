@@ -1,4 +1,4 @@
-package material
+package worldtexture
 
 import (
 	"image"
@@ -30,8 +30,6 @@ func CreateTexs(w, h int, imgs []image.Image) uint32 {
 	gl.TexParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.REPEAT)
 	gl.TexParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.REPEAT)
 	gl.BindTexture(gl.TEXTURE_2D_ARRAY, 0)
-
-	// upload each layer
 
 	return texs
 }

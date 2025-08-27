@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"frontend/engine/assets/material"
 	"frontend/engine/components/projection"
+	"frontend/engine/tools/worldtexture"
 	frontendapi "frontend/services/api"
 	frontendtcp "frontend/services/api/tcp"
 	"frontend/services/assets"
@@ -133,6 +134,7 @@ func frontendDic(
 			// []ecs.ComponentType{ecs.GetComponentType(transform.Transform{})},
 			// []ecs.ComponentType{},
 		),
+		worldtexture.Package(),
 
 		// mods
 		ping.FrontendPackage(),

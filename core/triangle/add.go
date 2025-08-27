@@ -12,6 +12,7 @@ import (
 	"frontend/engine/components/transform"
 	"frontend/engine/systems/projections"
 	"frontend/engine/tools/worldmesh"
+	"frontend/engine/tools/worldtexture"
 	"frontend/services/assets"
 	"frontend/services/colliders"
 	"frontend/services/colliders/shapes"
@@ -61,18 +62,23 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 	})
 
 	ioc.WrapService(b, scenes.LoadDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
-		geometryFactory := ioc.Get[worldmesh.RegisterFactory[texturematerial.Vertex]](c)
+		worldMeshFactory := ioc.Get[worldmesh.RegisterFactory[texturematerial.Vertex]](c)
+		worldTextureFactory := ioc.Get[worldtexture.RegisterFactory](c)
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			entity := ctx.World.NewEntity()
 			ctx.World.SaveComponent(entity, material.NewMaterial(texturematerial.Material))
-			register, err := geometryFactory.New(MeshAssetID)
+
+			textureRegister, err := worldTextureFactory.New(TextureAssetID)
 			if err != nil {
 				ioc.Get[logger.Logger](c).Error(err)
 			}
-			ctx.World.SaveRegister(register)
-			ctx.World.SaveRegister(texturematerial.NewWorldMeshesAndTextures(
-				[]assets.AssetID{TextureAssetID},
-			))
+			ctx.World.SaveRegister(textureRegister)
+
+			meshRegister, err := worldMeshFactory.New(MeshAssetID)
+			if err != nil {
+				ioc.Get[logger.Logger](c).Error(err)
+			}
+			ctx.World.SaveRegister(meshRegister)
 		})
 
 		b.OnLoad(func(ctx scenes.SceneCtx) { // cube

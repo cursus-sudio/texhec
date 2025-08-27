@@ -30,11 +30,11 @@ type registerFactory[Vertex any] struct {
 
 func NewRegisterFactory[Vertex any](
 	assetsStorage assets.AssetsStorage,
-	vbooFactory vbo.VBOFactory[Vertex],
+	vboFactory vbo.VBOFactory[Vertex],
 ) RegisterFactory[Vertex] {
 	return &registerFactory[Vertex]{
 		assetsStorage: assetsStorage,
-		vboFactory:    vbooFactory,
+		vboFactory:    vboFactory,
 	}
 }
 
@@ -47,7 +47,7 @@ func (r *registerFactory[Vertex]) New(meshAssets ...assets.AssetID) (WorldMeshRe
 		if err != nil {
 			err := errors.Join(
 				err,
-				errors.New("creating geometry register"),
+				errors.New("creating world mesh register"),
 			)
 			return WorldMeshRegister[Vertex]{}, err
 		}

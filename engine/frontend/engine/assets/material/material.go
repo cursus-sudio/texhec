@@ -8,6 +8,7 @@ import (
 	texturecomponent "frontend/engine/components/texture"
 	"frontend/engine/components/transform"
 	"frontend/engine/tools/worldmesh"
+	"frontend/engine/tools/worldtexture"
 	"frontend/services/assets"
 	"frontend/services/ecs"
 	"frontend/services/graphics"
@@ -84,7 +85,13 @@ func (m *materialCache) modifyRegisterOnChanges(
 			register.mutex.Lock()
 			defer register.mutex.Unlock()
 
-			geometry, err := ecs.GetRegister[worldmesh.WorldMeshRegister[Vertex]](world)
+			mesh, err := ecs.GetRegister[worldmesh.WorldMeshRegister[Vertex]](world)
+			if err != nil {
+				m.logger.Error(err)
+				return
+			}
+
+			texture, err := ecs.GetRegister[worldtexture.WorldTextureRegister](world)
 			if err != nil {
 				m.logger.Error(err)
 				return
@@ -101,7 +108,8 @@ func (m *materialCache) modifyRegisterOnChanges(
 				if err != nil {
 					continue
 				}
-				textureIndex, ok := register.textures[textureComponent.ID]
+				// textureIndex, ok := register.textures[textureComponent.ID]
+				textureIndex, ok := texture.Assets.GetIndex(textureComponent.ID)
 				if !ok {
 					m.logger.Error(fmt.Errorf(
 						"material cannot render entity with texture which isn't in WorldTextureMaterialComponent",
@@ -113,7 +121,7 @@ func (m *materialCache) modifyRegisterOnChanges(
 				if err != nil {
 					continue
 				}
-				meshRange, ok := geometry.Ranges[meshComponent.ID]
+				meshRange, ok := mesh.Ranges[meshComponent.ID]
 				if !ok {
 					m.logger.Error(fmt.Errorf(
 						"material cannot render entity with mesh which isn't in WorldTextureMaterialComponent",
@@ -144,7 +152,7 @@ func (m *materialCache) modifyRegisterOnChanges(
 				register.buffers.Upsert(
 					entity,
 					cmd,
-					textureIndex,
+					int32(textureIndex),
 					model,
 					projectionIndex,
 				)
@@ -173,14 +181,12 @@ func (m *materialCache) modifyRegisterOnChanges(
 func (m *materialCache) render(world ecs.World, p program.Program) error {
 	register, err := ecs.GetRegister[materialWorldRegister](world)
 	if err != nil {
-		register, err = createRegister(
-			world,
-			p,
-			m.assetsStorage,
+		register = newMaterialWorldRegistry(
+			map[ecs.ComponentType]int32{
+				ecs.GetComponentType(projection.Ortho{}):       0,
+				ecs.GetComponentType(projection.Perspective{}): 1,
+			},
 		)
-		if err != nil {
-			return err
-		}
 		m.modifyRegisterOnChanges(world, register)
 		world.SaveRegister(register)
 	}

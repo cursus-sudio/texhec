@@ -59,6 +59,11 @@ func (pkg Pkg) Register(b ioc.Builder) {
 					}
 					vert.Release()
 					frag.Release()
+
+					p.Use()
+					texLoc := gl.GetUniformLocation(p.ID(), gl.Str("texs\x00"))
+					gl.Uniform1i(texLoc, 1)
+
 					return p, nil
 				},
 				ioc.Get[window.Api](c),

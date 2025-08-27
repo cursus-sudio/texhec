@@ -1,16 +1,23 @@
 package ecs
 
-import "sync"
+import (
+	"frontend/services/datastructures"
+	"sync"
+)
 
 type registryImpl struct {
-	registry map[RegisterType]Register
-	mutex    *sync.RWMutex
+	cleanableTypes datastructures.Set[RegisterType]
+	cleanables     datastructures.Set[Cleanable]
+	registry       map[RegisterType]Register
+	mutex          *sync.RWMutex
 }
 
-func newRegistry(mutex *sync.RWMutex) registryInterface {
+func newRegistry(mutex *sync.RWMutex) *registryImpl {
 	return &registryImpl{
-		registry: map[RegisterType]Register{},
-		mutex:    mutex,
+		cleanableTypes: datastructures.NewSet[RegisterType](),
+		cleanables:     datastructures.NewSet[Cleanable](),
+		registry:       map[RegisterType]Register{},
+		mutex:          mutex,
 	}
 }
 
@@ -18,6 +25,17 @@ func (r *registryImpl) SaveRegister(register Register) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	registerType := GetRegisterType(register)
+	if cleanable, ok := register.(Cleanable); ok {
+		index, ok := r.cleanableTypes.GetIndex(registerType)
+		if ok {
+			cleanable := r.cleanables.Get()[index]
+			cleanable.CleanUp()
+			r.cleanables.Remove(index)
+			r.cleanableTypes.Remove(index)
+		}
+		r.cleanableTypes.Add(registerType)
+		r.cleanables.Add(cleanable)
+	}
 	r.registry[registerType] = register
 }
 
@@ -30,4 +48,13 @@ func (r *registryImpl) GetRegister(registerType RegisterType) (Register, error) 
 		return zero, ErrRegisterNotFound
 	}
 	return value, nil
+}
+
+func (r *registryImpl) CleanUp() {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	for _, cleanable := range r.cleanables.Get() {
+		cleanable.CleanUp()
+	}
+	*r = *newRegistry(r.mutex)
 }

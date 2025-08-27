@@ -116,6 +116,12 @@ func GetRegisterType(register Register) RegisterType {
 type registryInterface interface {
 	SaveRegister(Register) // upsert (create or update)
 	GetRegister(RegisterType) (Register, error)
+
+	CleanUp()
+}
+
+type Cleanable interface {
+	CleanUp()
 }
 
 func GetRegister[RegisterT Register](w World) (RegisterT, error) {

@@ -5,12 +5,18 @@ import (
 	"testing"
 )
 
+type register struct{ value int }
+type Register struct{ *register }
+
+func (r Register) CleanUp() {
+	r.value = 0
+}
+
 func TestRegistry(t *testing.T) {
-	type Register struct{ value int }
 	world := ecs.NewWorld()
 
-	r1 := Register{1}
-	r2 := Register{2}
+	r1 := Register{&register{1}}
+	r2 := Register{&register{2}}
 
 	if _, err := ecs.GetRegister[Register](world); err == nil {
 		t.Errorf("got register from empty world")
@@ -32,6 +38,22 @@ func TestRegistry(t *testing.T) {
 		return
 	} else if register != r2 {
 		t.Errorf("expected to get register but got invalid register %v", register)
+		return
+	}
+
+	if r1.value != 0 {
+		t.Errorf("register wasn't cleaned up properly on replace")
+		return
+	}
+
+	if r2.value == 0 {
+		t.Errorf("register was cleaned up prematurely")
+		return
+	}
+
+	world.CleanUp()
+	if r2.value != 0 {
+		t.Errorf("register wasn't cleaned up properly on clean up")
 		return
 	}
 }

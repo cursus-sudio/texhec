@@ -1,13 +1,12 @@
-package projections
+package broadcollision
 
 import (
 	"frontend/engine/components/projection"
 	"frontend/engine/components/transform"
 	"frontend/services/datastructures"
 	"frontend/services/ecs"
-	"math"
-
 	"github.com/go-gl/mathgl/mgl32"
+	"math"
 )
 
 type orthoOcclusion struct {

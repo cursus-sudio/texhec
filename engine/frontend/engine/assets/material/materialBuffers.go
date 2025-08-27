@@ -10,7 +10,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-type entitiesBuffers struct {
+type materialBuffers struct {
 	entities        datastructures.Set[ecs.EntityID]
 	modelBuffer     buffers.Buffer[mgl32.Mat4]
 	modelProjBuffer buffers.Buffer[int32]
@@ -18,10 +18,12 @@ type entitiesBuffers struct {
 	cmdBuffer       buffers.Buffer[graphics.DrawElementsIndirectCommand]
 	// currently there is 1 entity 1 command
 	// TODO add instancing
+
+	projBuffer buffers.Buffer[mgl32.Mat4]
 }
 
-func newEntitiesBuffers() *entitiesBuffers {
-	m := &entitiesBuffers{}
+func newMaterialBuffers(projectionsCount int) *materialBuffers {
+	m := &materialBuffers{}
 	var buffer uint32
 
 	m.entities = datastructures.NewSet[ecs.EntityID]()
@@ -45,24 +47,36 @@ func newEntitiesBuffers() *entitiesBuffers {
 	m.modelProjBuffer = buffers.NewBuffer[int32](
 		gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
 
+	gl.GenBuffers(1, &buffer)
+	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 4, buffer)
+	m.projBuffer = buffers.NewBuffer[mgl32.Mat4](gl.SHADER_STORAGE_BUFFER, gl.STATIC_DRAW, buffer)
+
+	for i := 0; i < projectionsCount; i++ {
+		m.projBuffer.Add(mgl32.Ident4())
+	}
+
 	return m
 }
 
-func (m *entitiesBuffers) CleanUp() {
+func (m *materialBuffers) Release() {
 	m.modelBuffer.Release()
 	m.modelProjBuffer.Release()
 	m.modelTexBuffer.Release()
 	m.cmdBuffer.Release()
+
+	m.projBuffer.Release()
 }
 
-func (m *entitiesBuffers) Flush() {
+func (m *materialBuffers) Flush() {
 	m.cmdBuffer.Flush()
 	m.modelTexBuffer.Flush()
 	m.modelBuffer.Flush()
 	m.modelProjBuffer.Flush()
+
+	m.projBuffer.Flush()
 }
 
-func (m *entitiesBuffers) Upsert(
+func (m *materialBuffers) Upsert(
 	entity ecs.EntityID,
 	cmd graphics.DrawElementsIndirectCommand,
 	textureIndex int32,
@@ -83,7 +97,7 @@ func (m *entitiesBuffers) Upsert(
 	m.modelProjBuffer.Add(projectionIndex)
 }
 
-func (m *entitiesBuffers) Remove(entities []ecs.EntityID) {
+func (m *materialBuffers) Remove(entities []ecs.EntityID) {
 	indices := []int{}
 	for _, entity := range entities {
 		index, ok := m.entities.GetIndex(entity)

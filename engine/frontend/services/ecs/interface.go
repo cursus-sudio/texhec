@@ -119,11 +119,11 @@ type registryInterface interface {
 	SaveRegister(Register) // upsert (create or update)
 	GetRegister(RegisterType) (Register, error)
 
-	CleanUp()
+	Release()
 }
 
 type Cleanable interface {
-	CleanUp()
+	Release()
 }
 
 func GetRegister[RegisterT Register](w World) (RegisterT, error) {

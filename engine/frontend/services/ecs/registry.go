@@ -31,7 +31,7 @@ func (r *registryImpl) SaveRegister(register Register) {
 		index, ok := r.cleanableTypes.GetIndex(registerType)
 		if ok {
 			cleanable := r.cleanables.Get()[index]
-			cleanable.CleanUp()
+			cleanable.Release()
 			r.cleanables.Remove(index)
 			r.cleanableTypes.Remove(index)
 		}
@@ -54,11 +54,11 @@ func (r *registryImpl) GetRegister(registerType RegisterType) (Register, error) 
 	return value, nil
 }
 
-func (r *registryImpl) CleanUp() {
+func (r *registryImpl) Release() {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	for _, cleanable := range r.cleanables.Get() {
-		cleanable.CleanUp()
+		cleanable.Release()
 	}
 	*r = *newRegistry(r.mutex)
 }

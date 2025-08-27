@@ -38,9 +38,9 @@ func (ebo *ebo) Release() {
 }
 
 func (ebo *ebo) SetIndices(indices []Index) {
-	indiciesLen := len(indices)
+	indicesLen := len(indices)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo.id)
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, indiciesLen*4, gl.Ptr(indices), gl.STATIC_DRAW)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, indicesLen*4, gl.Ptr(indices), gl.STATIC_DRAW)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
-	ebo.len = indiciesLen
+	ebo.len = indicesLen
 }

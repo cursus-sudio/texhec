@@ -97,7 +97,7 @@ func (n *sceneBuilder) Build(sceneId SceneId) Scene {
 		for _, listener := range n.onUnload {
 			listener(ctx)
 		}
-		ctx.World.CleanUp()
+		ctx.World.Release()
 	}
 	onLoad := func() SceneCtx {
 		ctx := NewSceneCtx(

@@ -7,8 +7,10 @@ import (
 	"frontend/engine/components/projection"
 	texturecomponent "frontend/engine/components/texture"
 	"frontend/engine/components/transform"
+	"frontend/engine/tools/worldmesh"
 	"frontend/services/assets"
 	"frontend/services/ecs"
+	"frontend/services/graphics"
 	"frontend/services/graphics/program"
 	"frontend/services/media/window"
 	"shared/services/logger"
@@ -68,7 +70,7 @@ func (m *materialCache) modifyRegisterOnChanges(
 			cameraTransformMat4 := projectionComponent.ViewMat4(cameraTransformComponent)
 
 			mvp := projectionMat4.Mul4(cameraTransformMat4)
-			register.projBuffer.Set(int(projectionIndex), mvp)
+			register.buffers.projBuffer.Set(int(projectionIndex), mvp)
 		}
 		query.OnAdd(onChange)
 		query.OnChange(onChange)
@@ -81,6 +83,12 @@ func (m *materialCache) modifyRegisterOnChanges(
 		onChange := func(entities []ecs.EntityID) {
 			register.mutex.Lock()
 			defer register.mutex.Unlock()
+
+			geometry, err := ecs.GetRegister[worldmesh.WorldMeshRegister[Vertex]](world)
+			if err != nil {
+				m.logger.Error(err)
+				return
+			}
 
 			for _, entity := range entities {
 				transformComponent, err := ecs.GetComponent[transform.Transform](world, entity)
@@ -105,14 +113,13 @@ func (m *materialCache) modifyRegisterOnChanges(
 				if err != nil {
 					continue
 				}
-				meshIndex, ok := register.meshes[meshComponent.ID]
+				meshRange, ok := geometry.Ranges[meshComponent.ID]
 				if !ok {
 					m.logger.Error(fmt.Errorf(
 						"material cannot render entity with mesh which isn't in WorldTextureMaterialComponent",
 					))
 					continue
 				}
-				meshRange := register.packedMesh[meshIndex]
 
 				usedProjection, err := ecs.GetComponent[projection.UsedProjection](world, entity)
 				if err != nil {
@@ -127,8 +134,14 @@ func (m *materialCache) modifyRegisterOnChanges(
 					continue
 				}
 
-				cmd := meshRange.DrawCommand(1, 0)
-				register.entitiesBuffers.Upsert(
+				cmd := graphics.NewDrawElementsIndirectCommand(
+					meshRange.IndexCount,
+					1,
+					meshRange.FirstIndex,
+					meshRange.FirstVertex,
+					0,
+				)
+				register.buffers.Upsert(
 					entity,
 					cmd,
 					textureIndex,
@@ -153,14 +166,18 @@ func (m *materialCache) modifyRegisterOnChanges(
 
 		query.OnAdd(onChange)
 		query.OnChange(onChange)
-		query.OnRemove(register.entitiesBuffers.Remove)
+		query.OnRemove(register.buffers.Remove)
 	}
 }
 
 func (m *materialCache) render(world ecs.World, p program.Program) error {
 	register, err := ecs.GetRegister[materialWorldRegister](world)
 	if err != nil {
-		register, err = createRegister(world, p, m.assetsStorage)
+		register, err = createRegister(
+			world,
+			p,
+			m.assetsStorage,
+		)
 		if err != nil {
 			return err
 		}
@@ -168,7 +185,5 @@ func (m *materialCache) render(world ecs.World, p program.Program) error {
 		world.SaveRegister(register)
 	}
 
-	register.Render(p)
-
-	return nil
+	return register.Render(world, p)
 }

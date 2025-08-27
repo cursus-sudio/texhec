@@ -16,24 +16,24 @@ func NewMesh(id assets.AssetID) Mesh {
 //
 
 type MeshStorageAsset[Vertex any] interface {
-	Verticies() []Vertex
-	Indicies() []ebo.Index
+	Vertices() []Vertex
+	Indices() []ebo.Index
 }
 
 type meshStorageAsset[Vertex any] struct {
-	verticies []Vertex
-	indicies  []ebo.Index
+	vertices []Vertex
+	indices  []ebo.Index
 }
 
 func NewMeshStorageAsset[Vertex any](
-	verticies []Vertex,
-	indicies []ebo.Index,
+	vertices []Vertex,
+	indices []ebo.Index,
 ) MeshStorageAsset[Vertex] {
 	return &meshStorageAsset[Vertex]{
-		verticies: verticies,
-		indicies:  indicies,
+		vertices: vertices,
+		indices:  indices,
 	}
 }
 
-func (asset *meshStorageAsset[Vertex]) Verticies() []Vertex   { return asset.verticies }
-func (asset *meshStorageAsset[Vertex]) Indicies() []ebo.Index { return asset.indicies }
+func (asset *meshStorageAsset[Vertex]) Vertices() []Vertex   { return asset.vertices }
+func (asset *meshStorageAsset[Vertex]) Indices() []ebo.Index { return asset.indices }

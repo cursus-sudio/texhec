@@ -5,6 +5,7 @@ import "sync"
 type world struct {
 	entitiesInterface
 	*componentsImpl
+	registryInterface
 	mutex sync.Locker
 }
 
@@ -12,10 +13,12 @@ func NewWorld() World {
 	mutex := &sync.RWMutex{}
 	componentsImpl := newComponents(mutex)
 	entitiesImpl := newEntities(mutex)
+	registryImpl := newRegistry(&sync.RWMutex{})
 
 	return &world{
 		entitiesInterface: entitiesImpl,
 		componentsImpl:    componentsImpl,
+		registryInterface: registryImpl,
 	}
 }
 

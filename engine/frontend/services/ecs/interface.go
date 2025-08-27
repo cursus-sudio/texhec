@@ -5,6 +5,8 @@ import (
 	"reflect"
 )
 
+//
+//
 // entities
 
 type EntityID struct {
@@ -23,6 +25,8 @@ type entitiesInterface interface {
 	EntityExists(EntityID) bool
 }
 
+//
+//
 // components
 
 type ComponentType struct {
@@ -31,7 +35,7 @@ type ComponentType struct {
 
 func (t *ComponentType) String() string { return t.componentType.String() }
 
-func NewComponentType(componentType reflect.Type) ComponentType {
+func newComponentType(componentType reflect.Type) ComponentType {
 	return ComponentType{componentType: componentType}
 }
 
@@ -40,13 +44,13 @@ type Component interface{}
 func GetComponentType(component Component) ComponentType {
 	typeOfComponent := reflect.TypeOf(component)
 	if typeOfComponent.Kind() != reflect.Struct {
-		panic("component has to be a struct")
+		panic("component has to be a struct (cannot use pointers under the hood)")
 	}
-	return NewComponentType(reflect.TypeOf(component))
+	return newComponentType(typeOfComponent)
 }
 
 func GetComponentPointerType(componentPointer any) ComponentType {
-	return NewComponentType(reflect.TypeOf(componentPointer).Elem())
+	return newComponentType(reflect.TypeOf(componentPointer).Elem())
 }
 
 var (
@@ -87,9 +91,49 @@ func GetComponent[WantedComponent Component](w World, entity EntityID) (WantedCo
 	return component.(WantedComponent), nil
 }
 
+//
+//
+// registry
+
+var (
+	ErrRegisterNotFound error = errors.New("register not found")
+)
+
+type RegisterType struct {
+	registerType reflect.Type
+}
+
+type Register any
+
+func GetRegisterType(register Register) RegisterType {
+	typeOfRegister := reflect.TypeOf(register)
+	if typeOfRegister.Kind() != reflect.Struct {
+		panic("register has to be a struct (can use pointers under the hood)")
+	}
+	return RegisterType{typeOfRegister}
+}
+
+type registryInterface interface {
+	SaveRegister(Register) // upsert (create or update)
+	GetRegister(RegisterType) (Register, error)
+}
+
+func GetRegister[RegisterT Register](w World) (RegisterT, error) {
+	var zero RegisterT
+	registerType := GetRegisterType(zero)
+	value, err := w.GetRegister(registerType)
+	if err != nil {
+		return zero, err
+	}
+	return value.(RegisterT), nil
+}
+
+//
+//
 // world
 
 type World interface {
 	entitiesInterface
 	componentsInterface
+	registryInterface
 }

@@ -11,6 +11,7 @@ import (
 	"frontend/engine/systems/mainpipeline"
 	"frontend/engine/systems/projections"
 	"frontend/engine/tools/worldmesh"
+	"frontend/engine/tools/worldprojections"
 	"frontend/engine/tools/worldtexture"
 	"frontend/services/assets"
 	"frontend/services/colliders"
@@ -65,16 +66,11 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		worldMeshFactory := ioc.Get[worldmesh.RegisterFactory[mainpipeline.Vertex]](c)
 		worldTextureFactory := ioc.Get[worldtexture.RegisterFactory](c)
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			pipeline, err := mainpipeline.NewSystem(
-				ctx.World,
-				ioc.Get[window.Api](c),
-				ioc.Get[assets.AssetsStorage](c),
-				ioc.Get[logger.Logger](c),
-				[]ecs.ComponentType{
-					ecs.GetComponentType(projection.Visible{}),
-				},
+			projectionsRegister := worldprojections.NewWorldProjectionsRegister(
+				ecs.GetComponentType(projection.Ortho{}),
+				ecs.GetComponentType(projection.Perspective{}),
 			)
-			events.ListenE(ctx.EventsBuilder, pipeline.Listen)
+			ctx.World.SaveRegister(projectionsRegister)
 
 			textureRegister, err := worldTextureFactory.New(TextureAssetID)
 			if err != nil {
@@ -102,6 +98,19 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			ctx.World.SaveComponent(entity, ChangeTransformOverTimeComponent{})
 		})
 		b.OnLoad(func(ctx scenes.SceneCtx) {
+			pipeline, err := mainpipeline.NewSystem(
+				ctx.World,
+				ioc.Get[window.Api](c),
+				ioc.Get[assets.AssetsStorage](c),
+				ioc.Get[logger.Logger](c),
+				[]ecs.ComponentType{
+					ecs.GetComponentType(projection.Visible{}),
+				},
+			)
+			if err != nil {
+				ioc.Get[logger.Logger](c).Error(err)
+			}
+			events.ListenE(ctx.EventsBuilder, pipeline.Listen)
 			projections.NewOcclusionSystem(ctx.World)
 			system := NewChangeTransformOverTimeSystem(ctx.World)
 			events.Listen(ctx.EventsBuilder, system.Update)

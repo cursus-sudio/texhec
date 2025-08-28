@@ -9,6 +9,7 @@ import (
 	"frontend/engine/components/transform"
 	"frontend/engine/systems/render"
 	"frontend/engine/tools/worldmesh"
+	"frontend/engine/tools/worldprojections"
 	"frontend/engine/tools/worldtexture"
 	"frontend/services/assets"
 	"frontend/services/ecs"
@@ -53,12 +54,9 @@ func NewSystem(
 		entitiesQueryAdditionalArguments: entitiesQueryAdditionalArguments,
 	}
 
-	register, err := newRegister(
-		map[ecs.ComponentType]int32{
-			ecs.GetComponentType(projection.Ortho{}):       0,
-			ecs.GetComponentType(projection.Perspective{}): 1,
-		},
-	)
+	projRegister, err := ecs.GetRegister[worldprojections.WorldProjectionsRegister](world)
+
+	register, err := newRegister(projRegister.Projections)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +71,7 @@ func (m *System) modifyRegisterOnChanges() error {
 		return err
 	}
 	// modify projections buffer
-	for projectionType, projectionIndex := range register.projections {
+	for projectionIndex, projectionType := range register.projections.Get() {
 		query := m.world.QueryEntitiesWithComponents(
 			projectionType,
 			ecs.GetComponentType(transform.Transform{}),
@@ -172,7 +170,8 @@ func (m *System) modifyRegisterOnChanges() error {
 				if err != nil {
 					continue
 				}
-				projectionIndex, ok := register.projections[usedProjection.ProjectionComponent]
+
+				projectionIndex, ok := register.projections.GetIndex(usedProjection.ProjectionComponent)
 				if !ok {
 					m.logger.Error(fmt.Errorf(
 						"pipeline doesn't handle \"%s\" projection",
@@ -193,7 +192,7 @@ func (m *System) modifyRegisterOnChanges() error {
 					cmd,
 					int32(textureIndex),
 					model,
-					projectionIndex,
+					int32(projectionIndex),
 				)
 				// cmd := NewDrawElementsIndirectCommand(meshRange, 1, uint32(len(m.entities.Get())))
 				// cmd := NewDrawElementsIndirectCommand(meshRange, 1, uint32(index))

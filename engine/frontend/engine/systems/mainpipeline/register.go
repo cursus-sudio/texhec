@@ -1,6 +1,7 @@
 package mainpipeline
 
 import (
+	"frontend/services/datastructures"
 	"frontend/services/ecs"
 	"frontend/services/graphics/program"
 	"frontend/services/graphics/shader"
@@ -14,10 +15,10 @@ type pipelineRegister struct {
 	buffers *pipelineBuffers
 	program program.Program
 
-	projections map[ecs.ComponentType]int32
+	projections datastructures.Set[ecs.ComponentType]
 }
 
-func newRegister(projections map[ecs.ComponentType]int32) (pipelineRegister, error) {
+func newRegister(projections datastructures.Set[ecs.ComponentType]) (pipelineRegister, error) {
 	vert, err := shader.NewShader(vertSource, shader.VertexShader)
 	if err != nil {
 		return pipelineRegister{}, err
@@ -41,7 +42,7 @@ func newRegister(projections map[ecs.ComponentType]int32) (pipelineRegister, err
 
 	return pipelineRegister{
 		mutex:       &sync.RWMutex{},
-		buffers:     newBuffers(len(projections)),
+		buffers:     newBuffers(len(projections.Get())),
 		program:     p,
 		projections: projections,
 	}, nil

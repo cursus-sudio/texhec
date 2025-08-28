@@ -1,4 +1,4 @@
-package material
+package mainpipeline
 
 type Vertex struct {
 	Pos [3]float32

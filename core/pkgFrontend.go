@@ -9,8 +9,7 @@ import (
 	"core/triangle"
 	"errors"
 	"fmt"
-	"frontend/engine/assets/material"
-	"frontend/engine/components/projection"
+	"frontend/engine/systems/mainpipeline"
 	"frontend/engine/tools/worldtexture"
 	frontendapi "frontend/services/api"
 	frontendtcp "frontend/services/api/tcp"
@@ -127,13 +126,7 @@ func frontendDic(
 		scenes.Package(),
 		frontendscopes.Package(),
 
-		material.Package(
-			[]ecs.ComponentType{
-				ecs.GetComponentType(projection.Visible{}),
-			},
-			// []ecs.ComponentType{ecs.GetComponentType(transform.Transform{})},
-			// []ecs.ComponentType{},
-		),
+		mainpipeline.Package(),
 		worldtexture.Package(),
 
 		// mods

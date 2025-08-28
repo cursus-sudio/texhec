@@ -8,7 +8,6 @@ import (
 	mousesystem "frontend/engine/systems/mouse"
 	"frontend/engine/systems/projections"
 	"frontend/engine/systems/render"
-	"frontend/services/assets"
 	"frontend/services/backendconnection"
 	"frontend/services/colliders"
 	"frontend/services/console"
@@ -149,7 +148,7 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 
 	ioc.WrapService(b, scenes.LoadAfterDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			renderSystem := render.NewRenderSystem(ctx.World, ioc.Get[assets.Assets](c))
+			renderSystem := render.NewRenderSystem(ctx.World, ctx.Events)
 			events.ListenE(ctx.EventsBuilder, renderSystem.Listen)
 
 			flushSystem := render.NewFlushSystem(ioc.Get[window.Api](c))

@@ -1,4 +1,4 @@
-package material
+package mainpipeline
 
 import (
 	"frontend/services/datastructures"

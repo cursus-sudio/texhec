@@ -1,4 +1,4 @@
-package material
+package mainpipeline
 
 import (
 	"errors"
@@ -7,21 +7,29 @@ import (
 	"frontend/engine/components/projection"
 	texturecomponent "frontend/engine/components/texture"
 	"frontend/engine/components/transform"
+	"frontend/engine/systems/render"
 	"frontend/engine/tools/worldmesh"
 	"frontend/engine/tools/worldtexture"
 	"frontend/services/assets"
 	"frontend/services/ecs"
 	"frontend/services/graphics"
-	"frontend/services/graphics/program"
 	"frontend/services/media/window"
 	"shared/services/logger"
+
+	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
 var (
 	ErrTexturesHaveToShareSize error = errors.New("all textures have to match size")
 )
 
-type materialCache struct {
+// this component says which entities use material
+type MaterialComponent struct{}
+
+//
+
+type System struct {
+	world         ecs.World
 	window        window.Api
 	assetsStorage assets.AssetsStorage
 	logger        logger.Logger
@@ -29,13 +37,45 @@ type materialCache struct {
 	entitiesQueryAdditionalArguments []ecs.ComponentType
 }
 
-func (m *materialCache) modifyRegisterOnChanges(
+func NewSystem(
 	world ecs.World,
-	register materialWorldRegister,
-) {
+	window window.Api,
+	assetsStorage assets.AssetsStorage,
+	logger logger.Logger,
+	entitiesQueryAdditionalArguments []ecs.ComponentType,
+) (*System, error) {
+	system := &System{
+		world: world,
+
+		window:        window,
+		assetsStorage: assetsStorage,
+		logger:        logger,
+
+		entitiesQueryAdditionalArguments: entitiesQueryAdditionalArguments,
+	}
+
+	register, err := newMaterialWorldRegistry(
+		map[ecs.ComponentType]int32{
+			ecs.GetComponentType(projection.Ortho{}):       0,
+			ecs.GetComponentType(projection.Perspective{}): 1,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	world.SaveRegister(register)
+	system.modifyRegisterOnChanges()
+	return system, nil
+}
+
+func (m *System) modifyRegisterOnChanges() error {
+	register, err := ecs.GetRegister[materialWorldRegister](m.world)
+	if err != nil {
+		return err
+	}
 	// modify projections buffer
 	for projectionType, projectionIndex := range register.projections {
-		query := world.QueryEntitiesWithComponents(
+		query := m.world.QueryEntitiesWithComponents(
 			projectionType,
 			ecs.GetComponentType(transform.Transform{}),
 		)
@@ -49,7 +89,7 @@ func (m *materialCache) modifyRegisterOnChanges(
 			}
 			camera := entities[0]
 
-			anyProj, err := world.GetComponent(camera, projectionType)
+			anyProj, err := m.world.GetComponent(camera, projectionType)
 			if err != nil {
 				m.logger.Error(err)
 				return
@@ -61,7 +101,7 @@ func (m *materialCache) modifyRegisterOnChanges(
 				return
 			}
 
-			cameraTransformComponent, err := ecs.GetComponent[transform.Transform](world, camera)
+			cameraTransformComponent, err := ecs.GetComponent[transform.Transform](m.world, camera)
 			if err != nil {
 				m.logger.Error(errors.New("camera misses transform component"))
 				return
@@ -85,26 +125,26 @@ func (m *materialCache) modifyRegisterOnChanges(
 			register.mutex.Lock()
 			defer register.mutex.Unlock()
 
-			mesh, err := ecs.GetRegister[worldmesh.WorldMeshRegister[Vertex]](world)
+			mesh, err := ecs.GetRegister[worldmesh.WorldMeshRegister[Vertex]](m.world)
 			if err != nil {
 				m.logger.Error(err)
 				return
 			}
 
-			texture, err := ecs.GetRegister[worldtexture.WorldTextureRegister](world)
+			texture, err := ecs.GetRegister[worldtexture.WorldTextureRegister](m.world)
 			if err != nil {
 				m.logger.Error(err)
 				return
 			}
 
 			for _, entity := range entities {
-				transformComponent, err := ecs.GetComponent[transform.Transform](world, entity)
+				transformComponent, err := ecs.GetComponent[transform.Transform](m.world, entity)
 				if err != nil {
 					continue
 				}
 				model := transformComponent.Mat4()
 
-				textureComponent, err := ecs.GetComponent[texturecomponent.Texture](world, entity)
+				textureComponent, err := ecs.GetComponent[texturecomponent.Texture](m.world, entity)
 				if err != nil {
 					continue
 				}
@@ -117,7 +157,7 @@ func (m *materialCache) modifyRegisterOnChanges(
 					continue
 				}
 
-				meshComponent, err := ecs.GetComponent[meshcomponent.Mesh](world, entity)
+				meshComponent, err := ecs.GetComponent[meshcomponent.Mesh](m.world, entity)
 				if err != nil {
 					continue
 				}
@@ -129,7 +169,7 @@ func (m *materialCache) modifyRegisterOnChanges(
 					continue
 				}
 
-				usedProjection, err := ecs.GetComponent[projection.UsedProjection](world, entity)
+				usedProjection, err := ecs.GetComponent[projection.UsedProjection](m.world, entity)
 				if err != nil {
 					continue
 				}
@@ -161,7 +201,7 @@ func (m *materialCache) modifyRegisterOnChanges(
 			}
 		}
 
-		query := world.QueryEntitiesWithComponents(
+		query := m.world.QueryEntitiesWithComponents(
 			append(
 				m.entitiesQueryAdditionalArguments,
 				ecs.GetComponentType(MaterialComponent{}),
@@ -176,20 +216,38 @@ func (m *materialCache) modifyRegisterOnChanges(
 		query.OnChange(onChange)
 		query.OnRemove(register.buffers.Remove)
 	}
+	return nil
 }
 
-func (m *materialCache) render(world ecs.World, p program.Program) error {
-	register, err := ecs.GetRegister[materialWorldRegister](world)
+func (m *System) Listen(render.RenderEvent) error {
+	materialRegister, err := ecs.GetRegister[materialWorldRegister](m.world)
 	if err != nil {
-		register = newMaterialWorldRegistry(
-			map[ecs.ComponentType]int32{
-				ecs.GetComponentType(projection.Ortho{}):       0,
-				ecs.GetComponentType(projection.Perspective{}): 1,
-			},
-		)
-		m.modifyRegisterOnChanges(world, register)
-		world.SaveRegister(register)
+		return err
+	}
+	mesh, err := ecs.GetRegister[worldmesh.WorldMeshRegister[Vertex]](m.world)
+	if err != nil {
+		return err
+	}
+	texture, err := ecs.GetRegister[worldtexture.WorldTextureRegister](m.world)
+	if err != nil {
+		return err
 	}
 
-	return register.Render(world, p)
+	materialRegister.mutex.Lock()
+	materialRegister.buffers.Flush()
+	materialRegister.mutex.Unlock()
+
+	materialRegister.program.Use()
+	mesh.Mesh.Use()
+	texture.Bind()
+	gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, materialRegister.buffers.cmdBuffer.ID())
+	gl.MultiDrawElementsIndirect(
+		gl.TRIANGLES,
+		gl.UNSIGNED_INT,
+		nil,
+		int32(len(materialRegister.buffers.cmdBuffer.Get())),
+		0,
+	)
+
+	return nil
 }

@@ -3,9 +3,9 @@ package triangle
 import (
 	"bytes"
 	_ "embed"
-	"frontend/engine/assets/material"
 	"frontend/engine/components/mesh"
 	"frontend/engine/components/texture"
+	"frontend/engine/systems/mainpipeline"
 	"frontend/services/assets"
 	"frontend/services/graphics/vao/ebo"
 	"image"
@@ -17,7 +17,7 @@ import (
 func registerAssets(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b assets.AssetsStorageBuilder) assets.AssetsStorageBuilder {
 		b.RegisterAsset(MeshAssetID, func() (any, error) {
-			vertices := []material.Vertex{
+			vertices := []mainpipeline.Vertex{
 				// Front face
 				{Pos: [3]float32{1, 1, 1}, TexturePos: [2]float32{0, 0}},
 				{Pos: [3]float32{1, -1, 1}, TexturePos: [2]float32{1, 0}},

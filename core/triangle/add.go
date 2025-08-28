@@ -3,13 +3,12 @@ package triangle
 import (
 	_ "embed"
 	"fmt"
-	texturematerial "frontend/engine/assets/material"
-	"frontend/engine/components/material"
 	"frontend/engine/components/mesh"
 	"frontend/engine/components/mouse"
 	"frontend/engine/components/projection"
 	"frontend/engine/components/texture"
 	"frontend/engine/components/transform"
+	"frontend/engine/systems/mainpipeline"
 	"frontend/engine/systems/projections"
 	"frontend/engine/tools/worldmesh"
 	"frontend/engine/tools/worldtexture"
@@ -19,6 +18,7 @@ import (
 	"frontend/services/console"
 	"frontend/services/ecs"
 	"frontend/services/frames"
+	"frontend/services/media/window"
 	"frontend/services/scenes"
 	"shared/services/logger"
 
@@ -62,11 +62,19 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 	})
 
 	ioc.WrapService(b, scenes.LoadDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
-		worldMeshFactory := ioc.Get[worldmesh.RegisterFactory[texturematerial.Vertex]](c)
+		worldMeshFactory := ioc.Get[worldmesh.RegisterFactory[mainpipeline.Vertex]](c)
 		worldTextureFactory := ioc.Get[worldtexture.RegisterFactory](c)
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			entity := ctx.World.NewEntity()
-			ctx.World.SaveComponent(entity, material.NewMaterial(texturematerial.Material))
+			pipeline, err := mainpipeline.NewSystem(
+				ctx.World,
+				ioc.Get[window.Api](c),
+				ioc.Get[assets.AssetsStorage](c),
+				ioc.Get[logger.Logger](c),
+				[]ecs.ComponentType{
+					ecs.GetComponentType(projection.Visible{}),
+				},
+			)
+			events.ListenE(ctx.EventsBuilder, pipeline.Listen)
 
 			textureRegister, err := worldTextureFactory.New(TextureAssetID)
 			if err != nil {
@@ -89,7 +97,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
 			ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
 			// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
-			ctx.World.SaveComponent(entity, texturematerial.MaterialComponent{})
+			ctx.World.SaveComponent(entity, mainpipeline.MaterialComponent{})
 			ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
 			ctx.World.SaveComponent(entity, ChangeTransformOverTimeComponent{})
 		})
@@ -137,7 +145,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
 				ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
 				// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
-				ctx.World.SaveComponent(entity, texturematerial.MaterialComponent{})
+				ctx.World.SaveComponent(entity, mainpipeline.MaterialComponent{})
 				ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
 				ctx.World.SaveComponent(entity, mouse.NewMouseEvents().
 					AddLeftClickEvents(OnClickDomainEvent{entity, row, col}).

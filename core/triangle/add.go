@@ -89,7 +89,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
 			ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
 			// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
-			ctx.World.SaveComponent(entity, texturematerial.TextureMaterialComponent{})
+			ctx.World.SaveComponent(entity, texturematerial.MaterialComponent{})
 			ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
 			ctx.World.SaveComponent(entity, ChangeTransformOverTimeComponent{})
 		})
@@ -137,7 +137,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
 				ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
 				// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
-				ctx.World.SaveComponent(entity, texturematerial.TextureMaterialComponent{})
+				ctx.World.SaveComponent(entity, texturematerial.MaterialComponent{})
 				ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
 				ctx.World.SaveComponent(entity, mouse.NewMouseEvents().
 					AddLeftClickEvents(OnClickDomainEvent{entity, row, col}).

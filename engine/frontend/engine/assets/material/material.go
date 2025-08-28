@@ -164,7 +164,7 @@ func (m *materialCache) modifyRegisterOnChanges(
 		query := world.QueryEntitiesWithComponents(
 			append(
 				m.entitiesQueryAdditionalArguments,
-				ecs.GetComponentType(TextureMaterialComponent{}),
+				ecs.GetComponentType(MaterialComponent{}),
 				ecs.GetComponentType(transform.Transform{}),
 				ecs.GetComponentType(projection.UsedProjection{}),
 				ecs.GetComponentType(meshcomponent.Mesh{}),

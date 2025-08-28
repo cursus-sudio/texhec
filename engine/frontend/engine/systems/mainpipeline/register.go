@@ -9,28 +9,28 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
-type materialWorldRegister struct {
+type pipelineRegister struct {
 	mutex   *sync.RWMutex
-	buffers *materialBuffers
+	buffers *pipelineBuffers
 	program program.Program
 
 	projections map[ecs.ComponentType]int32
 }
 
-func newMaterialWorldRegistry(projections map[ecs.ComponentType]int32) (materialWorldRegister, error) {
+func newRegister(projections map[ecs.ComponentType]int32) (pipelineRegister, error) {
 	vert, err := shader.NewShader(vertSource, shader.VertexShader)
 	if err != nil {
-		return materialWorldRegister{}, err
+		return pipelineRegister{}, err
 	}
 	frag, err := shader.NewShader(fragSource, shader.FragmentShader)
 	if err != nil {
-		return materialWorldRegister{}, err
+		return pipelineRegister{}, err
 	}
 	p, err := program.NewProgram(vert, frag, nil)
 	if err != nil {
 		vert.Release()
 		frag.Release()
-		return materialWorldRegister{}, err
+		return pipelineRegister{}, err
 	}
 	vert.Release()
 	frag.Release()
@@ -39,15 +39,15 @@ func newMaterialWorldRegistry(projections map[ecs.ComponentType]int32) (material
 	texLoc := gl.GetUniformLocation(p.ID(), gl.Str("texs\x00"))
 	gl.Uniform1i(texLoc, 1)
 
-	return materialWorldRegister{
+	return pipelineRegister{
 		mutex:       &sync.RWMutex{},
-		buffers:     newMaterialBuffers(len(projections)),
+		buffers:     newBuffers(len(projections)),
 		program:     p,
 		projections: projections,
 	}, nil
 }
 
-func (register materialWorldRegister) Release() {
+func (register pipelineRegister) Release() {
 	register.buffers.Release()
 	register.program.Release()
 }

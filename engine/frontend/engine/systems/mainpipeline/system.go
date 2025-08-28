@@ -23,8 +23,7 @@ var (
 	ErrTexturesHaveToShareSize error = errors.New("all textures have to match size")
 )
 
-// this component says which entities use material
-type MaterialComponent struct{}
+type PipelineComponent struct{}
 
 //
 
@@ -54,7 +53,7 @@ func NewSystem(
 		entitiesQueryAdditionalArguments: entitiesQueryAdditionalArguments,
 	}
 
-	register, err := newMaterialWorldRegistry(
+	register, err := newRegister(
 		map[ecs.ComponentType]int32{
 			ecs.GetComponentType(projection.Ortho{}):       0,
 			ecs.GetComponentType(projection.Perspective{}): 1,
@@ -69,7 +68,7 @@ func NewSystem(
 }
 
 func (m *System) modifyRegisterOnChanges() error {
-	register, err := ecs.GetRegister[materialWorldRegister](m.world)
+	register, err := ecs.GetRegister[pipelineRegister](m.world)
 	if err != nil {
 		return err
 	}
@@ -152,7 +151,7 @@ func (m *System) modifyRegisterOnChanges() error {
 				textureIndex, ok := texture.Assets.GetIndex(textureComponent.ID)
 				if !ok {
 					m.logger.Error(fmt.Errorf(
-						"material cannot render entity with texture which isn't in WorldTextureMaterialComponent",
+						"pipeline cannot render entity with texture which isn't in world texture",
 					))
 					continue
 				}
@@ -164,7 +163,7 @@ func (m *System) modifyRegisterOnChanges() error {
 				meshRange, ok := mesh.Ranges[meshComponent.ID]
 				if !ok {
 					m.logger.Error(fmt.Errorf(
-						"material cannot render entity with mesh which isn't in WorldTextureMaterialComponent",
+						"pipeline cannot render entity with mesh which isn't in world mesh",
 					))
 					continue
 				}
@@ -176,7 +175,7 @@ func (m *System) modifyRegisterOnChanges() error {
 				projectionIndex, ok := register.projections[usedProjection.ProjectionComponent]
 				if !ok {
 					m.logger.Error(fmt.Errorf(
-						"material doesn't handle \"%s\" projection",
+						"pipeline doesn't handle \"%s\" projection",
 						usedProjection.ProjectionComponent.String(),
 					))
 					continue
@@ -204,7 +203,7 @@ func (m *System) modifyRegisterOnChanges() error {
 		query := m.world.QueryEntitiesWithComponents(
 			append(
 				m.entitiesQueryAdditionalArguments,
-				ecs.GetComponentType(MaterialComponent{}),
+				ecs.GetComponentType(PipelineComponent{}),
 				ecs.GetComponentType(transform.Transform{}),
 				ecs.GetComponentType(projection.UsedProjection{}),
 				ecs.GetComponentType(meshcomponent.Mesh{}),
@@ -220,7 +219,7 @@ func (m *System) modifyRegisterOnChanges() error {
 }
 
 func (m *System) Listen(render.RenderEvent) error {
-	materialRegister, err := ecs.GetRegister[materialWorldRegister](m.world)
+	pipelineRegister, err := ecs.GetRegister[pipelineRegister](m.world)
 	if err != nil {
 		return err
 	}
@@ -233,19 +232,19 @@ func (m *System) Listen(render.RenderEvent) error {
 		return err
 	}
 
-	materialRegister.mutex.Lock()
-	materialRegister.buffers.Flush()
-	materialRegister.mutex.Unlock()
+	pipelineRegister.mutex.Lock()
+	pipelineRegister.buffers.Flush()
+	pipelineRegister.mutex.Unlock()
 
-	materialRegister.program.Use()
+	pipelineRegister.program.Use()
 	mesh.Mesh.Use()
 	texture.Bind()
-	gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, materialRegister.buffers.cmdBuffer.ID())
+	gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, pipelineRegister.buffers.cmdBuffer.ID())
 	gl.MultiDrawElementsIndirect(
 		gl.TRIANGLES,
 		gl.UNSIGNED_INT,
 		nil,
-		int32(len(materialRegister.buffers.cmdBuffer.Get())),
+		int32(len(pipelineRegister.buffers.cmdBuffer.Get())),
 		0,
 	)
 

@@ -10,7 +10,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-type materialBuffers struct {
+type pipelineBuffers struct {
 	entities        datastructures.Set[ecs.EntityID]
 	modelBuffer     buffers.Buffer[mgl32.Mat4]
 	modelProjBuffer buffers.Buffer[int32]
@@ -22,8 +22,8 @@ type materialBuffers struct {
 	projBuffer buffers.Buffer[mgl32.Mat4]
 }
 
-func newMaterialBuffers(projectionsCount int) *materialBuffers {
-	m := &materialBuffers{}
+func newBuffers(projectionsCount int) *pipelineBuffers {
+	m := &pipelineBuffers{}
 	var buffer uint32
 
 	m.entities = datastructures.NewSet[ecs.EntityID]()
@@ -58,7 +58,7 @@ func newMaterialBuffers(projectionsCount int) *materialBuffers {
 	return m
 }
 
-func (m *materialBuffers) Release() {
+func (m *pipelineBuffers) Release() {
 	m.modelBuffer.Release()
 	m.modelProjBuffer.Release()
 	m.modelTexBuffer.Release()
@@ -67,7 +67,7 @@ func (m *materialBuffers) Release() {
 	m.projBuffer.Release()
 }
 
-func (m *materialBuffers) Flush() {
+func (m *pipelineBuffers) Flush() {
 	m.cmdBuffer.Flush()
 	m.modelTexBuffer.Flush()
 	m.modelBuffer.Flush()
@@ -76,7 +76,7 @@ func (m *materialBuffers) Flush() {
 	m.projBuffer.Flush()
 }
 
-func (m *materialBuffers) Upsert(
+func (m *pipelineBuffers) Upsert(
 	entity ecs.EntityID,
 	cmd graphics.DrawElementsIndirectCommand,
 	textureIndex int32,
@@ -97,7 +97,7 @@ func (m *materialBuffers) Upsert(
 	m.modelProjBuffer.Add(projectionIndex)
 }
 
-func (m *materialBuffers) Remove(entities []ecs.EntityID) {
+func (m *pipelineBuffers) Remove(entities []ecs.EntityID) {
 	indices := []int{}
 	for _, entity := range entities {
 		index, ok := m.entities.GetIndex(entity)

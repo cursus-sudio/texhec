@@ -21,7 +21,7 @@ type colliderAsset struct {
 	collider colliders.Collider
 }
 
-func NewMaterialStorageAsset(c colliders.Collider) ColliderAsset {
+func NewColliderStorageAsset(c colliders.Collider) ColliderAsset {
 	asset := &colliderAsset{collider: c}
 	asset.GoAsset = assets.NewGoAsset(asset)
 	return asset

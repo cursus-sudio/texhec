@@ -43,8 +43,6 @@ func frontendDic(
 	backendC ioc.Dic,
 	sharedPkg SharedPkg,
 ) ioc.Dic {
-	// sdl + opengl
-
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		panic(fmt.Errorf("Failed to initialize SDL: %s", err))
 	}

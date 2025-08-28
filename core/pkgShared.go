@@ -21,8 +21,6 @@ func SharedPackage() SharedPkg {
 		pkgs: []ioc.Pkg{
 			netconnection.Package(time.Second),
 			clock.Package(time.RFC3339Nano),
-			// netconnectionPkg,
-			// clockPkg,
 			eventspkg.Package(),
 			codec.Package(),
 			runtime.Package(),

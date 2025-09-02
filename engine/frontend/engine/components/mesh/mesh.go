@@ -15,7 +15,7 @@ func NewMesh(id assets.AssetID) Mesh {
 
 //
 
-type MeshStorageAsset[Vertex any] interface {
+type MeshAsset[Vertex any] interface {
 	Vertices() []Vertex
 	Indices() []ebo.Index
 }
@@ -28,11 +28,12 @@ type meshStorageAsset[Vertex any] struct {
 func NewMeshStorageAsset[Vertex any](
 	vertices []Vertex,
 	indices []ebo.Index,
-) MeshStorageAsset[Vertex] {
-	return &meshStorageAsset[Vertex]{
+) MeshAsset[Vertex] {
+	asset := &meshStorageAsset[Vertex]{
 		vertices: vertices,
 		indices:  indices,
 	}
+	return asset
 }
 
 func (asset *meshStorageAsset[Vertex]) Vertices() []Vertex   { return asset.vertices }

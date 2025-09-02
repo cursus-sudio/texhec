@@ -19,7 +19,7 @@ func (r WorldTextureRegister) Release() {
 	gl.DeleteTextures(1, &r.Texture)
 }
 
-func (r WorldTextureRegister) Bind() {
+func (r WorldTextureRegister) Use() {
 	gl.BindTexture(gl.TEXTURE_2D_ARRAY, r.Texture)
 }
 
@@ -43,7 +43,7 @@ func (r *registerFactory) New(textureAssets ...assets.AssetID) (WorldTextureRegi
 
 	w, h := 0, 0
 	for i, assetID := range textureAssets {
-		asset, err := assets.StorageGet[texture.TextureStorageAsset](r.assetsStorage, assetID)
+		asset, err := assets.StorageGet[texture.TextureAsset](r.assetsStorage, assetID)
 		if err != nil {
 			err := errors.Join(
 				err,

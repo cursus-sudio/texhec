@@ -53,6 +53,10 @@ func (s UpdateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
 			resizePerspective.FovY, aspectRatio,
 			resizePerspective.Near, resizePerspective.Far,
 		)
+		originalPerspective, _ := ecs.GetComponent[projection.Perspective](s.world, entity)
+		if originalPerspective == perspective {
+			continue
+		}
 		s.world.SaveComponent(entity, perspective)
 	}
 	for _, entity := range s.orthoQuery.Entities() {
@@ -61,9 +65,13 @@ func (s UpdateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
 			continue
 		}
 		ortho := projection.NewOrtho(
-			w, h,
+			w/resizeOrtho.Zoom, h/resizeOrtho.Zoom,
 			resizeOrtho.Near, resizeOrtho.Far,
 		)
+		originalOrtho, _ := ecs.GetComponent[projection.Ortho](s.world, entity)
+		if originalOrtho == ortho {
+			continue
+		}
 		s.world.SaveComponent(entity, ortho)
 	}
 }

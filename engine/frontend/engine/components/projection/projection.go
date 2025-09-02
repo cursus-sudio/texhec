@@ -1,8 +1,8 @@
 package projection
 
 import (
+	"frontend/engine/components/collider"
 	"frontend/engine/components/transform"
-	"frontend/services/colliders/shapes"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -13,7 +13,7 @@ type Projection interface {
 	ShootRay(
 		cameraTransform transform.Transform,
 		mousePos mgl32.Vec2,
-	) shapes.Ray
+	) collider.Ray
 }
 
 func RayDirection(
@@ -46,7 +46,7 @@ func ShootRay(
 	viewMatrix mgl32.Mat4,
 	mousePos mgl32.Vec2,
 	defaultRayOrigin *mgl32.Vec3,
-) shapes.Ray {
+) collider.Ray {
 	nearWorld, direction := RayDirection(projectionMatrix, viewMatrix, mousePos)
 	var rayOrigin mgl32.Vec3
 	if defaultRayOrigin != nil {
@@ -54,5 +54,5 @@ func ShootRay(
 	} else {
 		rayOrigin = nearWorld.Vec3()
 	}
-	return shapes.NewRay(rayOrigin, direction)
+	return collider.NewRay(rayOrigin, direction)
 }

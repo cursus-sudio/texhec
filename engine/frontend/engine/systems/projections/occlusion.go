@@ -1,6 +1,7 @@
 package projections
 
 import (
+	"frontend/engine/components/collider"
 	"frontend/engine/components/projection"
 	"frontend/engine/components/transform"
 	"frontend/services/datastructures"
@@ -13,14 +14,14 @@ import (
 type orthoOcclusion struct {
 	tileSize          mgl32.Vec2
 	positionsEntities map[mgl32.Vec2]datastructures.Set[ecs.EntityID]
-	entitiesMeta      map[ecs.EntityID]struct{ aabb transform.AABB }
+	entitiesMeta      map[ecs.EntityID]struct{ aabb collider.AABB }
 }
 
 func newOrthoOcclusion(tileSize mgl32.Vec2) *orthoOcclusion {
 	return &orthoOcclusion{
 		tileSize:          tileSize,
 		positionsEntities: map[mgl32.Vec2]datastructures.Set[ecs.EntityID]{},
-		entitiesMeta:      map[ecs.EntityID]struct{ aabb transform.AABB }{},
+		entitiesMeta:      map[ecs.EntityID]struct{ aabb collider.AABB }{},
 	}
 }
 
@@ -28,7 +29,7 @@ func floorF32ToInt(num float32) int {
 	return int(math.Floor(float64(num)))
 }
 
-func (s *orthoOcclusion) getPositions(aabb transform.AABB) []mgl32.Vec2 {
+func (s *orthoOcclusion) getPositions(aabb collider.AABB) []mgl32.Vec2 {
 	minPos, maxPos := aabb.Min.Vec2(), aabb.Max.Vec2()
 	minGridX := floorF32ToInt(minPos.X() / s.tileSize.X())
 	minGridY := floorF32ToInt(minPos.Y() / s.tileSize.Y())
@@ -49,12 +50,12 @@ func (s *orthoOcclusion) getPositions(aabb transform.AABB) []mgl32.Vec2 {
 	return positions
 }
 
-func (s *orthoOcclusion) Add(entity ecs.EntityID, aabb transform.AABB) {
+func (s *orthoOcclusion) Add(entity ecs.EntityID, aabb collider.AABB) {
 	positions := s.getPositions(aabb)
 	if len(positions) == 0 {
 		return
 	}
-	s.entitiesMeta[entity] = struct{ aabb transform.AABB }{aabb}
+	s.entitiesMeta[entity] = struct{ aabb collider.AABB }{aabb}
 
 	for _, position := range positions {
 		set, ok := s.positionsEntities[position]
@@ -85,7 +86,7 @@ func (s *orthoOcclusion) Remove(entity ecs.EntityID) {
 	delete(s.entitiesMeta, entity)
 }
 
-func (s *orthoOcclusion) GetColliding(aabb transform.AABB) datastructures.Set[ecs.EntityID] {
+func (s *orthoOcclusion) GetColliding(aabb collider.AABB) datastructures.Set[ecs.EntityID] {
 	entities := datastructures.NewSet[ecs.EntityID]()
 	positions := s.getPositions(aabb)
 	for _, position := range positions {
@@ -109,6 +110,12 @@ type OcclusionSystem struct {
 }
 
 func NewOcclusionSystem(world ecs.World) *OcclusionSystem {
+	world.QueryEntitiesWithComponents(ecs.GetComponentType(transform.Transform{})).OnAdd(func(ei []ecs.EntityID) {
+		for _, entity := range ei {
+			world.SaveComponent(entity, projection.Visible{})
+		}
+	})
+	return nil
 	// orthoEntities := datastructures.NewSet[ecs.EntityID]()
 	perspectiveEntities := datastructures.NewSet[ecs.EntityID]()
 
@@ -143,7 +150,7 @@ func NewOcclusionSystem(world ecs.World) *OcclusionSystem {
 		if err != nil {
 			return
 		}
-		cameraAabb := transform.NewAABB(
+		cameraAabb := collider.NewAABB(
 			// Min: mgl32.Vec3{left, bottom, -far},
 			// Max: mgl32.Vec3{right, top, -near},
 			mgl32.Vec3{cameraTransform.Pos.X() - ortho.Width/2, cameraTransform.Pos.Y() - ortho.Height/2, -ortho.Far},
@@ -187,7 +194,7 @@ func NewOcclusionSystem(world ecs.World) *OcclusionSystem {
 				world.SaveComponent(entity, projection.Visible{})
 				continue
 			}
-			aabb := transform.ToAABB()
+			aabb := collider.TransformAABB(transform)
 			s.ortho.Add(entity, aabb)
 		}
 		refresh()
@@ -205,7 +212,7 @@ func NewOcclusionSystem(world ecs.World) *OcclusionSystem {
 			if usedProj != projection.NewUsedProjection[projection.Ortho]() {
 				continue
 			}
-			aabb := transform.ToAABB()
+			aabb := collider.TransformAABB(transform)
 			s.ortho.Remove(entity)
 			s.ortho.Add(entity, aabb)
 		}

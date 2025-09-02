@@ -1,8 +1,8 @@
 package projection
 
 import (
+	"frontend/engine/components/collider"
 	"frontend/engine/components/transform"
-	"frontend/services/colliders/shapes"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -33,7 +33,7 @@ func (p Ortho) ViewMat4(cameraTransform transform.Transform) mgl32.Mat4 {
 func (ortho Ortho) ShootRay(
 	cameraTransform transform.Transform,
 	mousePos mgl32.Vec2,
-) shapes.Ray {
+) collider.Ray {
 	return ShootRay(
 		ortho.Mat4(),
 		ortho.ViewMat4(cameraTransform),

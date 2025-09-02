@@ -3,6 +3,7 @@ package triangle
 import (
 	"bytes"
 	_ "embed"
+	"frontend/engine/components/collider"
 	"frontend/engine/components/mesh"
 	"frontend/engine/components/texture"
 	"frontend/engine/systems/mainpipeline"
@@ -11,6 +12,7 @@ import (
 	"image"
 	_ "image/png"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -53,6 +55,7 @@ func registerAssets(b ioc.Builder) {
 			asset := mesh.NewMeshStorageAsset(vertices, indices)
 			return asset, nil
 		})
+
 		b.RegisterAsset(TextureAssetID, func() (any, error) {
 			imgFile := bytes.NewBuffer(textureSource)
 			img, _, err := image.Decode(imgFile)
@@ -60,6 +63,20 @@ func registerAssets(b ioc.Builder) {
 				return nil, err
 			}
 			asset := texture.NewTextureStorageAsset(img)
+			return asset, nil
+		})
+
+		// colliders.NewCollider([]colliders.Shape{
+		// 	shapes.NewRect2D(transform.NewTransform().SetSize([3]float32{1, 1})),
+		// })
+		b.RegisterAsset(ColliderAssetID, func() (any, error) {
+			asset := collider.NewColliderStorageAsset(
+				[]collider.AABB{collider.NewAABB(mgl32.Vec3{-1, -1}, mgl32.Vec3{1, 1})},
+				[]collider.Range{collider.NewRange(collider.Leaf, 0, 2)},
+				[]collider.Polygon{
+					collider.NewPolygon(mgl32.Vec3{-1, -1, 0}, mgl32.Vec3{+1, -1, 0}, [3]float32{-1, +1, 0}),
+					collider.NewPolygon(mgl32.Vec3{+1, +1, 0}, mgl32.Vec3{+1, -1, 0}, [3]float32{-1, +1, 0}),
+				})
 			return asset, nil
 		})
 		return b

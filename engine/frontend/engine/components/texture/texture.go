@@ -13,20 +13,20 @@ func NewTexture(id assets.AssetID) Texture {
 	return Texture{ID: id}
 }
 
-type TextureStorageAsset interface {
+type TextureAsset interface {
 	Image() image.Image
 }
 
-type textureStorageAsset struct {
+type textureAsset struct {
 	image image.Image
 }
 
 func NewTextureStorageAsset(
 	image image.Image,
-) TextureStorageAsset {
-	return &textureStorageAsset{
+) TextureAsset {
+	return &textureAsset{
 		image: image,
 	}
 }
 
-func (a *textureStorageAsset) Image() image.Image { return a.image }
+func (a *textureAsset) Image() image.Image { return a.image }

@@ -19,11 +19,7 @@ type Parameter struct {
 	Value int32
 }
 
-func createProgram(vertexShader, fragmentShader uint32, parameters []Parameter) (uint32, error) {
-	program := gl.CreateProgram()
-	gl.AttachShader(program, vertexShader)
-	gl.AttachShader(program, fragmentShader)
-
+func compileProgram(program uint32, parameters []Parameter) error {
 	for _, p := range parameters {
 		gl.ProgramParameteri(program, p.Name, p.Value)
 	}
@@ -39,10 +35,10 @@ func createProgram(vertexShader, fragmentShader uint32, parameters []Parameter) 
 		infoLog := strings.Repeat("\x00", int(logLength+1))
 		gl.GetProgramInfoLog(program, logLength, nil, gl.Str(infoLog))
 
-		return 0, fmt.Errorf("failed to link program: %v", infoLog)
+		return fmt.Errorf("failed to link program: %v", infoLog)
 	}
 
-	return program, nil
+	return nil
 }
 
 // fields with tag `uniform:"uniformName"` will have automatically generated uniform

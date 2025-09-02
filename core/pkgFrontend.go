@@ -10,14 +10,13 @@ import (
 	"errors"
 	"fmt"
 	"frontend/engine/systems/mainpipeline"
+	"frontend/engine/tools/broadcollision"
 	"frontend/engine/tools/worldtexture"
 	frontendapi "frontend/services/api"
 	frontendtcp "frontend/services/api/tcp"
 	"frontend/services/assets"
 	"frontend/services/backendconnection"
 	"frontend/services/backendconnection/localconnector"
-	"frontend/services/colliders"
-	"frontend/services/colliders/shapes"
 	"frontend/services/console"
 	"frontend/services/dbpkg"
 	"frontend/services/ecs"
@@ -92,8 +91,6 @@ func frontendDic(
 		sharedPkg,
 		api.Package(func(c ioc.Dic) ioc.Dic { return c }),
 		assets.Package(),
-		colliders.Package(),
-		shapes.Package(),
 		logger.Package(true, func(c ioc.Dic, message string) {
 			ioc.Get[console.Console](c).PrintPermanent(message)
 		}),
@@ -126,6 +123,7 @@ func frontendDic(
 
 		mainpipeline.Package(),
 		worldtexture.Package(),
+		broadcollision.Package(),
 
 		// mods
 		ping.FrontendPackage(),

@@ -3,6 +3,7 @@ package triangle
 import (
 	_ "embed"
 	"fmt"
+	"frontend/engine/components/collider"
 	"frontend/engine/components/mesh"
 	"frontend/engine/components/mouse"
 	"frontend/engine/components/projection"
@@ -14,8 +15,6 @@ import (
 	"frontend/engine/tools/worldprojections"
 	"frontend/engine/tools/worldtexture"
 	"frontend/services/assets"
-	"frontend/services/colliders"
-	"frontend/services/colliders/shapes"
 	"frontend/services/console"
 	"frontend/services/ecs"
 	"frontend/services/frames"
@@ -30,8 +29,9 @@ import (
 )
 
 const (
-	MeshAssetID    assets.AssetID = "vao_asset"
-	TextureAssetID assets.AssetID = "texture_asset"
+	MeshAssetID     assets.AssetID = "vao_asset"
+	TextureAssetID  assets.AssetID = "texture_asset"
+	ColliderAssetID assets.AssetID = "collider_asset"
 )
 
 func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
@@ -39,18 +39,32 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			camera := ctx.World.NewEntity()
 			ctx.World.SaveComponent(camera, transform.NewTransform().
-				SetPos(mgl32.Vec3{0, 0, 100}).
-				SetRotation(mgl32.QuatIdent()),
+				SetPos(mgl32.Vec3{0, 0, 100}),
 			)
 			ctx.World.SaveComponent(camera, projection.NewDynamicOrtho(
 				-1000,
 				+1000,
+				1,
 			))
 			ctx.World.SaveComponent(camera, projection.NewDynamicPerspective(
 				mgl32.DegToRad(90),
 				0.01,
 				1000,
 			))
+			// uiCamera := ctx.World.NewEntity()
+			// ctx.World.SaveComponent(uiCamera, transform.NewTransform().
+			// 	SetPos(mgl32.Vec3{0, -50, 100}),
+			// )
+			// ctx.World.SaveComponent(uiCamera, projection.NewDynamicOrtho(
+			// 	-1000,
+			// 	+1000,
+			// 	1,
+			// ))
+			// ctx.World.SaveComponent(uiCamera, projection.NewDynamicPerspective(
+			// 	mgl32.DegToRad(90),
+			// 	0.01,
+			// 	1000,
+			// ))
 		})
 		return b
 	})
@@ -91,10 +105,10 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				SetPos(mgl32.Vec3{0, 0, -300}).
 				SetSize(mgl32.Vec3{100, 100, 100}))
 			ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
+			ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
+			ctx.World.SaveComponent(entity, mainpipeline.PipelineComponent{})
 			ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
 			// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
-			ctx.World.SaveComponent(entity, mainpipeline.PipelineComponent{})
-			ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
 			ctx.World.SaveComponent(entity, ChangeTransformOverTimeComponent{})
 		})
 		b.OnLoad(func(ctx scenes.SceneCtx) {
@@ -151,17 +165,17 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				ctx.World.SaveComponent(entity, transform.NewTransform().
 					SetPos([3]float32{float32(col) * (size + gap), float32(row) * (size + gap), 0}).
 					SetSize([3]float32{size, size, 1}))
+				ctx.World.SaveComponent(entity, transform.NewStatic())
 				ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
+				ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
+				ctx.World.SaveComponent(entity, mainpipeline.PipelineComponent{})
 				ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
 				// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
-				ctx.World.SaveComponent(entity, mainpipeline.PipelineComponent{})
-				ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
+				ctx.World.SaveComponent(entity, collider.NewCollider(ColliderAssetID))
 				ctx.World.SaveComponent(entity, mouse.NewMouseEvents().
 					AddLeftClickEvents(OnClickDomainEvent{entity, row, col}).
 					AddMouseHoverEvents(OnHoveredDomainEvent{entity, row, col}),
 				)
-				ctx.World.SaveComponent(entity, colliders.NewCollider([]colliders.Shape{
-					shapes.NewRect2D(transform.NewTransform().SetSize([3]float32{1, 1}))}))
 			}
 		})
 
@@ -190,29 +204,27 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				}
 
 				cameras := camerasQuery.Entities()
-				if len(cameras) != 1 {
-					return projection.ErrWorldShouldHaveOneProjection
-				}
-				camera := cameras[0]
-				cameraTransform, err := ecs.GetComponent[transform.Transform](ctx.World, camera)
-				if err != nil {
-					return err
-				}
-				{
-					pos := cameraTransform.Pos
-					mul := 1000 * float32(event.Delta.Seconds())
-					pos[0] += mul * float32(xAxis)
-					pos[1] += mul * float32(yAxis)
-					cameraTransform.Pos = pos
-				}
-				// rotation := cameraTransform.Rotation
-				// mul := 100 * float32(event.Delta.Seconds())
-				// rotation = rotation.Mul(mgl32.QuatRotate(mgl32.DegToRad(mul*float32(xAxis)), mgl32.Vec3{0, 1, 0}))
-				// rotation = rotation.Mul(mgl32.QuatRotate(mgl32.DegToRad(mul*float32(yAxis)), mgl32.Vec3{-1, 0, 0}))
-				// cameraTransform.Rotation = rotation
+				for _, camera := range cameras {
+					cameraTransform, err := ecs.GetComponent[transform.Transform](ctx.World, camera)
+					if err != nil {
+						return err
+					}
+					{
+						pos := cameraTransform.Pos
+						mul := 1000 * float32(event.Delta.Seconds())
+						pos[0] += mul * float32(xAxis)
+						pos[1] += mul * float32(yAxis)
+						cameraTransform.Pos = pos
+					}
+					// rotation := cameraTransform.Rotation
+					// mul := 100 * float32(event.Delta.Seconds())
+					// rotation = rotation.Mul(mgl32.QuatRotate(mgl32.DegToRad(mul*float32(xAxis)), mgl32.Vec3{0, 1, 0}))
+					// rotation = rotation.Mul(mgl32.QuatRotate(mgl32.DegToRad(mul*float32(yAxis)), mgl32.Vec3{-1, 0, 0}))
+					// cameraTransform.Rotation = rotation
 
-				if err := ctx.World.SaveComponent(camera, cameraTransform); err != nil {
-					return err
+					if err := ctx.World.SaveComponent(camera, cameraTransform); err != nil {
+						return err
+					}
 				}
 				return nil
 			}

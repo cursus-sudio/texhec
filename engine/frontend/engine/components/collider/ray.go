@@ -1,15 +1,12 @@
-package shapes
+package collider
 
 import (
 	"frontend/engine/components/transform"
-	"frontend/services/colliders"
 	"frontend/services/graphics/camera"
 	"math"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
-
-// ray
 
 type ray struct {
 	Pos       mgl32.Vec3
@@ -18,7 +15,7 @@ type ray struct {
 
 type Ray struct{ ray }
 
-func (s ray) Apply(t transform.Transform) colliders.Shape {
+func (s ray) Apply(t transform.Transform) Ray {
 	return Ray{ray{Pos: s.Pos.Add(t.Pos), Direction: t.Rotation.Rotate(s.Direction)}}
 }
 
@@ -38,6 +35,12 @@ func NewRay(pos mgl32.Vec3, direction mgl32.Vec3) Ray {
 	}}
 }
 
-// func rayRayHandler(s1 Ray, s2 Ray) colliders.Collision {
-// 	return nil
-// }
+type RayHit struct {
+	Point    mgl32.Vec3
+	Normal   mgl32.Vec3
+	Distance float32
+}
+
+func NewRayHit(point mgl32.Vec3, normal mgl32.Vec3, dist float32) RayHit {
+	return RayHit{point, normal, dist}
+}

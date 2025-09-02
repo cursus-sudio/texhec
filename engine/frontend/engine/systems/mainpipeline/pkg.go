@@ -1,7 +1,6 @@
 package mainpipeline
 
 import (
-	_ "embed"
 	"frontend/engine/tools/worldmesh"
 	"frontend/services/assets"
 	"frontend/services/graphics/vao/vbo"
@@ -10,12 +9,6 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/ogiusek/ioc/v2"
 )
-
-//go:embed s.vert
-var vertSource string
-
-//go:embed s.frag
-var fragSource string
 
 type Pkg struct{}
 

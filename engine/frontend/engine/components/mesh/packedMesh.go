@@ -14,7 +14,7 @@ type PackedMesh[Vertex any] struct {
 	Ranges   []MeshRange
 }
 
-func Pack[Vertex any](meshes ...MeshStorageAsset[Vertex]) PackedMesh[Vertex] {
+func Pack[Vertex any](meshes ...MeshAsset[Vertex]) PackedMesh[Vertex] {
 	p := PackedMesh[Vertex]{}
 	for _, m := range meshes {
 		var firstVertex = uint32(len(p.Vertices))

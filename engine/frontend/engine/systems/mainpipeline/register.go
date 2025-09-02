@@ -1,6 +1,7 @@
 package mainpipeline
 
 import (
+	_ "embed"
 	"frontend/services/datastructures"
 	"frontend/services/ecs"
 	"frontend/services/graphics/program"
@@ -10,16 +11,32 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
-type pipelineRegister struct {
-	mutex   *sync.RWMutex
+type value struct {
+	mutex *sync.RWMutex
+
 	buffers *pipelineBuffers
 	program program.Program
 
 	projections datastructures.Set[ecs.ComponentType]
 }
 
+type pipelineRegister struct{ *value }
+
+//go:embed s.vert
+var vertSource string
+
+//go:embed s.geom
+var geomSource string
+
+//go:embed s.frag
+var fragSource string
+
 func newRegister(projections datastructures.Set[ecs.ComponentType]) (pipelineRegister, error) {
 	vert, err := shader.NewShader(vertSource, shader.VertexShader)
+	if err != nil {
+		return pipelineRegister{}, err
+	}
+	geom, err := shader.NewShader(geomSource, shader.GeomShader)
 	if err != nil {
 		return pipelineRegister{}, err
 	}
@@ -27,7 +44,12 @@ func newRegister(projections datastructures.Set[ecs.ComponentType]) (pipelineReg
 	if err != nil {
 		return pipelineRegister{}, err
 	}
-	p, err := program.NewProgram(vert, frag, nil)
+	programID := gl.CreateProgram()
+	gl.AttachShader(programID, vert.ID())
+	gl.AttachShader(programID, geom.ID())
+	gl.AttachShader(programID, frag.ID())
+
+	p, err := program.NewProgram(programID, nil)
 	if err != nil {
 		vert.Release()
 		frag.Release()
@@ -40,12 +62,12 @@ func newRegister(projections datastructures.Set[ecs.ComponentType]) (pipelineReg
 	texLoc := gl.GetUniformLocation(p.ID(), gl.Str("texs\x00"))
 	gl.Uniform1i(texLoc, 1)
 
-	return pipelineRegister{
+	return pipelineRegister{&value{
 		mutex:       &sync.RWMutex{},
-		buffers:     newBuffers(len(projections.Get())),
+		buffers:     newBuffers(),
 		program:     p,
 		projections: projections,
-	}, nil
+	}}, nil
 }
 
 func (register pipelineRegister) Release() {

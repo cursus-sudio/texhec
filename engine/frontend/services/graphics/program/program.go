@@ -3,7 +3,6 @@ package program
 import (
 	"errors"
 	"fmt"
-	"frontend/services/graphics/shader"
 	"reflect"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -26,8 +25,8 @@ type program struct {
 	locations     any
 }
 
-func NewProgram(vertexShader, fragmentShader shader.Shader, parameters []Parameter) (Program, error) {
-	p, err := createProgram(vertexShader.ID(), fragmentShader.ID(), parameters)
+func NewProgram(p uint32, parameters []Parameter) (Program, error) {
+	err := compileProgram(p, parameters)
 	if err != nil {
 		return nil, err
 	}

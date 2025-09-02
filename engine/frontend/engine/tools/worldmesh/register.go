@@ -41,9 +41,9 @@ func NewRegisterFactory[Vertex any](
 func (r *registerFactory[Vertex]) New(meshAssets ...assets.AssetID) (WorldMeshRegister[Vertex], error) {
 	rangesIndices := map[assets.AssetID]int{}
 
-	meshesToPack := make([]mesh.MeshStorageAsset[Vertex], len(meshAssets))
+	meshesToPack := make([]mesh.MeshAsset[Vertex], len(meshAssets))
 	for i, assetID := range meshAssets {
-		meshAsset, err := assets.StorageGet[mesh.MeshStorageAsset[Vertex]](r.assetsStorage, assetID)
+		meshAsset, err := assets.StorageGet[mesh.MeshAsset[Vertex]](r.assetsStorage, assetID)
 		if err != nil {
 			err := errors.Join(
 				err,

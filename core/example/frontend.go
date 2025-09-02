@@ -2,16 +2,13 @@ package example
 
 import (
 	"core/triangle"
-	"frontend/engine/components/mouse"
-	"frontend/engine/components/projection"
 	"frontend/engine/systems/inputs"
 	mousesystem "frontend/engine/systems/mouse"
 	"frontend/engine/systems/projections"
 	"frontend/engine/systems/render"
+	"frontend/engine/tools/broadcollision"
 	"frontend/services/backendconnection"
-	"frontend/services/colliders"
 	"frontend/services/console"
-	"frontend/services/ecs"
 	inputsmedia "frontend/services/media/inputs"
 	"frontend/services/media/window"
 	"frontend/services/scenes"
@@ -83,11 +80,9 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			cameraRaySystem := mousesystem.NewCameraRaySystem(
 				ctx.World,
-				ioc.Get[colliders.ColliderService](c),
+				ioc.Get[broadcollision.CollisionServiceFactory](c)(ctx.World),
 				ioc.Get[window.Api](c),
 				ctx.Events,
-				[]ecs.ComponentType{ecs.GetComponentType(projection.Ortho{}), ecs.GetComponentType(projection.Perspective{})},
-				[]ecs.ComponentType{ecs.GetComponentType(projection.Visible{}), ecs.GetComponentType(mouse.MouseEvents{})},
 			)
 			events.Listen(ctx.EventsBuilder, func(event mousesystem.ShootRayEvent) {
 				if err := cameraRaySystem.Listen(event); err != nil {
@@ -145,14 +140,18 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		})
 		return b
 	})
+	ioc.WrapService(b, scenes.LoadFirst, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
+		b.OnLoad(func(ctx scenes.SceneCtx) {
+			clearSystem := render.NewClearSystem()
+			events.Listen(ctx.EventsBuilder, clearSystem.Listen)
+		})
+		return b
+	})
 
 	ioc.WrapService(b, scenes.LoadAfterDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			renderSystem := render.NewRenderSystem(ctx.World, ctx.Events)
+			renderSystem := render.NewRenderSystem(ctx.World, ctx.Events, ioc.Get[window.Api](c))
 			events.ListenE(ctx.EventsBuilder, renderSystem.Listen)
-
-			flushSystem := render.NewFlushSystem(ioc.Get[window.Api](c))
-			events.Listen(ctx.EventsBuilder, flushSystem.Listen)
 		})
 		return b
 	})

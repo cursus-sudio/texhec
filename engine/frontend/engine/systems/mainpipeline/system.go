@@ -9,15 +9,18 @@ import (
 	"frontend/engine/components/transform"
 	"frontend/engine/systems/render"
 	"frontend/engine/tools/worldmesh"
-	"frontend/engine/tools/worldprojections"
 	"frontend/engine/tools/worldtexture"
 	"frontend/services/assets"
+	"frontend/services/datastructures"
 	"frontend/services/ecs"
 	"frontend/services/graphics"
+	"frontend/services/graphics/buffers"
 	"frontend/services/media/window"
 	"shared/services/logger"
+	"sync"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 var (
@@ -54,9 +57,10 @@ func NewSystem(
 		entitiesQueryAdditionalArguments: entitiesQueryAdditionalArguments,
 	}
 
-	projRegister, err := ecs.GetRegister[worldprojections.WorldProjectionsRegister](world)
+	projections := datastructures.NewSet[ecs.ComponentType]()
+	projections.Add(ecs.GetComponentType(projection.Ortho{}), ecs.GetComponentType(projection.Perspective{}))
 
-	register, err := newRegister(projRegister.Projections)
+	register, err := newRegister(projections)
 	if err != nil {
 		return nil, err
 	}
@@ -65,36 +69,31 @@ func NewSystem(
 	return system, nil
 }
 
-func (m *System) modifyRegisterOnChanges() error {
-	register, err := ecs.GetRegister[pipelineRegister](m.world)
-	if err != nil {
-		return err
-	}
-	// modify projections buffer
-	for projectionIndex, projectionType := range register.projections.Get() {
-		query := m.world.QueryEntitiesWithComponents(
-			projectionType,
-			ecs.GetComponentType(transform.Transform{}),
-		)
-		onChange := func(_ []ecs.EntityID) {
-			register.mutex.Lock()
-			defer register.mutex.Unlock()
-			entities := query.Entities()
-			if len(entities) != 1 {
-				m.logger.Error(projection.ErrWorldShouldHaveOneProjection)
-				return
-			}
-			camera := entities[0]
+func listenToProjectionChanges[Projection projection.Projection](
+	m *System,
+	mutex *sync.RWMutex,
+	buffer buffers.Buffer[mgl32.Mat4],
+) {
 
-			anyProj, err := m.world.GetComponent(camera, projectionType)
+	var zero Projection
+	query := m.world.QueryEntitiesWithComponents(
+		ecs.GetComponentType(zero),
+		ecs.GetComponentType(transform.Transform{}),
+	)
+	onChange := func(_ []ecs.EntityID) {
+		mutex.Lock()
+		defer mutex.Unlock()
+		entities := query.Entities()
+		for len(buffer.Get()) < len(entities) {
+			buffer.Add(mgl32.Mat4{})
+		}
+		for len(buffer.Get()) > len(entities) {
+			buffer.Remove(len(buffer.Get()) - 1)
+		}
+		for i, camera := range entities {
+			projectionComponent, err := ecs.GetComponent[Projection](m.world, camera)
 			if err != nil {
 				m.logger.Error(err)
-				return
-			}
-
-			projectionComponent, ok := anyProj.(projection.Projection)
-			if !ok {
-				m.logger.Error(projection.ErrExpectedUsedProjectionToImplementProjection)
 				return
 			}
 
@@ -108,13 +107,21 @@ func (m *System) modifyRegisterOnChanges() error {
 			cameraTransformMat4 := projectionComponent.ViewMat4(cameraTransformComponent)
 
 			mvp := projectionMat4.Mul4(cameraTransformMat4)
-			register.buffers.projBuffer.Set(int(projectionIndex), mvp)
+			buffer.Set(i, mvp)
 		}
-		query.OnAdd(onChange)
-		query.OnChange(onChange)
 	}
+	query.OnAdd(onChange)
+	query.OnChange(onChange)
+	query.OnRemove(onChange)
+}
 
-	//
+func (m *System) modifyRegisterOnChanges() error {
+	register, err := ecs.GetRegister[pipelineRegister](m.world)
+	if err != nil {
+		return err
+	}
+	listenToProjectionChanges[projection.Ortho](m, register.mutex, register.buffers.orthoBuffer)
+	listenToProjectionChanges[projection.Perspective](m, register.mutex, register.buffers.perspectiveBuffer)
 
 	// change entities buffer
 	{
@@ -145,7 +152,6 @@ func (m *System) modifyRegisterOnChanges() error {
 				if err != nil {
 					continue
 				}
-				// textureIndex, ok := register.textures[textureComponent.ID]
 				textureIndex, ok := texture.Assets.GetIndex(textureComponent.ID)
 				if !ok {
 					m.logger.Error(fmt.Errorf(
@@ -199,6 +205,12 @@ func (m *System) modifyRegisterOnChanges() error {
 			}
 		}
 
+		onRemove := func(entities []ecs.EntityID) {
+			register.mutex.Lock()
+			defer register.mutex.Unlock()
+			register.buffers.Remove(entities)
+		}
+
 		query := m.world.QueryEntitiesWithComponents(
 			append(
 				m.entitiesQueryAdditionalArguments,
@@ -212,10 +224,12 @@ func (m *System) modifyRegisterOnChanges() error {
 
 		query.OnAdd(onChange)
 		query.OnChange(onChange)
-		query.OnRemove(register.buffers.Remove)
+		query.OnRemove(onRemove)
 	}
 	return nil
 }
+
+var changes0 int = 0
 
 func (m *System) Listen(render.RenderEvent) error {
 	pipelineRegister, err := ecs.GetRegister[pipelineRegister](m.world)
@@ -237,13 +251,14 @@ func (m *System) Listen(render.RenderEvent) error {
 
 	pipelineRegister.program.Use()
 	mesh.Mesh.Use()
-	texture.Bind()
+	texture.Use()
 	gl.BindBuffer(gl.DRAW_INDIRECT_BUFFER, pipelineRegister.buffers.cmdBuffer.ID())
+	cmdBufferLen := len(pipelineRegister.buffers.cmdBuffer.Get())
 	gl.MultiDrawElementsIndirect(
 		gl.TRIANGLES,
 		gl.UNSIGNED_INT,
 		nil,
-		int32(len(pipelineRegister.buffers.cmdBuffer.Get())),
+		int32(cmdBufferLen),
 		0,
 	)
 

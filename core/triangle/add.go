@@ -11,6 +11,7 @@ import (
 	"frontend/engine/components/transform"
 	"frontend/engine/systems/mainpipeline"
 	"frontend/engine/systems/projections"
+	"frontend/engine/systems/transformsystem"
 	"frontend/engine/tools/worldmesh"
 	"frontend/engine/tools/worldprojections"
 	"frontend/engine/tools/worldtexture"
@@ -67,6 +68,13 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadInitialEvents, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			events.Emit(ctx.Events, projections.NewUpdateProjectionsEvent())
+		})
+		return b
+	})
+
+	ioc.WrapService(b, scenes.LoadFirst, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
+		b.OnLoad(func(ctx scenes.SceneCtx) {
+			transformsystem.NewLockerSystem(ctx.World)
 		})
 		return b
 	})
@@ -130,8 +138,9 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			})
 			entity := ctx.World.NewEntity()
 			ctx.World.SaveComponent(entity, transform.NewTransform().
-				SetPos([3]float32{-300, 200, -1}).
+				SetPos([3]float32{-400, 300, -1}).
 				SetSize([3]float32{100, 100, 1}))
+			ctx.World.SaveComponent(entity, transform.NewPosLock(mgl32.Vec3{1, 0}))
 			ctx.World.SaveComponent(entity, transform.NewStatic())
 			ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
 			ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))

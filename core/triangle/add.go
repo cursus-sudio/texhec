@@ -74,7 +74,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 
 	ioc.WrapService(b, scenes.LoadFirst, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			transformsystem.NewLockerSystem(ctx.World)
+			transformsystem.NewPivotPointSystem(ctx.World)
 		})
 		return b
 	})
@@ -140,7 +140,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			ctx.World.SaveComponent(entity, transform.NewTransform().
 				SetPos([3]float32{-400, 300, -1}).
 				SetSize([3]float32{100, 100, 1}))
-			ctx.World.SaveComponent(entity, transform.NewPosLock(mgl32.Vec3{1, 0}))
+			ctx.World.SaveComponent(entity, transform.NewPivotPoint(mgl32.Vec3{1, 0}))
 			ctx.World.SaveComponent(entity, transform.NewStatic())
 			ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
 			ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))

@@ -39,6 +39,7 @@ func (s *RenderSystem) Listen(args frames.FrameEvent) error {
 		gl.WaitSync(s.fence, gl.SYNC_FLUSH_COMMANDS_BIT, gl.TIMEOUT_IGNORED)
 		gl.DeleteSync(s.fence)
 		s.setFence = false
+		gl.Flush()
 	}
 
 	events.Emit(s.events, RenderEvent{})

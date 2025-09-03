@@ -2,8 +2,11 @@ package projections
 
 import (
 	"frontend/engine/components/projection"
+	"frontend/engine/components/transform"
 	"frontend/services/ecs"
 	"frontend/services/media/window"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 // events
@@ -28,13 +31,22 @@ type UpdateProjetionsSystem struct {
 func NewUpdateProjectionsSystem(world ecs.World, window window.Api) UpdateProjetionsSystem {
 	perspectiveQuery := world.QueryEntitiesWithComponents(ecs.GetComponentType(projection.DynamicPerspective{}))
 	orthoQuery := world.QueryEntitiesWithComponents(ecs.GetComponentType(projection.DynamicOrtho{}))
-	return UpdateProjetionsSystem{
+	s := UpdateProjetionsSystem{
 		world:  world,
 		window: window,
 
 		perspectivesQuery: perspectiveQuery,
 		orthoQuery:        orthoQuery,
 	}
+	listener := func(_ []ecs.EntityID) { s.Listen(UpdateProjectionsEvent{}) }
+	perspectiveQuery.OnAdd(listener)
+	perspectiveQuery.OnChange(listener)
+	perspectiveQuery.OnRemove(listener)
+	orthoQuery.OnAdd(listener)
+	orthoQuery.OnChange(listener)
+	orthoQuery.OnRemove(listener)
+
+	return s
 }
 
 func (s UpdateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
@@ -60,10 +72,18 @@ func (s UpdateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
 		s.world.SaveComponent(entity, perspective)
 	}
 	for _, entity := range s.orthoQuery.Entities() {
+		transformComponent, err := ecs.GetComponent[transform.Transform](s.world, entity)
+		if err != nil {
+			continue
+		}
 		resizeOrtho, err := ecs.GetComponent[projection.DynamicOrtho](s.world, entity)
 		if err != nil {
 			continue
 		}
+
+		transformComponent.Size = mgl32.Vec3{w / resizeOrtho.Zoom, h / resizeOrtho.Zoom, transformComponent.Size.Z()}
+		s.world.SaveComponent(entity, transformComponent)
+
 		ortho := projection.NewOrtho(
 			w/resizeOrtho.Zoom, h/resizeOrtho.Zoom,
 			resizeOrtho.Near, resizeOrtho.Far,

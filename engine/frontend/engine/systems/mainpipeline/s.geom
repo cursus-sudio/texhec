@@ -7,12 +7,12 @@ layout(triangle_strip, max_vertices = 30) out;
 //
 
 in FS {
-    vec2 textureCoord;
+    vec2 uv;
     flat int drawID;
 } gs_in[];
 
 out FS {
-    vec2 textureCoord;
+    vec2 uv;
     flat int drawID;
 } gs_out;
 
@@ -39,7 +39,7 @@ void main() {
             for (int i = 0; i < gl_in.length(); i++) {
                 gl_Position = camera * gl_in[i].gl_Position;
 
-                gs_out.textureCoord = gs_in[i].textureCoord;
+                gs_out.uv = gs_in[i].uv;
                 gs_out.drawID = gs_in[i].drawID;
                 EmitVertex();
             }
@@ -51,7 +51,7 @@ void main() {
             for (int i = 0; i < gl_in.length(); i++) {
                 gl_Position = camera * gl_in[i].gl_Position;
 
-                gs_out.textureCoord = gs_in[i].textureCoord;
+                gs_out.uv = gs_in[i].uv;
                 gs_out.drawID = gs_in[i].drawID;
                 EmitVertex();
             }

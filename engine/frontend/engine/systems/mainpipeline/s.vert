@@ -1,14 +1,14 @@
 #version 460 core
 
 layout(location = 0) in vec3 pos;
-layout(location = 1) in vec2 textureCoord;
+layout(location = 1) in vec2 uv;
 
 layout(std430, binding = 2) buffer ModelData {
     mat4 modelsMatrix[];
 };
 
 out FS {
-    vec2 textureCoord;
+    vec2 uv;
     flat int drawID;
 } vs;
 
@@ -19,7 +19,7 @@ void main() {
 
     //
 
-    vs.textureCoord = textureCoord;
+    vs.uv = uv;
 
     mat4 modelMatrix = modelsMatrix[id];
 

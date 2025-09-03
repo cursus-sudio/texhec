@@ -10,47 +10,68 @@ import (
 	"frontend/services/assets"
 	"frontend/services/graphics/vao/ebo"
 	"image"
+	"image/draw"
 	_ "image/png"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
 )
 
+func flipImage(img image.Image) image.Image {
+	bounds := img.Bounds()
+	newImg := image.NewRGBA(bounds)
+
+	for y := 0; y < bounds.Dy(); y++ {
+		// Use draw.Draw to copy a row of pixels.
+		// The destination rectangle is a single row at the flipped Y coordinate.
+		destY := bounds.Dy() - 1 - y
+		destRect := image.Rect(0, destY, bounds.Dx(), destY+1)
+
+		// The source rectangle is a single row at the original Y coordinate.
+		srcRect := image.Rect(0, y, bounds.Dx(), y+1)
+
+		// Copy the source row to the destination row.
+		draw.Draw(newImg, destRect, img, srcRect.Min, draw.Src)
+	}
+	return newImg
+}
+
 func registerAssets(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b assets.AssetsStorageBuilder) assets.AssetsStorageBuilder {
 		b.RegisterAsset(MeshAssetID, func() (any, error) {
 			vertices := []mainpipeline.Vertex{
 				// Front face
-				{Pos: [3]float32{1, 1, 1}, TexturePos: [2]float32{0, 0}},
-				{Pos: [3]float32{1, -1, 1}, TexturePos: [2]float32{1, 0}},
-				{Pos: [3]float32{-1, -1, 1}, TexturePos: [2]float32{1, 1}},
 				{Pos: [3]float32{-1, 1, 1}, TexturePos: [2]float32{0, 1}},
+				{Pos: [3]float32{-1, -1, 1}, TexturePos: [2]float32{0, 0}},
+				{Pos: [3]float32{1, -1, 1}, TexturePos: [2]float32{1, 0}},
+				{Pos: [3]float32{1, 1, 1}, TexturePos: [2]float32{1, 1}},
 
 				// Back face
-				{Pos: [3]float32{-1, 1, -1}, TexturePos: [2]float32{1, 0}},
-				{Pos: [3]float32{-1, -1, -1}, TexturePos: [2]float32{1, 1}},
-				{Pos: [3]float32{1, -1, -1}, TexturePos: [2]float32{0, 1}},
-				{Pos: [3]float32{1, 1, -1}, TexturePos: [2]float32{0, 0}},
+				{Pos: [3]float32{-1, 1, -1}, TexturePos: [2]float32{1, 1}},
+				{Pos: [3]float32{-1, -1, -1}, TexturePos: [2]float32{1, 0}},
+				{Pos: [3]float32{1, -1, -1}, TexturePos: [2]float32{0, 0}},
+				{Pos: [3]float32{1, 1, -1}, TexturePos: [2]float32{0, 1}},
 			}
 
 			indices := []ebo.Index{
+				// Front face
 				0, 1, 2,
 				0, 2, 3,
-
+				// Back face
 				4, 5, 6,
 				4, 6, 7,
-
-				0, 1, 6,
-				0, 6, 7,
-
-				3, 2, 5, //
-				3, 5, 4,
-
-				0, 3, 4,
-				0, 4, 7, //
-
-				1, 5, 2, //
-				1, 6, 5,
+				// Top face
+				3, 7, 4,
+				3, 4, 0,
+				// Bottom face
+				1, 5, 6,
+				1, 6, 2,
+				// Right face
+				2, 6, 7,
+				2, 7, 3,
+				// Left face
+				5, 1, 0,
+				5, 0, 4,
 			}
 			asset := mesh.NewMeshStorageAsset(vertices, indices)
 			return asset, nil
@@ -62,7 +83,8 @@ func registerAssets(b ioc.Builder) {
 			if err != nil {
 				return nil, err
 			}
-			asset := texture.NewTextureStorageAsset(img)
+			imgInverse := flipImage(img)
+			asset := texture.NewTextureStorageAsset(imgInverse)
 			return asset, nil
 		})
 

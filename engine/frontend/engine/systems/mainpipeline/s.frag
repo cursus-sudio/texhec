@@ -1,7 +1,7 @@
 #version 460 core
 
 in FS {
-    vec2 textureCoord;
+    vec2 uv;
     flat int drawID;
 } fs;
 
@@ -15,6 +15,6 @@ out vec4 fragColor;
 
 void main() {
     int textureID = texturesIDs[fs.drawID];
-    vec3 base = texture(texs, vec3(fs.textureCoord, float(textureID))).rgb;
+    vec3 base = texture(texs, vec3(fs.uv, float(textureID))).rgb;
     fragColor = vec4(base, 1.0);
 }

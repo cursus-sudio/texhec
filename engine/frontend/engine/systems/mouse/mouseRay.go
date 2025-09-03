@@ -85,6 +85,9 @@ func (s *CameraRaySystem) Listen(args ShootRayEvent) error {
 			if err != nil {
 				return err
 			}
+			if collision == nil {
+				continue
+			}
 			if nearestCollision == nil {
 				nearestCollision = collision
 				continue

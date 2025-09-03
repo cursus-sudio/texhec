@@ -51,15 +51,15 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				0.01,
 				1000,
 			))
-			// uiCamera := ctx.World.NewEntity()
-			// ctx.World.SaveComponent(uiCamera, transform.NewTransform().
-			// 	SetPos(mgl32.Vec3{0, -50, 100}),
-			// )
-			// ctx.World.SaveComponent(uiCamera, projection.NewDynamicOrtho(
-			// 	-1000,
-			// 	+1000,
-			// 	1,
-			// ))
+			uiCamera := ctx.World.NewEntity()
+			ctx.World.SaveComponent(uiCamera, transform.NewTransform().
+				SetPos(mgl32.Vec3{0, -50, 100}),
+			)
+			ctx.World.SaveComponent(uiCamera, projection.NewDynamicOrtho(
+				-1000,
+				+100,
+				1,
+			))
 			// ctx.World.SaveComponent(uiCamera, projection.NewDynamicPerspective(
 			// 	mgl32.DegToRad(90),
 			// 	0.01,

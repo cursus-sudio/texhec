@@ -2,6 +2,7 @@ package example
 
 import (
 	"core/triangle"
+	"frontend/engine/systems/collidersystem"
 	"frontend/engine/systems/inputs"
 	mousesystem "frontend/engine/systems/mouse"
 	"frontend/engine/systems/projections"
@@ -89,6 +90,8 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 					ioc.Get[logger.Logger](c).Error(err)
 				}
 			})
+
+			collidersystem.NewColliderSystem(ctx.World, ioc.Get[broadcollision.CollisionServiceFactory](c))
 
 			hoverSystem := mousesystem.NewHoverSystem(ctx.World, ctx.Events)
 			events.Listen(ctx.EventsBuilder, hoverSystem.Listen)

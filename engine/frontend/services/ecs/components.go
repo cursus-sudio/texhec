@@ -140,6 +140,9 @@ func (components *componentsImpl) SaveComponent(entityID EntityID, component Com
 	dependentQueries, _ := components.dependentQueries[componentType]
 	if entityHadComponent {
 		for _, query := range dependentQueries {
+			if _, ok := query.entities.GetIndex(entityID); !ok {
+				continue
+			}
 			for _, listener := range query.onChange {
 				listener([]EntityID{entityID})
 			}

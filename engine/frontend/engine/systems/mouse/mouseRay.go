@@ -58,6 +58,9 @@ func (s *CameraRaySystem) Listen(args ShootRayEvent) error {
 	}
 
 	for _, projectionType := range p.Projections.Get() {
+		if projectionType == ecs.GetComponentType(projection.Perspective{}) {
+			continue
+		}
 		var cameraTransform transform.Transform
 		query := s.world.QueryEntitiesWithComponents(projectionType)
 		cameras := query.Entities()

@@ -1,6 +1,10 @@
 package collider
 
-import "github.com/go-gl/mathgl/mgl32"
+import (
+	"frontend/services/assets"
+
+	"github.com/go-gl/mathgl/mgl32"
+)
 
 type RangeTarget bool
 
@@ -26,6 +30,7 @@ func NewPolygon(a, b, c mgl32.Vec3) Polygon {
 }
 
 type ColliderAsset interface {
+	assets.GoAsset
 	// first aabb is the entry point
 	AABBs() []AABB
 	// []Range element index corresponds to []AABB element index
@@ -35,6 +40,7 @@ type ColliderAsset interface {
 }
 
 type colliderAsset struct {
+	assets.GoAsset
 	aabbs    []AABB
 	ranges   []Range
 	polygons []Polygon
@@ -45,7 +51,13 @@ func NewColliderStorageAsset(
 	ranges []Range,
 	polygons []Polygon,
 ) ColliderAsset {
-	return &colliderAsset{aabbs, ranges, polygons}
+	asset := &colliderAsset{
+		aabbs:    aabbs,
+		ranges:   ranges,
+		polygons: polygons,
+	}
+	asset.GoAsset = assets.NewGoAsset(asset)
+	return asset
 }
 
 func (a *colliderAsset) AABBs() []AABB       { return a.aabbs }

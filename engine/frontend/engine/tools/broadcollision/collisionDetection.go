@@ -7,6 +7,8 @@ import (
 	"frontend/services/assets"
 	"frontend/services/ecs"
 	"math"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 // TODO 1
@@ -35,8 +37,7 @@ func (c *collisionDetectionService) CollidesWithRay(entity ecs.EntityID, ray col
 	if err != nil {
 		return nil, err
 	}
-	if ok, _ := rayAABBIntersect(
-		ray, collider.TransformAABB(transformComponent), math.MaxFloat32); !ok {
+	if ok, _ := rayAABBIntersect(ray, collider.TransformAABB(transformComponent), math.MaxFloat32); !ok {
 		return nil, nil
 	}
 
@@ -51,58 +52,65 @@ func (c *collisionDetectionService) CollidesWithRay(entity ecs.EntityID, ray col
 
 	//
 
+	{
+		inverseTransform := transformComponent.Mat4().Inv()
+		inverseTranspose := inverseTransform.Transpose()
+		ray = collider.NewRay(
+			inverseTransform.Mul4x1(ray.Pos.Vec4(1.0)).Vec3(),
+			inverseTranspose.Mul4x1(ray.Direction.Vec4(1.0)).Vec3(),
+		)
+	}
+
 	aabbs := colliderAsset.AABBs()
 	ranges := colliderAsset.Ranges()
 	polygons := colliderAsset.Polygons()
 
 	rangesToVisit := []collider.Range{}
 	if len(ranges) > 0 {
-		rangesToVisit = append(rangesToVisit, ranges[0])
+		rangesToVisit = append(rangesToVisit, collider.NewRange(collider.Branch, 0, 1))
 	}
 
 	var closestHit *collider.RayHit
-	var minDistance float32 = math.MaxFloat32
 
 	for len(rangesToVisit) > 0 {
 		currentRange := rangesToVisit[len(rangesToVisit)-1]
 		rangesToVisit = rangesToVisit[:len(rangesToVisit)-1]
 
-		aabb := aabbs[currentRange.First]
-
-		intersects, _ := rayAABBIntersect(ray, aabb, minDistance)
-		if !intersects {
-			continue
-		}
-
 		if currentRange.Target == collider.Branch {
-			for i := uint32(0); i < currentRange.Count; i++ {
-				childIndex := currentRange.First + 1 + i
-				if childIndex < uint32(len(ranges)) {
-					rangesToVisit = append(rangesToVisit, ranges[childIndex])
+			for i := currentRange.First; i < currentRange.First+currentRange.Count; i++ {
+				aabb := aabbs[i]
+				var maxDistance float32 = math.MaxFloat32
+				if closestHit != nil {
+					maxDistance = closestHit.Distance
 				}
+				intersects, _ := rayAABBIntersect(ray, aabb, maxDistance)
+				if !intersects {
+					continue
+				}
+				rangesToVisit = append(rangesToVisit, ranges[i])
 			}
-			continue
-		}
+		} else if currentRange.Target == collider.Leaf {
+			polygons := polygons[currentRange.First : currentRange.First+currentRange.Count]
+			for _, polygon := range polygons {
+				var maxDistance float32 = math.MaxFloat32
+				if closestHit != nil {
+					maxDistance = closestHit.Distance
+				}
+				intersect, dist := rayTriangleIntersect(ray, polygon, maxDistance)
+				if !intersect {
+					continue
+				}
 
-		for i := uint32(0); i < currentRange.Count; i++ {
-			polygonIndex := currentRange.First + i
-			polygon := polygons[polygonIndex]
+				if closestHit != nil && dist >= closestHit.Distance {
+					continue
+				}
 
-			intersect, dist := rayTriangleIntersect(ray, polygon, minDistance)
-			if !intersect {
-				continue
+				hitPoint := ray.Pos.Add(ray.Direction.Mul(dist))
+				normal := polygon.B.Sub(polygon.A).Cross(polygon.C.Sub(polygon.A)).Normalize()
+
+				hit := collider.NewRayHit(hitPoint, normal, dist)
+				closestHit = &hit
 			}
-
-			if dist >= minDistance {
-				continue
-			}
-
-			minDistance = dist
-			hitPoint := ray.Pos.Add(ray.Direction.Mul(dist))
-			normal := polygon.B.Sub(polygon.A).Cross(polygon.C.Sub(polygon.A)).Normalize()
-
-			hit := collider.NewRayHit(hitPoint, normal, dist)
-			closestHit = &hit
 		}
 	}
 
@@ -119,60 +127,36 @@ func (c *collisionDetectionService) CollidesWithObject(entityA ecs.EntityID, ent
 }
 
 func (c *collisionDetectionService) ShootRay(ray collider.Ray) (ObjectRayCollision, error) {
-	aabbs := c.worldCollider.AABBs()
-	ranges := c.worldCollider.Ranges()
-	entities := c.worldCollider.Entities()
-	if len(aabbs) == 0 {
+	chunkCoordBefore := ray.Pos.Mul(1 / c.worldCollider.ChunkSize())
+	chunkCoord := mgl32.Vec2{
+		float32(math.Round(float64(chunkCoordBefore[0]))) * c.worldCollider.ChunkSize(),
+		float32(math.Round(float64(chunkCoordBefore[1]))) * c.worldCollider.ChunkSize(),
+	}
+
+	chunk, ok := c.worldCollider.Chunks()[chunkCoord]
+	if !ok {
 		return nil, nil
 	}
 
-	branchesToVisit := []int{}
-	branchesToVisit = append(branchesToVisit, 0)
-
 	var closestHit *collider.RayHit
 	var closestEntity ecs.EntityID
-	var minDistance float32 = math.MaxFloat32
 
-	for len(branchesToVisit) > 0 {
-		currentBranch := branchesToVisit[len(branchesToVisit)-1]
-		branchesToVisit = branchesToVisit[:len(branchesToVisit)-1]
-		currentRange := ranges[currentBranch]
-
-		intersects, dist := rayAABBIntersect(ray, aabbs[currentRange.First], minDistance)
-		if !intersects || dist >= closestHit.Distance {
+	for _, entity := range chunk.Get() {
+		collision, err := c.CollidesWithRay(entity, ray)
+		if err != nil {
+			return nil, err
+		}
+		if collision == nil {
 			continue
 		}
 
-		if currentRange.Target == collider.Branch {
-			for i := uint32(0); i < currentRange.Count; i++ {
-				childIndex := currentRange.First + i
-				branchesToVisit = append(branchesToVisit, int(childIndex))
-			}
+		if closestHit != nil && collision.Hit().Distance <= closestHit.Distance {
 			continue
 		}
 
-		// leaf
-		for i := uint32(0); i < currentRange.Count; i++ {
-			entityIndex := currentRange.First + i
-			entity := entities[entityIndex]
-
-			collision, err := c.CollidesWithRay(entity, ray)
-			if err != nil {
-				return nil, err
-			}
-			if collision == nil {
-				continue
-			}
-
-			if collision.Hit().Distance >= minDistance {
-				continue
-			}
-
-			minDistance = dist
-			hit := collision.Hit()
-			closestHit = &hit
-			closestEntity = entity
-		}
+		hit := collision.Hit()
+		closestHit = &hit
+		closestEntity = entity
 	}
 
 	if closestHit == nil {

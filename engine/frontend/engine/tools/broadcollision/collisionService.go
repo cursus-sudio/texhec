@@ -5,6 +5,8 @@ import (
 	"frontend/engine/components/transform"
 	"frontend/services/assets"
 	"frontend/services/ecs"
+	"shared/services/logger"
+	"sync"
 )
 
 type CollisionServiceFactory func(ecs.World) CollisionService
@@ -17,18 +19,35 @@ type CollisionService interface {
 // TODO 3
 // change visibility check in projection/occlusion
 
-type collisionsService struct {
-	world                ecs.World
-	assets               assets.Assets
+type register struct {
 	staticWorldCollider  worldCollider
 	dynamicWorldCollider worldCollider
+	mutex                sync.Locker
 }
 
-var factory CollisionServiceFactory = func(w ecs.World) CollisionService {
-	return &collisionsService{
-		world:                w,
-		staticWorldCollider:  newWorldCollider(w),
-		dynamicWorldCollider: newWorldCollider(w),
+func newRegister(world ecs.World) register {
+	r := register{
+		newWorldCollider(world, 100),
+		newWorldCollider(world, 100),
+		&sync.Mutex{},
+	}
+	world.SaveRegister(r)
+	return r
+}
+
+type collisionsService struct {
+	world  ecs.World
+	assets assets.Assets
+	logger logger.Logger
+}
+
+func factory(assets assets.Assets, logger logger.Logger) CollisionServiceFactory {
+	return func(w ecs.World) CollisionService {
+		return &collisionsService{
+			world:  w,
+			assets: assets,
+			logger: logger,
+		}
 	}
 }
 
@@ -41,26 +60,41 @@ func (s *collisionsService) CollidesWithObject(entityA ecs.EntityID, entityB ecs
 		CollidesWithObject(entityA, entityB)
 }
 
-func (s *collisionsService) ShootRay(entity collider.Ray) (ObjectRayCollision, error) {
-	c1, err := newCollisionDetectionService(s.world, s.assets, s.staticWorldCollider).ShootRay(entity)
-	if c1 == nil || err != nil {
+func (s *collisionsService) ShootRay(ray collider.Ray) (ObjectRayCollision, error) {
+	r, err := ecs.GetRegister[register](s.world)
+	if err != nil {
+		r = newRegister(s.world)
+	}
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	c1, err := newCollisionDetectionService(s.world, s.assets, r.staticWorldCollider).ShootRay(ray)
+	if err != nil {
 		return nil, err
 	}
-	c2, err := newCollisionDetectionService(s.world, s.assets, s.dynamicWorldCollider).ShootRay(entity)
-	if c2 == nil || err != nil {
+	c2, err := newCollisionDetectionService(s.world, s.assets, r.dynamicWorldCollider).ShootRay(ray)
+	if err != nil {
 		return nil, err
 	}
-	if c1.Hit().Distance < c2.Hit().Distance {
+	if c1 == nil {
+		return c2, nil
+	}
+	if c2 == nil || c1.Hit().Distance < c2.Hit().Distance {
 		return c1, nil
 	}
 	return c2, nil
 }
 func (s *collisionsService) NarrowCollisions(entity ecs.EntityID) ([]ecs.EntityID, error) {
-	c1, err := newCollisionDetectionService(s.world, s.assets, s.staticWorldCollider).NarrowCollisions(entity)
+	r, err := ecs.GetRegister[register](s.world)
+	if err != nil {
+		r = newRegister(s.world)
+	}
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	c1, err := newCollisionDetectionService(s.world, s.assets, r.staticWorldCollider).NarrowCollisions(entity)
 	if err != nil {
 		return nil, err
 	}
-	c2, err := newCollisionDetectionService(s.world, s.assets, s.dynamicWorldCollider).NarrowCollisions(entity)
+	c2, err := newCollisionDetectionService(s.world, s.assets, r.dynamicWorldCollider).NarrowCollisions(entity)
 	if err != nil {
 		return nil, err
 	}
@@ -69,6 +103,12 @@ func (s *collisionsService) NarrowCollisions(entity ecs.EntityID) ([]ecs.EntityI
 }
 
 func (s *collisionsService) Add(entities ...ecs.EntityID) {
+	r, err := ecs.GetRegister[register](s.world)
+	if err != nil {
+		r = newRegister(s.world)
+	}
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 	static := make([]ecs.EntityID, 0, len(entities))
 	dynamic := make([]ecs.EntityID, 0, len(entities))
 	for _, entity := range entities {
@@ -80,13 +120,25 @@ func (s *collisionsService) Add(entities ...ecs.EntityID) {
 			static = append(static, entity)
 		}
 	}
-	s.dynamicWorldCollider.Add(dynamic...)
-	s.staticWorldCollider.Add(static...)
+	r.dynamicWorldCollider.Add(dynamic...)
+	r.staticWorldCollider.Add(static...)
 
 }
 func (s *collisionsService) Update(entities ...ecs.EntityID) {
-	s.dynamicWorldCollider.Update(entities...)
+	r, err := ecs.GetRegister[register](s.world)
+	if err != nil {
+		r = newRegister(s.world)
+	}
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	r.dynamicWorldCollider.Update(entities...)
 }
 func (s *collisionsService) Remove(entities ...ecs.EntityID) {
-	s.dynamicWorldCollider.Remove(entities...)
+	r, err := ecs.GetRegister[register](s.world)
+	if err != nil {
+		r = newRegister(s.world)
+	}
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	r.dynamicWorldCollider.Remove(entities...)
 }

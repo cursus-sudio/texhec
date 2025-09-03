@@ -5,6 +5,9 @@ import (
 	"frontend/engine/components/transform"
 	"frontend/services/datastructures"
 	"frontend/services/ecs"
+	"math"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type CollidersTrackingService interface {
@@ -15,135 +18,72 @@ type CollidersTrackingService interface {
 
 // TODO 2
 type worldCollider interface {
-	AABBs() []collider.AABB
-	Ranges() []collider.Range
-	Entities() []ecs.EntityID
+	ChunkSize() float32
+	Chunks() map[mgl32.Vec2]datastructures.Set[ecs.EntityID]
 
 	CollidersTrackingService
 }
 
-type node struct {
-	Parent           *node
-	Collider         collider.AABB
-	ChildrenNodes    []node
-	ChildrenEntities datastructures.Set[ecs.EntityID]
-}
-
 type worldColliderImpl struct {
-	world ecs.World
-
-	leavesPerNode int
-
-	node         *node
-	entitiesNode map[ecs.EntityID]datastructures.Set[*node]
-
-	// objects
-	aabbs  []collider.AABB
-	ranges []collider.Range
-
-	// leaf targets
-	entities []ecs.EntityID
+	world             ecs.World
+	chunkSize         float32
+	chunks            map[mgl32.Vec2]datastructures.Set[ecs.EntityID]
+	entitiesPositions map[ecs.EntityID][]mgl32.Vec2
 }
 
-func newWorldCollider(world ecs.World) worldCollider {
+func newWorldCollider(world ecs.World, chunkSize float32) worldCollider {
 	return &worldColliderImpl{
-		world:         world,
-		leavesPerNode: 8, // for octo tree
+		world:             world,
+		chunkSize:         chunkSize,
+		chunks:            make(map[mgl32.Vec2]datastructures.Set[ecs.EntityID]),
+		entitiesPositions: make(map[ecs.EntityID][]mgl32.Vec2),
 	}
 }
 
-func (c *worldColliderImpl) Refresh() {
-	type RangeToPopulate struct {
-		NodeID     *node
-		RangeIndex int
-	}
+func floorF32ToInt(num float32) int {
+	return int(math.Floor(float64(num)))
+}
 
-	aabbs := []collider.AABB{}
-	ranges := []collider.Range{}
-	entities := []ecs.EntityID{}
+func (c *worldColliderImpl) getPositions(aabb collider.AABB) []mgl32.Vec2 {
+	minPos, maxPos := aabb.Min.Vec2(), aabb.Max.Vec2()
+	minGridX := floorF32ToInt(minPos.X() / c.chunkSize)
+	minGridY := floorF32ToInt(minPos.Y() / c.chunkSize)
+	maxGridX := floorF32ToInt(maxPos.X() / c.chunkSize)
+	maxGridY := floorF32ToInt(maxPos.Y() / c.chunkSize)
 
-	nodesToVisit := []*node{c.node}
-	rangesToPopulate := []RangeToPopulate{}
-	for len(nodesToVisit) > 0 {
-		node := nodesToVisit[0]
-		if len(rangesToPopulate) != 0 {
-			if rangeToPopulate := rangesToPopulate[0]; rangeToPopulate.NodeID == node {
-				ranges[rangeToPopulate.RangeIndex].First = uint32(len(aabbs))
-				rangesToPopulate = rangesToPopulate[1:]
-			}
-		}
-		nodesToVisit = nodesToVisit[1:]
+	var positions []mgl32.Vec2
+	for x := minGridX; x <= maxGridX; x++ {
+		for y := minGridY; y <= maxGridY; y++ {
+			tileX := float32(x) * c.chunkSize
+			tileY := float32(y) * c.chunkSize
+			tileCenter := mgl32.Vec2{tileX, tileY}
 
-		if node.ChildrenNodes != nil {
-			aabbs = append(aabbs, node.Collider)
-			count := len(node.ChildrenNodes)
-			colliderRange := collider.NewRange(collider.Branch, 0, uint32(count))
-			rangeIndex := len(ranges)
-			ranges = append(ranges, colliderRange)
-
-			rangesToPopulate = append(rangesToPopulate, RangeToPopulate{node, rangeIndex})
-			for i := range node.ChildrenNodes {
-				nodesToVisit = append(nodesToVisit, &node.ChildrenNodes[i])
-			}
-			continue
-		}
-
-		if node.ChildrenEntities != nil {
-			aabbs = append(aabbs, node.Collider)
-			index := len(entities)
-			count := len(node.ChildrenEntities.Get())
-			colliderRange := collider.NewRange(collider.Leaf, uint32(index), uint32(count))
-
-			ranges = append(ranges, colliderRange)
-			entities = append(entities, node.ChildrenEntities.Get()...)
-			continue
+			positions = append(positions, tileCenter)
 		}
 	}
+
+	return positions
 }
 
-func (c *worldColliderImpl) AABBs() []collider.AABB {
-	return nil
-	if c.aabbs == nil {
-		c.Refresh()
-	}
-	return c.aabbs
-}
-func (c *worldColliderImpl) Ranges() []collider.Range {
-	return nil
-	if c.ranges == nil {
-		c.Refresh()
-	}
-	return c.ranges
-}
-func (c *worldColliderImpl) Entities() []ecs.EntityID {
-	return nil
-	if c.entities == nil {
-		c.Refresh()
-	}
-	return c.entities
-}
-
-func (c *worldColliderImpl) add(entity ecs.EntityID, aabb collider.AABB) {
-	// check size.
-	// add to leafest node.
-	// if is on one tile: split if there are to many entities
-	// if is on many tiles: do nothing or split if there are to many entities
-}
+func (c *worldColliderImpl) ChunkSize() float32                                      { return c.chunkSize }
+func (c *worldColliderImpl) Chunks() map[mgl32.Vec2]datastructures.Set[ecs.EntityID] { return c.chunks }
 
 func (c *worldColliderImpl) Add(entities ...ecs.EntityID) {
-	c.aabbs = nil
-	c.ranges = nil
-	c.entities = nil
 	for _, entity := range entities {
-		if _, ok := c.entitiesNode[entity]; ok {
-			continue
-		}
 		transformComponent, err := ecs.GetComponent[transform.Transform](c.world, entity)
 		if err != nil {
 			continue
 		}
-		aabb := collider.TransformAABB(transformComponent)
-		c.add(entity, aabb)
+		positions := c.getPositions(collider.TransformAABB(transformComponent))
+		c.entitiesPositions[entity] = positions
+		for _, position := range positions {
+			arr, ok := c.chunks[position]
+			if !ok {
+				arr = datastructures.NewSet[ecs.EntityID]()
+			}
+			arr.Add(entity)
+			c.chunks[position] = arr
+		}
 	}
 }
 func (c *worldColliderImpl) Update(entities ...ecs.EntityID) {
@@ -151,53 +91,22 @@ func (c *worldColliderImpl) Update(entities ...ecs.EntityID) {
 	c.Add(entities...)
 }
 func (c *worldColliderImpl) Remove(entities ...ecs.EntityID) {
-	// clear collision tree cache
-	c.aabbs = nil
-	c.ranges = nil
-	c.entities = nil
-
 	for _, entity := range entities {
-		nodes, ok := c.entitiesNode[entity]
+		positions, ok := c.entitiesPositions[entity]
 		if !ok {
 			continue
 		}
-		parentized := []*node{}
-		delete(c.entitiesNode, entity)
-		for _, node := range nodes.Get() {
-			node.ChildrenEntities.RemoveElements(entity)
-			if node.Parent == nil {
+		delete(c.entitiesPositions, entity)
+		for _, position := range positions {
+			arr, ok := c.chunks[position]
+			if !ok {
 				continue
 			}
-
-		checkParent:
-			children := datastructures.NewSet[ecs.EntityID]()
-			count := 0
-			if node.Parent == nil {
-				goto finishParentChecking
+			arr.RemoveElements(entity)
+			if len(arr.Get()) == 0 {
+				delete(c.chunks, position)
+				continue
 			}
-			for _, child := range node.Parent.ChildrenNodes {
-				if len(child.ChildrenNodes) != 0 {
-					goto finishParentChecking
-				}
-				count += len(child.ChildrenNodes)
-				if count >= c.leavesPerNode {
-					goto finishParentChecking
-				}
-				for _, entity := range child.ChildrenEntities.Get() {
-					children.Add(entity)
-				}
-			}
-
-			parentized = append(parentized, node)
-			node = node.Parent
-			node.ChildrenNodes = nil
-			node.ChildrenEntities = children
-			goto checkParent
-		}
-	finishParentChecking:
-		for _, node := range parentized {
-			nodes.RemoveElements(node)
-			nodes.Add(node.Parent)
 		}
 	}
 }

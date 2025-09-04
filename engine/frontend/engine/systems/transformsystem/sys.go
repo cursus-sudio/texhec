@@ -9,9 +9,9 @@ import (
 
 func applyLockTransform(transformComponent transform.Transform, posLock transform.PivotPoint) {
 	change := mgl32.Vec3{
-		transformComponent.Size[0] * (posLock.Lock[0] - .5),
-		transformComponent.Size[1] * (posLock.Lock[1] - .5),
-		transformComponent.Size[2] * (posLock.Lock[2] - .5),
+		transformComponent.Size[0] * (posLock.Point[0] - .5),
+		transformComponent.Size[1] * (posLock.Point[1] - .5),
+		transformComponent.Size[2] * (posLock.Point[2] - .5),
 	}
 	transformComponent.Pos = transformComponent.Pos.Add(change)
 }

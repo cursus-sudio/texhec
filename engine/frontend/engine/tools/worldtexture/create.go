@@ -13,7 +13,7 @@ func CreateTexs(w, h int, imgs []image.Image) uint32 {
 	gl.GenTextures(1, &texs)
 	gl.ActiveTexture(gl.TEXTURE1)
 	gl.BindTexture(gl.TEXTURE_2D_ARRAY, texs)
-	gl.TexStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.RGBA8, int32(w), int32(h), 3)
+	gl.TexStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.RGBA8, int32(w), int32(h), int32(len(imgs)))
 
 	for i, img := range imgs {
 		rgbaImg, ok := img.(*image.RGBA)

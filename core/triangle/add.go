@@ -3,12 +3,14 @@ package triangle
 import (
 	_ "embed"
 	"fmt"
+	"frontend/engine/components/anchor"
 	"frontend/engine/components/collider"
 	"frontend/engine/components/mesh"
 	"frontend/engine/components/mouse"
 	"frontend/engine/components/projection"
 	"frontend/engine/components/texture"
 	"frontend/engine/components/transform"
+	"frontend/engine/systems/anchorsystem"
 	"frontend/engine/systems/mainpipeline"
 	"frontend/engine/systems/projections"
 	"frontend/engine/systems/transformsystem"
@@ -39,7 +41,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			ctx.World.SaveComponent(camera, transform.NewTransform())
 			ctx.World.SaveComponent(camera, projection.NewDynamicOrtho(
 				-1000,
-				0,
+				+1000,
 				1,
 			))
 			ctx.World.SaveComponent(camera, projection.NewDynamicPerspective(
@@ -49,12 +51,34 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			))
 			ctx.World.SaveComponent(camera, MobileCamera{})
 			uiCamera := ctx.World.NewEntity()
-			ctx.World.SaveComponent(uiCamera, transform.NewTransform())
+			ctx.World.SaveComponent(uiCamera, transform.NewTransform().
+				SetPos(mgl32.Vec3{0, 0, 10000}))
 			ctx.World.SaveComponent(uiCamera, projection.NewDynamicOrtho(
-				0,
-				1000,
+				-1,
+				+1,
 				1,
 			))
+
+			type QuitEvent struct{}
+
+			events.Listen(ctx.EventsBuilder, func(e QuitEvent) {
+				ioc.Get[runtime.Runtime](c).Stop()
+			})
+			exitBtn := ctx.World.NewEntity()
+			ctx.World.SaveComponent(exitBtn, transform.NewTransform().
+				SetSize(mgl32.Vec3{100, 100, 1}))
+			ctx.World.SaveComponent(exitBtn, anchor.NewParentAnchor(uiCamera).
+				SetPivotPoint(mgl32.Vec3{0, 1, .5}))
+			ctx.World.SaveComponent(exitBtn, transform.NewPivotPoint(mgl32.Vec3{1, 0, .5}))
+			ctx.World.SaveComponent(exitBtn, mesh.NewMesh(MeshAssetID))
+			ctx.World.SaveComponent(exitBtn, texture.NewTexture(Texture4AssetID))
+			ctx.World.SaveComponent(exitBtn, mainpipeline.PipelineComponent{})
+			ctx.World.SaveComponent(exitBtn, projection.NewUsedProjection[projection.Ortho]())
+			ctx.World.SaveComponent(exitBtn, collider.NewCollider(ColliderAssetID))
+			ctx.World.SaveComponent(exitBtn, mouse.NewMouseEvents().
+				// AddMouseHoverEvents(QuitEvent{}).
+				AddLeftClickEvents(QuitEvent{}),
+			)
 		})
 		return b
 	})
@@ -68,6 +92,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 
 	ioc.WrapService(b, scenes.LoadFirst, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
+			anchorsystem.NewAnchorSystem(ctx.World)
 			transformsystem.NewPivotPointSystem(ctx.World)
 		})
 		return b
@@ -104,7 +129,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		b.OnLoad(func(ctx scenes.SceneCtx) { // cube
 			entity := ctx.World.NewEntity()
 			ctx.World.SaveComponent(entity, transform.NewTransform().
-				SetPos(mgl32.Vec3{0, 0, -300}).
+				SetPos(mgl32.Vec3{0, 0, 200}).
 				SetSize(mgl32.Vec3{100, 100, 100}))
 			ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
 			ctx.World.SaveComponent(entity, texture.NewTexture(Texture2AssetID))
@@ -130,25 +155,6 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		})
 
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			type QuitEvent struct{}
-
-			events.Listen(ctx.EventsBuilder, func(e QuitEvent) {
-				ioc.Get[runtime.Runtime](c).Stop()
-			})
-			entity := ctx.World.NewEntity()
-			ctx.World.SaveComponent(entity, transform.NewTransform().
-				SetPos([3]float32{-400, 300, -1}).
-				SetSize([3]float32{100, 100, 1}))
-			ctx.World.SaveComponent(entity, transform.NewPivotPoint(mgl32.Vec3{1, 0}))
-			ctx.World.SaveComponent(entity, transform.NewStatic())
-			ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
-			ctx.World.SaveComponent(entity, texture.NewTexture(Texture4AssetID))
-			ctx.World.SaveComponent(entity, mainpipeline.PipelineComponent{})
-			ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
-			ctx.World.SaveComponent(entity, collider.NewCollider(ColliderAssetID))
-			ctx.World.SaveComponent(entity, mouse.NewMouseEvents().
-				AddLeftClickEvents(QuitEvent{}),
-			)
 		})
 
 		b.OnLoad(func(ctx scenes.SceneCtx) {
@@ -184,7 +190,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				col := i % cols
 				entity := ctx.World.NewEntity()
 				ctx.World.SaveComponent(entity, transform.NewTransform().
-					SetPos([3]float32{float32(col) * (size + gap), float32(row) * (size + gap), 1}).
+					SetPos([3]float32{float32(col) * (size + gap), float32(row) * (size + gap), 10}).
 					SetSize([3]float32{size, size, 1}))
 				ctx.World.SaveComponent(entity, transform.NewStatic())
 				ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))

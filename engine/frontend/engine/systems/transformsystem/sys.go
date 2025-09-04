@@ -7,11 +7,11 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-func applyLockTransform(transformComponent transform.Transform, posLock transform.PivotPoint) {
+func applyLockTransform(transformComponent transform.Transform, pivot transform.PivotPoint) {
 	change := mgl32.Vec3{
-		transformComponent.Size[0] * (posLock.Point[0] - .5),
-		transformComponent.Size[1] * (posLock.Point[1] - .5),
-		transformComponent.Size[2] * (posLock.Point[2] - .5),
+		transformComponent.Size[0] * (pivot.Point[0] - .5),
+		transformComponent.Size[1] * (pivot.Point[1] - .5),
+		transformComponent.Size[2] * (pivot.Point[2] - .5),
 	}
 	transformComponent.Pos = transformComponent.Pos.Add(change)
 }
@@ -33,11 +33,11 @@ func NewPivotPointSystem(world ecs.World) {
 			if err != nil {
 				continue
 			}
-			posLock, err := ecs.GetComponent[transform.PivotPoint](world, entity)
+			pivot, err := ecs.GetComponent[transform.PivotPoint](world, entity)
 			if err != nil {
 				continue
 			}
-			applyLockTransform(transformComponent, posLock)
+			applyLockTransform(transformComponent, pivot)
 		}
 	}
 	query.OnAdd(listener)

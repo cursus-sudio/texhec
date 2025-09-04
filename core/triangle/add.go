@@ -31,12 +31,6 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-const (
-	MeshAssetID     assets.AssetID = "vao_asset"
-	TextureAssetID  assets.AssetID = "texture_asset"
-	ColliderAssetID assets.AssetID = "collider_asset"
-)
-
 func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 	type MobileCamera struct{}
 	ioc.WrapService(b, scenes.LoadWorld, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
@@ -89,7 +83,12 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			)
 			ctx.World.SaveRegister(projectionsRegister)
 
-			textureRegister, err := worldTextureFactory.New(TextureAssetID)
+			textureRegister, err := worldTextureFactory.New(
+				Texture1AssetID,
+				Texture2AssetID,
+				Texture3AssetID,
+				Texture4AssetID,
+			)
 			if err != nil {
 				ioc.Get[logger.Logger](c).Error(err)
 			}
@@ -108,7 +107,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				SetPos(mgl32.Vec3{0, 0, -300}).
 				SetSize(mgl32.Vec3{100, 100, 100}))
 			ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
-			ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
+			ctx.World.SaveComponent(entity, texture.NewTexture(Texture2AssetID))
 			ctx.World.SaveComponent(entity, mainpipeline.PipelineComponent{})
 			ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
 			// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
@@ -143,7 +142,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			ctx.World.SaveComponent(entity, transform.NewPivotPoint(mgl32.Vec3{1, 0}))
 			ctx.World.SaveComponent(entity, transform.NewStatic())
 			ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
-			ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
+			ctx.World.SaveComponent(entity, texture.NewTexture(Texture4AssetID))
 			ctx.World.SaveComponent(entity, mainpipeline.PipelineComponent{})
 			ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
 			ctx.World.SaveComponent(entity, collider.NewCollider(ColliderAssetID))
@@ -189,7 +188,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 					SetSize([3]float32{size, size, 1}))
 				ctx.World.SaveComponent(entity, transform.NewStatic())
 				ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
-				ctx.World.SaveComponent(entity, texture.NewTexture(TextureAssetID))
+				ctx.World.SaveComponent(entity, texture.NewTexture(Texture1AssetID))
 				ctx.World.SaveComponent(entity, mainpipeline.PipelineComponent{})
 				ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
 				// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())

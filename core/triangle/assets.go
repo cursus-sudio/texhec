@@ -17,6 +17,27 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
+//go:embed assets/1.png
+var texture1Source []byte
+
+//go:embed assets/2.png
+var texture2Source []byte
+
+//go:embed assets/3.png
+var texture3Source []byte
+
+//go:embed assets/4.png
+var texture4Source []byte
+
+const (
+	MeshAssetID     assets.AssetID = "vao_asset"
+	Texture1AssetID assets.AssetID = "texture1_asset"
+	Texture2AssetID assets.AssetID = "texture2_asset"
+	Texture3AssetID assets.AssetID = "texture3_asset"
+	Texture4AssetID assets.AssetID = "texture4_asset"
+	ColliderAssetID assets.AssetID = "collider_asset"
+)
+
 func flipImage(img image.Image) image.Image {
 	bounds := img.Bounds()
 	newImg := image.NewRGBA(bounds)
@@ -77,8 +98,41 @@ func registerAssets(b ioc.Builder) {
 			return asset, nil
 		})
 
-		b.RegisterAsset(TextureAssetID, func() (any, error) {
-			imgFile := bytes.NewBuffer(textureSource)
+		b.RegisterAsset(Texture1AssetID, func() (any, error) {
+			imgFile := bytes.NewBuffer(texture1Source)
+			img, _, err := image.Decode(imgFile)
+			if err != nil {
+				return nil, err
+			}
+			imgInverse := flipImage(img)
+			asset := texture.NewTextureStorageAsset(imgInverse)
+			return asset, nil
+		})
+
+		b.RegisterAsset(Texture2AssetID, func() (any, error) {
+			imgFile := bytes.NewBuffer(texture2Source)
+			img, _, err := image.Decode(imgFile)
+			if err != nil {
+				return nil, err
+			}
+			imgInverse := flipImage(img)
+			asset := texture.NewTextureStorageAsset(imgInverse)
+			return asset, nil
+		})
+
+		b.RegisterAsset(Texture3AssetID, func() (any, error) {
+			imgFile := bytes.NewBuffer(texture3Source)
+			img, _, err := image.Decode(imgFile)
+			if err != nil {
+				return nil, err
+			}
+			imgInverse := flipImage(img)
+			asset := texture.NewTextureStorageAsset(imgInverse)
+			return asset, nil
+		})
+
+		b.RegisterAsset(Texture4AssetID, func() (any, error) {
+			imgFile := bytes.NewBuffer(texture4Source)
 			img, _, err := image.Decode(imgFile)
 			if err != nil {
 				return nil, err

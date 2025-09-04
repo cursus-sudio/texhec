@@ -1,16 +1,12 @@
 package triangle
 
 import (
-	_ "embed"
 	"frontend/services/assets"
 	"frontend/services/scenes"
 	appruntime "shared/services/runtime"
 
 	"github.com/ogiusek/ioc/v2"
 )
-
-//go:embed square.png
-var textureSource []byte
 
 type FrontendPkg struct{}
 
@@ -29,7 +25,10 @@ func (FrontendPkg) Register(b ioc.Builder) {
 
 			assets.Release(
 				MeshAssetID,
-				TextureAssetID,
+				Texture1AssetID,
+				Texture2AssetID,
+				Texture3AssetID,
+				Texture4AssetID,
 			)
 		})
 		return b

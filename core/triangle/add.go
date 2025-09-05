@@ -155,23 +155,6 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		})
 
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			started := 0
-			events.Listen(ctx.EventsBuilder, func(event frames.FrameEvent) {
-				if started < 2 {
-					started++
-					return
-				}
-
-				if event.Delta.Seconds() > .16 {
-					ioc.Get[logger.Logger](c).Error(fmt.Errorf(
-						"race condition. time waiting: %v",
-						event.Delta.Seconds(),
-					))
-				}
-			})
-		})
-
-		b.OnLoad(func(ctx scenes.SceneCtx) {
 			type OnHoveredDomainEvent struct {
 				entity   ecs.EntityID
 				row, col int

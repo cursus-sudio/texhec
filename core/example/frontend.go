@@ -153,7 +153,12 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 
 	ioc.WrapService(b, scenes.LoadAfterDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			renderSystem := render.NewRenderSystem(ctx.World, ctx.Events, ioc.Get[window.Api](c))
+			renderSystem := render.NewRenderSystem(
+				ctx.World,
+				ctx.Events,
+				ioc.Get[window.Api](c),
+				2,
+			)
 			events.ListenE(ctx.EventsBuilder, renderSystem.Listen)
 		})
 		return b

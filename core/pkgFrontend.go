@@ -75,7 +75,7 @@ func frontendDic(
 	if err := window.GLMakeCurrent(ctx); err != nil {
 		panic(fmt.Errorf("could not make OpenGL context current: %v", err))
 	}
-	sdl.GLSetSwapInterval(0)
+	sdl.GLSetSwapInterval(1)
 
 	// path
 
@@ -116,8 +116,8 @@ func frontendDic(
 			windowapi.Package(window, ctx),
 		),
 		ecs.Package(),
-		// frames.Package(60),
-		frames.Package(10000),
+		frames.Package(60),
+		// frames.Package(10000),
 		scenes.Package(),
 		frontendscopes.Package(),
 

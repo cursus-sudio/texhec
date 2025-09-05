@@ -129,7 +129,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		b.OnLoad(func(ctx scenes.SceneCtx) { // cube
 			entity := ctx.World.NewEntity()
 			ctx.World.SaveComponent(entity, transform.NewTransform().
-				SetPos(mgl32.Vec3{0, 0, 200}).
+				SetPos(mgl32.Vec3{0, 0, -300}).
 				SetSize(mgl32.Vec3{100, 100, 100}))
 			ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
 			ctx.World.SaveComponent(entity, texture.NewTexture(Texture2AssetID))
@@ -155,6 +155,20 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		})
 
 		b.OnLoad(func(ctx scenes.SceneCtx) {
+			started := 0
+			events.Listen(ctx.EventsBuilder, func(event frames.FrameEvent) {
+				if started < 2 {
+					started++
+					return
+				}
+
+				if event.Delta.Seconds() > .16 {
+					ioc.Get[logger.Logger](c).Error(fmt.Errorf(
+						"race condition. time waiting: %v",
+						event.Delta.Seconds(),
+					))
+				}
+			})
 		})
 
 		b.OnLoad(func(ctx scenes.SceneCtx) {

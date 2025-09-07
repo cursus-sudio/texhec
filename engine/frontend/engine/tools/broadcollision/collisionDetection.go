@@ -58,6 +58,7 @@ func (c *collisionDetectionService) CollidesWithRay(entity ecs.EntityID, ray col
 		ray = collider.NewRay(
 			inverseTransform.Mul4x1(ray.Pos.Vec4(1.0)).Vec3(),
 			inverseTranspose.Mul4x1(ray.Direction.Vec4(1.0)).Vec3(),
+			ray.MaxDistance,
 		)
 	}
 
@@ -92,23 +93,14 @@ func (c *collisionDetectionService) CollidesWithRay(entity ecs.EntityID, ray col
 		} else if currentRange.Target == collider.Leaf {
 			polygons := polygons[currentRange.First : currentRange.First+currentRange.Count]
 			for _, polygon := range polygons {
-				var maxDistance float32 = math.MaxFloat32
-				if closestHit != nil {
-					maxDistance = closestHit.Distance
-				}
-				intersect, dist := rayTriangleIntersect(ray, polygon, maxDistance)
+				collisionRay, intersect := rayTriangleIntersect(ray, polygon)
 				if !intersect {
 					continue
 				}
+				ray = collisionRay
 
-				if closestHit != nil && dist >= closestHit.Distance {
-					continue
-				}
-
-				hitPoint := ray.Pos.Add(ray.Direction.Mul(dist))
 				normal := polygon.B.Sub(polygon.A).Cross(polygon.C.Sub(polygon.A)).Normalize()
-
-				hit := collider.NewRayHit(hitPoint, normal, dist)
+				hit := collider.NewRayHit(collisionRay, normal)
 				closestHit = &hit
 			}
 		}

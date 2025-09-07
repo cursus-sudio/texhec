@@ -38,37 +38,37 @@ func rayAABBIntersect(r collider.Ray, box collider.AABB, maxDist float32) (bool,
 
 //
 
-func rayTriangleIntersect(r collider.Ray, poly collider.Polygon, maxDist float32) (bool, float32) {
+func rayTriangleIntersect(r collider.Ray, poly collider.Polygon) (collider.Ray, bool) {
 	edge1 := poly.B.Sub(poly.A)
 	edge2 := poly.C.Sub(poly.A)
 	normal := edge1.Cross(edge2).Normalize()
 
 	denom := normal.Dot(r.Direction)
 	if mgl32.Abs(denom) < mgl32.Epsilon {
-		return false, 0.0
+		return collider.Ray{}, false
 	}
 
 	t := poly.A.Sub(r.Pos).Dot(normal) / denom
-	if t < mgl32.Epsilon || t > maxDist {
-		return false, 0.0
+	if t < mgl32.Epsilon || (t > r.MaxDistance && r.MaxDistance != 0) {
+		return collider.Ray{}, false
 	}
 
 	p := r.Pos.Add(r.Direction.Mul(t))
 
 	crossAB := edge1.Cross(p.Sub(poly.A))
 	if normal.Dot(crossAB) < 0 {
-		return false, 0.0
+		return collider.Ray{}, false
 	}
 
 	crossBC := poly.C.Sub(poly.B).Cross(p.Sub(poly.B))
 	if normal.Dot(crossBC) < 0 {
-		return false, 0.0
+		return collider.Ray{}, false
 	}
 
 	crossCA := poly.A.Sub(poly.C).Cross(p.Sub(poly.C))
 	if normal.Dot(crossCA) < 0 {
-		return false, 0.0
+		return collider.Ray{}, false
 	}
 
-	return true, t
+	return collider.NewRay(r.Pos, r.Direction, t), true
 }

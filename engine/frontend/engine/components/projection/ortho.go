@@ -13,7 +13,7 @@ type Ortho struct {
 }
 
 func NewOrtho(w, h, near, far float32) Ortho {
-	return Ortho{Width: w, Height: h, Near: near, Far: far}
+	return Ortho{Width: w, Height: h, Near: min(near, far), Far: max(near, far)}
 }
 
 func (ortho Ortho) Mat4() mgl32.Mat4 {

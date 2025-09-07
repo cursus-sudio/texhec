@@ -78,7 +78,10 @@ func (s *collisionsService) ShootRay(ray collider.Ray) (ObjectRayCollision, erro
 	if c1 == nil {
 		return c2, nil
 	}
-	if c2 == nil || c1.Hit().Distance < c2.Hit().Distance {
+	if c2 == nil {
+		return c1, nil
+	}
+	if c1.Hit().Distance < c2.Hit().Distance {
 		return c1, nil
 	}
 	return c2, nil

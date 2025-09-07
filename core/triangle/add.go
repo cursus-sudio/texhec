@@ -54,8 +54,8 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			ctx.World.SaveComponent(uiCamera, transform.NewTransform().
 				SetPos(mgl32.Vec3{0, 0, 10000}))
 			ctx.World.SaveComponent(uiCamera, projection.NewDynamicOrtho(
-				-1,
-				+1,
+				-1000,
+				+1000,
 				1,
 			))
 
@@ -187,7 +187,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				col := i % cols
 				entity := ctx.World.NewEntity()
 				ctx.World.SaveComponent(entity, transform.NewTransform().
-					SetPos([3]float32{float32(col) * (size + gap), float32(row) * (size + gap), 10}).
+					SetPos([3]float32{float32(col) * (size + gap), float32(row) * (size + gap), 0}).
 					SetSize([3]float32{size, size, 1}))
 				ctx.World.SaveComponent(entity, transform.NewStatic())
 				ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))

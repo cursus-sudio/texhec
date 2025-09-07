@@ -92,7 +92,8 @@ func (s *CameraRaySystem) Listen(args ShootRayEvent) error {
 				nearestCollision = collision
 				continue
 			}
-			if nearestCollision.Hit().Distance > nearestCollision.Hit().Distance {
+
+			if nearestCollision.Hit().Distance > collision.Hit().Distance {
 				nearestCollision = collision
 			}
 		}

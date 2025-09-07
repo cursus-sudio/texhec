@@ -1,39 +1,27 @@
 package collider
 
 import (
-	"frontend/engine/components/transform"
-	"frontend/services/graphics/camera"
-	"math"
-
 	"github.com/go-gl/mathgl/mgl32"
 )
 
 type ray struct {
 	Pos       mgl32.Vec3
 	Direction mgl32.Vec3
+	// max length is either 0 symbolizing infinity or a potive number
+	MaxDistance float32
 }
 
 type Ray struct{ ray }
 
-func (s ray) Apply(t transform.Transform) Ray {
-	return Ray{ray{Pos: s.Pos.Add(t.Pos), Direction: t.Rotation.Rotate(s.Direction)}}
-}
-
-func (s ray) Position() mgl32.Vec3 { return s.Pos }
-
-func (s ray) Rotation() mgl32.Quat {
-	axis := camera.Forward.Cross(s.Direction).Normalize()
-	angle := float32(math.Acos(float64(camera.Forward.Dot(s.Direction))))
-
-	return mgl32.QuatRotate(angle, axis)
-}
-
-func NewRay(pos mgl32.Vec3, direction mgl32.Vec3) Ray {
+func NewRay(pos mgl32.Vec3, direction mgl32.Vec3, maxDistance float32) Ray {
 	return Ray{ray{
-		Pos:       pos,
-		Direction: direction.Normalize(),
+		Pos:         pos,
+		Direction:   direction.Normalize(),
+		MaxDistance: max(0, maxDistance),
 	}}
 }
+
+func (r Ray) HitPoint() mgl32.Vec3 { return r.Pos.Add(r.Direction.Mul(r.MaxDistance)) }
 
 type RayHit struct {
 	Point    mgl32.Vec3
@@ -41,6 +29,6 @@ type RayHit struct {
 	Distance float32
 }
 
-func NewRayHit(point mgl32.Vec3, normal mgl32.Vec3, dist float32) RayHit {
-	return RayHit{point, normal, dist}
+func NewRayHit(ray Ray, normal mgl32.Vec3) RayHit {
+	return RayHit{ray.HitPoint(), normal, ray.MaxDistance}
 }

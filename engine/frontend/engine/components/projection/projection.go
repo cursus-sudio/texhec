@@ -20,7 +20,7 @@ func RayDirection(
 	projectionMatrix mgl32.Mat4,
 	viewMatrix mgl32.Mat4,
 	mousePos mgl32.Vec2,
-) (NearWorld mgl32.Vec4, Direction mgl32.Vec3) {
+) (NearWorld mgl32.Vec4, Direction mgl32.Vec3, MaxDistance float32) {
 	invViewProjection := projectionMatrix.Mul4(viewMatrix).Inv()
 
 	nearClip := mgl32.Vec4{mousePos.X(), mousePos.Y(), -1, 1}
@@ -32,13 +32,11 @@ func RayDirection(
 	nearWorld = nearWorld.Mul(1 / nearWorld[3])
 	farWorld = farWorld.Mul(1 / farWorld[3])
 
-	direction := mgl32.Vec3{
-		farWorld[0] - nearWorld[0],
-		farWorld[1] - nearWorld[1],
-		farWorld[2] - nearWorld[2],
-	}.Normalize()
+	notNormalizedDirection := farWorld.Vec3().Sub(nearWorld.Vec3())
+	direction := notNormalizedDirection.Normalize()
+	dist := notNormalizedDirection.Len()
 
-	return nearWorld, direction
+	return nearWorld, direction, dist
 }
 
 func ShootRay(
@@ -47,12 +45,12 @@ func ShootRay(
 	mousePos mgl32.Vec2,
 	defaultRayOrigin *mgl32.Vec3,
 ) collider.Ray {
-	nearWorld, direction := RayDirection(projectionMatrix, viewMatrix, mousePos)
+	nearWorld, direction, maxDistance := RayDirection(projectionMatrix, viewMatrix, mousePos)
 	var rayOrigin mgl32.Vec3
 	if defaultRayOrigin != nil {
 		rayOrigin = *defaultRayOrigin
 	} else {
 		rayOrigin = nearWorld.Vec3()
 	}
-	return collider.NewRay(rayOrigin, direction)
+	return collider.NewRay(rayOrigin, direction, maxDistance)
 }

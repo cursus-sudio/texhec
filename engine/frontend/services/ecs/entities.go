@@ -9,24 +9,26 @@ import (
 
 type entitiesImpl struct {
 	counter uint64
+	holes   datastructures.Set[EntityID]
+	mutex   sync.Locker
 
 	existingEntities datastructures.Set[EntityID]
-	mutex            *sync.RWMutex
-	// existingEntities map[EntityID]entity
-	// cachedEntities []EntityID
 }
 
-func newEntities(mutex *sync.RWMutex) *entitiesImpl {
+func newEntities() *entitiesImpl {
 	return &entitiesImpl{
 		counter:          0,
+		holes:            datastructures.NewSet[EntityID](),
+		mutex:            &sync.Mutex{},
 		existingEntities: datastructures.NewSet[EntityID](),
-		mutex:            mutex,
-		// existingEntities: make(map[EntityID]entity),
 	}
 }
 
 func (entitiesStorage *entitiesImpl) NewEntity() EntityID {
-	entitiesStorage.mutex.Lock()
+	if id, ok := entitiesStorage.holes.GetStored(0); ok {
+		entitiesStorage.holes.Remove(0)
+		return id
+	}
 	entitiesStorage.counter += 1
 	index := entitiesStorage.counter
 	id := EntityID(index)
@@ -35,13 +37,11 @@ func (entitiesStorage *entitiesImpl) NewEntity() EntityID {
 }
 
 func (entitiesStorage *entitiesImpl) RemoveEntity(entityId EntityID) {
-	entitiesStorage.mutex.Lock()
+	entitiesStorage.holes.Add(entityId)
 	entitiesStorage.existingEntities.RemoveElements(entityId)
 }
 
 func (entitiesStorage *entitiesImpl) GetEntities() []EntityID {
-	entitiesStorage.mutex.RLocker().Lock()
-	defer entitiesStorage.mutex.RLocker().Unlock()
 	return entitiesStorage.existingEntities.Get()
 }
 
@@ -49,3 +49,6 @@ func (entitiesStorage *entitiesImpl) EntityExists(entityId EntityID) bool {
 	_, ok := entitiesStorage.existingEntities.GetIndex(entityId)
 	return ok
 }
+
+func (entitiesStorage *entitiesImpl) LockEntities()   { entitiesStorage.mutex.Lock() }
+func (entitiesStorage *entitiesImpl) UnlockEntities() { entitiesStorage.mutex.Unlock() }

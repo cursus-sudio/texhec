@@ -1,19 +1,15 @@
 package ecs
 
-import "sync"
-
 type world struct {
 	entitiesInterface
 	*componentsImpl
 	registryInterface
-	mutex sync.Locker
 }
 
 func NewWorld() World {
-	mutex := &sync.RWMutex{}
-	componentsImpl := newComponents(mutex)
-	entitiesImpl := newEntities(mutex)
-	registryImpl := newRegistry(&sync.RWMutex{})
+	componentsImpl := newComponents()
+	entitiesImpl := newEntities()
+	registryImpl := newRegistry()
 
 	return &world{
 		entitiesInterface: entitiesImpl,

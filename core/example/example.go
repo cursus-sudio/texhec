@@ -162,7 +162,7 @@ func (system *someSystem) Listen(args frames.FrameEvent) error {
 	if entitiesLen < 10 {
 		text += "entities found: {\n"
 		for _, entity := range system.World.GetEntities() {
-			text += fmt.Sprintf(" - %s\n", entity)
+			text += fmt.Sprintf(" - %v\n", entity)
 		}
 		text += "}\n"
 		text += "\n"

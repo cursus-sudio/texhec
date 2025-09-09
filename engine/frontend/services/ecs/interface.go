@@ -9,7 +9,9 @@ import (
 //
 // entities
 
-type EntityID uint64
+type EntityID int
+
+func (id EntityID) Index() int { return int(id) }
 
 func NewEntityID(id uint64) EntityID { return EntityID(id) }
 
@@ -19,6 +21,9 @@ type entitiesInterface interface {
 
 	GetEntities() []EntityID
 	EntityExists(EntityID) bool
+
+	LockEntities()
+	UnlockEntities()
 }
 
 //
@@ -63,7 +68,29 @@ type LiveQuery interface {
 	Entities() []EntityID
 }
 
+type ComponentsArray[Component any] interface {
+	// can return:
+	// - ErrEntityDoNotExists
+	SaveComponent(EntityID, Component) error // upsert
+
+	// can return:
+	// - ErrComponentDoNotExists
+	// - ErrEntityDoNotExists
+	GetComponent(entity EntityID) (Component, error)
+	RemoveComponent(EntityID)
+
+	AddEntity(EntityID)
+	RemoveEntity(EntityID)
+
+	OnAdd(func([]EntityID))
+	OnChange(func([]EntityID))
+	OnRemove(func([]EntityID))
+}
+
 type componentsInterface interface {
+	// any is ComponentArray[ComponentType]
+	// GetArray(ComponentType) (any, error)
+
 	// can return:
 	// - ErrEntityDoNotExists
 	SaveComponent(EntityID, Component) error // upsert (create or update)
@@ -76,6 +103,9 @@ type componentsInterface interface {
 	// returns for with all listed component types
 	// the same live query should be returned for the same input
 	QueryEntitiesWithComponents(...ComponentType) LiveQuery
+
+	LockComponents()
+	UnlockComponents()
 }
 
 func GetComponent[WantedComponent Component](w World, entity EntityID) (WantedComponent, error) {
@@ -116,6 +146,9 @@ type registryInterface interface {
 	GetRegister(RegisterType) (Register, error)
 
 	Release()
+
+	LockRegistry()
+	UnlockRegistry()
 }
 
 type Cleanable interface {

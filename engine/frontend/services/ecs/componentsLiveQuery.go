@@ -88,6 +88,12 @@ func (query *liveQuery) RemoveEntity(entity EntityID) {
 	}
 }
 
+func (query *liveQuery) Changed(entities []EntityID) {
+	for _, listener := range query.onChange {
+		listener(entities)
+	}
+}
+
 func (query *liveQuery) AddEntities(entities []EntityID) {
 	query.entities.Add(entities...)
 	for _, listener := range query.onAdd {

@@ -11,21 +11,19 @@ type registryImpl struct {
 	cleanableTypes datastructures.Set[RegisterType]
 	cleanables     datastructures.Array[Cleanable]
 	registry       map[RegisterType]Register
-	mutex          *sync.RWMutex
+	mutex          sync.Locker
 }
 
-func newRegistry(mutex *sync.RWMutex) *registryImpl {
+func newRegistry() *registryImpl {
 	return &registryImpl{
 		cleanableTypes: datastructures.NewSet[RegisterType](),
 		cleanables:     datastructures.NewArray[Cleanable](),
 		registry:       map[RegisterType]Register{},
-		mutex:          mutex,
+		mutex:          &sync.Mutex{},
 	}
 }
 
 func (r *registryImpl) SaveRegister(register Register) {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
 	registerType := GetRegisterType(register)
 	if cleanable, ok := register.(Cleanable); ok {
 		index, ok := r.cleanableTypes.GetIndex(registerType)
@@ -42,8 +40,6 @@ func (r *registryImpl) SaveRegister(register Register) {
 }
 
 func (r *registryImpl) GetRegister(registerType RegisterType) (Register, error) {
-	r.mutex.RLocker().Lock()
-	defer r.mutex.RLocker().Unlock()
 	value, ok := r.registry[registerType]
 	if !ok {
 		return nil, errors.Join(
@@ -55,10 +51,11 @@ func (r *registryImpl) GetRegister(registerType RegisterType) (Register, error) 
 }
 
 func (r *registryImpl) Release() {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
 	for _, cleanable := range r.cleanables.Get() {
 		cleanable.Release()
 	}
-	*r = *newRegistry(r.mutex)
+	*r = *newRegistry()
 }
+
+func (r *registryImpl) LockRegistry()   { r.mutex.Lock() }
+func (r *registryImpl) UnlockRegistry() { r.mutex.Unlock() }

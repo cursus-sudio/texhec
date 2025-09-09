@@ -1,38 +1,44 @@
 package ecs
 
-import (
-	"sync"
-)
+import "sync"
 
 //
 
 type componentsImpl struct {
+	mutex sync.Locker
+
+	componentArrays  map[ComponentType]any // any is *componentsArray[ComponentType]
 	entityComponents map[EntityID]map[ComponentType]*Component
 	componentEntity  map[ComponentType]map[EntityID]*Component
 
 	cachedQueries    map[queryKey]*liveQuery
 	dependentQueries map[ComponentType][]*liveQuery
-
-	mutex *sync.RWMutex
 }
 
-func newComponents(mutex *sync.RWMutex) *componentsImpl {
+func newComponents() *componentsImpl {
 	return &componentsImpl{
+		mutex:           &sync.Mutex{},
+		componentArrays: make(map[ComponentType]any),
+
 		entityComponents: make(map[EntityID]map[ComponentType]*Component),
 		componentEntity:  make(map[ComponentType]map[EntityID]*Component),
 
 		cachedQueries:    make(map[queryKey]*liveQuery, 0),
 		dependentQueries: make(map[ComponentType][]*liveQuery, 0),
-
-		mutex: mutex,
 	}
 }
 
+// func (components *componentsImpl) getComponentArray(componentType ComponentType) any {
+// 	if arr, ok := components.componentArrays[componentType]; ok {
+// 		return arr
+// 	}
+// 	// newArray := newComponentsArray
+// 	return nil
+// }
+
 func (components *componentsImpl) SaveComponent(entityID EntityID, component Component) error {
-	components.mutex.Lock()
 	componentType := GetComponentType(component)
 	if components.entityComponents[entityID] == nil {
-		components.mutex.Unlock()
 		return ErrEntityDoNotExists
 	}
 
@@ -43,7 +49,6 @@ func (components *componentsImpl) SaveComponent(entityID EntityID, component Com
 
 	components.entityComponents[entityID][componentType] = &component
 	components.componentEntity[componentType][entityID] = &component
-	components.mutex.Unlock()
 
 	dependentQueries, _ := components.dependentQueries[componentType]
 	if entityHadComponent {
@@ -51,9 +56,7 @@ func (components *componentsImpl) SaveComponent(entityID EntityID, component Com
 			if _, ok := query.entities.GetIndex(entityID); !ok {
 				continue
 			}
-			for _, listener := range query.onChange {
-				listener([]EntityID{entityID})
-			}
+			query.Changed([]EntityID{entityID})
 		}
 		return nil
 	}
@@ -79,8 +82,6 @@ func (components *componentsImpl) SaveComponent(entityID EntityID, component Com
 }
 
 func (components *componentsImpl) GetComponent(entityId EntityID, componentType ComponentType) (Component, error) {
-	components.mutex.RLocker().Lock()
-	defer components.mutex.RLocker().Unlock()
 	entity, ok := components.entityComponents[entityId]
 	if !ok {
 		return nil, ErrEntityDoNotExists
@@ -93,10 +94,8 @@ func (components *componentsImpl) GetComponent(entityId EntityID, componentType 
 }
 
 func (components *componentsImpl) RemoveComponent(entityId EntityID, componentType ComponentType) {
-	components.mutex.Lock()
 	delete(components.entityComponents[entityId], componentType)
 	delete(components.componentEntity[componentType], entityId)
-	components.mutex.Unlock()
 	// manage cache
 	dependentQueries, _ := components.dependentQueries[componentType]
 	for _, query := range dependentQueries {
@@ -106,7 +105,6 @@ func (components *componentsImpl) RemoveComponent(entityId EntityID, componentTy
 
 func (components *componentsImpl) AddEntity(entity EntityID) {
 	components.entityComponents[entity] = make(map[ComponentType]*Component)
-	components.mutex.Unlock()
 }
 
 func (components *componentsImpl) RemoveEntity(entityID EntityID) {
@@ -118,15 +116,12 @@ func (components *componentsImpl) RemoveEntity(entityID EntityID) {
 		delete(components.componentEntity[componentType], entityID)
 	}
 	delete(components.entityComponents, entityID)
-	components.mutex.Unlock()
 	for _, query := range components.cachedQueries {
 		query.RemoveEntity(entityID)
 	}
 }
 
 func (components *componentsImpl) GetEntitiesWithComponents(componentTypes ...ComponentType) []EntityID {
-	components.mutex.RLocker().Lock()
-	defer components.mutex.RLocker().Unlock()
 	if len(componentTypes) == 0 {
 		return nil
 	}
@@ -168,8 +163,6 @@ func (components *componentsImpl) GetEntitiesWithComponents(componentTypes ...Co
 }
 
 func (components *componentsImpl) QueryEntitiesWithComponents(componentTypes ...ComponentType) LiveQuery {
-	components.mutex.RLocker().Lock()
-	defer components.mutex.RLocker().Unlock()
 	key := newQueryKey(componentTypes)
 	if query, ok := components.cachedQueries[key]; ok {
 		return query
@@ -184,3 +177,6 @@ func (components *componentsImpl) QueryEntitiesWithComponents(componentTypes ...
 	}
 	return query
 }
+
+func (components *componentsImpl) LockComponents()   { components.mutex.Lock() }
+func (components *componentsImpl) UnlockComponents() { components.mutex.Unlock() }

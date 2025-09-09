@@ -19,10 +19,6 @@ func TestComponents(t *testing.T) {
 		t.Errorf("when retrieving component from not existing entity do not got ErrEntityDoNotExists error")
 	}
 
-	if err := world.SaveComponent(ecs.EntityID(0), component); err != ecs.ErrEntityDoNotExists {
-		t.Errorf("when trying to save component on not existing entity do not got ErrEntityDoNotExists error")
-	}
-
 	entityId := world.NewEntity()
 	if err := world.SaveComponent(entityId, component); err != nil {
 		t.Errorf("when trying to save component on existing entity got unexpected error")

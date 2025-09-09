@@ -27,8 +27,8 @@ func newEntities(mutex *sync.RWMutex) *entitiesImpl {
 
 func (entitiesStorage *entitiesImpl) NewEntity() EntityID {
 	entitiesStorage.mutex.Lock()
-	index := entitiesStorage.counter
 	entitiesStorage.counter += 1
+	index := entitiesStorage.counter
 	id := EntityID(index)
 	entitiesStorage.existingEntities.Add(id)
 	return id

@@ -44,11 +44,16 @@ func BenchmarkGetComponent(b *testing.B) {
 		world.NewEntity()
 	}
 
-	entity := world.NewEntity()
-	world.SaveComponent(entity, Component{})
-
+	entities := make([]ecs.EntityID, b.N)
 	for i := 0; i < b.N; i++ {
-		ecs.GetComponent[Component](world, entity)
+		entity := world.NewEntity()
+		world.SaveComponent(entity, Component{})
+		entities[i] = entity
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		ecs.GetComponent[Component](world, entities[i])
 	}
 }
 

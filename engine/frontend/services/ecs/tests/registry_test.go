@@ -8,7 +8,7 @@ import (
 type register struct{ value int }
 type Register struct{ *register }
 
-func (r Register) CleanUp() {
+func (r Register) Release() {
 	r.value = 0
 }
 

@@ -6,6 +6,19 @@ import (
 	"strings"
 )
 
+// interface
+
+type LiveQuery interface {
+	// on add listener add all entities are passed to it
+	OnAdd(func([]EntityID))
+	OnChange(func([]EntityID))
+	OnRemove(func([]EntityID))
+
+	Entities() []EntityID
+}
+
+// impl
+
 type queryKey string
 
 func newQueryKey(components []ComponentType) queryKey {

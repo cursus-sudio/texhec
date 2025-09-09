@@ -5,6 +5,26 @@ import (
 	"math"
 )
 
+// interface
+
+type ComponentsArray[Component any] interface {
+	// can return:
+	// - ErrEntityDoNotExists
+	SaveComponent(EntityID, Component) error // upsert
+
+	// can return:
+	// - ErrComponentDoNotExists
+	// - ErrEntityDoNotExists
+	GetComponent(entity EntityID) (Component, error)
+	RemoveComponent(EntityID)
+
+	OnAdd(func([]EntityID))
+	OnChange(func([]EntityID))
+	OnRemove(func([]EntityID))
+}
+
+// impl
+
 const (
 	noEntity    uint32 = math.MaxUint32 - 0
 	noComponent uint32 = math.MaxUint32 - 1
@@ -12,7 +32,7 @@ const (
 
 type componentsArray[Component any] struct {
 	// entity here is an index
-	entitiesComponents []uint32 // -2 means entity doesn't exist. -1 means entity do not has component
+	entitiesComponents []uint32 // here some indices have special meaning (read constants above)
 	components         []Component
 	componentsEntities []EntityID
 
@@ -21,11 +41,9 @@ type componentsArray[Component any] struct {
 	onAdd    []func([]EntityID)
 }
 
-// func NewComponentsArray[Component any]() ComponentsArray[Component] {
 func NewComponentsArray[Component any]() *componentsArray[Component] {
 	return &componentsArray[Component]{
 		entitiesComponents: make([]uint32, 0),
-		// components:         make([]componentsArrayComponent[Component], 0),
 		components:         make([]Component, 0),
 		componentsEntities: make([]EntityID, 0),
 

@@ -1,8 +1,73 @@
 package ecs
 
-import "sync"
+import (
+	"errors"
+	"reflect"
+	"sync"
+)
 
-//
+// interface
+
+type ComponentType struct {
+	componentType reflect.Type
+}
+
+func (t *ComponentType) String() string { return t.componentType.String() }
+
+func newComponentType(componentType reflect.Type) ComponentType {
+	return ComponentType{componentType: componentType}
+}
+
+type Component interface{}
+
+func GetComponentType(component Component) ComponentType {
+	typeOfComponent := reflect.TypeOf(component)
+	if typeOfComponent.Kind() != reflect.Struct {
+		panic("component has to be a struct (cannot use pointers under the hood)")
+	}
+	return newComponentType(typeOfComponent)
+}
+
+func GetComponentPointerType(componentPointer any) ComponentType {
+	return newComponentType(reflect.TypeOf(componentPointer).Elem())
+}
+
+var (
+	ErrComponentDoNotExists error = errors.New("component do not exists")
+	ErrEntityDoNotExists    error = errors.New("entity do not exists")
+)
+
+type componentsInterface interface {
+	// any is ComponentArray[ComponentType]
+	// GetArray(ComponentType) (any, error)
+
+	// can return:
+	// - ErrEntityDoNotExists
+	SaveComponent(EntityID, Component) error // upsert (create or update)
+	// can return:
+	// - ErrComponentDoNotExists
+	// - ErrEntityDoNotExists
+	GetComponent(entityId EntityID, componentType ComponentType) (Component, error)
+	RemoveComponent(EntityID, ComponentType)
+
+	// returns for with all listed component types
+	// the same live query should be returned for the same input
+	QueryEntitiesWithComponents(...ComponentType) LiveQuery
+
+	LockComponents()
+	UnlockComponents()
+}
+
+func GetComponent[WantedComponent Component](w World, entity EntityID) (WantedComponent, error) {
+	var zero WantedComponent
+	component, err := w.GetComponent(entity, GetComponentType(zero))
+	if err != nil {
+		return zero, err
+	}
+	return component.(WantedComponent), nil
+}
+
+// impl
 
 type componentsImpl struct {
 	mutex sync.Locker

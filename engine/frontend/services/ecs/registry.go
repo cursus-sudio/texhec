@@ -4,8 +4,57 @@ import (
 	"errors"
 	"fmt"
 	"frontend/services/datastructures"
+	"reflect"
 	"sync"
 )
+
+// interface
+
+var (
+	ErrRegisterNotFound error = errors.New("register not found")
+)
+
+type RegisterType struct {
+	registerType reflect.Type
+}
+
+func (t *RegisterType) String() string { return t.registerType.String() }
+
+type Register any
+
+func GetRegisterType(register Register) RegisterType {
+	typeOfRegister := reflect.TypeOf(register)
+	if typeOfRegister.Kind() != reflect.Struct {
+		panic("register has to be a struct (can use pointers under the hood)")
+	}
+	return RegisterType{typeOfRegister}
+}
+
+type registryInterface interface {
+	SaveRegister(Register) // upsert (create or update)
+	GetRegister(RegisterType) (Register, error)
+
+	Release()
+
+	LockRegistry()
+	UnlockRegistry()
+}
+
+type Cleanable interface {
+	Release()
+}
+
+func GetRegister[RegisterT Register](w World) (RegisterT, error) {
+	var zero RegisterT
+	registerType := GetRegisterType(zero)
+	value, err := w.GetRegister(registerType)
+	if err != nil {
+		return zero, err
+	}
+	return value.(RegisterT), nil
+}
+
+// impl
 
 type registryImpl struct {
 	cleanableTypes datastructures.Set[RegisterType]

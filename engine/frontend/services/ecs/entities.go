@@ -5,7 +5,28 @@ import (
 	"sync"
 )
 
-// type entity any
+// interface
+
+type EntityID int
+
+func (id EntityID) Index() int { return int(id) }
+
+func NewEntityID(id uint64) EntityID { return EntityID(id) }
+
+//
+
+type entitiesInterface interface {
+	NewEntity() EntityID
+	RemoveEntity(EntityID)
+
+	GetEntities() []EntityID
+	EntityExists(EntityID) bool
+
+	LockEntities()
+	UnlockEntities()
+}
+
+// impl
 
 type entitiesImpl struct {
 	counter uint64

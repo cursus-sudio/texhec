@@ -1,5 +1,15 @@
 package ecs
 
+// interface
+
+type World interface {
+	entitiesInterface
+	componentsInterface
+	registryInterface
+}
+
+//
+
 type world struct {
 	entitiesInterface
 	*componentsImpl

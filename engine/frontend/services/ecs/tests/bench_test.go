@@ -2,47 +2,8 @@ package ecs_test
 
 import (
 	"frontend/services/ecs"
-	"sync"
 	"testing"
 )
-
-func BenchmarkArrayGet(b *testing.B) {
-	type Component struct{}
-	type Data struct {
-		mutex              sync.RWMutex
-		entitiesComponents []int
-		components         []Component
-	}
-	data := Data{
-		mutex:              sync.RWMutex{},
-		entitiesComponents: make([]int, b.N),
-		components:         make([]Component, b.N),
-	}
-
-	for i := 0; i < b.N; i++ {
-		data.entitiesComponents[i] = i
-		data.components[i] = Component{}
-	}
-
-	b.ResetTimer()
-	for entityIndex := 0; entityIndex < b.N; entityIndex++ {
-		// data.mutex.RLock()
-		// defer data.mutex.RUnlock()
-		if entityIndex >= len(data.entitiesComponents) {
-			continue
-		}
-		componentIndex := data.entitiesComponents[entityIndex]
-		switch componentIndex {
-		case -2:
-			break
-		case -1:
-			break
-		default:
-			_ = data.components[componentIndex]
-		}
-
-	}
-}
 
 func BenchmarkGetComponentType(b *testing.B) {
 	type Component struct{}
@@ -154,17 +115,5 @@ func BenchmarkQueryEntitiesWithComponents(b *testing.B) {
 	componentType := ecs.GetComponentType(RequiredComponent{})
 	for i := 0; i < b.N; i++ {
 		world.QueryEntitiesWithComponents(componentType)
-	}
-}
-
-func BenchmarkMapGet(b *testing.B) {
-	m := make(map[int]int, b.N)
-	for i := 0; i < b.N; i++ {
-		m[i] = i
-	}
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = m[i]
 	}
 }

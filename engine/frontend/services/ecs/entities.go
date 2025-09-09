@@ -1,7 +1,6 @@
 package ecs
 
 import (
-	"fmt"
 	"frontend/services/datastructures"
 	"sync"
 )
@@ -9,7 +8,7 @@ import (
 // type entity any
 
 type entitiesImpl struct {
-	counter int
+	counter uint64
 
 	existingEntities datastructures.Set[EntityID]
 	mutex            *sync.RWMutex
@@ -28,12 +27,9 @@ func newEntities(mutex *sync.RWMutex) *entitiesImpl {
 
 func (entitiesStorage *entitiesImpl) NewEntity() EntityID {
 	entitiesStorage.mutex.Lock()
-	// can later switch this to guid
 	index := entitiesStorage.counter
 	entitiesStorage.counter += 1
-	id := EntityID{
-		id: fmt.Sprintf("%d", index),
-	}
+	id := EntityID(index)
 	entitiesStorage.existingEntities.Add(id)
 	return id
 }

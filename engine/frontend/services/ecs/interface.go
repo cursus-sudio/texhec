@@ -9,13 +9,9 @@ import (
 //
 // entities
 
-type EntityID struct {
-	id string
-}
+type EntityID uint64
 
-func NewEntityID(id string) EntityID { return EntityID{id} }
-
-func (entityId EntityID) Ok() bool { return entityId.id != "" }
+func NewEntityID(id uint64) EntityID { return EntityID(id) }
 
 type entitiesInterface interface {
 	NewEntity() EntityID

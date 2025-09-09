@@ -15,11 +15,11 @@ func TestComponents(t *testing.T) {
 	component := Component{Counter: 7}
 	secondComponent := Component{Counter: 8}
 
-	if _, err := ecs.GetComponent[Component](world, ecs.EntityID{}); err != ecs.ErrEntityDoNotExists {
+	if _, err := ecs.GetComponent[Component](world, ecs.EntityID(0)); err != ecs.ErrEntityDoNotExists {
 		t.Errorf("when retrieving component from not existing entity do not got ErrEntityDoNotExists error")
 	}
 
-	if err := world.SaveComponent(ecs.EntityID{}, component); err != ecs.ErrEntityDoNotExists {
+	if err := world.SaveComponent(ecs.EntityID(0), component); err != ecs.ErrEntityDoNotExists {
 		t.Errorf("when trying to save component on not existing entity do not got ErrEntityDoNotExists error")
 	}
 
@@ -34,7 +34,7 @@ func TestComponents(t *testing.T) {
 		t.Errorf("retrieved component isn't equal to saved component")
 	}
 
-	if err := world.SaveComponent(ecs.EntityID{}, secondComponent); err != ecs.ErrEntityDoNotExists {
+	if err := world.SaveComponent(ecs.EntityID(0), secondComponent); err != ecs.ErrEntityDoNotExists {
 		t.Errorf("when trying to save existing component on not existing entity do not got ErrEntityDoNotExists error")
 	}
 

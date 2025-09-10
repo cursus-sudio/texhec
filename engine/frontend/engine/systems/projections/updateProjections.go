@@ -95,7 +95,9 @@ func (s UpdateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
 			continue
 		}
 
-		transformComponent.Size = mgl32.Vec3{w / resizeOrtho.Zoom, h / resizeOrtho.Zoom, transformComponent.Size.Z()}
+		transformComponent.SetSize(mgl32.Vec3{
+			w / resizeOrtho.Zoom, h / resizeOrtho.Zoom, transformComponent.Size.Z(),
+		})
 		s.transformArray.SaveComponent(entity, transformComponent)
 
 		ortho := projection.NewOrtho(

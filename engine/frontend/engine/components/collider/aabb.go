@@ -6,14 +6,12 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-type aabb struct {
+type AABB struct {
 	Min, Max mgl32.Vec3
 }
 
-type AABB struct{ aabb }
-
 func NewAABB(min, max mgl32.Vec3) AABB {
-	return AABB{aabb{Min: min, Max: max}}
+	return AABB{Min: min, Max: max}
 }
 
 func TransformAABB(t transform.Transform) AABB {

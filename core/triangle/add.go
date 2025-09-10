@@ -51,8 +51,8 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			))
 			ecs.SaveComponent(ctx.World.Components(), camera, MobileCamera{})
 			uiCamera := ctx.World.NewEntity()
-			ecs.SaveComponent(ctx.World.Components(), uiCamera, transform.NewTransform().
-				SetPos(mgl32.Vec3{0, 0, 10000}))
+			ecs.SaveComponent(ctx.World.Components(), uiCamera, transform.NewTransform().Ptr().
+				SetPos(mgl32.Vec3{0, 0, 10000}).Val())
 			ecs.SaveComponent(ctx.World.Components(), uiCamera, projection.NewDynamicOrtho(
 				-1000,
 				+1000,
@@ -65,10 +65,11 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				ioc.Get[runtime.Runtime](c).Stop()
 			})
 			exitBtn := ctx.World.NewEntity()
-			ecs.SaveComponent(ctx.World.Components(), exitBtn, transform.NewTransform().
-				SetSize(mgl32.Vec3{100, 100, 1}))
-			ecs.SaveComponent(ctx.World.Components(), exitBtn, anchor.NewParentAnchor(uiCamera).
-				SetPivotPoint(mgl32.Vec3{0, 1, .5}))
+			ecs.SaveComponent(ctx.World.Components(), exitBtn, transform.NewTransform().Ptr().
+				SetSize(mgl32.Vec3{100, 100, 1}).Val())
+			ecs.SaveComponent(ctx.World.Components(), exitBtn, anchor.NewParentAnchor(uiCamera).Ptr().
+				SetPivotPoint(mgl32.Vec3{0, 1, .5}).
+				Val())
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, transform.NewPivotPoint(mgl32.Vec3{1, 0, .5}))
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, mesh.NewMesh(MeshAssetID))
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, texture.NewTexture(Texture4AssetID))
@@ -128,9 +129,9 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 
 		b.OnLoad(func(ctx scenes.SceneCtx) { // cube
 			entity := ctx.World.NewEntity()
-			ecs.SaveComponent(ctx.World.Components(), entity, transform.NewTransform().
+			ecs.SaveComponent(ctx.World.Components(), entity, transform.NewTransform().Ptr().
 				SetPos(mgl32.Vec3{0, 0, -300}).
-				SetSize(mgl32.Vec3{100, 100, 100}))
+				SetSize(mgl32.Vec3{100, 100, 100}).Val())
 			ecs.SaveComponent(ctx.World.Components(), entity, mesh.NewMesh(MeshAssetID))
 			ecs.SaveComponent(ctx.World.Components(), entity, texture.NewTexture(Texture2AssetID))
 			ecs.SaveComponent(ctx.World.Components(), entity, mainpipeline.PipelineComponent{})
@@ -186,9 +187,9 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				row := i / cols
 				col := i % cols
 				entity := ctx.World.NewEntity()
-				ecs.SaveComponent(ctx.World.Components(), entity, transform.NewTransform().
+				ecs.SaveComponent(ctx.World.Components(), entity, transform.NewTransform().Ptr().
 					SetPos([3]float32{float32(col) * (size + gap), float32(row) * (size + gap), 0}).
-					SetSize([3]float32{size, size, 1}))
+					SetSize([3]float32{size, size, 1}).Val())
 				ecs.SaveComponent(ctx.World.Components(), entity, transform.NewStatic())
 				ecs.SaveComponent(ctx.World.Components(), entity, mesh.NewMesh(MeshAssetID))
 				ecs.SaveComponent(ctx.World.Components(), entity, texture.NewTexture(Texture1AssetID))
@@ -241,7 +242,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 						mul := 1000 * float32(event.Delta.Seconds())
 						pos[0] += mul * float32(xAxis)
 						pos[1] += mul * float32(yAxis)
-						cameraTransform.Pos = pos
+						cameraTransform.SetPos(pos)
 					}
 					// rotation := cameraTransform.Rotation
 					// mul := 100 * float32(event.Delta.Seconds())

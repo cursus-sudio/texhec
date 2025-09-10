@@ -11,6 +11,11 @@ type ComponentsArray[Component any] interface {
 	// - ErrEntityDoNotExists
 	SaveComponent(EntityID, Component) error // upsert
 
+	// differs from save component by not triggering events
+	// can return:
+	// - ErrEntityDoNotExists
+	DirtySaveComponent(EntityID, Component) error // upsert
+
 	// can return:
 	// - ErrComponentDoNotExists
 	// - ErrEntityDoNotExists
@@ -61,7 +66,6 @@ func (c *componentsArray[Component]) SaveComponent(entity EntityID, component Co
 	if componentIndex == noEntity {
 		return ErrEntityDoNotExists
 	}
-	// component := componentsArrayComponent[Component]{entity, rawComponent}
 	if componentIndex == noComponent {
 		c.entitiesComponents[entityIndex] = uint32(len(c.components))
 		c.components = append(c.components, component)
@@ -83,6 +87,26 @@ func (c *componentsArray[Component]) SaveComponent(entity EntityID, component Co
 		listener(entities)
 	}
 
+	return nil
+}
+
+func (c *componentsArray[Component]) DirtySaveComponent(entity EntityID, component Component) error {
+	entityIndex := entity.Index()
+	if entityIndex >= len(c.entitiesComponents) {
+		return ErrEntityDoNotExists
+	}
+	componentIndex := c.entitiesComponents[entityIndex]
+	if componentIndex == noEntity {
+		return ErrEntityDoNotExists
+	}
+	if componentIndex == noComponent {
+		c.entitiesComponents[entityIndex] = uint32(len(c.components))
+		c.components = append(c.components, component)
+		c.componentsEntities = append(c.componentsEntities, entity)
+		return nil
+	}
+	c.components[componentIndex] = component
+	c.componentsEntities[componentIndex] = entity
 	return nil
 }
 

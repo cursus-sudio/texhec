@@ -15,7 +15,7 @@ const (
 	// ChangeChild
 )
 
-type parentAnchor struct {
+type ParentAnchor struct {
 	Parent            ecs.EntityID
 	OnChildChange     RelativeChange
 	RelativeTransform transform.Transform
@@ -24,29 +24,34 @@ type parentAnchor struct {
 	ParentPivot transform.PivotPoint
 }
 
-type ParentAnchor struct{ *parentAnchor }
-
 func NewParentAnchor(parent ecs.EntityID) ParentAnchor {
-	return ParentAnchor{&parentAnchor{
+	return ParentAnchor{
 		parent,
 		Ignore,
 		transform.NewTransform(),
 		transform.NewPivotPoint(mgl32.Vec3{.5, .5, .5}),
-	}}
+	}
 }
 
-func (c ParentAnchor) SetParent(entity ecs.EntityID) ParentAnchor {
-	return ParentAnchor{&parentAnchor{entity, c.OnChildChange, c.RelativeTransform, c.ParentPivot}}
+func (c ParentAnchor) Ptr() *ParentAnchor { return &c }
+func (c *ParentAnchor) Val() ParentAnchor { return *c }
+
+func (c *ParentAnchor) SetParent(entity ecs.EntityID) *ParentAnchor {
+	c.Parent = entity
+	return c
 }
 
-func (c ParentAnchor) SetChildChange(change RelativeChange) ParentAnchor {
-	return ParentAnchor{&parentAnchor{c.Parent, change, c.RelativeTransform, c.ParentPivot}}
+func (c *ParentAnchor) SetChildChange(change RelativeChange) *ParentAnchor {
+	c.OnChildChange = change
+	return c
 }
 
-func (c ParentAnchor) SetRelativeTransform(transform transform.Transform) ParentAnchor {
-	return ParentAnchor{&parentAnchor{c.Parent, c.OnChildChange, transform, c.ParentPivot}}
+func (c *ParentAnchor) SetRelativeTransform(transform transform.Transform) *ParentAnchor {
+	c.RelativeTransform = transform
+	return c
 }
 
-func (c ParentAnchor) SetPivotPoint(pivot mgl32.Vec3) ParentAnchor {
-	return ParentAnchor{&parentAnchor{c.Parent, c.OnChildChange, c.RelativeTransform, transform.NewPivotPoint(pivot)}}
+func (c *ParentAnchor) SetPivotPoint(pivot mgl32.Vec3) *ParentAnchor {
+	c.ParentPivot = transform.NewPivotPoint(pivot)
+	return c
 }

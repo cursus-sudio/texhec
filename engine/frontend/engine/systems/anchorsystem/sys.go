@@ -13,26 +13,28 @@ func applyChildTransform(
 	parent transform.Transform,
 	child transform.Transform,
 	anchor anchor.ParentAnchor,
-) {
-	child.Pos = parent.Pos.
+) transform.Transform {
+	child.SetPos(parent.Pos.
 		Add(mgl32.Vec3{
 			parent.Size[0] * (anchor.ParentPivot.Point[0] - .5),
 			parent.Size[1] * (anchor.ParentPivot.Point[1] - .5),
 			parent.Size[2] * (anchor.ParentPivot.Point[2] - .5),
 		}).
-		Add(anchor.RelativeTransform.Pos)
+		Add(anchor.RelativeTransform.Pos),
+	)
 
 	if anchor.RelativeTransform.Rotation != mgl32.QuatIdent() {
-		child.Rotation = parent.Rotation.Mul(anchor.RelativeTransform.Rotation)
+		child.SetRotation(parent.Rotation.Mul(anchor.RelativeTransform.Rotation))
 	}
 
 	if (anchor.RelativeTransform.Size != mgl32.Vec3{}) {
-		child.Size = mgl32.Vec3{
+		child.SetSize(mgl32.Vec3{
 			parent.Size[0] * anchor.RelativeTransform.Size[0],
 			parent.Size[1] * anchor.RelativeTransform.Size[1],
 			parent.Size[2] * anchor.RelativeTransform.Size[2],
-		}
+		})
 	}
+	return child
 }
 
 func NewAnchorSystem(world ecs.World) {
@@ -111,7 +113,8 @@ func NewAnchorSystem(world ecs.World) {
 					continue
 				}
 
-				applyChildTransform(parentTransform, childTransform, anchor)
+				childTransform = applyChildTransform(parentTransform, childTransform, anchor)
+				transformArray.DirtySaveComponent(child, childTransform)
 			}
 		}
 

@@ -4,21 +4,19 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-type ray struct {
+type Ray struct {
 	Pos       mgl32.Vec3
 	Direction mgl32.Vec3
 	// max length is either 0 symbolizing infinity or a potive number
 	MaxDistance float32
 }
 
-type Ray struct{ ray }
-
 func NewRay(pos mgl32.Vec3, direction mgl32.Vec3, maxDistance float32) Ray {
-	return Ray{ray{
+	return Ray{
 		Pos:         pos,
 		Direction:   direction.Normalize(),
 		MaxDistance: max(0, maxDistance),
-	}}
+	}
 }
 
 func (r Ray) HitPoint() mgl32.Vec3 { return r.Pos.Add(r.Direction.Mul(r.MaxDistance)) }

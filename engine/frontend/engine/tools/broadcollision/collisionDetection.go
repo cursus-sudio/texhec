@@ -23,17 +23,25 @@ type CollisionDetectionService interface {
 }
 
 type collisionDetectionService struct {
-	world         ecs.World
-	assets        assets.Assets
-	worldCollider worldCollider
+	// world           ecs.World
+	transformsArray ecs.ComponentsArray[transform.Transform]
+	colliderArray   ecs.ComponentsArray[collider.Collider]
+	assets          assets.Assets
+	worldCollider   worldCollider
 }
 
 func newCollisionDetectionService(world ecs.World, assets assets.Assets, worldCollider worldCollider) CollisionDetectionService {
-	return &collisionDetectionService{world, assets, worldCollider}
+	return &collisionDetectionService{
+		// world,
+		ecs.GetComponentArray[transform.Transform](world.Components()),
+		ecs.GetComponentArray[collider.Collider](world.Components()),
+		assets,
+		worldCollider,
+	}
 }
 
 func (c *collisionDetectionService) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) (ObjectRayCollision, error) {
-	transformComponent, err := ecs.GetComponent[transform.Transform](c.world, entity)
+	transformComponent, err := c.transformsArray.GetComponent(entity)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +49,7 @@ func (c *collisionDetectionService) CollidesWithRay(entity ecs.EntityID, ray col
 		return nil, nil
 	}
 
-	colliderComponent, err := ecs.GetComponent[collider.Collider](c.world, entity)
+	colliderComponent, err := c.colliderArray.GetComponent(entity)
 	if err != nil {
 		return nil, err
 	}

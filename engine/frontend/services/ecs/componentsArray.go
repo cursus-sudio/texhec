@@ -1,7 +1,6 @@
 package ecs
 
 import (
-	// "reflect"
 	"math"
 )
 
@@ -36,9 +35,9 @@ type componentsArray[Component any] struct {
 	components         []Component
 	componentsEntities []EntityID
 
-	onRemove []func([]EntityID)
-	onChange []func([]EntityID)
 	onAdd    []func([]EntityID)
+	onChange []func([]EntityID)
+	onRemove []func([]EntityID)
 }
 
 func NewComponentsArray[Component any]() *componentsArray[Component] {
@@ -47,16 +46,13 @@ func NewComponentsArray[Component any]() *componentsArray[Component] {
 		components:         make([]Component, 0),
 		componentsEntities: make([]EntityID, 0),
 
-		onRemove: make([]func([]EntityID), 0),
-		onChange: make([]func([]EntityID), 0),
 		onAdd:    make([]func([]EntityID), 0),
+		onChange: make([]func([]EntityID), 0),
+		onRemove: make([]func([]EntityID), 0),
 	}
 }
 
 func (c *componentsArray[Component]) SaveComponent(entity EntityID, component Component) error {
-	listener := func() {}
-	defer listener()
-
 	entityIndex := entity.Index()
 	if entityIndex >= len(c.entitiesComponents) {
 		return ErrEntityDoNotExists
@@ -70,22 +66,23 @@ func (c *componentsArray[Component]) SaveComponent(entity EntityID, component Co
 		c.entitiesComponents[entityIndex] = uint32(len(c.components))
 		c.components = append(c.components, component)
 		c.componentsEntities = append(c.componentsEntities, entity)
-		listener = func() {
-			entities := []EntityID{entity}
-			for _, listener := range c.onAdd {
-				listener(entities)
-			}
+
+		// listeners
+		entities := []EntityID{entity}
+		for _, listener := range c.onAdd {
+			listener(entities)
 		}
 		return nil
 	}
 	c.components[componentIndex] = component
 	c.componentsEntities[componentIndex] = entity
-	listener = func() {
-		entities := []EntityID{entity}
-		for _, listener := range c.onChange {
-			listener(entities)
-		}
+
+	// listeners
+	entities := []EntityID{entity}
+	for _, listener := range c.onChange {
+		listener(entities)
 	}
+
 	return nil
 }
 
@@ -99,19 +96,21 @@ func (c *componentsArray[Component]) GetComponent(entity EntityID) (Component, e
 	var zero Component
 	switch componentIndex {
 	case noEntity:
-		return zero, ErrComponentDoNotExists
-	case noComponent:
 		return zero, ErrEntityDoNotExists
+	case noComponent:
+		return zero, ErrComponentDoNotExists
 	default:
 		component := c.components[componentIndex]
 		return component, nil
 	}
 }
 
-func (c *componentsArray[Component]) RemoveComponent(entity EntityID) {
-	listener := func() {}
-	defer listener()
+func (c *componentsArray[Component]) GetEntities() []EntityID { return c.componentsEntities }
+func (c *componentsArray[Component]) GetAnyComponent(entity EntityID) (any, error) {
+	return c.GetComponent(entity)
+}
 
+func (c *componentsArray[Component]) RemoveComponent(entity EntityID) {
 	entityIndex := entity.Index()
 	if entityIndex >= len(c.entitiesComponents) {
 		return
@@ -123,28 +122,31 @@ func (c *componentsArray[Component]) RemoveComponent(entity EntityID) {
 
 	c.entitiesComponents[entityIndex] = noComponent
 
-	// move component
-	movedComponent := c.components[len(c.components)-1]
-	c.components[componentIndex] = movedComponent
-	c.components = c.components[:len(c.components)-1]
+	if len(c.components)-1 == int(componentIndex) {
+		c.components = c.components[:len(c.components)-1]
+		c.componentsEntities = c.componentsEntities[:len(c.componentsEntities)-1]
+	} else {
+		movedComponent := c.components[len(c.components)-1]
+		movedComponentEntity := c.componentsEntities[len(c.componentsEntities)-1]
 
-	movedComponentEntity := c.componentsEntities[len(c.componentsEntities)-1]
-	c.componentsEntities[componentIndex] = movedComponentEntity
-	c.componentsEntities = c.componentsEntities[:len(c.componentsEntities)-1]
+		c.components[componentIndex] = movedComponent
+		c.componentsEntities[componentIndex] = movedComponentEntity
 
-	movedEntityIndex := movedComponentEntity.Index()
-	c.entitiesComponents[movedEntityIndex] = componentIndex
+		c.components = c.components[:len(c.components)-1]
+		c.componentsEntities = c.componentsEntities[:len(c.componentsEntities)-1]
 
-	listener = func() {
-		entities := []EntityID{entity}
-		for _, listener := range c.onRemove {
-			listener(entities)
-		}
+		movedEntityIndex := movedComponentEntity.Index()
+		c.entitiesComponents[movedEntityIndex] = componentIndex
+	}
+
+	// listeners
+	entities := []EntityID{entity}
+	for _, listener := range c.onRemove {
+		listener(entities)
 	}
 }
 
 func (c *componentsArray[Component]) AddEntity(entity EntityID) {
-
 	entityIndex := entity.Index()
 	for entityIndex >= len(c.entitiesComponents) {
 		c.entitiesComponents = append(c.entitiesComponents, noEntity)
@@ -153,23 +155,19 @@ func (c *componentsArray[Component]) AddEntity(entity EntityID) {
 }
 
 func (c *componentsArray[Component]) RemoveEntity(entity EntityID) {
-	listener := func() {}
-	defer listener()
-
 	entityIndex := entity.Index()
 	if entityIndex >= len(c.entitiesComponents) {
 		return
 	}
 	componentIndex := c.entitiesComponents[entityIndex]
+	c.entitiesComponents[entityIndex] = noEntity
 	if componentIndex != noComponent && componentIndex != noEntity {
-		listener = func() {
-			entities := []EntityID{entity}
-			for _, listener := range c.onRemove {
-				listener(entities)
-			}
+		// listeners
+		entities := []EntityID{entity}
+		for _, listener := range c.onRemove {
+			listener(entities)
 		}
 	}
-	c.entitiesComponents[entityIndex] = noEntity
 }
 
 func (c *componentsArray[Component]) OnAdd(listener func([]EntityID)) {

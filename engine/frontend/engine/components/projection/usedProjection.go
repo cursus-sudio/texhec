@@ -19,7 +19,7 @@ func NewUsedProjection[P Projection]() UsedProjection {
 }
 
 func (usedProjection UsedProjection) GetCameraProjection(world ecs.World, camera ecs.EntityID) (Projection, error) {
-	anyProj, err := world.GetComponent(camera, usedProjection.ProjectionComponent)
+	anyProj, err := world.GetAnyComponent(camera, usedProjection.ProjectionComponent)
 	if err != nil {
 		return nil, err
 	}

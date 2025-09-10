@@ -80,6 +80,10 @@ func listenToProjectionChanges[Projection projection.Projection](
 		ecs.GetComponentType(zero),
 		ecs.GetComponentType(transform.Transform{}),
 	)
+
+	transformArray := ecs.GetComponentArray[transform.Transform](m.world.Components())
+	projectionsArray := ecs.GetComponentArray[Projection](m.world.Components())
+
 	onChange := func(_ []ecs.EntityID) {
 		mutex.Lock()
 		defer mutex.Unlock()
@@ -91,13 +95,13 @@ func listenToProjectionChanges[Projection projection.Projection](
 			buffer.Remove(len(buffer.Get()) - 1)
 		}
 		for i, camera := range entities {
-			projectionComponent, err := ecs.GetComponent[Projection](m.world, camera)
+			projectionComponent, err := projectionsArray.GetComponent(camera)
 			if err != nil {
 				m.logger.Error(err)
 				return
 			}
 
-			cameraTransformComponent, err := ecs.GetComponent[transform.Transform](m.world, camera)
+			cameraTransformComponent, err := transformArray.GetComponent(camera)
 			if err != nil {
 				m.logger.Error(errors.New("camera misses transform component"))
 				return
@@ -125,6 +129,11 @@ func (m *System) modifyRegisterOnChanges() error {
 
 	// change entities buffer
 	{
+		transformArray := ecs.GetComponentArray[transform.Transform](m.world.Components())
+		usedProjectionsArray := ecs.GetComponentArray[projection.UsedProjection](m.world.Components())
+		textureArray := ecs.GetComponentArray[texturecomponent.Texture](m.world.Components())
+		meshArray := ecs.GetComponentArray[meshcomponent.Mesh](m.world.Components())
+
 		onChange := func(entities []ecs.EntityID) {
 			register.mutex.Lock()
 			defer register.mutex.Unlock()
@@ -142,13 +151,13 @@ func (m *System) modifyRegisterOnChanges() error {
 			}
 
 			for _, entity := range entities {
-				transformComponent, err := ecs.GetComponent[transform.Transform](m.world, entity)
+				transformComponent, err := transformArray.GetComponent(entity)
 				if err != nil {
 					continue
 				}
 				model := transformComponent.Mat4()
 
-				textureComponent, err := ecs.GetComponent[texturecomponent.Texture](m.world, entity)
+				textureComponent, err := textureArray.GetComponent(entity)
 				if err != nil {
 					continue
 				}
@@ -160,7 +169,7 @@ func (m *System) modifyRegisterOnChanges() error {
 					continue
 				}
 
-				meshComponent, err := ecs.GetComponent[meshcomponent.Mesh](m.world, entity)
+				meshComponent, err := meshArray.GetComponent(entity)
 				if err != nil {
 					continue
 				}
@@ -172,7 +181,7 @@ func (m *System) modifyRegisterOnChanges() error {
 					continue
 				}
 
-				usedProjection, err := ecs.GetComponent[projection.UsedProjection](m.world, entity)
+				usedProjection, err := usedProjectionsArray.GetComponent(entity)
 				if err != nil {
 					continue
 				}

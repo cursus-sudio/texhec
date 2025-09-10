@@ -8,23 +8,27 @@ import (
 )
 
 type HoverSystem struct {
-	world   ecs.World
-	events  events.Events
-	targets map[ecs.ComponentType]ecs.EntityID
+	world            ecs.World
+	mouseEventsArray ecs.ComponentsArray[mouse.MouseEvents]
+	hoveredArray     ecs.ComponentsArray[mouse.Hovered]
+	events           events.Events
+	targets          map[ecs.ComponentType]ecs.EntityID
 }
 
 func NewHoverSystem(world ecs.World, events events.Events) HoverSystem {
 	return HoverSystem{
-		world:   world,
-		events:  events,
-		targets: map[ecs.ComponentType]ecs.EntityID{},
+		world:            world,
+		mouseEventsArray: ecs.GetComponentArray[mouse.MouseEvents](world.Components()),
+		hoveredArray:     ecs.GetComponentArray[mouse.Hovered](world.Components()),
+		events:           events,
+		targets:          map[ecs.ComponentType]ecs.EntityID{},
 	}
 }
 
 func (s *HoverSystem) handleMouseLeave(entity ecs.EntityID) {
-	s.world.RemoveComponent(entity, ecs.GetComponentType(mouse.Hovered{}))
+	s.hoveredArray.RemoveComponent(entity)
 
-	mouseEvents, err := ecs.GetComponent[mouse.MouseEvents](s.world, entity)
+	mouseEvents, err := s.mouseEventsArray.GetComponent(entity)
 	if err != nil {
 		return
 	}
@@ -44,11 +48,11 @@ func (s *HoverSystem) Listen(event RayChangedTargetEvent) {
 	s.targets[event.ProjectionType] = *event.EntityID
 	entity := *event.EntityID
 
-	mouseEvents, err := ecs.GetComponent[mouse.MouseEvents](s.world, entity)
+	mouseEvents, err := s.mouseEventsArray.GetComponent(entity)
 	if err != nil {
 		return
 	}
-	s.world.SaveComponent(entity, mouse.Hovered{})
+	s.hoveredArray.SaveComponent(entity, mouse.Hovered{})
 	for _, event := range mouseEvents.MouseEnterEvents {
 		events.EmitAny(s.events, event)
 	}

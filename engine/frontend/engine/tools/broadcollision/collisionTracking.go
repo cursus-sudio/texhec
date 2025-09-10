@@ -26,6 +26,7 @@ type worldCollider interface {
 
 type worldColliderImpl struct {
 	world             ecs.World
+	transformArray    ecs.ComponentsArray[transform.Transform]
 	chunkSize         float32
 	chunks            map[mgl32.Vec2]datastructures.Set[ecs.EntityID]
 	entitiesPositions map[ecs.EntityID][]mgl32.Vec2
@@ -34,6 +35,7 @@ type worldColliderImpl struct {
 func newWorldCollider(world ecs.World, chunkSize float32) worldCollider {
 	return &worldColliderImpl{
 		world:             world,
+		transformArray:    ecs.GetComponentArray[transform.Transform](world.Components()),
 		chunkSize:         chunkSize,
 		chunks:            make(map[mgl32.Vec2]datastructures.Set[ecs.EntityID]),
 		entitiesPositions: make(map[ecs.EntityID][]mgl32.Vec2),
@@ -70,7 +72,7 @@ func (c *worldColliderImpl) Chunks() map[mgl32.Vec2]datastructures.Set[ecs.Entit
 
 func (c *worldColliderImpl) Add(entities ...ecs.EntityID) {
 	for _, entity := range entities {
-		transformComponent, err := ecs.GetComponent[transform.Transform](c.world, entity)
+		transformComponent, err := c.transformArray.GetComponent(entity)
 		if err != nil {
 			continue
 		}

@@ -9,9 +9,10 @@ import (
 )
 
 type HoverEventSystem struct {
-	world  ecs.World
-	events events.Events
-	query  ecs.LiveQuery
+	world            ecs.World
+	mouseEventsArray ecs.ComponentsArray[mouse.MouseEvents]
+	events           events.Events
+	query            ecs.LiveQuery
 }
 
 func NewHoverEventsSystem(world ecs.World, events events.Events) HoverEventSystem {
@@ -20,15 +21,16 @@ func NewHoverEventsSystem(world ecs.World, events events.Events) HoverEventSyste
 		ecs.GetComponentType(mouse.Hovered{}),
 	)
 	return HoverEventSystem{
-		world:  world,
-		events: events,
-		query:  query,
+		world:            world,
+		mouseEventsArray: ecs.GetComponentArray[mouse.MouseEvents](world.Components()),
+		events:           events,
+		query:            query,
 	}
 }
 
 func (s *HoverEventSystem) Listen(event frames.FrameEvent) {
 	for _, entity := range s.query.Entities() {
-		eventsComponent, err := ecs.GetComponent[mouse.MouseEvents](s.world, entity)
+		eventsComponent, err := s.mouseEventsArray.GetComponent(entity)
 		if err != nil {
 			continue
 		}

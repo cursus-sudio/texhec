@@ -38,22 +38,22 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadWorld, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			camera := ctx.World.NewEntity()
-			ctx.World.SaveComponent(camera, transform.NewTransform())
-			ctx.World.SaveComponent(camera, projection.NewDynamicOrtho(
+			ecs.SaveComponent(ctx.World.Components(), camera, transform.NewTransform())
+			ecs.SaveComponent(ctx.World.Components(), camera, projection.NewDynamicOrtho(
 				-1000,
 				+1000,
 				1,
 			))
-			ctx.World.SaveComponent(camera, projection.NewDynamicPerspective(
+			ecs.SaveComponent(ctx.World.Components(), camera, projection.NewDynamicPerspective(
 				mgl32.DegToRad(90),
 				0.01,
 				1000,
 			))
-			ctx.World.SaveComponent(camera, MobileCamera{})
+			ecs.SaveComponent(ctx.World.Components(), camera, MobileCamera{})
 			uiCamera := ctx.World.NewEntity()
-			ctx.World.SaveComponent(uiCamera, transform.NewTransform().
+			ecs.SaveComponent(ctx.World.Components(), uiCamera, transform.NewTransform().
 				SetPos(mgl32.Vec3{0, 0, 10000}))
-			ctx.World.SaveComponent(uiCamera, projection.NewDynamicOrtho(
+			ecs.SaveComponent(ctx.World.Components(), uiCamera, projection.NewDynamicOrtho(
 				-1000,
 				+1000,
 				1,
@@ -65,17 +65,17 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				ioc.Get[runtime.Runtime](c).Stop()
 			})
 			exitBtn := ctx.World.NewEntity()
-			ctx.World.SaveComponent(exitBtn, transform.NewTransform().
+			ecs.SaveComponent(ctx.World.Components(), exitBtn, transform.NewTransform().
 				SetSize(mgl32.Vec3{100, 100, 1}))
-			ctx.World.SaveComponent(exitBtn, anchor.NewParentAnchor(uiCamera).
+			ecs.SaveComponent(ctx.World.Components(), exitBtn, anchor.NewParentAnchor(uiCamera).
 				SetPivotPoint(mgl32.Vec3{0, 1, .5}))
-			ctx.World.SaveComponent(exitBtn, transform.NewPivotPoint(mgl32.Vec3{1, 0, .5}))
-			ctx.World.SaveComponent(exitBtn, mesh.NewMesh(MeshAssetID))
-			ctx.World.SaveComponent(exitBtn, texture.NewTexture(Texture4AssetID))
-			ctx.World.SaveComponent(exitBtn, mainpipeline.PipelineComponent{})
-			ctx.World.SaveComponent(exitBtn, projection.NewUsedProjection[projection.Ortho]())
-			ctx.World.SaveComponent(exitBtn, collider.NewCollider(ColliderAssetID))
-			ctx.World.SaveComponent(exitBtn, mouse.NewMouseEvents().
+			ecs.SaveComponent(ctx.World.Components(), exitBtn, transform.NewPivotPoint(mgl32.Vec3{1, 0, .5}))
+			ecs.SaveComponent(ctx.World.Components(), exitBtn, mesh.NewMesh(MeshAssetID))
+			ecs.SaveComponent(ctx.World.Components(), exitBtn, texture.NewTexture(Texture4AssetID))
+			ecs.SaveComponent(ctx.World.Components(), exitBtn, mainpipeline.PipelineComponent{})
+			ecs.SaveComponent(ctx.World.Components(), exitBtn, projection.NewUsedProjection[projection.Ortho]())
+			ecs.SaveComponent(ctx.World.Components(), exitBtn, collider.NewCollider(ColliderAssetID))
+			ecs.SaveComponent(ctx.World.Components(), exitBtn, mouse.NewMouseEvents().
 				// AddMouseHoverEvents(QuitEvent{}).
 				AddLeftClickEvents(QuitEvent{}),
 			)
@@ -128,15 +128,15 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 
 		b.OnLoad(func(ctx scenes.SceneCtx) { // cube
 			entity := ctx.World.NewEntity()
-			ctx.World.SaveComponent(entity, transform.NewTransform().
+			ecs.SaveComponent(ctx.World.Components(), entity, transform.NewTransform().
 				SetPos(mgl32.Vec3{0, 0, -300}).
 				SetSize(mgl32.Vec3{100, 100, 100}))
-			ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
-			ctx.World.SaveComponent(entity, texture.NewTexture(Texture2AssetID))
-			ctx.World.SaveComponent(entity, mainpipeline.PipelineComponent{})
-			ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
+			ecs.SaveComponent(ctx.World.Components(), entity, mesh.NewMesh(MeshAssetID))
+			ecs.SaveComponent(ctx.World.Components(), entity, texture.NewTexture(Texture2AssetID))
+			ecs.SaveComponent(ctx.World.Components(), entity, mainpipeline.PipelineComponent{})
+			ecs.SaveComponent(ctx.World.Components(), entity, projection.NewUsedProjection[projection.Perspective]())
 			// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
-			ctx.World.SaveComponent(entity, ChangeTransformOverTimeComponent{})
+			ecs.SaveComponent(ctx.World.Components(), entity, ChangeTransformOverTimeComponent{})
 		})
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			pipeline, err := mainpipeline.NewSystem(
@@ -186,17 +186,17 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				row := i / cols
 				col := i % cols
 				entity := ctx.World.NewEntity()
-				ctx.World.SaveComponent(entity, transform.NewTransform().
+				ecs.SaveComponent(ctx.World.Components(), entity, transform.NewTransform().
 					SetPos([3]float32{float32(col) * (size + gap), float32(row) * (size + gap), 0}).
 					SetSize([3]float32{size, size, 1}))
-				ctx.World.SaveComponent(entity, transform.NewStatic())
-				ctx.World.SaveComponent(entity, mesh.NewMesh(MeshAssetID))
-				ctx.World.SaveComponent(entity, texture.NewTexture(Texture1AssetID))
-				ctx.World.SaveComponent(entity, mainpipeline.PipelineComponent{})
-				ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
+				ecs.SaveComponent(ctx.World.Components(), entity, transform.NewStatic())
+				ecs.SaveComponent(ctx.World.Components(), entity, mesh.NewMesh(MeshAssetID))
+				ecs.SaveComponent(ctx.World.Components(), entity, texture.NewTexture(Texture1AssetID))
+				ecs.SaveComponent(ctx.World.Components(), entity, mainpipeline.PipelineComponent{})
+				ecs.SaveComponent(ctx.World.Components(), entity, projection.NewUsedProjection[projection.Ortho]())
 				// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
-				ctx.World.SaveComponent(entity, collider.NewCollider(ColliderAssetID))
-				ctx.World.SaveComponent(entity, mouse.NewMouseEvents().
+				ecs.SaveComponent(ctx.World.Components(), entity, collider.NewCollider(ColliderAssetID))
+				ecs.SaveComponent(ctx.World.Components(), entity, mouse.NewMouseEvents().
 					AddLeftClickEvents(OnClickDomainEvent{entity, row, col}).
 					AddMouseHoverEvents(OnHoveredDomainEvent{entity, row, col}),
 				)
@@ -214,6 +214,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				ecs.GetComponentType(projection.DynamicOrtho{}),
 				ecs.GetComponentType(MobileCamera{}),
 			)
+			transformArray := ecs.GetComponentArray[transform.Transform](ctx.World.Components())
 
 			moveCameraSystem := func(event frames.FrameEvent) error {
 				xAxis := 0
@@ -231,7 +232,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 
 				cameras := camerasQuery.Entities()
 				for _, camera := range cameras {
-					cameraTransform, err := ecs.GetComponent[transform.Transform](ctx.World, camera)
+					cameraTransform, err := transformArray.GetComponent(camera)
 					if err != nil {
 						return err
 					}
@@ -248,7 +249,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 					// rotation = rotation.Mul(mgl32.QuatRotate(mgl32.DegToRad(mul*float32(yAxis)), mgl32.Vec3{-1, 0, 0}))
 					// cameraTransform.Rotation = rotation
 
-					if err := ctx.World.SaveComponent(camera, cameraTransform); err != nil {
+					if err := transformArray.SaveComponent(camera, cameraTransform); err != nil {
 						return err
 					}
 				}
@@ -257,6 +258,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 
 			events.ListenE(ctx.EventsBuilder, moveCameraSystem)
 
+			dynamicOrthoArray := ecs.GetComponentArray[projection.DynamicOrtho](ctx.World.Components())
 			events.ListenE(ctx.EventsBuilder, func(event sdl.MouseWheelEvent) error {
 				if event.Y == 0 {
 					return nil
@@ -264,7 +266,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				cameras := camerasQuery.Entities()
 				var mul = float32(math.Pow(10, float64(event.Y)/50))
 				for _, camera := range cameras {
-					ortho, err := ecs.GetComponent[projection.DynamicOrtho](ctx.World, camera)
+					ortho, err := dynamicOrthoArray.GetComponent(camera)
 					if err != nil {
 						return err
 					}
@@ -272,7 +274,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 					ortho.Zoom *= mul
 					ortho.Zoom = max(min(ortho.Zoom, 5), 0.1)
 
-					if err := ctx.World.SaveComponent(camera, ortho); err != nil {
+					if err := dynamicOrthoArray.SaveComponent(camera, ortho); err != nil {
 						return err
 					}
 				}

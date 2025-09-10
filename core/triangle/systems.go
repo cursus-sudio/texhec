@@ -34,11 +34,11 @@ func NewChangeTransformOverTimeSystem(
 
 func (s *ChangeTransformOverTimeSystem) Update(args frames.FrameEvent) {
 	for _, entity := range s.LiveQuery.Entities() {
-		changeTransformOverTimeComponent, err := ecs.GetComponent[ChangeTransformOverTimeComponent](s.World, entity)
+		changeTransformOverTimeComponent, err := ecs.GetComponent[ChangeTransformOverTimeComponent](s.World.Components(), entity)
 		if err != nil {
 			continue
 		}
-		transformComponent, err := ecs.GetComponent[transform.Transform](s.World, entity)
+		transformComponent, err := ecs.GetComponent[transform.Transform](s.World.Components(), entity)
 		if err != nil {
 			continue
 		}
@@ -59,7 +59,7 @@ func (s *ChangeTransformOverTimeSystem) Update(args frames.FrameEvent) {
 		// transformComponent.Size.Z *= scaleFactor
 		// transformComponent.Pos.X = float32(t.Seconds()) * 100
 
-		s.World.SaveComponent(entity, transformComponent)
-		s.World.SaveComponent(entity, changeTransformOverTimeComponent)
+		ecs.SaveComponent(s.World.Components(), entity, transformComponent)
+		ecs.SaveComponent(s.World.Components(), entity, changeTransformOverTimeComponent)
 	}
 }

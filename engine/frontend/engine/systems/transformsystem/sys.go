@@ -21,6 +21,8 @@ func NewPivotPointSystem(world ecs.World) {
 		ecs.GetComponentType(transform.Transform{}),
 		ecs.GetComponentType(transform.PivotPoint{}),
 	)
+	transformArray := ecs.GetComponentArray[transform.Transform](world.Components())
+	pivotPointsArray := ecs.GetComponentArray[transform.PivotPoint](world.Components())
 	var lastChanged ecs.EntityID
 	listener := func(ei []ecs.EntityID) {
 		for _, entity := range ei {
@@ -29,11 +31,11 @@ func NewPivotPointSystem(world ecs.World) {
 				lastChanged = zero
 				continue
 			}
-			transformComponent, err := ecs.GetComponent[transform.Transform](world, entity)
+			transformComponent, err := transformArray.GetComponent(entity)
 			if err != nil {
 				continue
 			}
-			pivot, err := ecs.GetComponent[transform.PivotPoint](world, entity)
+			pivot, err := pivotPointsArray.GetComponent(entity)
 			if err != nil {
 				continue
 			}

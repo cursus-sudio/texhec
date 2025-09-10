@@ -67,7 +67,7 @@ func (system *toggleSystem) Listen(args frames.FrameEvent) error {
 	}
 
 	for _, entity := range system.LiveQuery.Entities() {
-		component, err := ecs.GetComponent[someComponent](system.World, entity)
+		component, err := ecs.GetComponent[someComponent](system.World.Components(), entity)
 		if err != nil {
 			continue
 		}
@@ -128,13 +128,13 @@ func (system *someSystem) Listen(args frames.FrameEvent) error {
 	text += fmt.Sprintf("now %s\n", time.Now().Format(format))
 
 	for _, entity := range system.LiveQuery.Entities() {
-		component, err := ecs.GetComponent[someComponent](system.World, entity)
+		component, err := ecs.GetComponent[someComponent](system.World.Components(), entity)
 		if err != nil {
 			continue
 		}
 		component.PastTime += args.Delta
 		component.Frame += 1
-		system.World.SaveComponent(entity, component)
+		ecs.SaveComponent(system.World.Components(), entity, component)
 
 		text += "\n"
 		text += fmt.Sprintf("first frame %s\n", component.StartedAt.Format(format))

@@ -9,10 +9,11 @@ import (
 )
 
 type ClickSystem struct {
-	world     ecs.World
-	events    events.Events
-	liveQuery ecs.LiveQuery
-	clickOn   uint8
+	world            ecs.World
+	mouseEventsArray ecs.ComponentsArray[mouse.MouseEvents]
+	events           events.Events
+	liveQuery        ecs.LiveQuery
+	clickOn          uint8
 }
 
 // use sdl.PRESSED or sdl.RELEASED or clickOn
@@ -26,10 +27,11 @@ func NewClickSystem(
 		ecs.GetComponentType(mouse.MouseEvents{}),
 	)
 	return ClickSystem{
-		world:     world,
-		events:    events,
-		liveQuery: liveQuery,
-		clickOn:   clickOn,
+		world:            world,
+		mouseEventsArray: ecs.GetComponentArray[mouse.MouseEvents](world.Components()),
+		events:           events,
+		liveQuery:        liveQuery,
+		clickOn:          clickOn,
 	}
 }
 
@@ -40,7 +42,7 @@ func (s ClickSystem) Listen(event sdl.MouseButtonEvent) {
 	entities := s.liveQuery.Entities()
 	for _, entity := range entities {
 		var mouseEvents mouse.MouseEvents
-		mouseEvents, err := ecs.GetComponent[mouse.MouseEvents](s.world, entity)
+		mouseEvents, err := s.mouseEventsArray.GetComponent(entity)
 		if err != nil {
 			continue
 		}

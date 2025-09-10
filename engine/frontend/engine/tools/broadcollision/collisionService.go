@@ -36,17 +36,19 @@ func newRegister(world ecs.World) register {
 }
 
 type collisionsService struct {
-	world  ecs.World
-	assets assets.Assets
-	logger logger.Logger
+	world                ecs.World
+	transformStaticArray ecs.ComponentsArray[transform.Static]
+	assets               assets.Assets
+	logger               logger.Logger
 }
 
 func factory(assets assets.Assets, logger logger.Logger) CollisionServiceFactory {
 	return func(w ecs.World) CollisionService {
 		return &collisionsService{
-			world:  w,
-			assets: assets,
-			logger: logger,
+			world:                w,
+			transformStaticArray: ecs.GetComponentArray[transform.Static](w.Components()),
+			assets:               assets,
+			logger:               logger,
 		}
 	}
 }
@@ -115,7 +117,8 @@ func (s *collisionsService) Add(entities ...ecs.EntityID) {
 	static := make([]ecs.EntityID, 0, len(entities))
 	dynamic := make([]ecs.EntityID, 0, len(entities))
 	for _, entity := range entities {
-		_, err := ecs.GetComponent[transform.Static](s.world, entity)
+
+		_, err := s.transformStaticArray.GetComponent(entity)
 		isDynamic := err != nil
 		if isDynamic {
 			dynamic = append(dynamic, entity)

@@ -17,8 +17,8 @@ type world struct {
 }
 
 func NewWorld() World {
-	componentsImpl := newComponents()
 	entitiesImpl := newEntities()
+	componentsImpl := newComponents(entitiesImpl.GetEntities)
 	registryImpl := newRegistry()
 
 	return &world{
@@ -47,18 +47,4 @@ func (world world) EntityExists(entity EntityID) bool {
 	return world.entitiesInterface.EntityExists(entity)
 }
 
-func (world world) SaveComponent(entity EntityID, component Component) error {
-	return world.componentsImpl.SaveComponent(entity, component)
-}
-
-func (world world) GetComponent(entityId EntityID, componentType ComponentType) (Component, error) {
-	return world.componentsImpl.GetComponent(entityId, componentType)
-}
-
-func (world world) RemoveComponent(entity EntityID, componentType ComponentType) {
-	world.componentsImpl.RemoveComponent(entity, componentType)
-}
-
-func (world world) QueryEntitiesWithComponents(componentTypes ...ComponentType) LiveQuery {
-	return world.componentsImpl.QueryEntitiesWithComponents(componentTypes...)
-}
+//

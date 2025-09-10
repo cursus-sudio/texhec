@@ -6,21 +6,18 @@ import (
 )
 
 func BenchmarkGetComponentType(b *testing.B) {
-	type Component struct{}
 	for i := 0; i < b.N; i++ {
 		ecs.GetComponentType(Component{})
 	}
 }
 
 func BenchmarkGetComponentPointerType(b *testing.B) {
-	type Component struct{}
 	for i := 0; i < b.N; i++ {
 		ecs.GetComponentPointerType((*Component)(nil))
 	}
 }
 
 func BenchmarkComponentsArraySave(b *testing.B) {
-	type Component struct{}
 	world := ecs.NewComponentsArray[Component]()
 
 	for i := 0; i < b.N; i++ {
@@ -40,13 +37,12 @@ func BenchmarkComponentsArraySave(b *testing.B) {
 }
 
 func BenchmarkComponentsArrayGet10Times(b *testing.B) {
-	type Component bool
-	world := ecs.NewComponentsArray[bool]()
+	world := ecs.NewComponentsArray[Component]()
 
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
 		world.AddEntity(entity)
-		world.SaveComponent(entity, false)
+		world.SaveComponent(entity, Component{})
 	}
 
 	b.ResetTimer()
@@ -60,7 +56,6 @@ func BenchmarkComponentsArrayGet10Times(b *testing.B) {
 }
 
 func BenchmarkSaveComponent(b *testing.B) {
-	type Component struct{}
 	world := ecs.NewWorld()
 
 	otherEntitiesPresent := 100
@@ -71,12 +66,11 @@ func BenchmarkSaveComponent(b *testing.B) {
 	entity := world.NewEntity()
 
 	for i := 0; i < b.N; i++ {
-		world.SaveComponent(entity, Component{})
+		ecs.SaveComponent(world.Components(), entity, Component{})
 	}
 }
 
 func BenchmarkGetComponent(b *testing.B) {
-	type Component struct{}
 	world := ecs.NewWorld()
 
 	otherEntitiesPresent := 100
@@ -87,18 +81,17 @@ func BenchmarkGetComponent(b *testing.B) {
 	entities := make([]ecs.EntityID, b.N)
 	for i := 0; i < b.N; i++ {
 		entity := world.NewEntity()
-		world.SaveComponent(entity, Component{})
+		ecs.SaveComponent(world.Components(), entity, Component{})
 		entities[i] = entity
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		ecs.GetComponent[Component](world, entities[i])
+		ecs.GetComponent[Component](world.Components(), entities[i])
 	}
 }
 
 func BenchmarkQueryEntitiesWithComponents(b *testing.B) {
-	type RequiredComponent struct{}
 	world := ecs.NewWorld()
 
 	otherEntitiesPresent := 10000
@@ -109,10 +102,10 @@ func BenchmarkQueryEntitiesWithComponents(b *testing.B) {
 	requiredEntitiesPresent := 10000
 	for i := 0; i < requiredEntitiesPresent; i++ {
 		entity := world.NewEntity()
-		world.SaveComponent(entity, RequiredComponent{})
+		ecs.SaveComponent(world.Components(), entity, Component{})
 	}
 
-	componentType := ecs.GetComponentType(RequiredComponent{})
+	componentType := ecs.GetComponentType(Component{})
 	for i := 0; i < b.N; i++ {
 		world.QueryEntitiesWithComponents(componentType)
 	}

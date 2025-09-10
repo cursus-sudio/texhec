@@ -18,6 +18,8 @@ func newComponentType(componentType reflect.Type) ComponentType {
 	return ComponentType{componentType: componentType}
 }
 
+//
+
 type Component interface{}
 
 func GetComponentType(component Component) ComponentType {
@@ -32,6 +34,10 @@ func GetComponentPointerType(componentPointer any) ComponentType {
 	return newComponentType(reflect.TypeOf(componentPointer).Elem())
 }
 
+//
+//
+//
+
 var (
 	ErrComponentDoNotExists error = errors.New("component do not exists")
 	ErrEntityDoNotExists    error = errors.New("entity do not exists")
@@ -40,31 +46,16 @@ var (
 type componentsInterface interface {
 	// any is ComponentArray[ComponentType]
 	// GetArray(ComponentType) (any, error)
-
-	// can return:
-	// - ErrEntityDoNotExists
-	SaveComponent(EntityID, Component) error // upsert (create or update)
-	// can return:
-	// - ErrComponentDoNotExists
-	// - ErrEntityDoNotExists
-	GetComponent(entityId EntityID, componentType ComponentType) (Component, error)
-	RemoveComponent(EntityID, ComponentType)
+	Components() ComponentsStorage
 
 	// returns for with all listed component types
 	// the same live query should be returned for the same input
 	QueryEntitiesWithComponents(...ComponentType) LiveQuery
 
+	GetAnyComponent(EntityID, ComponentType) (any, error)
+
 	LockComponents()
 	UnlockComponents()
-}
-
-func GetComponent[WantedComponent Component](w World, entity EntityID) (WantedComponent, error) {
-	var zero WantedComponent
-	component, err := w.GetComponent(entity, GetComponentType(zero))
-	if err != nil {
-		return zero, err
-	}
-	return component.(WantedComponent), nil
 }
 
 // impl
@@ -72,176 +63,229 @@ func GetComponent[WantedComponent Component](w World, entity EntityID) (WantedCo
 type componentsImpl struct {
 	mutex sync.Locker
 
-	componentArrays  map[ComponentType]any // any is *componentsArray[ComponentType]
-	entityComponents map[EntityID]map[ComponentType]*Component
-	componentEntity  map[ComponentType]map[EntityID]*Component
+	storage ComponentsStorage
+}
+
+func (components *componentsImpl) Components() ComponentsStorage { return components.storage }
+func (components *componentsImpl) LockComponents()               { components.mutex.Lock() }
+func (components *componentsImpl) UnlockComponents()             { components.mutex.Unlock() }
+func (components *componentsImpl) AddEntity(entity EntityID) {
+	for _, arr := range components.storage.arrays {
+		arr.AddEntity(entity)
+	}
+}
+
+func (components *componentsImpl) RemoveEntity(entity EntityID) {
+	for _, arr := range components.storage.arrays {
+		arr.RemoveEntity(entity)
+	}
+}
+
+func newComponents(getEntities func() []EntityID) *componentsImpl {
+	return &componentsImpl{
+		mutex:   &sync.Mutex{},
+		storage: newComponentsStorage(getEntities),
+	}
+}
+
+//
+
+type arraysSharedInterface interface {
+	AddEntity(entity EntityID)
+	RemoveEntity(entity EntityID)
+
+	GetEntities() []EntityID
+	GetAnyComponent(entity EntityID) (any, error)
+
+	OnAdd(listener func([]EntityID))
+	OnChange(listener func([]EntityID))
+	OnRemove(listener func([]EntityID))
+}
+
+type componentsStorage struct {
+	arrays      map[ComponentType]arraysSharedInterface // any is *componentsArray[ComponentType]
+	getEntities func() []EntityID
+	onArrayAdd  map[ComponentType][]*liveQuery
 
 	cachedQueries    map[queryKey]*liveQuery
 	dependentQueries map[ComponentType][]*liveQuery
 }
 
-func newComponents() *componentsImpl {
-	return &componentsImpl{
-		mutex:           &sync.Mutex{},
-		componentArrays: make(map[ComponentType]any),
+type ComponentsStorage *componentsStorage
 
-		entityComponents: make(map[EntityID]map[ComponentType]*Component),
-		componentEntity:  make(map[ComponentType]map[EntityID]*Component),
+func newComponentsStorage(getEntities func() []EntityID) ComponentsStorage {
+	return &componentsStorage{
+		arrays:      make(map[ComponentType]arraysSharedInterface),
+		getEntities: getEntities,
+		onArrayAdd:  make(map[ComponentType][]*liveQuery),
 
 		cachedQueries:    make(map[queryKey]*liveQuery, 0),
 		dependentQueries: make(map[ComponentType][]*liveQuery, 0),
 	}
 }
 
-// func (components *componentsImpl) getComponentArray(componentType ComponentType) any {
-// 	if arr, ok := components.componentArrays[componentType]; ok {
-// 		return arr
-// 	}
-// 	// newArray := newComponentsArray
-// 	return nil
-// }
-
-func (components *componentsImpl) SaveComponent(entityID EntityID, component Component) error {
-	componentType := GetComponentType(component)
-	if components.entityComponents[entityID] == nil {
-		return ErrEntityDoNotExists
-	}
-
-	_, entityHadComponent := components.entityComponents[entityID][componentType]
-	if components.componentEntity[componentType] == nil {
-		components.componentEntity[componentType] = make(map[EntityID]*Component)
-	}
-
-	components.entityComponents[entityID][componentType] = &component
-	components.componentEntity[componentType][entityID] = &component
-
-	dependentQueries, _ := components.dependentQueries[componentType]
-	if entityHadComponent {
-		for _, query := range dependentQueries {
-			if _, ok := query.entities.GetIndex(entityID); !ok {
-				continue
-			}
-			query.Changed([]EntityID{entityID})
-		}
-		return nil
-	}
-	// manage cache
-	for _, query := range dependentQueries {
-		dependenciesNeeded := len(query.dependencies)
-		entityComponents := components.entityComponents[entityID]
-		for componentType := range entityComponents {
-			if _, ok := query.dependencies[componentType]; !ok {
-				continue
-			}
-			dependenciesNeeded--
-			if dependenciesNeeded == 0 {
-				break
-			}
-		}
-		if dependenciesNeeded == 0 {
-			query.AddEntities([]EntityID{entityID})
-		}
-	}
-
-	return nil
-}
-
-func (components *componentsImpl) GetComponent(entityId EntityID, componentType ComponentType) (Component, error) {
-	entity, ok := components.entityComponents[entityId]
-	if !ok {
-		return nil, ErrEntityDoNotExists
-	}
-	componentPtr, ok := entity[componentType]
-	if !ok {
-		return nil, ErrComponentDoNotExists
-	}
-	return *componentPtr, nil
-}
-
-func (components *componentsImpl) RemoveComponent(entityId EntityID, componentType ComponentType) {
-	delete(components.entityComponents[entityId], componentType)
-	delete(components.componentEntity[componentType], entityId)
-	// manage cache
-	dependentQueries, _ := components.dependentQueries[componentType]
-	for _, query := range dependentQueries {
-		query.RemoveEntity(entityId)
-	}
-}
-
-func (components *componentsImpl) AddEntity(entity EntityID) {
-	components.entityComponents[entity] = make(map[ComponentType]*Component)
-}
-
-func (components *componentsImpl) RemoveEntity(entityID EntityID) {
-	entityComponents, ok := components.entityComponents[entityID]
+func addDependentQueriesListeners(
+	components ComponentsStorage,
+	componentType ComponentType,
+) {
+	queries, ok := components.onArrayAdd[componentType]
 	if !ok {
 		return
 	}
-	for componentType := range entityComponents {
-		delete(components.componentEntity[componentType], entityID)
+	array, ok := components.arrays[componentType]
+	if !ok {
+		return
 	}
-	delete(components.entityComponents, entityID)
-	for _, query := range components.cachedQueries {
-		query.RemoveEntity(entityID)
-	}
+	delete(components.onArrayAdd, componentType)
+
+	array.OnAdd(func(ei []EntityID) {
+		for _, query := range queries {
+			addedEntities := []EntityID{}
+		entityLoop:
+			for _, entity := range ei {
+				for _, dependency := range query.dependencies.Get() {
+					array, ok := components.arrays[dependency]
+					if !ok {
+						continue entityLoop
+					}
+					if _, err := array.GetAnyComponent(entity); err != nil {
+						continue entityLoop
+					}
+				}
+				addedEntities = append(addedEntities, entity)
+			}
+			if len(addedEntities) != 0 {
+				query.AddedEntities(addedEntities)
+			}
+		}
+	})
+	array.OnChange(func(ei []EntityID) {
+		for _, query := range queries {
+			changedEntities := []EntityID{}
+			for _, entity := range ei {
+				if _, ok := query.entities.GetIndex(entity); ok {
+					changedEntities = append(changedEntities, entity)
+				}
+			}
+			query.Changed(changedEntities)
+		}
+	})
+	array.OnRemove(func(ei []EntityID) {
+		for _, query := range queries {
+			removedEntities := []EntityID{}
+
+			for _, entity := range ei {
+				_, ok := query.entities.GetIndex(entity)
+				if !ok {
+					continue
+				}
+				removedEntities = append(removedEntities, entity)
+			}
+			query.RemovedEntities(removedEntities)
+		}
+	})
 }
 
-func (components *componentsImpl) GetEntitiesWithComponents(componentTypes ...ComponentType) []EntityID {
+func GetComponentArray[Component any](components ComponentsStorage) ComponentsArray[Component] {
+	var zero Component
+	componentType := GetComponentType(zero)
+
+	if array, ok := components.arrays[componentType]; ok {
+		return array.(ComponentsArray[Component])
+	}
+	array := NewComponentsArray[Component]()
+	for _, entity := range components.getEntities() {
+		array.AddEntity(entity)
+	}
+	components.arrays[componentType] = array
+	addDependentQueriesListeners(components, componentType)
+	return array
+}
+
+func SaveComponent[Component any](
+	components ComponentsStorage,
+	entity EntityID,
+	component Component,
+) error {
+	return GetComponentArray[Component](components).
+		SaveComponent(entity, component)
+}
+
+func GetComponent[Component any](
+	components ComponentsStorage,
+	entity EntityID,
+) (Component, error) {
+	return GetComponentArray[Component](components).
+		GetComponent(entity)
+}
+
+func RemoveComponent[Component any](
+	components ComponentsStorage,
+	entity EntityID,
+) {
+	GetComponentArray[Component](components).
+		RemoveComponent(entity)
+}
+
+func GetEntitiesWithComponents(
+	components ComponentsStorage,
+	componentTypes ...ComponentType,
+) []EntityID {
 	if len(componentTypes) == 0 {
 		return nil
 	}
 
-	firstType := componentTypes[0]
-	entitiesMap, ok := components.componentEntity[firstType]
-	if !ok || len(entitiesMap) == 0 {
-		return nil
-	}
-
-	intersection := make(map[EntityID]struct{}, len(entitiesMap))
-	for entity := range entitiesMap {
-		intersection[entity] = struct{}{}
-	}
-
-	for _, componentType := range componentTypes[1:] {
-		entitiesMap, ok := components.componentEntity[componentType]
-		if !ok || len(entitiesMap) == 0 {
+	var arrays []arraysSharedInterface
+	for _, componentType := range componentTypes {
+		array, ok := components.arrays[componentType]
+		if !ok {
 			return nil
 		}
+		arrays = append(arrays, array)
+	}
 
-		for entity := range intersection {
-			if _, exists := entitiesMap[entity]; !exists {
-				delete(intersection, entity)
+	arrayEntities := arrays[0].GetEntities()
+	arrays = arrays[1:]
+	finalEntities := []EntityID{}
+arrayEntities:
+	for _, entity := range arrayEntities {
+		for _, array := range arrays {
+			if _, err := array.GetAnyComponent(entity); err != nil {
+				continue arrayEntities
 			}
 		}
-
-		if len(intersection) == 0 {
-			return nil
-		}
+		finalEntities = append(finalEntities, entity)
 	}
-
-	entitiesSlice := make([]EntityID, 0, len(intersection))
-	for entity := range intersection {
-		entitiesSlice = append(entitiesSlice, entity)
-	}
-
-	return entitiesSlice
+	return finalEntities
 }
 
-func (components *componentsImpl) QueryEntitiesWithComponents(componentTypes ...ComponentType) LiveQuery {
+func (i *componentsImpl) QueryEntitiesWithComponents(componentTypes ...ComponentType) LiveQuery {
+	components := i.storage
 	key := newQueryKey(componentTypes)
 	if query, ok := components.cachedQueries[key]; ok {
 		return query
 	}
-	entities := components.GetEntitiesWithComponents(componentTypes...)
+	entities := GetEntitiesWithComponents(components, componentTypes...)
 	query := newLiveQuery(componentTypes, entities)
 	components.cachedQueries[key] = query
 	for _, componentType := range componentTypes {
 		dependentQueries, _ := components.dependentQueries[componentType]
 		dependentQueries = append(dependentQueries, query)
 		components.dependentQueries[componentType] = dependentQueries
+
+		onAdd, _ := components.onArrayAdd[componentType]
+		onAdd = append(onAdd, query)
+		components.onArrayAdd[componentType] = onAdd
+
+		if _, ok := components.arrays[componentType]; ok {
+			addDependentQueriesListeners(components, componentType)
+		}
 	}
 	return query
 }
-
-func (components *componentsImpl) LockComponents()   { components.mutex.Lock() }
-func (components *componentsImpl) UnlockComponents() { components.mutex.Unlock() }
+func (i *componentsImpl) GetAnyComponent(entity EntityID, componentType ComponentType) (any, error) {
+	if array, ok := i.storage.arrays[componentType]; ok {
+		return array.GetAnyComponent(entity)
+	}
+	return nil, ErrComponentDoNotExists
+}

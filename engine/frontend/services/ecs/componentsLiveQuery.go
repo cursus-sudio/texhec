@@ -42,7 +42,7 @@ func newQueryKey(components []ComponentType) queryKey {
 //
 
 type liveQuery struct {
-	dependencies map[ComponentType]any // this is faster []ComponentType
+	dependencies datastructures.Set[ComponentType] // this is faster []ComponentType
 	entities     datastructures.Set[EntityID]
 	onRemove     []func([]EntityID)
 	onChange     []func([]EntityID)
@@ -53,9 +53,9 @@ func newLiveQuery(
 	componentTypes []ComponentType,
 	res []EntityID,
 ) *liveQuery {
-	dependencies := make(map[ComponentType]any, len(componentTypes))
+	dependencies := datastructures.NewSet[ComponentType]()
 	for _, componentType := range componentTypes {
-		dependencies[componentType] = nil
+		dependencies.Add(componentType)
 	}
 	entities := datastructures.NewSet[EntityID]()
 	for _, entity := range res {
@@ -89,15 +89,10 @@ func (query *liveQuery) Entities() []EntityID {
 
 //
 
-func (query *liveQuery) RemoveEntity(entity EntityID) {
-	index, ok := query.entities.GetIndex(entity)
-	if !ok {
-		return
-	}
-	query.entities.Remove(index)
-	rmArgs := []EntityID{entity}
-	for _, listener := range query.onRemove {
-		listener(rmArgs)
+func (query *liveQuery) AddedEntities(entities []EntityID) {
+	query.entities.Add(entities...)
+	for _, listener := range query.onAdd {
+		listener(entities)
 	}
 }
 
@@ -107,9 +102,9 @@ func (query *liveQuery) Changed(entities []EntityID) {
 	}
 }
 
-func (query *liveQuery) AddEntities(entities []EntityID) {
-	query.entities.Add(entities...)
-	for _, listener := range query.onAdd {
+func (query *liveQuery) RemovedEntities(entities []EntityID) {
+	query.entities.RemoveElements(entities...)
+	for _, listener := range query.onRemove {
 		listener(entities)
 	}
 }

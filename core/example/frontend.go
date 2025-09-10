@@ -10,6 +10,7 @@ import (
 	"frontend/engine/tools/broadcollision"
 	"frontend/services/backendconnection"
 	"frontend/services/console"
+	"frontend/services/ecs"
 	inputsmedia "frontend/services/media/inputs"
 	"frontend/services/media/window"
 	"frontend/services/scenes"
@@ -71,7 +72,7 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			for i := 0; i < 1; i++ {
 				entity := ctx.World.NewEntity()
-				ctx.World.SaveComponent(entity, newSomeComponent())
+				ecs.SaveComponent(ctx.World.Components(), entity, newSomeComponent())
 			}
 		})
 		return b

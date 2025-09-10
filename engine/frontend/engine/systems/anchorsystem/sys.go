@@ -43,6 +43,8 @@ func NewAnchorSystem(world ecs.World) {
 			ecs.GetComponentType(transform.Transform{}),
 		)
 
+		transformArray := ecs.GetComponentArray[transform.Transform](world.Components())
+
 		onChange := func(ei []ecs.EntityID) {
 			for _, parent := range ei {
 				children, ok := parentsChildren[parent]
@@ -50,11 +52,11 @@ func NewAnchorSystem(world ecs.World) {
 					continue
 				}
 				for _, child := range children.Get() {
-					childTransform, err := ecs.GetComponent[transform.Transform](world, child)
+					childTransform, err := transformArray.GetComponent(child)
 					if err != nil {
 						childTransform = transform.NewTransform()
 					}
-					world.SaveComponent(child, childTransform)
+					transformArray.SaveComponent(child, childTransform)
 				}
 			}
 		}
@@ -83,9 +85,12 @@ func NewAnchorSystem(world ecs.World) {
 			ecs.GetComponentType(anchor.ParentAnchor{}),
 		)
 
+		transformArray := ecs.GetComponentArray[transform.Transform](world.Components())
+		parentAnchorArray := ecs.GetComponentArray[anchor.ParentAnchor](world.Components())
+
 		onAdd := func(ei []ecs.EntityID) {
 			for _, child := range ei {
-				anchor, err := ecs.GetComponent[anchor.ParentAnchor](world, child)
+				anchor, err := parentAnchorArray.GetComponent(child)
 				if err != nil {
 					continue
 				}
@@ -97,11 +102,11 @@ func NewAnchorSystem(world ecs.World) {
 				}
 				set.Add(child)
 
-				childTransform, err := ecs.GetComponent[transform.Transform](world, child)
+				childTransform, err := transformArray.GetComponent(child)
 				if err != nil {
 					continue
 				}
-				parentTransform, err := ecs.GetComponent[transform.Transform](world, anchor.Parent)
+				parentTransform, err := transformArray.GetComponent(anchor.Parent)
 				if err != nil {
 					continue
 				}

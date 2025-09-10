@@ -26,6 +26,13 @@ type UpdateProjetionsSystem struct {
 
 	perspectivesQuery ecs.LiveQuery
 	orthoQuery        ecs.LiveQuery
+
+	transformArray ecs.ComponentsArray[transform.Transform]
+
+	dynamicPerspectivesArray ecs.ComponentsArray[projection.DynamicPerspective]
+	dynamicOrthoArray        ecs.ComponentsArray[projection.DynamicOrtho]
+	perspectivesArray        ecs.ComponentsArray[projection.Perspective]
+	orthoArray               ecs.ComponentsArray[projection.Ortho]
 }
 
 func NewUpdateProjectionsSystem(world ecs.World, window window.Api) UpdateProjetionsSystem {
@@ -37,6 +44,13 @@ func NewUpdateProjectionsSystem(world ecs.World, window window.Api) UpdateProjet
 
 		perspectivesQuery: perspectiveQuery,
 		orthoQuery:        orthoQuery,
+
+		transformArray: ecs.GetComponentArray[transform.Transform](world.Components()),
+
+		dynamicPerspectivesArray: ecs.GetComponentArray[projection.DynamicPerspective](world.Components()),
+		dynamicOrthoArray:        ecs.GetComponentArray[projection.DynamicOrtho](world.Components()),
+		perspectivesArray:        ecs.GetComponentArray[projection.Perspective](world.Components()),
+		orthoArray:               ecs.GetComponentArray[projection.Ortho](world.Components()),
 	}
 	listener := func(_ []ecs.EntityID) { s.Listen(UpdateProjectionsEvent{}) }
 	perspectiveQuery.OnAdd(listener)
@@ -57,7 +71,7 @@ func (s UpdateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
 	}
 	aspectRatio := w / h
 	for _, entity := range s.perspectivesQuery.Entities() {
-		resizePerspective, err := ecs.GetComponent[projection.DynamicPerspective](s.world, entity)
+		resizePerspective, err := s.dynamicPerspectivesArray.GetComponent(entity)
 		if err != nil {
 			continue
 		}
@@ -65,33 +79,33 @@ func (s UpdateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
 			resizePerspective.FovY, aspectRatio,
 			resizePerspective.Near, resizePerspective.Far,
 		)
-		originalPerspective, _ := ecs.GetComponent[projection.Perspective](s.world, entity)
+		originalPerspective, _ := s.perspectivesArray.GetComponent(entity)
 		if originalPerspective == perspective {
 			continue
 		}
-		s.world.SaveComponent(entity, perspective)
+		s.perspectivesArray.SaveComponent(entity, perspective)
 	}
 	for _, entity := range s.orthoQuery.Entities() {
-		transformComponent, err := ecs.GetComponent[transform.Transform](s.world, entity)
+		transformComponent, err := s.transformArray.GetComponent(entity)
 		if err != nil {
 			continue
 		}
-		resizeOrtho, err := ecs.GetComponent[projection.DynamicOrtho](s.world, entity)
+		resizeOrtho, err := s.dynamicOrthoArray.GetComponent(entity)
 		if err != nil {
 			continue
 		}
 
 		transformComponent.Size = mgl32.Vec3{w / resizeOrtho.Zoom, h / resizeOrtho.Zoom, transformComponent.Size.Z()}
-		s.world.SaveComponent(entity, transformComponent)
+		s.transformArray.SaveComponent(entity, transformComponent)
 
 		ortho := projection.NewOrtho(
 			w/resizeOrtho.Zoom, h/resizeOrtho.Zoom,
 			resizeOrtho.Near, resizeOrtho.Far,
 		)
-		originalOrtho, _ := ecs.GetComponent[projection.Ortho](s.world, entity)
+		originalOrtho, _ := s.orthoArray.GetComponent(entity)
 		if originalOrtho == ortho {
 			continue
 		}
-		s.world.SaveComponent(entity, ortho)
+		s.orthoArray.SaveComponent(entity, ortho)
 	}
 }

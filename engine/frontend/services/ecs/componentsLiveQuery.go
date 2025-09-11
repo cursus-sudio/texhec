@@ -42,28 +42,23 @@ func newQueryKey(components []ComponentType) queryKey {
 //
 
 type liveQuery struct {
-	dependencies datastructures.Set[ComponentType] // this is faster []ComponentType
-	entities     datastructures.Set[EntityID]
-	onRemove     []func([]EntityID)
-	onChange     []func([]EntityID)
-	onAdd        []func([]EntityID)
+	dependencies   datastructures.Set[ComponentType] // this is faster []ComponentType
+	entities       []uint32
+	cachedEntities []EntityID
+	onRemove       []func([]EntityID)
+	onChange       []func([]EntityID)
+	onAdd          []func([]EntityID)
 }
 
-func newLiveQuery(
-	componentTypes []ComponentType,
-	res []EntityID,
-) *liveQuery {
+func newLiveQuery(componentTypes []ComponentType) *liveQuery {
 	dependencies := datastructures.NewSet[ComponentType]()
 	for _, componentType := range componentTypes {
 		dependencies.Add(componentType)
 	}
-	entities := datastructures.NewSet[EntityID]()
-	for _, entity := range res {
-		entities.Add(entity)
-	}
 	return &liveQuery{
-		dependencies: dependencies,
-		entities:     entities,
+		dependencies:   dependencies,
+		entities:       []uint32{},
+		cachedEntities: []EntityID{},
 	}
 }
 
@@ -84,13 +79,20 @@ func (query *liveQuery) OnRemove(listener func([]EntityID)) {
 }
 
 func (query *liveQuery) Entities() []EntityID {
-	return query.entities.Get()
+	return query.cachedEntities
 }
 
 //
 
 func (query *liveQuery) AddedEntities(entities []EntityID) {
-	query.entities.Add(entities...)
+	for _, entity := range entities {
+		entityIndex := entity.Index()
+		for entityIndex >= len(query.entities) {
+			query.entities = append(query.entities, noEntity)
+		}
+		query.entities[entityIndex] = uint32(len(query.cachedEntities))
+		query.cachedEntities = append(query.cachedEntities, entity)
+	}
 	for _, listener := range query.onAdd {
 		listener(entities)
 	}
@@ -103,7 +105,22 @@ func (query *liveQuery) Changed(entities []EntityID) {
 }
 
 func (query *liveQuery) RemovedEntities(entities []EntityID) {
-	query.entities.RemoveElements(entities...)
+	for _, entity := range entities {
+		entityIndex := entity.Index()
+		cachedIndex := query.entities[entityIndex]
+
+		query.entities[entityIndex] = noEntity
+
+		if len(query.cachedEntities)-1 != int(cachedIndex) {
+			movedComponentEntity := query.cachedEntities[len(query.cachedEntities)-1]
+			query.cachedEntities[cachedIndex] = movedComponentEntity
+
+			movedEntityIndex := movedComponentEntity.Index()
+			query.entities[movedEntityIndex] = cachedIndex
+		}
+
+		query.cachedEntities = query.cachedEntities[:len(query.cachedEntities)-1]
+	}
 	for _, listener := range query.onRemove {
 		listener(entities)
 	}

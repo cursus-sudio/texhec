@@ -17,45 +17,7 @@ func BenchmarkGetComponentPointerType(b *testing.B) {
 	}
 }
 
-func BenchmarkComponentsArraySave(b *testing.B) {
-	world := ecs.NewComponentsArray[Component]()
-
-	for i := 0; i < b.N; i++ {
-		entity := ecs.NewEntityID(uint64(i))
-		world.AddEntity(entity)
-	}
-
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		entity := ecs.NewEntityID(uint64(i))
-		err := world.SaveComponent(entity, Component{})
-		if err != nil {
-			panic(err)
-		}
-	}
-}
-
-func BenchmarkComponentsArrayGet10Times(b *testing.B) {
-	world := ecs.NewComponentsArray[Component]()
-
-	for i := 0; i < b.N; i++ {
-		entity := ecs.NewEntityID(uint64(i))
-		world.AddEntity(entity)
-		world.SaveComponent(entity, Component{})
-	}
-
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		for j := 0; j < 10; j++ {
-			entity := ecs.NewEntityID(uint64(i))
-			_, _ = world.GetComponent(entity)
-		}
-	}
-}
-
-func BenchmarkSaveComponent(b *testing.B) {
+func BenchmarkSaveComponentInWorld(b *testing.B) {
 	world := ecs.NewWorld()
 
 	otherEntitiesPresent := 100
@@ -65,12 +27,14 @@ func BenchmarkSaveComponent(b *testing.B) {
 
 	entity := world.NewEntity()
 
+	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		ecs.SaveComponent(world.Components(), entity, Component{})
 	}
 }
 
-func BenchmarkGetComponent(b *testing.B) {
+func BenchmarkGetComponentInWorld(b *testing.B) {
 	world := ecs.NewWorld()
 
 	otherEntitiesPresent := 100
@@ -79,9 +43,10 @@ func BenchmarkGetComponent(b *testing.B) {
 	}
 
 	entities := make([]ecs.EntityID, b.N)
+	componentArray := ecs.GetComponentArray[Component](world.Components())
 	for i := 0; i < b.N; i++ {
 		entity := world.NewEntity()
-		ecs.SaveComponent(world.Components(), entity, Component{})
+		componentArray.SaveComponent(entity, Component{})
 		entities[i] = entity
 	}
 
@@ -91,22 +56,150 @@ func BenchmarkGetComponent(b *testing.B) {
 	}
 }
 
-func BenchmarkQueryEntitiesWithComponents(b *testing.B) {
-	world := ecs.NewWorld()
+func BenchmarkCreateComponentsInArray(b *testing.B) {
+	arr := ecs.NewComponentsArray[Component]()
 
-	otherEntitiesPresent := 10000
-	for i := 0; i < otherEntitiesPresent; i++ {
-		world.NewEntity()
-	}
-
-	requiredEntitiesPresent := 10000
-	for i := 0; i < requiredEntitiesPresent; i++ {
-		entity := world.NewEntity()
-		ecs.SaveComponent(world.Components(), entity, Component{})
-	}
-
-	componentType := ecs.GetComponentType(Component{})
 	for i := 0; i < b.N; i++ {
-		world.QueryEntitiesWithComponents(componentType)
+		entity := ecs.NewEntityID(uint64(i))
+		arr.AddEntity(entity)
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		entity := ecs.NewEntityID(uint64(i))
+		_ = arr.SaveComponent(entity, Component{})
+	}
+}
+
+func BenchmarkDirtyCreateComponentsInArray(b *testing.B) {
+	arr := ecs.NewComponentsArray[Component]()
+
+	for i := 0; i < b.N; i++ {
+		entity := ecs.NewEntityID(uint64(i))
+		arr.AddEntity(entity)
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		entity := ecs.NewEntityID(uint64(i))
+		_ = arr.DirtySaveComponent(entity, Component{})
+	}
+}
+
+func BenchmarkUpdateComponentsInArray(b *testing.B) {
+	arr := ecs.NewComponentsArray[Component]()
+
+	for i := 0; i < b.N; i++ {
+		entity := ecs.NewEntityID(uint64(i))
+		arr.AddEntity(entity)
+		_ = arr.SaveComponent(entity, Component{})
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		entity := ecs.NewEntityID(uint64(i))
+		_ = arr.SaveComponent(entity, Component{})
+	}
+}
+
+func BenchmarkDirtyUpdateComponentsInArray10Times(b *testing.B) {
+	arr := ecs.NewComponentsArray[Component]()
+
+	for i := 0; i < b.N; i++ {
+		entity := ecs.NewEntityID(uint64(i))
+		arr.AddEntity(entity)
+		_ = arr.SaveComponent(entity, Component{})
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		entity := ecs.NewEntityID(uint64(i))
+		for j := 0; j < 10; j++ {
+			_ = arr.DirtySaveComponent(entity, Component{})
+		}
+	}
+}
+
+func BenchmarkGetComponentsInArray10Times(b *testing.B) {
+	arr := ecs.NewComponentsArray[Component]()
+
+	for i := 0; i < b.N; i++ {
+		entity := ecs.NewEntityID(uint64(i))
+		arr.AddEntity(entity)
+		arr.SaveComponent(entity, Component{})
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		for j := 0; j < 10; j++ {
+			entity := ecs.NewEntityID(uint64(i))
+			_, _ = arr.GetComponent(entity)
+		}
+	}
+}
+
+func BenchmarkRemoveComponentInArray(b *testing.B) {
+	arr := ecs.NewComponentsArray[Component]()
+
+	for i := 0; i < b.N; i++ {
+		entity := ecs.NewEntityID(uint64(i))
+		arr.AddEntity(entity)
+		arr.SaveComponent(entity, Component{})
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		entity := ecs.NewEntityID(uint64(i))
+		arr.RemoveComponent(entity)
+	}
+}
+
+func BenchmarkAddEntityInArray(b *testing.B) {
+	arr := ecs.NewComponentsArray[Component]()
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		entity := ecs.NewEntityID(uint64(i))
+		arr.AddEntity(entity)
+	}
+}
+
+func BenchmarkRemoveEntityWithComponentInArray(b *testing.B) {
+	arr := ecs.NewComponentsArray[Component]()
+
+	for i := 0; i < b.N; i++ {
+		entity := ecs.NewEntityID(uint64(i))
+		arr.AddEntity(entity)
+		arr.SaveComponent(entity, Component{})
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		entity := ecs.NewEntityID(uint64(i))
+		arr.RemoveEntity(entity)
+	}
+}
+
+func BenchmarkRemoveEntityWithoutComponentInArray(b *testing.B) {
+	arr := ecs.NewComponentsArray[Component]()
+
+	for i := 0; i < b.N; i++ {
+		entity := ecs.NewEntityID(uint64(i))
+		arr.AddEntity(entity)
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		entity := ecs.NewEntityID(uint64(i))
+		arr.RemoveEntity(entity)
 	}
 }

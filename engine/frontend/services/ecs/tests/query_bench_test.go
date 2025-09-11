@@ -17,6 +17,28 @@ func addQueries(world ecs.World, others ...ecs.ComponentType) {
 	}
 }
 
+func BenchmarkQueryEntitiesWithComponents(b *testing.B) {
+	world := ecs.NewWorld()
+
+	otherEntitiesPresent := 10000
+	for i := 0; i < otherEntitiesPresent; i++ {
+		world.NewEntity()
+	}
+
+	requiredEntitiesPresent := 10000
+	for i := 0; i < requiredEntitiesPresent; i++ {
+		entity := world.NewEntity()
+		ecs.SaveComponent(world.Components(), entity, Component{})
+	}
+
+	b.ResetTimer()
+
+	componentType := ecs.GetComponentType(Component{})
+	for i := 0; i < b.N; i++ {
+		world.QueryEntitiesWithComponents(componentType)
+	}
+}
+
 func BenchmarkSaveWithLiveQuery(b *testing.B) {
 	world := ecs.NewWorld()
 

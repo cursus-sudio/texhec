@@ -7,20 +7,19 @@ import (
 // interface
 
 type ComponentsArray[Component any] interface {
+	// these can be wrapped in transaction {
 	// can return:
 	// - ErrEntityDoNotExists
 	SaveComponent(EntityID, Component) error // upsert
-
 	// differs from save component by not triggering events
-	// can return:
-	// - ErrEntityDoNotExists
 	DirtySaveComponent(EntityID, Component) error // upsert
+	RemoveComponent(EntityID)
+	// }
 
 	// can return:
 	// - ErrComponentDoNotExists
 	// - ErrEntityDoNotExists
 	GetComponent(entity EntityID) (Component, error)
-	RemoveComponent(EntityID)
 
 	OnAdd(func([]EntityID))
 	OnChange(func([]EntityID))
@@ -146,22 +145,19 @@ func (c *componentsArray[Component]) RemoveComponent(entity EntityID) {
 
 	c.entitiesComponents[entityIndex] = noComponent
 
-	if len(c.components)-1 == int(componentIndex) {
-		c.components = c.components[:len(c.components)-1]
-		c.componentsEntities = c.componentsEntities[:len(c.componentsEntities)-1]
-	} else {
+	if len(c.components)-1 != int(componentIndex) {
 		movedComponent := c.components[len(c.components)-1]
 		movedComponentEntity := c.componentsEntities[len(c.componentsEntities)-1]
 
 		c.components[componentIndex] = movedComponent
 		c.componentsEntities[componentIndex] = movedComponentEntity
 
-		c.components = c.components[:len(c.components)-1]
-		c.componentsEntities = c.componentsEntities[:len(c.componentsEntities)-1]
-
 		movedEntityIndex := movedComponentEntity.Index()
 		c.entitiesComponents[movedEntityIndex] = componentIndex
 	}
+
+	c.components = c.components[:len(c.components)-1]
+	c.componentsEntities = c.componentsEntities[:len(c.componentsEntities)-1]
 
 	// listeners
 	entities := []EntityID{entity}
@@ -184,13 +180,35 @@ func (c *componentsArray[Component]) RemoveEntity(entity EntityID) {
 		return
 	}
 	componentIndex := c.entitiesComponents[entityIndex]
-	c.entitiesComponents[entityIndex] = noEntity
-	if componentIndex != noComponent && componentIndex != noEntity {
+	switch componentIndex {
+	case noEntity:
+		return
+	case noComponent:
+		c.entitiesComponents[entityIndex] = noEntity
+		return
+	default:
+		c.entitiesComponents[entityIndex] = noEntity
+
+		if len(c.components)-1 != int(componentIndex) {
+			movedComponent := c.components[len(c.components)-1]
+			movedComponentEntity := c.componentsEntities[len(c.componentsEntities)-1]
+
+			c.components[componentIndex] = movedComponent
+			c.componentsEntities[componentIndex] = movedComponentEntity
+
+			movedEntityIndex := movedComponentEntity.Index()
+			c.entitiesComponents[movedEntityIndex] = componentIndex
+		}
+
+		c.components = c.components[:len(c.components)-1]
+		c.componentsEntities = c.componentsEntities[:len(c.componentsEntities)-1]
+
 		// listeners
 		entities := []EntityID{entity}
 		for _, listener := range c.onRemove {
 			listener(entities)
 		}
+		return
 	}
 }
 

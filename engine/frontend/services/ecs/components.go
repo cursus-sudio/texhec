@@ -140,7 +140,7 @@ func addDependentQueriesListeners(
 
 	array.OnAdd(func(ei []EntityID) {
 		for _, query := range queries {
-			addedEntities := []EntityID{}
+			addedEntities := make([]EntityID, 0, len(ei))
 		entityLoop:
 			for _, entity := range ei {
 				for _, dependency := range query.dependencies.Get() {
@@ -161,27 +161,49 @@ func addDependentQueriesListeners(
 	})
 	array.OnChange(func(ei []EntityID) {
 		for _, query := range queries {
-			changedEntities := []EntityID{}
+			changedEntities := make([]EntityID, 0, len(ei))
 			for _, entity := range ei {
-				if _, ok := query.entities.GetIndex(entity); ok {
+				index := entity.Index()
+				if index >= len(query.entities) {
+					continue
+				}
+				entityValue := query.entities[index]
+				switch entityValue {
+				case noComponent:
+				case noEntity:
+					break
+				default:
 					changedEntities = append(changedEntities, entity)
+					break
 				}
 			}
-			query.Changed(changedEntities)
+			if len(changedEntities) != 0 {
+				query.Changed(changedEntities)
+			}
 		}
 	})
 	array.OnRemove(func(ei []EntityID) {
 		for _, query := range queries {
-			removedEntities := []EntityID{}
+			removedEntities := make([]EntityID, 0, len(ei))
 
 			for _, entity := range ei {
-				_, ok := query.entities.GetIndex(entity)
-				if !ok {
+				index := entity.Index()
+				if index >= len(query.entities) {
 					continue
 				}
-				removedEntities = append(removedEntities, entity)
+				entityValue := query.entities[index]
+				switch entityValue {
+				case noComponent:
+				case noEntity:
+					break
+				default:
+					removedEntities = append(removedEntities, entity)
+					break
+				}
 			}
-			query.RemovedEntities(removedEntities)
+			if len(removedEntities) != 0 {
+				query.RemovedEntities(removedEntities)
+			}
 		}
 	})
 }
@@ -266,7 +288,8 @@ func (i *componentsImpl) QueryEntitiesWithComponents(componentTypes ...Component
 		return query
 	}
 	entities := GetEntitiesWithComponents(components, componentTypes...)
-	query := newLiveQuery(componentTypes, entities)
+	query := newLiveQuery(componentTypes)
+	query.AddedEntities(entities)
 	components.cachedQueries[key] = query
 	for _, componentType := range componentTypes {
 		dependentQueries, _ := components.dependentQueries[componentType]

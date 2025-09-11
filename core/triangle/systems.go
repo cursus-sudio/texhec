@@ -15,8 +15,10 @@ type ChangeTransformOverTimeComponent struct {
 }
 
 type ChangeTransformOverTimeSystem struct {
-	World     ecs.World
-	LiveQuery ecs.LiveQuery
+	World                ecs.World
+	ChangeTransformArray ecs.ComponentsArray[ChangeTransformOverTimeComponent]
+	TransformArray       ecs.ComponentsArray[transform.Transform]
+	LiveQuery            ecs.LiveQuery
 }
 
 func NewChangeTransformOverTimeSystem(
@@ -27,18 +29,20 @@ func NewChangeTransformOverTimeSystem(
 		ecs.GetComponentType(transform.Transform{}),
 	)
 	return &ChangeTransformOverTimeSystem{
-		World:     world,
-		LiveQuery: liveQuery,
+		World:                world,
+		ChangeTransformArray: ecs.GetComponentArray[ChangeTransformOverTimeComponent](world.Components()),
+		TransformArray:       ecs.GetComponentArray[transform.Transform](world.Components()),
+		LiveQuery:            liveQuery,
 	}
 }
 
 func (s *ChangeTransformOverTimeSystem) Update(args frames.FrameEvent) {
 	for _, entity := range s.LiveQuery.Entities() {
-		changeTransformOverTimeComponent, err := ecs.GetComponent[ChangeTransformOverTimeComponent](s.World.Components(), entity)
+		changeTransformOverTimeComponent, err := s.ChangeTransformArray.GetComponent(entity)
 		if err != nil {
 			continue
 		}
-		transformComponent, err := ecs.GetComponent[transform.Transform](s.World.Components(), entity)
+		transformComponent, err := s.TransformArray.GetComponent(entity)
 		if err != nil {
 			continue
 		}
@@ -59,7 +63,7 @@ func (s *ChangeTransformOverTimeSystem) Update(args frames.FrameEvent) {
 		// transformComponent.Size.Z *= scaleFactor
 		// transformComponent.Pos.X = float32(t.Seconds()) * 100
 
-		ecs.SaveComponent(s.World.Components(), entity, transformComponent)
-		ecs.SaveComponent(s.World.Components(), entity, changeTransformOverTimeComponent)
+		s.TransformArray.SaveComponent(entity, transformComponent)
+		s.ChangeTransformArray.SaveComponent(entity, changeTransformOverTimeComponent)
 	}
 }

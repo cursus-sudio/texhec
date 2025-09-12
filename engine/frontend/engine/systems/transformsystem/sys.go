@@ -3,16 +3,18 @@ package transformsystem
 import (
 	"frontend/engine/components/transform"
 	"frontend/services/ecs"
+	"shared/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-func NewPivotPointSystem(world ecs.World) {
+func NewPivotPointSystem(world ecs.World, logger logger.Logger) {
 	query := world.QueryEntitiesWithComponents(
 		ecs.GetComponentType(transform.Transform{}),
 		ecs.GetComponentType(transform.PivotPoint{}),
 	)
 	transformArray := ecs.GetComponentsArray[transform.Transform](world.Components())
+	transformTransaction := transformArray.Transaction()
 	pivotPointsArray := ecs.GetComponentsArray[transform.PivotPoint](world.Components())
 	var lastChanged ecs.EntityID
 	listener := func(ei []ecs.EntityID) {
@@ -37,7 +39,10 @@ func NewPivotPointSystem(world ecs.World) {
 				transformComponent.Size[2] * (pivot.Point[2] - .5),
 			}
 			transformComponent.SetPos(transformComponent.Pos.Add(change))
-			transformArray.DirtySaveComponent(entity, transformComponent)
+			transformTransaction.DirtySaveComponent(entity, transformComponent)
+		}
+		if err := transformTransaction.Flush(); err != nil {
+			logger.Error(err)
 		}
 	}
 	query.OnAdd(listener)

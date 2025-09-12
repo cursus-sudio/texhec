@@ -5,6 +5,7 @@ import (
 	"frontend/engine/components/transform"
 	"frontend/services/ecs"
 	"frontend/services/media/window"
+	"shared/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -23,6 +24,7 @@ func NewUpdateProjectionsEvent() UpdateProjectionsEvent {
 type UpdateProjetionsSystem struct {
 	world  ecs.World
 	window window.Api
+	logger logger.Logger
 
 	perspectivesQuery ecs.LiveQuery
 	orthoQuery        ecs.LiveQuery
@@ -35,12 +37,13 @@ type UpdateProjetionsSystem struct {
 	orthoArray               ecs.ComponentsArray[projection.Ortho]
 }
 
-func NewUpdateProjectionsSystem(world ecs.World, window window.Api) UpdateProjetionsSystem {
+func NewUpdateProjectionsSystem(world ecs.World, window window.Api, logger logger.Logger) UpdateProjetionsSystem {
 	perspectiveQuery := world.QueryEntitiesWithComponents(ecs.GetComponentType(projection.DynamicPerspective{}))
 	orthoQuery := world.QueryEntitiesWithComponents(ecs.GetComponentType(projection.DynamicOrtho{}))
 	s := UpdateProjetionsSystem{
 		world:  world,
 		window: window,
+		logger: logger,
 
 		perspectivesQuery: perspectiveQuery,
 		orthoQuery:        orthoQuery,
@@ -64,6 +67,10 @@ func NewUpdateProjectionsSystem(world ecs.World, window window.Api) UpdateProjet
 }
 
 func (s UpdateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
+	transformTransaction := s.transformArray.Transaction()
+	perspectiveTransaction := s.perspectivesArray.Transaction()
+	orthoTransaction := s.orthoArray.Transaction()
+
 	var w, h float32
 	{
 		width, height := s.window.Window().GetSize()
@@ -83,7 +90,7 @@ func (s UpdateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
 		if originalPerspective == perspective {
 			continue
 		}
-		s.perspectivesArray.SaveComponent(entity, perspective)
+		perspectiveTransaction.SaveComponent(entity, perspective)
 	}
 	for _, entity := range s.orthoQuery.Entities() {
 		transformComponent, err := s.transformArray.GetComponent(entity)
@@ -98,7 +105,7 @@ func (s UpdateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
 		transformComponent.SetSize(mgl32.Vec3{
 			w / resizeOrtho.Zoom, h / resizeOrtho.Zoom, transformComponent.Size.Z(),
 		})
-		s.transformArray.SaveComponent(entity, transformComponent)
+		transformTransaction.SaveComponent(entity, transformComponent)
 
 		ortho := projection.NewOrtho(
 			w/resizeOrtho.Zoom, h/resizeOrtho.Zoom,
@@ -108,6 +115,15 @@ func (s UpdateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
 		if originalOrtho == ortho {
 			continue
 		}
-		s.orthoArray.SaveComponent(entity, ortho)
+		orthoTransaction.SaveComponent(entity, ortho)
 	}
+
+	if err := ecs.FlushMany(
+		transformTransaction,
+		perspectiveTransaction,
+		orthoTransaction,
+	); err != nil {
+		s.logger.Error(err)
+	}
+
 }

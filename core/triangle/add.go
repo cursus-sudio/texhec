@@ -93,8 +93,8 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 
 	ioc.WrapService(b, scenes.LoadFirst, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			anchorsystem.NewAnchorSystem(ctx.World)
-			transformsystem.NewPivotPointSystem(ctx.World)
+			anchorsystem.NewAnchorSystem(ctx.World, ioc.Get[logger.Logger](c))
+			transformsystem.NewPivotPointSystem(ctx.World, ioc.Get[logger.Logger](c))
 		})
 		return b
 	})
@@ -151,8 +151,8 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				ioc.Get[logger.Logger](c).Error(err)
 			}
 			events.ListenE(ctx.EventsBuilder, pipeline.Listen)
-			system := NewChangeTransformOverTimeSystem(ctx.World)
-			events.Listen(ctx.EventsBuilder, system.Update)
+			system := NewChangeTransformOverTimeSystem(ctx.World, ioc.Get[logger.Logger](c))
+			events.Listen(ctx.EventsBuilder, system.Listen)
 		})
 
 		b.OnLoad(func(ctx scenes.SceneCtx) {

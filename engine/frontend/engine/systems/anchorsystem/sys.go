@@ -5,6 +5,7 @@ import (
 	"frontend/engine/components/transform"
 	"frontend/services/datastructures"
 	"frontend/services/ecs"
+	"shared/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -37,7 +38,7 @@ func applyChildTransform(
 	return child
 }
 
-func NewAnchorSystem(world ecs.World) {
+func NewAnchorSystem(world ecs.World, logger logger.Logger) {
 	parentsChildren := map[ecs.EntityID]datastructures.Set[ecs.EntityID]{}
 	childParent := map[ecs.EntityID]ecs.EntityID{}
 	{
@@ -46,6 +47,7 @@ func NewAnchorSystem(world ecs.World) {
 		)
 
 		transformArray := ecs.GetComponentsArray[transform.Transform](world.Components())
+		transformTransaction := transformArray.Transaction()
 
 		onChange := func(ei []ecs.EntityID) {
 			for _, parent := range ei {
@@ -58,8 +60,11 @@ func NewAnchorSystem(world ecs.World) {
 					if err != nil {
 						childTransform = transform.NewTransform()
 					}
-					transformArray.SaveComponent(child, childTransform)
+					transformTransaction.SaveComponent(child, childTransform)
 				}
+			}
+			if err := transformTransaction.Flush(); err != nil {
+				logger.Error(err)
 			}
 		}
 

@@ -18,13 +18,27 @@ type ComponentsArrayTransaction[Component any] interface {
 
 	// this prematurely locks mutex until we flush (it is optional).
 	// it is useful if we want to check error on many arrays.
-	PrepareFlush() ComponentsArrayTransaction[Component]
+	PrepareFlush()
 
 	Error() error
 
 	// runs Error() and if it doesn't return an error it applies it.
 	// flush also effectively resets transaction to initial state so it can be reused.
 	Flush() error
+	Discard()
+}
+
+type AnyComponentsArrayTransaction interface {
+	// this prematurely locks mutex until we flush (it is optional).
+	// it is useful if we want to check error on many arrays.
+	PrepareFlush()
+
+	Error() error
+
+	// runs Error() and if it doesn't return an error it applies it.
+	// flush also effectively resets transaction to initial state so it can be reused.
+	Flush() error
+	Discard()
 }
 
 // impl
@@ -109,10 +123,9 @@ func (t *componentsArrayTransaction[Component]) RemoveComponent(entity EntityID)
 	return t
 }
 
-func (t *componentsArrayTransaction[Component]) PrepareFlush() ComponentsArrayTransaction[Component] {
+func (t *componentsArrayTransaction[Component]) PrepareFlush() {
 	t.prepared = true
 	t.array.applyTransactionMutex.Lock()
-	return t
 }
 
 func (t *componentsArrayTransaction[Component]) Error() error {
@@ -198,5 +211,38 @@ func (t *componentsArrayTransaction[Component]) Flush() error {
 		}
 	}
 
+	return nil
+}
+
+func (t *componentsArrayTransaction[Component]) Discard() {
+	if !t.prepared {
+		t.array.applyTransactionMutex.Lock()
+		// unlock happens before listeners
+	}
+	t.prepared = false
+	t.saves = datastructures.NewSparseArray[EntityID, save[Component]]()
+	t.dirtySaves = datastructures.NewSparseArray[EntityID, save[Component]]()
+	t.removes = datastructures.NewSparseSet[EntityID]()
+	t.array.applyTransactionMutex.Unlock()
+}
+
+func FlushMany(transactions ...AnyComponentsArrayTransaction) error {
+	var err error
+	for _, transaction := range transactions {
+		transaction.PrepareFlush()
+		if err = transaction.Error(); err != nil {
+			break
+		}
+	}
+	if err != nil {
+		for _, transaction := range transactions {
+			transaction.Discard()
+		}
+		return err
+	}
+
+	for _, transaction := range transactions {
+		transaction.Flush()
+	}
 	return nil
 }

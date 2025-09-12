@@ -111,7 +111,7 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			})
 			events.Listen(ctx.EventsBuilder, inputs.NewResizeSystem().Listen)
 
-			resizeCameraSystem := projections.NewUpdateProjectionsSystem(ctx.World, ioc.Get[window.Api](c))
+			resizeCameraSystem := projections.NewUpdateProjectionsSystem(ctx.World, ioc.Get[window.Api](c), ioc.Get[logger.Logger](c))
 			events.Listen(ctx.EventsBuilder, resizeCameraSystem.Listen)
 			events.Listen(ctx.EventsBuilder, func(e sdl.WindowEvent) {
 				if e.Event == sdl.WINDOWEVENT_RESIZED {

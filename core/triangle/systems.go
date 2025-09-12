@@ -5,6 +5,7 @@ import (
 	"frontend/engine/components/transform"
 	"frontend/services/ecs"
 	"frontend/services/frames"
+	"shared/services/logger"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -18,11 +19,13 @@ type ChangeTransformOverTimeSystem struct {
 	World                ecs.World
 	ChangeTransformArray ecs.ComponentsArray[ChangeTransformOverTimeComponent]
 	TransformArray       ecs.ComponentsArray[transform.Transform]
+	Logger               logger.Logger
 	LiveQuery            ecs.LiveQuery
 }
 
 func NewChangeTransformOverTimeSystem(
 	world ecs.World,
+	logger logger.Logger,
 ) *ChangeTransformOverTimeSystem {
 	liveQuery := world.QueryEntitiesWithComponents(
 		ecs.GetComponentType(ChangeTransformOverTimeComponent{}),
@@ -32,11 +35,14 @@ func NewChangeTransformOverTimeSystem(
 		World:                world,
 		ChangeTransformArray: ecs.GetComponentsArray[ChangeTransformOverTimeComponent](world.Components()),
 		TransformArray:       ecs.GetComponentsArray[transform.Transform](world.Components()),
+		Logger:               logger,
 		LiveQuery:            liveQuery,
 	}
 }
 
-func (s *ChangeTransformOverTimeSystem) Update(args frames.FrameEvent) {
+func (s *ChangeTransformOverTimeSystem) Listen(args frames.FrameEvent) {
+	transformTransaction := s.TransformArray.Transaction()
+	changeTransaction := s.ChangeTransformArray.Transaction()
 	for _, entity := range s.LiveQuery.Entities() {
 		changeTransformOverTimeComponent, err := s.ChangeTransformArray.GetComponent(entity)
 		if err != nil {
@@ -63,7 +69,10 @@ func (s *ChangeTransformOverTimeSystem) Update(args frames.FrameEvent) {
 		// transformComponent.Size.Z *= scaleFactor
 		// transformComponent.Pos.X = float32(t.Seconds()) * 100
 
-		s.TransformArray.SaveComponent(entity, transformComponent)
-		s.ChangeTransformArray.SaveComponent(entity, changeTransformOverTimeComponent)
+		transformTransaction.SaveComponent(entity, transformComponent)
+		changeTransaction.SaveComponent(entity, changeTransformOverTimeComponent)
+	}
+	if err := ecs.FlushMany(transformTransaction, changeTransaction); err != nil {
+		s.Logger.Error(err)
 	}
 }

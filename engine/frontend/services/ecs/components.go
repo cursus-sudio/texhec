@@ -91,6 +91,9 @@ type arraysSharedInterface interface {
 	GetAnyComponent(entity EntityID) (any, error)
 	RemoveComponent(EntityID)
 
+	// this adds listeners for change and remove
+	addQueries([]*liveQuery)
+
 	OnAdd(listener func([]EntityID))
 	OnChange(listener func([]EntityID))
 	OnRemove(listener func([]EntityID))
@@ -132,16 +135,22 @@ func addDependentQueriesListeners(
 	}
 	delete(components.onArrayAdd, componentType)
 
-	array.OnAdd(func(ei []EntityID) {
-		for _, query := range queries {
+	for _, query := range queries {
+		arrays := make([]arraysSharedInterface, 0, len(query.dependencies.Get()))
+		missingArrays := query.dependencies.Get()
+		array.OnAdd(func(ei []EntityID) {
+			for _, missingArray := range missingArrays {
+				array, ok := components.arrays[missingArray]
+				if !ok {
+					return
+				}
+				missingArrays = missingArrays[1:]
+				arrays = append(arrays, array)
+			}
 			addedEntities := make([]EntityID, 0, len(ei))
 		entityLoop:
 			for _, entity := range ei {
-				for _, dependency := range query.dependencies.Get() {
-					array, ok := components.arrays[dependency]
-					if !ok {
-						continue entityLoop
-					}
+				for _, array := range arrays {
 					if _, err := array.GetAnyComponent(entity); err != nil {
 						continue entityLoop
 					}
@@ -151,37 +160,9 @@ func addDependentQueriesListeners(
 			if len(addedEntities) != 0 {
 				query.AddedEntities(addedEntities)
 			}
-		}
-	})
-	array.OnChange(func(ei []EntityID) {
-		for _, query := range queries {
-			changedEntities := make([]EntityID, 0, len(ei))
-			for _, entity := range ei {
-				if ok := query.entities.Get(entity); !ok {
-					continue
-				}
-				changedEntities = append(changedEntities, entity)
-			}
-			if len(changedEntities) != 0 {
-				query.Changed(changedEntities)
-			}
-		}
-	})
-	array.OnRemove(func(ei []EntityID) {
-		for _, query := range queries {
-			removedEntities := make([]EntityID, 0, len(ei))
-
-			for _, entity := range ei {
-				if ok := query.entities.Get(entity); !ok {
-					continue
-				}
-				removedEntities = append(removedEntities, entity)
-			}
-			if len(removedEntities) != 0 {
-				query.RemovedEntities(removedEntities)
-			}
-		}
-	})
+		})
+	}
+	array.addQueries(queries)
 }
 
 func GetComponentsArray[Component any](components ComponentsStorage) ComponentsArray[Component] {

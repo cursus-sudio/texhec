@@ -204,3 +204,9 @@ func Benchmark65536SavesWith7LiveQueries(b *testing.B) {
 func Benchmark65536SavesWith7LiveQueriesWithTransaction(b *testing.B) {
 	benchmarkNEntitiesSaveWith7LiveQueriesWithTransaction(b, 65536)
 }
+func Benchmark262144SavesWith7LiveQueries(b *testing.B) {
+	benchmarkNEntitiesSaveWith7LiveQueries(b, 262144)
+}
+func Benchmark262144SavesWith7LiveQueriesWithTransaction(b *testing.B) {
+	benchmarkNEntitiesSaveWith7LiveQueriesWithTransaction(b, 262144)
+}

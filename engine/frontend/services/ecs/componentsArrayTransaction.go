@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"frontend/services/datastructures"
-	"math"
 )
 
 // interface
@@ -41,10 +40,6 @@ const (
 	operationSave operation = iota
 	operationDirtySave
 	operationRemove
-)
-
-const (
-	noChange uint32 = math.MaxUint32 - 0
 )
 
 type componentsArrayTransaction[Component any] struct {

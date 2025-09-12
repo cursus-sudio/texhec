@@ -157,19 +157,10 @@ func addDependentQueriesListeners(
 		for _, query := range queries {
 			changedEntities := make([]EntityID, 0, len(ei))
 			for _, entity := range ei {
-				index := entity.Index()
-				if index >= len(query.entities) {
+				if ok := query.entities.Get(entity); !ok {
 					continue
 				}
-				entityValue := query.entities[index]
-				switch entityValue {
-				case noComponent:
-				case noEntity:
-					break
-				default:
-					changedEntities = append(changedEntities, entity)
-					break
-				}
+				changedEntities = append(changedEntities, entity)
 			}
 			if len(changedEntities) != 0 {
 				query.Changed(changedEntities)
@@ -181,19 +172,10 @@ func addDependentQueriesListeners(
 			removedEntities := make([]EntityID, 0, len(ei))
 
 			for _, entity := range ei {
-				index := entity.Index()
-				if index >= len(query.entities) {
+				if ok := query.entities.Get(entity); !ok {
 					continue
 				}
-				entityValue := query.entities[index]
-				switch entityValue {
-				case noComponent:
-				case noEntity:
-					break
-				default:
-					removedEntities = append(removedEntities, entity)
-					break
-				}
+				removedEntities = append(removedEntities, entity)
 			}
 			if len(removedEntities) != 0 {
 				query.RemovedEntities(removedEntities)

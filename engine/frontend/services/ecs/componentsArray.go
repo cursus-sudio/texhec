@@ -2,7 +2,6 @@ package ecs
 
 import (
 	"frontend/services/datastructures"
-	"math"
 	"sync"
 )
 
@@ -31,11 +30,6 @@ type ComponentsArray[Component any] interface {
 }
 
 // impl
-
-const (
-	noEntity    uint32 = math.MaxUint32 - 0
-	noComponent uint32 = math.MaxUint32 - 1
-)
 
 type componentsArray[Component any] struct {
 	entities   datastructures.SparseSet[EntityID]

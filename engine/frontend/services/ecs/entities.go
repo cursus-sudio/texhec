@@ -7,7 +7,7 @@ import (
 
 // interface
 
-type EntityID int
+type EntityID uint32
 
 func (id EntityID) Index() int { return int(id) }
 
@@ -33,15 +33,15 @@ type entitiesImpl struct {
 	holes   datastructures.Set[EntityID]
 	mutex   sync.Locker
 
-	existingEntities datastructures.Set[EntityID]
+	entities datastructures.SparseSet[EntityID]
 }
 
 func newEntities() *entitiesImpl {
 	return &entitiesImpl{
-		counter:          0,
-		holes:            datastructures.NewSet[EntityID](),
-		mutex:            &sync.Mutex{},
-		existingEntities: datastructures.NewSet[EntityID](),
+		counter:  0,
+		holes:    datastructures.NewSet[EntityID](),
+		mutex:    &sync.Mutex{},
+		entities: datastructures.NewSparseSet[EntityID](),
 	}
 }
 
@@ -53,22 +53,21 @@ func (entitiesStorage *entitiesImpl) NewEntity() EntityID {
 	entitiesStorage.counter += 1
 	index := entitiesStorage.counter
 	id := EntityID(index)
-	entitiesStorage.existingEntities.Add(id)
+	entitiesStorage.entities.Add(id)
 	return id
 }
 
-func (entitiesStorage *entitiesImpl) RemoveEntity(entityId EntityID) {
-	entitiesStorage.holes.Add(entityId)
-	entitiesStorage.existingEntities.RemoveElements(entityId)
+func (entitiesStorage *entitiesImpl) RemoveEntity(entity EntityID) {
+	entitiesStorage.holes.Add(entity)
+	entitiesStorage.entities.Remove(entity)
 }
 
 func (entitiesStorage *entitiesImpl) GetEntities() []EntityID {
-	return entitiesStorage.existingEntities.Get()
+	return entitiesStorage.entities.GetIndices()
 }
 
-func (entitiesStorage *entitiesImpl) EntityExists(entityId EntityID) bool {
-	_, ok := entitiesStorage.existingEntities.GetIndex(entityId)
-	return ok
+func (entitiesStorage *entitiesImpl) EntityExists(entity EntityID) bool {
+	return entitiesStorage.entities.Get(entity)
 }
 
 func (entitiesStorage *entitiesImpl) LockEntities()   { entitiesStorage.mutex.Lock() }

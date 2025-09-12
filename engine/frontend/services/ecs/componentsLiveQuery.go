@@ -2,6 +2,7 @@ package ecs
 
 import (
 	"frontend/services/datastructures"
+	"math"
 	"sort"
 	"strings"
 )
@@ -40,6 +41,10 @@ func newQueryKey(components []ComponentType) queryKey {
 }
 
 //
+
+const (
+	noCachedEntity uint32 = math.MaxUint32 - 0
+)
 
 type liveQuery struct {
 	dependencies   datastructures.Set[ComponentType] // this is faster []ComponentType
@@ -88,7 +93,7 @@ func (query *liveQuery) AddedEntities(entities []EntityID) {
 	for _, entity := range entities {
 		entityIndex := entity.Index()
 		for entityIndex >= len(query.entities) {
-			query.entities = append(query.entities, noEntity)
+			query.entities = append(query.entities, noCachedEntity)
 		}
 		query.entities[entityIndex] = uint32(len(query.cachedEntities))
 		query.cachedEntities = append(query.cachedEntities, entity)
@@ -109,7 +114,7 @@ func (query *liveQuery) RemovedEntities(entities []EntityID) {
 		entityIndex := entity.Index()
 		cachedIndex := query.entities[entityIndex]
 
-		query.entities[entityIndex] = noEntity
+		query.entities[entityIndex] = noCachedEntity
 
 		if len(query.cachedEntities)-1 != int(cachedIndex) {
 			movedComponentEntity := query.cachedEntities[len(query.cachedEntities)-1]

@@ -81,8 +81,8 @@ func listenToProjectionChanges[Projection projection.Projection](
 		ecs.GetComponentType(transform.Transform{}),
 	)
 
-	transformArray := ecs.GetComponentArray[transform.Transform](m.world.Components())
-	projectionsArray := ecs.GetComponentArray[Projection](m.world.Components())
+	transformArray := ecs.GetComponentsArray[transform.Transform](m.world.Components())
+	projectionsArray := ecs.GetComponentsArray[Projection](m.world.Components())
 
 	onChange := func(_ []ecs.EntityID) {
 		mutex.Lock()
@@ -129,10 +129,10 @@ func (m *System) modifyRegisterOnChanges() error {
 
 	// change entities buffer
 	{
-		transformArray := ecs.GetComponentArray[transform.Transform](m.world.Components())
-		usedProjectionsArray := ecs.GetComponentArray[projection.UsedProjection](m.world.Components())
-		textureArray := ecs.GetComponentArray[texturecomponent.Texture](m.world.Components())
-		meshArray := ecs.GetComponentArray[meshcomponent.Mesh](m.world.Components())
+		transformArray := ecs.GetComponentsArray[transform.Transform](m.world.Components())
+		usedProjectionsArray := ecs.GetComponentsArray[projection.UsedProjection](m.world.Components())
+		textureArray := ecs.GetComponentsArray[texturecomponent.Texture](m.world.Components())
+		meshArray := ecs.GetComponentsArray[meshcomponent.Mesh](m.world.Components())
 
 		onChange := func(entities []ecs.EntityID) {
 			register.mutex.Lock()

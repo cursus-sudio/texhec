@@ -42,7 +42,7 @@ func NewCameraRaySystem(
 ) CameraRaySystem {
 	return CameraRaySystem{
 		world:           world,
-		transformArray:  ecs.GetComponentArray[transform.Transform](world.Components()),
+		transformArray:  ecs.GetComponentsArray[transform.Transform](world.Components()),
 		broadCollisions: collider,
 		window:          window,
 		events:          events,

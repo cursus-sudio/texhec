@@ -2,6 +2,7 @@ package ecs
 
 import (
 	"errors"
+	"frontend/services/datastructures"
 	"reflect"
 	"sync"
 )
@@ -69,33 +70,26 @@ type componentsImpl struct {
 func (components *componentsImpl) Components() ComponentsStorage { return components.storage }
 func (components *componentsImpl) LockComponents()               { components.mutex.Lock() }
 func (components *componentsImpl) UnlockComponents()             { components.mutex.Unlock() }
-func (components *componentsImpl) AddEntity(entity EntityID) {
-	for _, arr := range components.storage.arrays {
-		arr.AddEntity(entity)
-	}
-}
 
 func (components *componentsImpl) RemoveEntity(entity EntityID) {
 	for _, arr := range components.storage.arrays {
-		arr.RemoveEntity(entity)
+		arr.RemoveComponent(entity)
 	}
 }
 
-func newComponents(getEntities func() []EntityID) *componentsImpl {
+func newComponents(entities datastructures.SparseSet[EntityID]) *componentsImpl {
 	return &componentsImpl{
 		mutex:   &sync.Mutex{},
-		storage: newComponentsStorage(getEntities),
+		storage: newComponentsStorage(entities),
 	}
 }
 
 //
 
 type arraysSharedInterface interface {
-	AddEntity(entity EntityID)
-	RemoveEntity(entity EntityID)
-
 	GetEntities() []EntityID
 	GetAnyComponent(entity EntityID) (any, error)
+	RemoveComponent(EntityID)
 
 	OnAdd(listener func([]EntityID))
 	OnChange(listener func([]EntityID))
@@ -103,9 +97,9 @@ type arraysSharedInterface interface {
 }
 
 type componentsStorage struct {
-	arrays      map[ComponentType]arraysSharedInterface // any is *componentsArray[ComponentType]
-	getEntities func() []EntityID
-	onArrayAdd  map[ComponentType][]*liveQuery
+	arrays     map[ComponentType]arraysSharedInterface // any is *componentsArray[ComponentType]
+	entities   datastructures.SparseSet[EntityID]
+	onArrayAdd map[ComponentType][]*liveQuery
 
 	cachedQueries    map[queryKey]*liveQuery
 	dependentQueries map[ComponentType][]*liveQuery
@@ -113,11 +107,11 @@ type componentsStorage struct {
 
 type ComponentsStorage *componentsStorage
 
-func newComponentsStorage(getEntities func() []EntityID) ComponentsStorage {
+func newComponentsStorage(entities datastructures.SparseSet[EntityID]) ComponentsStorage {
 	return &componentsStorage{
-		arrays:      make(map[ComponentType]arraysSharedInterface),
-		getEntities: getEntities,
-		onArrayAdd:  make(map[ComponentType][]*liveQuery),
+		arrays:     make(map[ComponentType]arraysSharedInterface),
+		entities:   entities,
+		onArrayAdd: make(map[ComponentType][]*liveQuery),
 
 		cachedQueries:    make(map[queryKey]*liveQuery, 0),
 		dependentQueries: make(map[ComponentType][]*liveQuery, 0),
@@ -208,17 +202,14 @@ func addDependentQueriesListeners(
 	})
 }
 
-func GetComponentArray[Component any](components ComponentsStorage) ComponentsArray[Component] {
+func GetComponentsArray[Component any](components ComponentsStorage) ComponentsArray[Component] {
 	var zero Component
 	componentType := GetComponentType(zero)
 
 	if array, ok := components.arrays[componentType]; ok {
 		return array.(ComponentsArray[Component])
 	}
-	array := NewComponentsArray[Component]()
-	for _, entity := range components.getEntities() {
-		array.AddEntity(entity)
-	}
+	array := NewComponentsArray[Component](components.entities)
 	components.arrays[componentType] = array
 	addDependentQueriesListeners(components, componentType)
 	return array
@@ -229,7 +220,7 @@ func SaveComponent[Component any](
 	entity EntityID,
 	component Component,
 ) error {
-	return GetComponentArray[Component](components).
+	return GetComponentsArray[Component](components).
 		SaveComponent(entity, component)
 }
 
@@ -237,7 +228,7 @@ func GetComponent[Component any](
 	components ComponentsStorage,
 	entity EntityID,
 ) (Component, error) {
-	return GetComponentArray[Component](components).
+	return GetComponentsArray[Component](components).
 		GetComponent(entity)
 }
 
@@ -245,7 +236,7 @@ func RemoveComponent[Component any](
 	components ComponentsStorage,
 	entity EntityID,
 ) {
-	GetComponentArray[Component](components).
+	GetComponentsArray[Component](components).
 		RemoveComponent(entity)
 }
 

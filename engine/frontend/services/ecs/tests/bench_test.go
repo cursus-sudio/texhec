@@ -1,6 +1,7 @@
 package ecs_test
 
 import (
+	"frontend/services/datastructures"
 	"frontend/services/ecs"
 	"testing"
 )
@@ -43,12 +44,14 @@ func BenchmarkGetComponentInWorld(b *testing.B) {
 	}
 
 	entities := make([]ecs.EntityID, b.N)
-	componentArray := ecs.GetComponentArray[Component](world.Components())
+	arr := ecs.GetComponentsArray[Component](world.Components())
+	transaction := arr.Transaction()
 	for i := 0; i < b.N; i++ {
 		entity := world.NewEntity()
-		componentArray.SaveComponent(entity, Component{})
+		transaction.SaveComponent(entity, Component{})
 		entities[i] = entity
 	}
+	transaction.Flush()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -57,81 +60,113 @@ func BenchmarkGetComponentInWorld(b *testing.B) {
 }
 
 func BenchmarkCreateComponentsInArray(b *testing.B) {
-	arr := ecs.NewComponentsArray[Component]()
+	entities := datastructures.NewSparseSet[ecs.EntityID]()
+	arr := ecs.NewComponentsArray[Component](entities)
 
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
-		arr.AddEntity(entity)
+		entities.Add(entity)
 	}
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
-		_ = arr.SaveComponent(entity, Component{})
+		arr.SaveComponent(entity, Component{})
 	}
 }
 
 func BenchmarkDirtyCreateComponentsInArray(b *testing.B) {
-	arr := ecs.NewComponentsArray[Component]()
+	entities := datastructures.NewSparseSet[ecs.EntityID]()
+	arr := ecs.NewComponentsArray[Component](entities)
 
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
-		arr.AddEntity(entity)
+		entities.Add(entity)
 	}
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
-		_ = arr.DirtySaveComponent(entity, Component{})
+		arr.DirtySaveComponent(entity, Component{})
 	}
 }
 
 func BenchmarkUpdateComponentsInArray(b *testing.B) {
-	arr := ecs.NewComponentsArray[Component]()
+	entities := datastructures.NewSparseSet[ecs.EntityID]()
+	arr := ecs.NewComponentsArray[Component](entities)
+	transaction := arr.Transaction()
 
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
-		arr.AddEntity(entity)
-		_ = arr.SaveComponent(entity, Component{})
+		entities.Add(entity)
+		transaction.SaveComponent(entity, Component{})
 	}
+
+	transaction.Flush()
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
-		_ = arr.SaveComponent(entity, Component{})
+		arr.SaveComponent(entity, Component{})
+	}
+}
+
+func BenchmarkTransactionUpdateComponentsInArray(b *testing.B) {
+	entities := datastructures.NewSparseSet[ecs.EntityID]()
+	arr := ecs.NewComponentsArray[Component](entities)
+	transaction := arr.Transaction()
+
+	for i := 0; i < b.N; i++ {
+		entity := ecs.NewEntityID(uint64(i))
+		entities.Add(entity)
+		transaction.SaveComponent(entity, Component{})
+	}
+	transaction.Flush()
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		entity := ecs.NewEntityID(uint64(i))
+		arr.SaveComponent(entity, Component{})
 	}
 }
 
 func BenchmarkDirtyUpdateComponentsInArray10Times(b *testing.B) {
-	arr := ecs.NewComponentsArray[Component]()
+	entities := datastructures.NewSparseSet[ecs.EntityID]()
+	arr := ecs.NewComponentsArray[Component](entities)
+	transaction := arr.Transaction()
 
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
-		arr.AddEntity(entity)
-		_ = arr.SaveComponent(entity, Component{})
+		entities.Add(entity)
+		transaction.SaveComponent(entity, Component{})
 	}
+	transaction.Flush()
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
 		for j := 0; j < 10; j++ {
-			_ = arr.DirtySaveComponent(entity, Component{})
+			arr.DirtySaveComponent(entity, Component{})
 		}
 	}
 }
 
 func BenchmarkGetComponentsInArray10Times(b *testing.B) {
-	arr := ecs.NewComponentsArray[Component]()
+	entities := datastructures.NewSparseSet[ecs.EntityID]()
+	arr := ecs.NewComponentsArray[Component](entities)
+	transaction := arr.Transaction()
 
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
-		arr.AddEntity(entity)
-		arr.SaveComponent(entity, Component{})
+		entities.Add(entity)
+		transaction.SaveComponent(entity, Component{})
 	}
+	transaction.Flush()
 
 	b.ResetTimer()
 
@@ -144,62 +179,21 @@ func BenchmarkGetComponentsInArray10Times(b *testing.B) {
 }
 
 func BenchmarkRemoveComponentInArray(b *testing.B) {
-	arr := ecs.NewComponentsArray[Component]()
+	entities := datastructures.NewSparseSet[ecs.EntityID]()
+	arr := ecs.NewComponentsArray[Component](entities)
+	transaction := arr.Transaction()
 
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
-		arr.AddEntity(entity)
-		arr.SaveComponent(entity, Component{})
+		entities.Add(entity)
+		transaction.SaveComponent(entity, Component{})
 	}
+	transaction.Flush()
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
 		arr.RemoveComponent(entity)
-	}
-}
-
-func BenchmarkAddEntityInArray(b *testing.B) {
-	arr := ecs.NewComponentsArray[Component]()
-
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		entity := ecs.NewEntityID(uint64(i))
-		arr.AddEntity(entity)
-	}
-}
-
-func BenchmarkRemoveEntityWithComponentInArray(b *testing.B) {
-	arr := ecs.NewComponentsArray[Component]()
-
-	for i := 0; i < b.N; i++ {
-		entity := ecs.NewEntityID(uint64(i))
-		arr.AddEntity(entity)
-		arr.SaveComponent(entity, Component{})
-	}
-
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		entity := ecs.NewEntityID(uint64(i))
-		arr.RemoveEntity(entity)
-	}
-}
-
-func BenchmarkRemoveEntityWithoutComponentInArray(b *testing.B) {
-	arr := ecs.NewComponentsArray[Component]()
-
-	for i := 0; i < b.N; i++ {
-		entity := ecs.NewEntityID(uint64(i))
-		arr.AddEntity(entity)
-	}
-
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		entity := ecs.NewEntityID(uint64(i))
-		arr.RemoveEntity(entity)
 	}
 }

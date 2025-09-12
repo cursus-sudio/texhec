@@ -18,7 +18,7 @@ type world struct {
 
 func NewWorld() World {
 	entitiesImpl := newEntities()
-	componentsImpl := newComponents(entitiesImpl.GetEntities)
+	componentsImpl := newComponents(entitiesImpl.entities)
 	registryImpl := newRegistry()
 
 	return &world{
@@ -30,7 +30,6 @@ func NewWorld() World {
 
 func (world world) NewEntity() EntityID {
 	entity := world.entitiesInterface.NewEntity()
-	world.componentsImpl.AddEntity(entity)
 	return entity
 }
 

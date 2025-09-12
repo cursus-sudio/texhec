@@ -45,12 +45,12 @@ func NewUpdateProjectionsSystem(world ecs.World, window window.Api) UpdateProjet
 		perspectivesQuery: perspectiveQuery,
 		orthoQuery:        orthoQuery,
 
-		transformArray: ecs.GetComponentArray[transform.Transform](world.Components()),
+		transformArray: ecs.GetComponentsArray[transform.Transform](world.Components()),
 
-		dynamicPerspectivesArray: ecs.GetComponentArray[projection.DynamicPerspective](world.Components()),
-		dynamicOrthoArray:        ecs.GetComponentArray[projection.DynamicOrtho](world.Components()),
-		perspectivesArray:        ecs.GetComponentArray[projection.Perspective](world.Components()),
-		orthoArray:               ecs.GetComponentArray[projection.Ortho](world.Components()),
+		dynamicPerspectivesArray: ecs.GetComponentsArray[projection.DynamicPerspective](world.Components()),
+		dynamicOrthoArray:        ecs.GetComponentsArray[projection.DynamicOrtho](world.Components()),
+		perspectivesArray:        ecs.GetComponentsArray[projection.Perspective](world.Components()),
+		orthoArray:               ecs.GetComponentsArray[projection.Ortho](world.Components()),
 	}
 	listener := func(_ []ecs.EntityID) { s.Listen(UpdateProjectionsEvent{}) }
 	perspectiveQuery.OnAdd(listener)

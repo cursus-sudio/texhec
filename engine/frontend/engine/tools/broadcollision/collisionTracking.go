@@ -35,7 +35,7 @@ type worldColliderImpl struct {
 func newWorldCollider(world ecs.World, chunkSize float32) worldCollider {
 	return &worldColliderImpl{
 		world:             world,
-		transformArray:    ecs.GetComponentArray[transform.Transform](world.Components()),
+		transformArray:    ecs.GetComponentsArray[transform.Transform](world.Components()),
 		chunkSize:         chunkSize,
 		chunks:            make(map[mgl32.Vec2]datastructures.Set[ecs.EntityID]),
 		entitiesPositions: make(map[ecs.EntityID][]mgl32.Vec2),

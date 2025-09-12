@@ -28,7 +28,7 @@ func NewClickSystem(
 	)
 	return ClickSystem{
 		world:            world,
-		mouseEventsArray: ecs.GetComponentArray[mouse.MouseEvents](world.Components()),
+		mouseEventsArray: ecs.GetComponentsArray[mouse.MouseEvents](world.Components()),
 		events:           events,
 		liveQuery:        liveQuery,
 		clickOn:          clickOn,

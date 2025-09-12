@@ -46,7 +46,7 @@ func factory(assets assets.Assets, logger logger.Logger) CollisionServiceFactory
 	return func(w ecs.World) CollisionService {
 		return &collisionsService{
 			world:                w,
-			transformStaticArray: ecs.GetComponentArray[transform.Static](w.Components()),
+			transformStaticArray: ecs.GetComponentsArray[transform.Static](w.Components()),
 			assets:               assets,
 			logger:               logger,
 		}

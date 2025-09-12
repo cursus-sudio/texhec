@@ -60,7 +60,7 @@ func TestComponents(t *testing.T) {
 
 func TestComponentsArrays(t *testing.T) {
 	world := ecs.NewWorld()
-	componentArray := ecs.GetComponentArray[Component](world.Components())
+	componentArray := ecs.GetComponentsArray[Component](world.Components())
 
 	if _, err := componentArray.GetComponent(ecs.EntityID(0)); err != ecs.ErrEntityDoNotExists {
 		t.Errorf("when retrieving component from not existing entity do not got ErrEntityDoNotExists error")
@@ -127,8 +127,8 @@ func TestComponentsQuery(t *testing.T) {
 
 	entity := world.NewEntity()
 
-	component := ecs.GetComponentArray[Component](world.Components())
-	component2 := ecs.GetComponentArray[Component2](world.Components())
+	component := ecs.GetComponentsArray[Component](world.Components())
+	component2 := ecs.GetComponentsArray[Component2](world.Components())
 
 	component.SaveComponent(entity, Component{})
 	if adds != expectedAdds {

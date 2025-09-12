@@ -215,7 +215,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				ecs.GetComponentType(projection.DynamicOrtho{}),
 				ecs.GetComponentType(MobileCamera{}),
 			)
-			transformArray := ecs.GetComponentArray[transform.Transform](ctx.World.Components())
+			transformArray := ecs.GetComponentsArray[transform.Transform](ctx.World.Components())
 
 			moveCameraSystem := func(event frames.FrameEvent) error {
 				xAxis := 0
@@ -259,7 +259,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 
 			events.ListenE(ctx.EventsBuilder, moveCameraSystem)
 
-			dynamicOrthoArray := ecs.GetComponentArray[projection.DynamicOrtho](ctx.World.Components())
+			dynamicOrthoArray := ecs.GetComponentsArray[projection.DynamicOrtho](ctx.World.Components())
 			events.ListenE(ctx.EventsBuilder, func(event sdl.MouseWheelEvent) error {
 				if event.Y == 0 {
 					return nil

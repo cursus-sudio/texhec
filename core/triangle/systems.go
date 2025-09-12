@@ -30,8 +30,8 @@ func NewChangeTransformOverTimeSystem(
 	)
 	return &ChangeTransformOverTimeSystem{
 		World:                world,
-		ChangeTransformArray: ecs.GetComponentArray[ChangeTransformOverTimeComponent](world.Components()),
-		TransformArray:       ecs.GetComponentArray[transform.Transform](world.Components()),
+		ChangeTransformArray: ecs.GetComponentsArray[ChangeTransformOverTimeComponent](world.Components()),
+		TransformArray:       ecs.GetComponentsArray[transform.Transform](world.Components()),
 		LiveQuery:            liveQuery,
 	}
 }

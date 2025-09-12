@@ -1,25 +1,29 @@
 package ecs
 
 import (
+	"frontend/services/datastructures"
 	"math"
+	"sync"
 )
 
 // interface
 
 type ComponentsArray[Component any] interface {
-	// these can be wrapped in transaction {
+	Transaction() ComponentsArrayTransaction[Component]
+
 	// can return:
 	// - ErrEntityDoNotExists
 	SaveComponent(EntityID, Component) error // upsert
 	// differs from save component by not triggering events
 	DirtySaveComponent(EntityID, Component) error // upsert
 	RemoveComponent(EntityID)
-	// }
 
 	// can return:
 	// - ErrComponentDoNotExists
 	// - ErrEntityDoNotExists
 	GetComponent(entity EntityID) (Component, error)
+	GetAnyComponent(entity EntityID) (any, error)
+	GetEntities() []EntityID
 
 	OnAdd(func([]EntityID))
 	OnChange(func([]EntityID))
@@ -34,21 +38,20 @@ const (
 )
 
 type componentsArray[Component any] struct {
-	// entity here is an index
-	entitiesComponents []uint32 // here some indices have special meaning (read constants above)
-	components         []Component
-	componentsEntities []EntityID
+	entities   datastructures.SparseSet[EntityID]
+	components datastructures.SparseArray[EntityID, Component]
+
+	applyTransactionMutex sync.Mutex
 
 	onAdd    []func([]EntityID)
 	onChange []func([]EntityID)
 	onRemove []func([]EntityID)
 }
 
-func NewComponentsArray[Component any]() *componentsArray[Component] {
+func NewComponentsArray[Component any](entities datastructures.SparseSet[EntityID]) ComponentsArray[Component] {
 	return &componentsArray[Component]{
-		entitiesComponents: make([]uint32, 0),
-		components:         make([]Component, 0),
-		componentsEntities: make([]EntityID, 0),
+		entities:   entities,
+		components: datastructures.NewSparseArray[EntityID, Component](),
 
 		onAdd:    make([]func([]EntityID), 0),
 		onChange: make([]func([]EntityID), 0),
@@ -56,160 +59,64 @@ func NewComponentsArray[Component any]() *componentsArray[Component] {
 	}
 }
 
-func (c *componentsArray[Component]) SaveComponent(entity EntityID, component Component) error {
-	entityIndex := entity.Index()
-	if entityIndex >= len(c.entitiesComponents) {
-		return ErrEntityDoNotExists
-	}
-	componentIndex := c.entitiesComponents[entityIndex]
-	if componentIndex == noEntity {
-		return ErrEntityDoNotExists
-	}
-	if componentIndex == noComponent {
-		c.entitiesComponents[entityIndex] = uint32(len(c.components))
-		c.components = append(c.components, component)
-		c.componentsEntities = append(c.componentsEntities, entity)
+func (c *componentsArray[Component]) Transaction() ComponentsArrayTransaction[Component] {
+	return newComponentsArrayTransaction(c)
+}
 
-		// listeners
-		entities := []EntityID{entity}
+func (c *componentsArray[Component]) SaveComponent(entity EntityID, component Component) error {
+	if ok := c.entities.Get(entity); !ok {
+		return ErrEntityDoNotExists
+	}
+	added := c.components.Set(entity, component)
+	entities := []EntityID{entity}
+	if added {
 		for _, listener := range c.onAdd {
 			listener(entities)
 		}
 		return nil
 	}
-	c.components[componentIndex] = component
-	c.componentsEntities[componentIndex] = entity
-
-	// listeners
-	entities := []EntityID{entity}
 	for _, listener := range c.onChange {
 		listener(entities)
 	}
-
 	return nil
 }
 
 func (c *componentsArray[Component]) DirtySaveComponent(entity EntityID, component Component) error {
-	entityIndex := entity.Index()
-	if entityIndex >= len(c.entitiesComponents) {
+	if ok := c.entities.Get(entity); !ok {
 		return ErrEntityDoNotExists
 	}
-	componentIndex := c.entitiesComponents[entityIndex]
-	if componentIndex == noEntity {
-		return ErrEntityDoNotExists
-	}
-	if componentIndex == noComponent {
-		c.entitiesComponents[entityIndex] = uint32(len(c.components))
-		c.components = append(c.components, component)
-		c.componentsEntities = append(c.componentsEntities, entity)
-		return nil
-	}
-	c.components[componentIndex] = component
-	c.componentsEntities[componentIndex] = entity
+	c.components.Set(entity, component)
 	return nil
 }
 
-func (c *componentsArray[Component]) GetComponent(entity EntityID) (Component, error) {
-	entityIndex := entity.Index()
-	if entityIndex >= len(c.entitiesComponents) {
-		var zero Component
-		return zero, ErrEntityDoNotExists
-	}
-	componentIndex := c.entitiesComponents[entityIndex]
-	var zero Component
-	switch componentIndex {
-	case noEntity:
-		return zero, ErrEntityDoNotExists
-	case noComponent:
-		return zero, ErrComponentDoNotExists
-	default:
-		component := c.components[componentIndex]
-		return component, nil
-	}
-}
-
-func (c *componentsArray[Component]) GetEntities() []EntityID { return c.componentsEntities }
-func (c *componentsArray[Component]) GetAnyComponent(entity EntityID) (any, error) {
-	return c.GetComponent(entity)
-}
-
 func (c *componentsArray[Component]) RemoveComponent(entity EntityID) {
-	entityIndex := entity.Index()
-	if entityIndex >= len(c.entitiesComponents) {
+	if removed := c.components.Remove(entity); !removed {
 		return
 	}
-	componentIndex := c.entitiesComponents[entityIndex]
-	if componentIndex == noEntity || componentIndex == noComponent {
-		return
-	}
-
-	c.entitiesComponents[entityIndex] = noComponent
-
-	if len(c.components)-1 != int(componentIndex) {
-		movedComponent := c.components[len(c.components)-1]
-		movedComponentEntity := c.componentsEntities[len(c.componentsEntities)-1]
-
-		c.components[componentIndex] = movedComponent
-		c.componentsEntities[componentIndex] = movedComponentEntity
-
-		movedEntityIndex := movedComponentEntity.Index()
-		c.entitiesComponents[movedEntityIndex] = componentIndex
-	}
-
-	c.components = c.components[:len(c.components)-1]
-	c.componentsEntities = c.componentsEntities[:len(c.componentsEntities)-1]
-
-	// listeners
 	entities := []EntityID{entity}
 	for _, listener := range c.onRemove {
 		listener(entities)
 	}
 }
 
-func (c *componentsArray[Component]) AddEntity(entity EntityID) {
-	entityIndex := entity.Index()
-	for entityIndex >= len(c.entitiesComponents) {
-		c.entitiesComponents = append(c.entitiesComponents, noEntity)
+func (c *componentsArray[Component]) GetComponent(entity EntityID) (Component, error) {
+	var zero Component
+	if ok := c.entities.Get(entity); !ok {
+		return zero, ErrEntityDoNotExists
 	}
-	c.entitiesComponents[entityIndex] = noComponent
+	if value, ok := c.components.Get(entity); !ok {
+		return zero, ErrComponentDoNotExists
+	} else {
+		return value, nil
+	}
 }
 
-func (c *componentsArray[Component]) RemoveEntity(entity EntityID) {
-	entityIndex := entity.Index()
-	if entityIndex >= len(c.entitiesComponents) {
-		return
-	}
-	componentIndex := c.entitiesComponents[entityIndex]
-	switch componentIndex {
-	case noEntity:
-		return
-	case noComponent:
-		c.entitiesComponents[entityIndex] = noEntity
-		return
-	default:
-		c.entitiesComponents[entityIndex] = noEntity
+func (c *componentsArray[Component]) GetEntities() []EntityID {
+	return c.components.GetIndices()
+}
 
-		if len(c.components)-1 != int(componentIndex) {
-			movedComponent := c.components[len(c.components)-1]
-			movedComponentEntity := c.componentsEntities[len(c.componentsEntities)-1]
-
-			c.components[componentIndex] = movedComponent
-			c.componentsEntities[componentIndex] = movedComponentEntity
-
-			movedEntityIndex := movedComponentEntity.Index()
-			c.entitiesComponents[movedEntityIndex] = componentIndex
-		}
-
-		c.components = c.components[:len(c.components)-1]
-		c.componentsEntities = c.componentsEntities[:len(c.componentsEntities)-1]
-
-		// listeners
-		entities := []EntityID{entity}
-		for _, listener := range c.onRemove {
-			listener(entities)
-		}
-		return
-	}
+func (c *componentsArray[Component]) GetAnyComponent(entity EntityID) (any, error) {
+	return c.GetComponent(entity)
 }
 
 func (c *componentsArray[Component]) OnAdd(listener func([]EntityID)) {

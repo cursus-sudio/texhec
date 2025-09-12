@@ -33,8 +33,8 @@ type collisionDetectionService struct {
 func newCollisionDetectionService(world ecs.World, assets assets.Assets, worldCollider worldCollider) CollisionDetectionService {
 	return &collisionDetectionService{
 		// world,
-		ecs.GetComponentArray[transform.Transform](world.Components()),
-		ecs.GetComponentArray[collider.Collider](world.Components()),
+		ecs.GetComponentsArray[transform.Transform](world.Components()),
+		ecs.GetComponentsArray[collider.Collider](world.Components()),
 		assets,
 		worldCollider,
 	}

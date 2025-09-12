@@ -45,7 +45,7 @@ func NewAnchorSystem(world ecs.World) {
 			ecs.GetComponentType(transform.Transform{}),
 		)
 
-		transformArray := ecs.GetComponentArray[transform.Transform](world.Components())
+		transformArray := ecs.GetComponentsArray[transform.Transform](world.Components())
 
 		onChange := func(ei []ecs.EntityID) {
 			for _, parent := range ei {
@@ -87,8 +87,8 @@ func NewAnchorSystem(world ecs.World) {
 			ecs.GetComponentType(anchor.ParentAnchor{}),
 		)
 
-		transformArray := ecs.GetComponentArray[transform.Transform](world.Components())
-		parentAnchorArray := ecs.GetComponentArray[anchor.ParentAnchor](world.Components())
+		transformArray := ecs.GetComponentsArray[transform.Transform](world.Components())
+		parentAnchorArray := ecs.GetComponentsArray[anchor.ParentAnchor](world.Components())
 
 		onAdd := func(ei []ecs.EntityID) {
 			for _, child := range ei {

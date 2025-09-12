@@ -18,8 +18,8 @@ type HoverSystem struct {
 func NewHoverSystem(world ecs.World, events events.Events) HoverSystem {
 	return HoverSystem{
 		world:            world,
-		mouseEventsArray: ecs.GetComponentArray[mouse.MouseEvents](world.Components()),
-		hoveredArray:     ecs.GetComponentArray[mouse.Hovered](world.Components()),
+		mouseEventsArray: ecs.GetComponentsArray[mouse.MouseEvents](world.Components()),
+		hoveredArray:     ecs.GetComponentsArray[mouse.Hovered](world.Components()),
 		events:           events,
 		targets:          map[ecs.ComponentType]ecs.EntityID{},
 	}

@@ -9,8 +9,6 @@ type SaveMetaFactory interface {
 	New(SaveName) SaveMeta
 }
 
-// func NewSaveMeta(name SaveName) SaveMeta {}
-
 var (
 	ErrInvalidQuery    error = errors.New("save storage: invalid query")
 	ErrSaveDoNotExists error = errors.New("save storage: save with this id do not exists")

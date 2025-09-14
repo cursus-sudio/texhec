@@ -41,12 +41,6 @@ type savableRepositories struct {
 	repositories map[RepoId]SavableRepo
 }
 
-func newSavableRepositories() SavableRepositories {
-	return &savableRepositories{
-		repositories: map[RepoId]SavableRepo{},
-	}
-}
-
 func (savableRepositories *savableRepositories) GetRepositories() map[RepoId]SavableRepo {
 	return savableRepositories.repositories
 }

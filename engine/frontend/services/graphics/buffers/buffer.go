@@ -1,8 +1,8 @@
 package buffers
 
 import (
-	"frontend/services/datastructures"
 	"reflect"
+	"shared/services/datastructures"
 	"sort"
 	"sync"
 

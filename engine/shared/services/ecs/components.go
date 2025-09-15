@@ -2,8 +2,8 @@ package ecs
 
 import (
 	"errors"
-	"frontend/services/datastructures"
 	"reflect"
+	"shared/services/datastructures"
 	"sync"
 )
 
@@ -87,16 +87,9 @@ func newComponents(entities datastructures.SparseSet[EntityID]) *componentsImpl 
 //
 
 type arraysSharedInterface interface {
-	GetEntities() []EntityID
-	GetAnyComponent(entity EntityID) (any, error)
-	RemoveComponent(EntityID)
-
+	AnyComponentArray
 	// this adds listeners for change and remove
 	addQueries([]*liveQuery)
-
-	OnAdd(listener func([]EntityID))
-	OnChange(listener func([]EntityID))
-	OnRemove(listener func([]EntityID))
 }
 
 type componentsStorage struct {

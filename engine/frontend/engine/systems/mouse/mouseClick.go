@@ -2,7 +2,7 @@ package mouse
 
 import (
 	"frontend/engine/components/mouse"
-	"frontend/services/ecs"
+	"shared/services/ecs"
 
 	"github.com/ogiusek/events"
 	"github.com/veandco/go-sdl2/sdl"

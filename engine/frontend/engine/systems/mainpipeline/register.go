@@ -2,10 +2,10 @@ package mainpipeline
 
 import (
 	_ "embed"
-	"frontend/services/datastructures"
-	"frontend/services/ecs"
 	"frontend/services/graphics/program"
 	"frontend/services/graphics/shader"
+	"shared/services/datastructures"
+	"shared/services/ecs"
 	"sync"
 
 	"github.com/go-gl/gl/v4.5-core/gl"

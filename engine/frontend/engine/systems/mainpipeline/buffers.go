@@ -1,10 +1,10 @@
 package mainpipeline
 
 import (
-	"frontend/services/datastructures"
-	"frontend/services/ecs"
 	"frontend/services/graphics"
 	"frontend/services/graphics/buffers"
+	"shared/services/datastructures"
+	"shared/services/ecs"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/go-gl/mathgl/mgl32"

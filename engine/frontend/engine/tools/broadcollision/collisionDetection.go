@@ -5,8 +5,8 @@ import (
 	"frontend/engine/components/collider"
 	"frontend/engine/components/transform"
 	"frontend/services/assets"
-	"frontend/services/ecs"
 	"math"
+	"shared/services/ecs"
 
 	"github.com/go-gl/mathgl/mgl32"
 )

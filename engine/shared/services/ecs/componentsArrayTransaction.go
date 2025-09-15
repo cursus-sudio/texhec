@@ -3,7 +3,7 @@ package ecs
 import (
 	"errors"
 	"fmt"
-	"frontend/services/datastructures"
+	"shared/services/datastructures"
 )
 
 // interface
@@ -12,8 +12,11 @@ type ComponentsArrayTransaction[Component any] interface {
 	// can return:
 	// - ErrEntityDoNotExists
 	SaveComponent(EntityID, Component) ComponentsArrayTransaction[Component] // upsert
+	SaveAnyComponent(EntityID, any) error                                    // upsert
 	// differs from save component by not triggering events
 	DirtySaveComponent(EntityID, Component) ComponentsArrayTransaction[Component] // upsert
+	DirtySaveAnyComponent(EntityID, any) error                                    // upsert
+
 	RemoveComponent(EntityID) ComponentsArrayTransaction[Component]
 
 	// this prematurely locks mutex until we flush (it is optional).
@@ -109,11 +112,29 @@ func (t *componentsArrayTransaction[Component]) SaveComponent(entity EntityID, c
 	return t
 }
 
+func (t *componentsArrayTransaction[Component]) SaveAnyComponent(entity EntityID, anyComponent any) error {
+	component, ok := anyComponent.(Component)
+	if !ok {
+		return ErrInvalidType
+	}
+	t.SaveComponent(entity, component)
+	return nil
+}
+
 func (t *componentsArrayTransaction[Component]) DirtySaveComponent(entity EntityID, component Component) ComponentsArrayTransaction[Component] {
 	t.removeOperation(entity)
 	t.dirtySaves.Set(entity, save[Component]{entity, component})
 	t.operations.Set(entity, operationDirtySave)
 	return t
+}
+
+func (t *componentsArrayTransaction[Component]) DirtySaveAnyComponent(entity EntityID, anyComponent any) error {
+	component, ok := anyComponent.(Component)
+	if !ok {
+		return ErrInvalidType
+	}
+	t.DirtySaveComponent(entity, component)
+	return nil
 }
 
 func (t *componentsArrayTransaction[Component]) RemoveComponent(entity EntityID) ComponentsArrayTransaction[Component] {

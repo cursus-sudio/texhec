@@ -4,8 +4,8 @@ import (
 	"errors"
 	"frontend/engine/components/texture"
 	"frontend/services/assets"
-	"frontend/services/datastructures"
 	"image"
+	"shared/services/datastructures"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 )

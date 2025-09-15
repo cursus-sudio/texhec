@@ -3,9 +3,9 @@ package broadcollision
 import (
 	"frontend/engine/components/collider"
 	"frontend/engine/components/transform"
-	"frontend/services/datastructures"
-	"frontend/services/ecs"
 	"math"
+	"shared/services/datastructures"
+	"shared/services/ecs"
 
 	"github.com/go-gl/mathgl/mgl32"
 )

@@ -2,7 +2,7 @@ package datastructures_test
 
 import (
 	"fmt"
-	"frontend/services/datastructures"
+	"shared/services/datastructures"
 	"testing"
 )
 

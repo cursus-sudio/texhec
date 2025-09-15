@@ -3,8 +3,8 @@ package anchorsystem
 import (
 	"frontend/engine/components/anchor"
 	"frontend/engine/components/transform"
-	"frontend/services/datastructures"
-	"frontend/services/ecs"
+	"shared/services/datastructures"
+	"shared/services/ecs"
 	"shared/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"

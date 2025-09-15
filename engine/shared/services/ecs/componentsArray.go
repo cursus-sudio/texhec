@@ -1,20 +1,47 @@
 package ecs
 
 import (
-	"frontend/services/datastructures"
+	"errors"
+	"shared/services/datastructures"
 	"sync"
 )
 
+var ErrInvalidType error = errors.New("expected an error component")
+
 // interface
+
+type AnyComponentArray interface {
+	// can return:
+	// - ErrEntityDoNotExists
+	SaveAnyComponent(EntityID, any) error // upsert
+	// differs from save component by not triggering events
+	DirtySaveAnyComponent(EntityID, any) error // upsert
+	RemoveComponent(EntityID)
+
+	// can return:
+	// - ErrComponentDoNotExists
+	// - ErrEntityDoNotExists
+	GetAnyComponent(entity EntityID) (any, error)
+	GetEntities() []EntityID
+
+	OnAdd(func([]EntityID))
+	OnChange(func([]EntityID))
+	OnRemove(func([]EntityID))
+}
 
 type ComponentsArray[Component any] interface {
 	Transaction() ComponentsArrayTransaction[Component]
+	AnyTransaction() AnyComponentsArrayTransaction
 
 	// can return:
 	// - ErrEntityDoNotExists
 	SaveComponent(EntityID, Component) error // upsert
+	SaveAnyComponent(EntityID, any) error    // upsert
+
 	// differs from save component by not triggering events
 	DirtySaveComponent(EntityID, Component) error // upsert
+	DirtySaveAnyComponent(EntityID, any) error    // upsert
+
 	RemoveComponent(EntityID)
 
 	// can return:
@@ -89,6 +116,10 @@ func (c *componentsArray[Component]) Transaction() ComponentsArrayTransaction[Co
 	return newComponentsArrayTransaction(c)
 }
 
+func (c *componentsArray[Component]) AnyTransaction() AnyComponentsArrayTransaction {
+	return c.Transaction()
+}
+
 func (c *componentsArray[Component]) addQueries(queries []*liveQuery) {
 	c.queries = append(c.queries, queries...)
 }
@@ -111,12 +142,28 @@ func (c *componentsArray[Component]) SaveComponent(entity EntityID, component Co
 	return nil
 }
 
+func (c *componentsArray[Component]) SaveAnyComponent(entity EntityID, anyComponent any) error {
+	component, ok := anyComponent.(Component)
+	if !ok {
+		return ErrInvalidType
+	}
+	return c.SaveComponent(entity, component)
+}
+
 func (c *componentsArray[Component]) DirtySaveComponent(entity EntityID, component Component) error {
 	if ok := c.entities.Get(entity); !ok {
 		return ErrEntityDoNotExists
 	}
 	c.components.Set(entity, component)
 	return nil
+}
+
+func (c *componentsArray[Component]) DirtySaveAnyComponent(entity EntityID, anyComponent any) error {
+	component, ok := anyComponent.(Component)
+	if !ok {
+		return ErrInvalidType
+	}
+	return c.SaveComponent(entity, component)
 }
 
 func (c *componentsArray[Component]) RemoveComponent(entity EntityID) {

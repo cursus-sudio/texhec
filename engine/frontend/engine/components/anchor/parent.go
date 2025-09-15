@@ -2,7 +2,7 @@ package anchor
 
 import (
 	"frontend/engine/components/transform"
-	"frontend/services/ecs"
+	"shared/services/ecs"
 
 	"github.com/go-gl/mathgl/mgl32"
 )

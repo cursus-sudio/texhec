@@ -1,7 +1,7 @@
 package ecs
 
 import (
-	"frontend/services/datastructures"
+	"shared/services/datastructures"
 	"sort"
 	"strings"
 )

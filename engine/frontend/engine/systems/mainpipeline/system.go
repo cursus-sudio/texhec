@@ -11,11 +11,11 @@ import (
 	"frontend/engine/tools/worldmesh"
 	"frontend/engine/tools/worldtexture"
 	"frontend/services/assets"
-	"frontend/services/datastructures"
-	"frontend/services/ecs"
 	"frontend/services/graphics"
 	"frontend/services/graphics/buffers"
 	"frontend/services/media/window"
+	"shared/services/datastructures"
+	"shared/services/ecs"
 	"shared/services/logger"
 	"sync"
 

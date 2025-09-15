@@ -2,7 +2,7 @@ package projection
 
 import (
 	"errors"
-	"frontend/services/ecs"
+	"shared/services/ecs"
 )
 
 var (

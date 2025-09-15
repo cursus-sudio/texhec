@@ -2,8 +2,8 @@ package mouse
 
 import (
 	"frontend/engine/components/mouse"
-	"frontend/services/ecs"
 	"frontend/services/frames"
+	"shared/services/ecs"
 
 	"github.com/ogiusek/events"
 )

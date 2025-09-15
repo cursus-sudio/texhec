@@ -1,8 +1,8 @@
 package worldprojections
 
 import (
-	"frontend/services/datastructures"
-	"frontend/services/ecs"
+	"shared/services/datastructures"
+	"shared/services/ecs"
 )
 
 type WorldProjectionsRegister struct {

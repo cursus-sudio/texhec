@@ -3,8 +3,8 @@ package projections
 import (
 	"frontend/engine/components/projection"
 	"frontend/engine/components/transform"
-	"frontend/services/ecs"
 	"frontend/services/media/window"
+	"shared/services/ecs"
 	"shared/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"

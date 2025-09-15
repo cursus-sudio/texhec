@@ -3,8 +3,8 @@ package triangle
 import (
 	_ "embed"
 	"frontend/engine/components/transform"
-	"frontend/services/ecs"
 	"frontend/services/frames"
+	"shared/services/ecs"
 	"shared/services/logger"
 	"time"
 

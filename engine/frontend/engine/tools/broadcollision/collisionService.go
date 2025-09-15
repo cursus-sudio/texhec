@@ -4,7 +4,7 @@ import (
 	"frontend/engine/components/collider"
 	"frontend/engine/components/transform"
 	"frontend/services/assets"
-	"frontend/services/ecs"
+	"shared/services/ecs"
 	"shared/services/logger"
 	"sync"
 )

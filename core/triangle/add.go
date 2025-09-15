@@ -19,11 +19,11 @@ import (
 	"frontend/engine/tools/worldtexture"
 	"frontend/services/assets"
 	"frontend/services/console"
-	"frontend/services/ecs"
 	"frontend/services/frames"
 	"frontend/services/media/window"
 	"frontend/services/scenes"
 	"math"
+	"shared/services/ecs"
 	"shared/services/logger"
 	"shared/services/runtime"
 

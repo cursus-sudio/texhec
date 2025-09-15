@@ -2,7 +2,7 @@ package transformsystem
 
 import (
 	"frontend/engine/components/transform"
-	"frontend/services/ecs"
+	"shared/services/ecs"
 	"shared/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"

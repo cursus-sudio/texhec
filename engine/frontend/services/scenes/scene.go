@@ -1,7 +1,7 @@
 package scenes
 
 import (
-	"frontend/services/ecs"
+	"shared/services/ecs"
 
 	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"

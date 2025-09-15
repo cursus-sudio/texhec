@@ -3,8 +3,8 @@ package ecs
 import (
 	"errors"
 	"fmt"
-	"frontend/services/datastructures"
 	"reflect"
+	"shared/services/datastructures"
 	"sync"
 )
 

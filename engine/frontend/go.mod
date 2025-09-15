@@ -10,7 +10,6 @@ require (
 	github.com/ogiusek/events v1.0.6
 	github.com/ogiusek/ioc/v2 v2.0.12
 	github.com/veandco/go-sdl2 v0.4.40
-	golang.org/x/exp v0.0.0-20250911091902-df9299821621
 )
 
 require (
@@ -25,6 +24,7 @@ require (
 	github.com/ogiusek/relay/v2 v2.0.6 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
+	golang.org/x/exp v0.0.0-20250911091902-df9299821621 // indirect
 	golang.org/x/mod v0.28.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect

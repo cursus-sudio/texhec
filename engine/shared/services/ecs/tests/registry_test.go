@@ -1,7 +1,7 @@
 package ecs_test
 
 import (
-	"frontend/services/ecs"
+	"shared/services/ecs"
 	"testing"
 )
 

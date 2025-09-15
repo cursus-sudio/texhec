@@ -2,9 +2,9 @@ package render
 
 import (
 	"frontend/services/assets"
-	"frontend/services/ecs"
 	"frontend/services/frames"
 	"frontend/services/media/window"
+	"shared/services/ecs"
 	"sync"
 
 	"github.com/go-gl/gl/v4.5-core/gl"

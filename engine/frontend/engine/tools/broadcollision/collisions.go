@@ -2,7 +2,7 @@ package broadcollision
 
 import (
 	"frontend/engine/components/collider"
-	"frontend/services/ecs"
+	"shared/services/ecs"
 )
 
 type ObjectRayCollision interface {

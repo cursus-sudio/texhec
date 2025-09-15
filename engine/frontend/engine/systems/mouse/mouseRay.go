@@ -6,8 +6,8 @@ import (
 	"frontend/engine/tools/broadcollision"
 	"frontend/engine/tools/worldprojections"
 	"frontend/services/assets"
-	"frontend/services/ecs"
 	"frontend/services/media/window"
+	"shared/services/ecs"
 
 	"github.com/ogiusek/events"
 )

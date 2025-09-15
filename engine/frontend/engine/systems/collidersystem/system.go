@@ -4,7 +4,7 @@ import (
 	"frontend/engine/components/collider"
 	"frontend/engine/components/transform"
 	"frontend/engine/tools/broadcollision"
-	"frontend/services/ecs"
+	"shared/services/ecs"
 )
 
 type ColliderSystem struct {

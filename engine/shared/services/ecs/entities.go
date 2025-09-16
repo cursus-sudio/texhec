@@ -17,6 +17,7 @@ func NewEntityID(id uint64) EntityID { return EntityID(id) }
 
 type entitiesInterface interface {
 	NewEntity() EntityID
+	EnsureEntityExists(EntityID)
 	RemoveEntity(EntityID)
 
 	GetEntities() []EntityID
@@ -55,6 +56,20 @@ func (entitiesStorage *entitiesImpl) NewEntity() EntityID {
 	id := EntityID(index)
 	entitiesStorage.entities.Add(id)
 	return id
+}
+
+func (entitiesStorage *entitiesImpl) EnsureEntityExists(entity EntityID) {
+	if ok := entitiesStorage.entities.Get(entity); ok {
+		return
+	}
+
+	for entitiesStorage.counter <= uint64(entity) {
+		entitiesStorage.counter++
+		entitiesStorage.holes.Add(EntityID(entitiesStorage.counter))
+	}
+
+	entitiesStorage.holes.RemoveElements(entity)
+	entitiesStorage.entities.Add(entity)
 }
 
 func (entitiesStorage *entitiesImpl) RemoveEntity(entity EntityID) {

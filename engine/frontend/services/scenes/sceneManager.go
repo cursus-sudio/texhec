@@ -3,12 +3,16 @@ package scenes
 type SceneManagerBuilder interface {
 	AddScene(Scene) SceneManagerBuilder
 	MakeActive(SceneId) SceneManagerBuilder
+	OnSceneLoad(func(SceneCtx)) SceneManagerBuilder
+	OnSceneUnload(func(SceneCtx)) SceneManagerBuilder
 	Build() SceneManager
 }
 
 type sceneManagerBuilder struct {
-	scenes       map[SceneId]Scene
-	currentScene *SceneId
+	scenes          map[SceneId]Scene
+	currentScene    *SceneId
+	loadListeners   []func(SceneCtx)
+	unloadListeners []func(SceneCtx)
 }
 
 func NewSceneManagerBuilder() SceneManagerBuilder {
@@ -33,6 +37,18 @@ func (b *sceneManagerBuilder) MakeActive(sceneId SceneId) SceneManagerBuilder {
 	return b
 }
 
+// listener is triggered after loading scene
+func (b *sceneManagerBuilder) OnSceneLoad(listener func(SceneCtx)) SceneManagerBuilder {
+	b.loadListeners = append(b.loadListeners, listener)
+	return b
+}
+
+// listener is triggered after unloading scene
+func (b *sceneManagerBuilder) OnSceneUnload(listener func(SceneCtx)) SceneManagerBuilder {
+	b.unloadListeners = append(b.unloadListeners, listener)
+	return b
+}
+
 func (b *sceneManagerBuilder) Build() SceneManager {
 	if b.currentScene == nil {
 		panic(ErrNoActiveScene.Error())
@@ -45,8 +61,20 @@ func (b *sceneManagerBuilder) Build() SceneManager {
 
 	manager := &sceneManager{
 		scenes:             b.scenes,
-		currentSceneId:     id,
+		activeSceneCtx:     nil,
 		loadedCurrentScene: false,
+		currentSceneId:     id,
+
+		onLoad: func(sc SceneCtx) {
+			for _, listener := range b.loadListeners {
+				listener(sc)
+			}
+		},
+		onUnload: func(sc SceneCtx) {
+			for _, listener := range b.unloadListeners {
+				listener(sc)
+			}
+		},
 	}
 	return manager
 }
@@ -72,6 +100,9 @@ type sceneManager struct {
 	activeSceneCtx     SceneCtx
 	loadedCurrentScene bool
 	currentSceneId     SceneId
+
+	onLoad   func(SceneCtx)
+	onUnload func(SceneCtx)
 }
 
 func (sceneManager *sceneManager) CurrentScene() SceneId {
@@ -97,15 +128,18 @@ func (sceneManager *sceneManager) LoadScene(sceneId SceneId) error {
 		unloadedScene = sceneManager.scenes[sceneManager.currentSceneId]
 	}
 
+	sceneManager.loadedCurrentScene = true
+
 	// load
 	sceneManager.currentSceneId = sceneId
 	ctx := loadedScene.Load()
-	sceneManager.loadedCurrentScene = true
+	sceneManager.onLoad(ctx)
 	sceneManager.activeSceneCtx = ctx
 
 	// unload
 	if unloadedScene != nil {
 		unloadedScene.Unload(previousCtx)
+		sceneManager.onUnload(previousCtx)
 	}
 
 	return nil

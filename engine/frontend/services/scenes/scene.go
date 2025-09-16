@@ -55,14 +55,14 @@ type sceneCtx struct {
 	Events        events.Events
 }
 
-type SceneCtx struct{ *sceneCtx }
+type SceneCtx *sceneCtx
 
 func NewSceneCtx(world ecs.World, eventsBuilder events.Builder) SceneCtx {
-	return SceneCtx{&sceneCtx{
+	return &sceneCtx{
 		world,
 		eventsBuilder,
 		eventsBuilder.Events(),
-	}}
+	}
 }
 
 //

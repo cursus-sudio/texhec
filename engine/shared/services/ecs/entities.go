@@ -63,7 +63,7 @@ func (entitiesStorage *entitiesImpl) EnsureEntityExists(entity EntityID) {
 		return
 	}
 
-	for entitiesStorage.counter <= uint64(entity) {
+	for entitiesStorage.counter < uint64(entity) {
 		entitiesStorage.counter++
 		entitiesStorage.holes.Add(EntityID(entitiesStorage.counter))
 	}

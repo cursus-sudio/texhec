@@ -18,6 +18,7 @@ type ComponentsArrayTransaction[Component any] interface {
 	DirtySaveAnyComponent(EntityID, any) error                                    // upsert
 
 	RemoveComponent(EntityID) ComponentsArrayTransaction[Component]
+	RemoveAnyComponent(EntityID)
 
 	// this prematurely locks mutex until we flush (it is optional).
 	// it is useful if we want to check error on many arrays.
@@ -32,6 +33,11 @@ type ComponentsArrayTransaction[Component any] interface {
 }
 
 type AnyComponentsArrayTransaction interface {
+	SaveAnyComponent(EntityID, any) error      // upsert
+	DirtySaveAnyComponent(EntityID, any) error // upsert
+
+	RemoveAnyComponent(EntityID)
+
 	// this prematurely locks mutex until we flush (it is optional).
 	// it is useful if we want to check error on many arrays.
 	PrepareFlush()
@@ -142,6 +148,12 @@ func (t *componentsArrayTransaction[Component]) RemoveComponent(entity EntityID)
 	t.removes.Add(entity)
 	t.operations.Set(entity, operationRemove)
 	return t
+}
+
+func (t *componentsArrayTransaction[Component]) RemoveAnyComponent(entity EntityID) {
+	t.removeOperation(entity)
+	t.removes.Add(entity)
+	t.operations.Set(entity, operationRemove)
 }
 
 func (t *componentsArrayTransaction[Component]) PrepareFlush() {

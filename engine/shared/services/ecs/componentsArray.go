@@ -11,6 +11,8 @@ var ErrInvalidType error = errors.New("expected an error component")
 // interface
 
 type AnyComponentArray interface {
+	AnyTransaction() AnyComponentsArrayTransaction
+
 	// can return:
 	// - ErrEntityDoNotExists
 	SaveAnyComponent(EntityID, any) error // upsert

@@ -31,9 +31,14 @@ func (storage *savesStorage) LoadSave(id SaveId) error {
 }
 
 func (storage *savesStorage) Save(id SaveId) error {
-	data := storage.Codec.Serialize()
-	err := storage.FileStorage.OverWrite(files.NewPath(id.String()), data)
-	return err
+	data, err := storage.Codec.Serialize()
+	if err != nil {
+		return err
+	}
+	if err := storage.FileStorage.OverWrite(files.NewPath(id.String()), data); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (storage *savesStorage) Delete(id SaveId) error {

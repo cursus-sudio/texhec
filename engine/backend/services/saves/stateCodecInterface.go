@@ -25,7 +25,7 @@ func newStateCodecRWMutex() StateCodecRWMutex          { return StateCodecRWMute
 func (mutex StateCodecRWMutex) RWMutex() *sync.RWMutex { return mutex.mutex }
 
 type StateCodec interface {
-	Serialize() SaveData
+	Serialize() (SaveData, error)
 	// can return:
 	// - ErrInvalidSaveFormat
 	Load(SaveData) error

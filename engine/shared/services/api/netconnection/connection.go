@@ -90,7 +90,14 @@ func (c *netConnection) HandleMsg(conn net.Conn, msg Msg) error {
 		}
 		r := c.Connection.Relay()
 		res, err := relay.HandleAny(r, decoded)
-		resMsg := NewResponse(msg.ID, string(c.Codec.Encode(res)), err)
+		var resMsg Msg
+		encodedMsg, encodeErr := c.Codec.Encode(res)
+		if encodeErr != nil {
+			c.Logger.Error(encodeErr)
+			resMsg = NewResponse(msg.ID, string(encodedMsg), httperrors.Err501)
+		} else {
+			resMsg = NewResponse(msg.ID, string(encodedMsg), err)
+		}
 		c.Send(conn, resMsg)
 		break
 	case MsgResponse:
@@ -121,7 +128,10 @@ func (c *netConnection) HandleMsg(conn net.Conn, msg Msg) error {
 }
 
 func (c *netConnection) Send(conn net.Conn, msg Msg) error {
-	bytes := c.Codec.Encode(msg)
+	bytes, err := c.Codec.Encode(msg)
+	if err != nil {
+		return err
+	}
 	length := uint64(len(bytes))
 	lengthInByes := make([]byte, 8)
 	binary.BigEndian.PutUint64(lengthInByes, uint64(length))
@@ -187,9 +197,15 @@ func (c *netConnection) Connect(conn net.Conn, onClose func()) connection.Connec
 
 	mlb.Relay().DefaultHandler(func(ctx relay.AnyContext) {
 		req := ctx.Req()
+		encodedReq, err := c.Codec.Encode(req)
+		if err != nil {
+			ctx.SetErr(err)
+			return
+		}
+
 		reqMsg := NewRequest(
 			c.UuidFactory.NewUUID().String(),
-			string(c.Codec.Encode(req)),
+			string(encodedReq),
 		)
 		resMsg := c.Request(conn, reqMsg)
 		if resMsg.Err != nil {
@@ -209,9 +225,14 @@ func (c *netConnection) Connect(conn net.Conn, onClose func()) connection.Connec
 	})
 
 	mlb.Relay().DefaultMessageHandler(func(ctx relay.AnyMessageCtx) {
+		encodedMsg, err := c.Codec.Encode(ctx.Message())
+		if err != nil {
+			c.Logger.Error(err)
+			return
+		}
 		msg := NewMessage(
 			c.UuidFactory.NewUUID().String(),
-			string(c.Codec.Encode(ctx.Message())),
+			string(encodedMsg),
 		)
 		c.Send(conn, msg)
 	})

@@ -50,10 +50,10 @@ func newStateCodec(
 
 type serializableElement struct {
 	Entity    ecs.EntityID
-	Component []byte
+	Component json.RawMessage
 }
 
-func (repoStateCodec *worldStateCodec) Serialize() SaveData {
+func (repoStateCodec *worldStateCodec) Serialize() (SaveData, error) {
 	repoStateCodec.repoWMutex.Lock()
 	defer repoStateCodec.repoWMutex.Unlock()
 	serializable := make(map[RepoId][]serializableElement, len(repoStateCodec.arrays))
@@ -63,14 +63,17 @@ func (repoStateCodec *worldStateCodec) Serialize() SaveData {
 		data := make([]serializableElement, 0, len(entities))
 		for _, entity := range entities {
 			component, _ := array.GetAnyComponent(entity)
-			componentSerialized := repoStateCodec.codec.Encode(component)
+			componentSerialized, err := repoStateCodec.codec.Encode(component)
+			if err != nil {
+				return nil, err
+			}
 			serialzied := serializableElement{entity, componentSerialized}
 			data = append(data, serialzied)
 		}
 		serializable[repoId] = data
 	}
 	bytes, _ := json.Marshal(serializable)
-	return NewSaveData(bytes)
+	return NewSaveData(bytes), nil
 }
 
 func (repoStateCodec *worldStateCodec) Load(data SaveData) error {

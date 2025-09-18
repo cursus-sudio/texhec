@@ -1,6 +1,8 @@
 package main
 
 import (
+	"backend/services/saves"
+	"backend/services/scopes"
 	"core/ping"
 	"core/tacticalmap"
 	"fmt"
@@ -8,7 +10,9 @@ import (
 	"frontend/services/backendconnection"
 	"os"
 	"runtime"
+	"shared/services/logger"
 	appruntime "shared/services/runtime"
+	"time"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/ogiusek/ioc/v2"
@@ -40,6 +44,7 @@ func main() {
 		// 	factory := ioc.Get[saves.SaveMetaFactory](backendC)
 		// 	err := s.NewSave(factory.New("very funny save\n"))
 		// 	ioc.Get[scopes.RequestService](backendC).Clean(scopes.NewRequestEndArgs(err))
+		// 	ioc.Get[logger.Logger](backendC).Info("saved")
 		// }()
 		backendRuntime.Run()
 		return

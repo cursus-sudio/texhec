@@ -10,15 +10,12 @@ import (
 type name string
 
 type Encoded struct {
-	Name  name   `json:"name"`
-	Bytes []byte `json:"bytes"`
+	Name  name            `json:"t"`
+	Bytes json.RawMessage `json:"v"`
 }
 
 type Codec interface {
-	// panics when type is not registered
-	Encode(any) []byte
-	// can return error when its not encodable or type is not registered
-	TryEncode(any) ([]byte, error)
+	Encode(any) ([]byte, error)
 
 	// can return:
 	// ErrInvalidInput
@@ -45,15 +42,7 @@ func NewCodec(types []reflect.Type) Codec {
 	}
 }
 
-func (codec *codec) Encode(model any) []byte {
-	bytes, err := codec.TryEncode(model)
-	if err != nil {
-		panic(err)
-	}
-	return bytes
-}
-
-func (codec *codec) TryEncode(model any) ([]byte, error) {
+func (codec *codec) Encode(model any) ([]byte, error) {
 	modelType := reflect.TypeOf(model)
 	name, ok := codec.namesByType[modelType]
 	if !ok {

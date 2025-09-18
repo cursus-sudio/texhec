@@ -4,7 +4,9 @@ import (
 	"backend/services/files"
 	"backend/services/scopes"
 	"shared/services/clock"
+	"shared/services/codec"
 	"shared/services/db"
+	"shared/services/ecs"
 	"shared/services/uuid"
 
 	"github.com/ogiusek/ioc/v2"
@@ -57,15 +59,20 @@ func (pkg Pkg) Register(b ioc.Builder) {
 	ioc.RegisterDependency[SavesStorage, StateCodec](b)
 	ioc.RegisterDependency[SavesStorage, files.FileStorage](b)
 
+	ioc.RegisterSingleton(b, func(c ioc.Dic) WorldStateCodecBuilder { return NewWorldStateCodecBuilder() })
+
 	ioc.RegisterSingleton(b, func(c ioc.Dic) StateCodecRWMutex { return newStateCodecRWMutex() })
-	ioc.RegisterSingleton(b, func(c ioc.Dic) StateCodec {
+	ioc.RegisterTransient(b, func(c ioc.Dic) StateCodec {
 		return newStateCodec(
-			ioc.Get[SavableRepositories](c).GetRepositories(),
 			ioc.Get[StateCodecRWMutex](c).RWMutex(),
+			ioc.Get[ecs.World](c),
+			ioc.Get[codec.Codec](c),
+			ioc.Get[WorldStateCodecBuilder](c).arrays,
 		)
 	})
 	ioc.RegisterDependency[StateCodec, SavableRepositories](b)
 	ioc.RegisterDependency[StateCodec, StateCodecRWMutex](b)
+	ioc.RegisterDependency[StateCodec, WorldStateCodecBuilder](b)
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) SavableRepoBuilder { return newSavableRepoBuilder() })
 

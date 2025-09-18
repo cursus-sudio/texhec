@@ -1,10 +1,7 @@
 package example
 
 import (
-	"backend/services/saves"
 	"core/tacticalmap"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"frontend/services/console"
 	"frontend/services/frames"
@@ -172,72 +169,4 @@ func (system *someSystem) Listen(args frames.FrameEvent) error {
 	system.Console.Print(text)
 	system.Console.Flush()
 	return nil
-}
-
-//
-
-// repo
-
-type IntRepo interface {
-	Increment()
-	GetCount() int
-}
-
-type intRepo struct {
-	Count   int         `json:"count"`
-	Changed bool        `json:"-"`
-	Mutex   sync.Locker `json:"-"`
-}
-
-func NewIntRepository(
-	count int,
-	changed bool,
-	mutex sync.Locker,
-) *intRepo {
-	return &intRepo{
-		Count:   count,
-		Changed: changed,
-		Mutex:   mutex,
-	}
-}
-
-func (savableIntRepo *intRepo) IsValidSnapshot(snapshot saves.RepoSnapshot) bool {
-	repo := intRepo{}
-	err := json.Unmarshal(snapshot.Bytes(), &repo)
-	return err == nil
-}
-
-func (savableIntRepo *intRepo) TakeSnapshot() saves.RepoSnapshot {
-	bytes, err := json.Marshal(savableIntRepo)
-	if err != nil {
-		panic(errors.Join(errors.New("error taking snapshot"), err))
-	}
-	savableIntRepo.Changed = false
-	return saves.NewRepoSnapshot(bytes)
-}
-
-func (savableIntRepo *intRepo) LoadSnapshot(snapshot saves.RepoSnapshot) error {
-	repo := intRepo{}
-	err := json.Unmarshal(snapshot.Bytes(), &repo)
-	if err != nil {
-		return err
-	}
-	savableIntRepo.Count = repo.Count
-	savableIntRepo.Changed = false
-	return nil
-}
-
-func (savableIntRepo *intRepo) HasChanges() bool {
-	return savableIntRepo.Changed
-}
-
-func (savableIntRepo *intRepo) Increment() {
-	savableIntRepo.Mutex.Lock()
-	defer savableIntRepo.Mutex.Unlock()
-	savableIntRepo.Count += 1
-	savableIntRepo.Changed = true
-}
-
-func (savableIntRepo *intRepo) GetCount() int {
-	return savableIntRepo.Count
 }

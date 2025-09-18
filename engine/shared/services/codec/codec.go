@@ -3,6 +3,7 @@ package codec
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"reflect"
 )
 
@@ -56,7 +57,10 @@ func (codec *codec) TryEncode(model any) ([]byte, error) {
 	modelType := reflect.TypeOf(model)
 	name, ok := codec.namesByType[modelType]
 	if !ok {
-		return nil, ErrTypeIsNotRegistered
+		return nil, errors.Join(
+			ErrTypeIsNotRegistered,
+			fmt.Errorf("codec is missing \"%v\" type", modelType.String()),
+		)
 	}
 	modelBytes, err := json.Marshal(model)
 	if err != nil {

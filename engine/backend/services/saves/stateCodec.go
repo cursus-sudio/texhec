@@ -3,72 +3,124 @@ package saves
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+	"reflect"
+	"shared/services/codec"
+	"shared/services/ecs"
 	"sync"
 )
 
-type repoStateCodec struct {
-	repoWMutex   sync.Locker
-	repositories map[RepoId]SavableRepo
+type WorldStateCodecBuilder struct {
+	arrays map[RepoId]func(ecs.World) ecs.AnyComponentArray
 }
 
-func newStateCodec(
-	repositories map[RepoId]SavableRepo,
-	repoWMutex sync.Locker,
-) StateCodec {
-	return &repoStateCodec{
-		repoWMutex:   repoWMutex,
-		repositories: repositories,
+func NewWorldStateCodecBuilder() WorldStateCodecBuilder {
+	return WorldStateCodecBuilder{
+		arrays: make(map[RepoId]func(ecs.World) ecs.AnyComponentArray),
 	}
 }
 
-func (repoStateCodec *repoStateCodec) Serialize() SaveData {
+func AddPersistedArray[ComponentType any](b WorldStateCodecBuilder) {
+	repoName := reflect.TypeFor[ComponentType]().String()
+	repoID := RepoId(repoName)
+	b.arrays[repoID] = func(w ecs.World) ecs.AnyComponentArray {
+		return ecs.GetComponentsArray[ComponentType](w.Components())
+	}
+}
+
+type worldStateCodec struct {
+	repoWMutex sync.Locker
+	world      ecs.World
+	codec      codec.Codec
+	arrays     map[RepoId]func(ecs.World) ecs.AnyComponentArray
+}
+
+func newStateCodec(
+	repoWMutex sync.Locker,
+	world ecs.World,
+	codec codec.Codec,
+	arrays map[RepoId]func(ecs.World) ecs.AnyComponentArray,
+) StateCodec {
+	return &worldStateCodec{
+		repoWMutex: repoWMutex,
+		world:      world,
+		codec:      codec,
+		arrays:     arrays,
+	}
+}
+
+type serializableElement struct {
+	Entity    ecs.EntityID
+	Component []byte
+}
+
+func (repoStateCodec *worldStateCodec) Serialize() SaveData {
 	repoStateCodec.repoWMutex.Lock()
 	defer repoStateCodec.repoWMutex.Unlock()
-	serializable := make(map[RepoId]RepoSnapshot, len(repoStateCodec.repositories))
-	for repoId, repo := range repoStateCodec.repositories {
-		serializable[repoId] = repo.TakeSnapshot()
+	serializable := make(map[RepoId][]serializableElement, len(repoStateCodec.arrays))
+	for repoId, getter := range repoStateCodec.arrays {
+		array := getter(repoStateCodec.world)
+		entities := array.GetEntities()
+		data := make([]serializableElement, 0, len(entities))
+		for _, entity := range entities {
+			component, _ := array.GetAnyComponent(entity)
+			componentSerialized := repoStateCodec.codec.Encode(component)
+			serialzied := serializableElement{entity, componentSerialized}
+			data = append(data, serialzied)
+		}
+		serializable[repoId] = data
 	}
 	bytes, _ := json.Marshal(serializable)
 	return NewSaveData(bytes)
 }
 
-func (repoStateCodec *repoStateCodec) HasChanges() bool {
-	for _, repo := range repoStateCodec.repositories {
-		if repo.HasChanges() {
-			return true
-		}
-	}
-	return false
-}
-
-func (repoStateCodec *repoStateCodec) Load(data SaveData) error {
+func (repoStateCodec *worldStateCodec) Load(data SaveData) error {
 	repoStateCodec.repoWMutex.Lock()
 	defer repoStateCodec.repoWMutex.Unlock()
 
 	// get repositories snapshots
-	snapshots := make(map[RepoId]RepoSnapshot, len(repoStateCodec.repositories))
+	snapshots := make(map[RepoId][]serializableElement, len(repoStateCodec.arrays))
 	if err := json.Unmarshal(data, &snapshots); err != nil {
 		return ErrInvalidSaveFormat
 	}
 
-	// verify snapshots
-	for key, snapshot := range snapshots {
-		if valid := repoStateCodec.repositories[key].IsValidSnapshot(snapshot); !valid {
-			return errors.Join(errors.New("repository does not recognize snapshot"), ErrInvalidSaveFormat)
+	transactions := make(map[RepoId]ecs.AnyComponentsArrayTransaction, len(repoStateCodec.arrays))
+
+	for key := range snapshots {
+		getter, ok := repoStateCodec.arrays[key]
+		if !ok {
+			return errors.Join(
+				ErrInvalidRepoSnapshot,
+				errors.New("repo isn't version compatible"),
+			)
 		}
+		array := getter(repoStateCodec.world)
+		transaction := array.AnyTransaction()
+		transactions[key] = transaction
 	}
 
 	// apply snapshots
 	for key, snapshot := range snapshots {
-		err := repoStateCodec.repositories[key].LoadSnapshot(snapshot)
+		getter := repoStateCodec.arrays[key]
+		array := getter(repoStateCodec.world)
+		transaction := transactions[key]
+		for _, entity := range array.GetEntities() {
+			transaction.RemoveAnyComponent(entity)
+		}
 
-		// if verified snapshot is invalid then something is wrong.
-		// therefor panic.
-		if err != nil {
-			panic(fmt.Sprintf("repository rejected snapshot which was earlier marked as valid by it\nrepo returned error %s", err.Error()))
+		for _, element := range snapshot {
+			encodedComponent := element.Component
+			decodedComponent, err := repoStateCodec.codec.Decode(encodedComponent)
+			if err != nil {
+				return ErrInvalidRepoSnapshot
+			}
+			if err := transaction.SaveAnyComponent(element.Entity, decodedComponent); err != nil {
+				return errors.Join(ErrInvalidRepoSnapshot, err)
+			}
 		}
 	}
-
-	return nil
+	transactionsArray := make([]ecs.AnyComponentsArrayTransaction, 0, len(transactions))
+	for _, transaction := range transactions {
+		transactionsArray = append(transactionsArray, transaction)
+	}
+	return ecs.FlushMany(transactionsArray...)
 }

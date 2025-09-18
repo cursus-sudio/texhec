@@ -17,6 +17,7 @@ import (
 	"os"
 	"path/filepath"
 	"shared/services/api"
+	"shared/services/ecs"
 	"shared/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
@@ -50,6 +51,7 @@ func backendDic(
 		files.Package(fmt.Sprintf("%s/files", storage)),
 		saves.Package(),
 		scopes.Package(),
+		ecs.Package(),
 
 		// mods
 		example.BackendPackage(),

@@ -1,6 +1,8 @@
 package scenes
 
 import (
+	"shared/services/ecs"
+
 	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
@@ -30,4 +32,8 @@ func (pkg Pkg) Register(b ioc.Builder) {
 		return b
 	})
 	ioc.RegisterDependency[events.Builder, SceneManager](b)
+
+	ioc.RegisterTransient(b, func(c ioc.Dic) ecs.World {
+		return ioc.Get[SceneManager](c).CurrentSceneCtx().World
+	})
 }

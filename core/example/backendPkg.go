@@ -3,6 +3,8 @@ package example
 import (
 	"backend/services/saves"
 	"reflect"
+	"shared/services/codec"
+	"shared/services/ecs"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -14,17 +16,19 @@ func BackendPackage() BackendPkg {
 }
 
 func (BackendPkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) *intRepo {
-		return NewIntRepository(
-			0,
-			false,
-			ioc.Get[saves.StateCodecRWMutex](c).RWMutex().RLocker(),
-		)
-	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) IntRepo { return ioc.Get[*intRepo](c) })
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s saves.SavableRepoBuilder) saves.SavableRepoBuilder {
-		repoId := reflect.TypeFor[IntRepo]().String()
-		s.AddRepo(saves.RepoId(repoId), ioc.Get[*intRepo](c))
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s saves.WorldStateCodecBuilder) saves.WorldStateCodecBuilder {
+		saves.AddPersistedArray[IntComponent](s)
 		return s
+	})
+
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, w ecs.World) ecs.World {
+		e := w.NewEntity()
+		ecs.SaveComponent(w.Components(), e, IntComponent{2137})
+		return w
+	})
+
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
+		b.Register(reflect.TypeFor[IntComponent]())
+		return b
 	})
 }

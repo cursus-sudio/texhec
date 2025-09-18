@@ -27,7 +27,6 @@ import (
 	"os"
 	"path/filepath"
 	"shared/services/api"
-	"shared/services/ecs"
 	"shared/services/logger"
 	"shared/services/uuid"
 	"shared/utils/connection"
@@ -115,7 +114,7 @@ func frontendDic(
 		media.Package(
 			windowapi.Package(window, ctx),
 		),
-		ecs.Package(),
+		// ecs.Package(), // scenes register world so ecs package isn't registered
 		frames.Package(60),
 		// frames.Package(10000),
 		scenes.Package(),

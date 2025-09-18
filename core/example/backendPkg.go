@@ -15,6 +15,8 @@ func BackendPackage() BackendPkg {
 	return BackendPkg{}
 }
 
+type IntComponent struct{ Counter int }
+
 func (BackendPkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s saves.WorldStateCodecBuilder) saves.WorldStateCodecBuilder {
 		saves.AddPersistedArray[IntComponent](s)

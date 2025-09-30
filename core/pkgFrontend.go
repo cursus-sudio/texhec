@@ -9,8 +9,10 @@ import (
 	"core/triangle"
 	"errors"
 	"fmt"
+	"frontend/engine/components/projection"
 	"frontend/engine/systems/genericrenderer"
 	"frontend/engine/tools/broadcollision"
+	"frontend/engine/tools/cameras"
 	frontendapi "frontend/services/api"
 	frontendtcp "frontend/services/api/tcp"
 	"frontend/services/assets"
@@ -118,6 +120,8 @@ func frontendDic(
 		// frames.Package(10000),
 		scenes.Package(),
 		frontendscopes.Package(),
+		cameras.Package(),
+		projection.Package(),
 
 		genericrenderer.Package(),
 		broadcollision.Package(),

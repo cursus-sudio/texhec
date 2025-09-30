@@ -7,6 +7,7 @@ import (
 	texturecomponent "frontend/engine/components/texture"
 	"frontend/engine/components/transform"
 	"frontend/engine/systems/render"
+	"frontend/engine/tools/cameras"
 	"frontend/services/assets"
 	"frontend/services/graphics/program"
 	"frontend/services/graphics/shader"
@@ -74,6 +75,7 @@ type System struct {
 	assetsStorage assets.AssetsStorage
 	logger        logger.Logger
 	vboFactory    vbo.VBOFactory[Vertex]
+	camerasCtors  cameras.CameraConstructors
 
 	query ecs.LiveQuery
 
@@ -86,6 +88,7 @@ func NewSystem(
 	assetsStorage assets.AssetsStorage,
 	logger logger.Logger,
 	vboFactory vbo.VBOFactory[Vertex],
+	camerasCtors cameras.CameraConstructors,
 	entitiesQueryAdditionalArguments []ecs.ComponentType,
 ) (*System, error) {
 	vert, err := shader.NewShader(vertSource, shader.VertexShader)
@@ -128,6 +131,7 @@ func NewSystem(
 		assetsStorage: assetsStorage,
 		logger:        logger,
 		vboFactory:    vboFactory,
+		camerasCtors:  camerasCtors,
 
 		query: world.QueryEntitiesWithComponents(
 			append(
@@ -227,20 +231,12 @@ func (m *System) Listen(render.RenderEvent) error {
 		textureAsset.Use()
 		meshAsset.Use()
 
-		for _, camera := range camerasQuery.Entities() {
-			cameraTransform, err := m.transformArray.GetComponent(camera)
+		for _, cameraEntity := range camerasQuery.Entities() {
+			camera, err := m.camerasCtors.Get(cameraEntity, usedProjection.ProjectionComponent)
 			if err != nil {
 				continue
 			}
-			anyProjection, err := m.world.GetAnyComponent(camera, usedProjection.ProjectionComponent)
-			if err != nil {
-				continue
-			}
-			projection, ok := anyProjection.(projection.Projection)
-			if !ok {
-				continue
-			}
-			mvp := projection.Mat4().Mul4(projection.ViewMat4(cameraTransform).Mul4(model))
+			mvp := camera.Mat4().Mul4(model)
 
 			gl.UniformMatrix4fv(locations.Mvp, 1, false, &mvp[0])
 			gl.DrawElementsWithOffset(gl.TRIANGLES, int32(meshAsset.EBO().Len()), gl.UNSIGNED_INT, 0)

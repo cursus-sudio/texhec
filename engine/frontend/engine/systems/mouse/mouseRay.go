@@ -4,6 +4,7 @@ import (
 	"frontend/engine/components/projection"
 	"frontend/engine/components/transform"
 	"frontend/engine/tools/broadcollision"
+	"frontend/engine/tools/cameras"
 	"frontend/engine/tools/worldprojections"
 	"frontend/services/assets"
 	"frontend/services/media/window"
@@ -30,6 +31,7 @@ type CameraRaySystem struct {
 	window          window.Api
 	events          events.Events
 	assets          assets.Assets
+	cameraCtors     cameras.CameraConstructors
 
 	hoversOverEntites map[ecs.ComponentType]ecs.EntityID
 }
@@ -39,6 +41,7 @@ func NewCameraRaySystem(
 	collider broadcollision.CollisionDetectionService,
 	window window.Api,
 	events events.Events,
+	cameraCtors cameras.CameraConstructors,
 ) CameraRaySystem {
 	return CameraRaySystem{
 		world:           world,
@@ -46,6 +49,7 @@ func NewCameraRaySystem(
 		broadCollisions: collider,
 		window:          window,
 		events:          events,
+		cameraCtors:     cameraCtors,
 
 		hoversOverEntites: map[ecs.ComponentType]ecs.EntityID{},
 	}
@@ -63,25 +67,16 @@ func (s *CameraRaySystem) Listen(args ShootRayEvent) error {
 		if projectionType == ecs.GetComponentType(projection.Perspective{}) {
 			continue
 		}
-		var cameraTransform transform.Transform
 		query := s.world.QueryEntitiesWithComponents(projectionType)
 		cameras := query.Entities()
 		var nearestCollision broadcollision.ObjectRayCollision
-		for _, camera := range cameras {
-			cameraTransform, err = s.transformArray.GetComponent(camera)
+		for _, cameraEntity := range cameras {
+			camera, err := s.cameraCtors.Get(cameraEntity, projectionType)
 			if err != nil {
 				return err
-			}
-			anyProj, err := s.world.GetAnyComponent(camera, projectionType)
-			if err != nil {
-				return err
-			}
-			proj, ok := anyProj.(projection.Projection)
-			if !ok {
-				return projection.ErrExpectedUsedProjectionToImplementProjection
 			}
 
-			ray := proj.ShootRay(cameraTransform, mousePos)
+			ray := camera.ShootRay(mousePos)
 
 			collision, err := s.broadCollisions.ShootRay(ray)
 			if err != nil {

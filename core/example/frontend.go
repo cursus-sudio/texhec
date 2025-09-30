@@ -8,6 +8,7 @@ import (
 	"frontend/engine/systems/projections"
 	"frontend/engine/systems/render"
 	"frontend/engine/tools/broadcollision"
+	"frontend/engine/tools/cameras"
 	"frontend/services/backendconnection"
 	"frontend/services/console"
 	inputsmedia "frontend/services/media/inputs"
@@ -85,6 +86,7 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				ioc.Get[broadcollision.CollisionServiceFactory](c)(ctx.World),
 				ioc.Get[window.Api](c),
 				ctx.Events,
+				ioc.Get[cameras.CameraConstructors](c),
 			)
 			events.Listen(ctx.EventsBuilder, func(event mousesystem.ShootRayEvent) {
 				if err := cameraRaySystem.Listen(event); err != nil {

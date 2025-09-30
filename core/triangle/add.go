@@ -14,6 +14,7 @@ import (
 	"frontend/engine/systems/genericrenderer"
 	"frontend/engine/systems/projections"
 	"frontend/engine/systems/transformsystem"
+	"frontend/engine/tools/cameras"
 	"frontend/engine/tools/worldprojections"
 	"frontend/services/assets"
 	"frontend/services/console"
@@ -126,6 +127,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				ioc.Get[assets.AssetsStorage](c),
 				ioc.Get[logger.Logger](c),
 				ioc.Get[vbo.VBOFactory[genericrenderer.Vertex]](c),
+				ioc.Get[cameras.CameraConstructors](c),
 				[]ecs.ComponentType{},
 			)
 			if err != nil {

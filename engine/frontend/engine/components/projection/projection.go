@@ -2,19 +2,9 @@ package projection
 
 import (
 	"frontend/engine/components/collider"
-	"frontend/engine/components/transform"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
-
-type Projection interface {
-	Mat4() mgl32.Mat4
-	ViewMat4(transform.Transform) mgl32.Mat4
-	ShootRay(
-		cameraTransform transform.Transform,
-		mousePos mgl32.Vec2,
-	) collider.Ray
-}
 
 func RayDirection(
 	projectionMatrix mgl32.Mat4,

@@ -6,7 +6,7 @@ import (
 	"frontend/engine/components/collider"
 	"frontend/engine/components/mesh"
 	"frontend/engine/components/texture"
-	"frontend/engine/systems/mainpipeline"
+	"frontend/engine/systems/genericrenderer"
 	"frontend/services/assets"
 	"frontend/services/graphics/vao/ebo"
 	"image"
@@ -60,7 +60,7 @@ func flipImage(img image.Image) image.Image {
 func registerAssets(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b assets.AssetsStorageBuilder) assets.AssetsStorageBuilder {
 		b.RegisterAsset(MeshAssetID, func() (any, error) {
-			vertices := []mainpipeline.Vertex{
+			vertices := []genericrenderer.Vertex{
 				// Front face
 				{Pos: [3]float32{-1, 1, 1}, TexturePos: [2]float32{0, 1}},
 				{Pos: [3]float32{-1, -1, 1}, TexturePos: [2]float32{0, 0}},

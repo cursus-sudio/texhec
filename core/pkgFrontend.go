@@ -9,9 +9,8 @@ import (
 	"core/triangle"
 	"errors"
 	"fmt"
-	"frontend/engine/systems/mainpipeline"
+	"frontend/engine/systems/genericrenderer"
 	"frontend/engine/tools/broadcollision"
-	"frontend/engine/tools/worldtexture"
 	frontendapi "frontend/services/api"
 	frontendtcp "frontend/services/api/tcp"
 	"frontend/services/assets"
@@ -120,8 +119,7 @@ func frontendDic(
 		scenes.Package(),
 		frontendscopes.Package(),
 
-		mainpipeline.Package(),
-		worldtexture.Package(),
+		genericrenderer.Package(),
 		broadcollision.Package(),
 
 		// mods

@@ -11,15 +11,14 @@ import (
 	"frontend/engine/components/texture"
 	"frontend/engine/components/transform"
 	"frontend/engine/systems/anchorsystem"
-	"frontend/engine/systems/mainpipeline"
+	"frontend/engine/systems/genericrenderer"
 	"frontend/engine/systems/projections"
 	"frontend/engine/systems/transformsystem"
-	"frontend/engine/tools/worldmesh"
 	"frontend/engine/tools/worldprojections"
-	"frontend/engine/tools/worldtexture"
 	"frontend/services/assets"
 	"frontend/services/console"
 	"frontend/services/frames"
+	"frontend/services/graphics/vao/vbo"
 	"frontend/services/media/window"
 	"frontend/services/scenes"
 	"math"
@@ -73,7 +72,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, transform.NewPivotPoint(mgl32.Vec3{1, 0, .5}))
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, mesh.NewMesh(MeshAssetID))
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, texture.NewTexture(Texture4AssetID))
-			ecs.SaveComponent(ctx.World.Components(), exitBtn, mainpipeline.PipelineComponent{})
+			ecs.SaveComponent(ctx.World.Components(), exitBtn, genericrenderer.PipelineComponent{})
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, projection.NewUsedProjection[projection.Ortho]())
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, collider.NewCollider(ColliderAssetID))
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, mouse.NewMouseEvents().
@@ -100,31 +99,12 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 	})
 
 	ioc.WrapService(b, scenes.LoadDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
-		worldMeshFactory := ioc.Get[worldmesh.RegisterFactory[mainpipeline.Vertex]](c)
-		worldTextureFactory := ioc.Get[worldtexture.RegisterFactory](c)
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			projectionsRegister := worldprojections.NewWorldProjectionsRegister(
 				ecs.GetComponentType(projection.Ortho{}),
 				ecs.GetComponentType(projection.Perspective{}),
 			)
 			ctx.World.SaveRegister(projectionsRegister)
-
-			textureRegister, err := worldTextureFactory.New(
-				Texture1AssetID,
-				Texture2AssetID,
-				Texture3AssetID,
-				Texture4AssetID,
-			)
-			if err != nil {
-				ioc.Get[logger.Logger](c).Error(err)
-			}
-			ctx.World.SaveRegister(textureRegister)
-
-			meshRegister, err := worldMeshFactory.New(MeshAssetID)
-			if err != nil {
-				ioc.Get[logger.Logger](c).Error(err)
-			}
-			ctx.World.SaveRegister(meshRegister)
 		})
 
 		b.OnLoad(func(ctx scenes.SceneCtx) { // cube
@@ -134,17 +114,18 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				SetSize(mgl32.Vec3{100, 100, 100}).Val())
 			ecs.SaveComponent(ctx.World.Components(), entity, mesh.NewMesh(MeshAssetID))
 			ecs.SaveComponent(ctx.World.Components(), entity, texture.NewTexture(Texture2AssetID))
-			ecs.SaveComponent(ctx.World.Components(), entity, mainpipeline.PipelineComponent{})
+			ecs.SaveComponent(ctx.World.Components(), entity, genericrenderer.PipelineComponent{})
 			ecs.SaveComponent(ctx.World.Components(), entity, projection.NewUsedProjection[projection.Perspective]())
 			// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
 			ecs.SaveComponent(ctx.World.Components(), entity, ChangeTransformOverTimeComponent{})
 		})
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			pipeline, err := mainpipeline.NewSystem(
+			pipeline, err := genericrenderer.NewSystem(
 				ctx.World,
 				ioc.Get[window.Api](c),
 				ioc.Get[assets.AssetsStorage](c),
 				ioc.Get[logger.Logger](c),
+				ioc.Get[vbo.VBOFactory[genericrenderer.Vertex]](c),
 				[]ecs.ComponentType{},
 			)
 			if err != nil {
@@ -179,8 +160,8 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				})
 			}
 
-			rows := 100
-			cols := 100
+			rows := 10
+			cols := 10
 			var size float32 = 100
 			var gap float32 = 0
 			for i := 0; i < rows*cols; i++ {
@@ -193,7 +174,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				ecs.SaveComponent(ctx.World.Components(), entity, transform.NewStatic())
 				ecs.SaveComponent(ctx.World.Components(), entity, mesh.NewMesh(MeshAssetID))
 				ecs.SaveComponent(ctx.World.Components(), entity, texture.NewTexture(Texture1AssetID))
-				ecs.SaveComponent(ctx.World.Components(), entity, mainpipeline.PipelineComponent{})
+				ecs.SaveComponent(ctx.World.Components(), entity, genericrenderer.PipelineComponent{})
 				ecs.SaveComponent(ctx.World.Components(), entity, projection.NewUsedProjection[projection.Ortho]())
 				// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
 				ecs.SaveComponent(ctx.World.Components(), entity, collider.NewCollider(ColliderAssetID))

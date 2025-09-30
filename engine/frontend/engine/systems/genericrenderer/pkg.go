@@ -1,8 +1,6 @@
-package mainpipeline
+package genericrenderer
 
 import (
-	"frontend/engine/tools/worldmesh"
-	"frontend/services/assets"
 	"frontend/services/graphics/vao/vbo"
 	"unsafe"
 
@@ -30,12 +28,5 @@ func (pkg Pkg) Register(b ioc.Builder) {
 			})
 			return vbo
 		}
-	})
-
-	ioc.RegisterSingleton(b, func(c ioc.Dic) worldmesh.RegisterFactory[Vertex] {
-		return worldmesh.NewRegisterFactory(
-			ioc.Get[assets.AssetsStorage](c),
-			ioc.Get[vbo.VBOFactory[Vertex]](c),
-		)
 	})
 }

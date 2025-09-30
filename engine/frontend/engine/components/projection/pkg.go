@@ -4,7 +4,6 @@ import (
 	"frontend/engine/components/collider"
 	"frontend/engine/components/transform"
 	"frontend/engine/tools/cameras"
-	"frontend/services/graphics/camera"
 	"shared/services/ecs"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -18,6 +17,10 @@ func Package() ioc.Pkg {
 }
 
 func (Pkg) Register(b ioc.Builder) {
+
+	ioc.RegisterSingleton(b, func(c ioc.Dic) CameraUp { return CameraUp(mgl32.Vec3{0, 1, 0}) })
+	ioc.RegisterSingleton(b, func(c ioc.Dic) CameraForward { return CameraForward(mgl32.Vec3{0, 0, -1}) })
+
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s cameras.CameraConstructorsFactory) cameras.CameraConstructorsFactory {
 		getCameraTransform := func(transformArray ecs.ComponentsArray[transform.Transform], entity ecs.EntityID) transform.Transform {
 			t, err := transformArray.GetComponent(entity)
@@ -82,10 +85,11 @@ func (Pkg) Register(b ioc.Builder) {
 			getCameraTransformMatrix := func() mgl32.Mat4 {
 				cameraTransform := getCameraTransform(transformArray, entity)
 
+				up, forward := ioc.Get[CameraUp](c), ioc.Get[CameraForward](c)
 				return mgl32.LookAtV(
 					cameraTransform.Pos,
-					cameraTransform.Pos.Add(cameraTransform.Rotation.Rotate(camera.Forward)),
-					camera.Up,
+					cameraTransform.Pos.Add(cameraTransform.Rotation.Rotate(mgl32.Vec3(forward))),
+					mgl32.Vec3(up),
 				)
 			}
 			getProjection := func() Perspective {

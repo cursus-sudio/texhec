@@ -1,5 +1,10 @@
 package projection
 
+import "github.com/go-gl/mathgl/mgl32"
+
+type CameraUp mgl32.Vec3
+type CameraForward mgl32.Vec3
+
 type Perspective struct {
 	FovY        float32
 	AspectRatio float32

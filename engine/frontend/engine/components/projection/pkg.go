@@ -2,6 +2,7 @@ package projection
 
 import (
 	"frontend/engine/components/collider"
+	"frontend/engine/components/groups"
 	"frontend/engine/components/transform"
 	"frontend/engine/tools/cameras"
 	"shared/services/ecs"
@@ -17,7 +18,6 @@ func Package() ioc.Pkg {
 }
 
 func (Pkg) Register(b ioc.Builder) {
-
 	ioc.RegisterSingleton(b, func(c ioc.Dic) CameraUp { return CameraUp(mgl32.Vec3{0, 1, 0}) })
 	ioc.RegisterSingleton(b, func(c ioc.Dic) CameraForward { return CameraForward(mgl32.Vec3{0, 0, -1}) })
 
@@ -57,6 +57,11 @@ func (Pkg) Register(b ioc.Builder) {
 					p.Near, p.Far,
 				)
 			}
+
+			cameraGroups, err := ecs.GetComponent[groups.Groups](world.Components(), entity)
+			if err != nil {
+				cameraGroups = groups.DefaultGroups()
+			}
 			camera := cameras.NewCamera(
 				func() mgl32.Mat4 {
 					projMatrix := getProjectionMatrix()
@@ -65,12 +70,13 @@ func (Pkg) Register(b ioc.Builder) {
 				},
 				func(mousePos mgl32.Vec2) collider.Ray {
 					return ShootRay(
-						getCameraTransformMatrix(),
 						getProjectionMatrix(),
+						getCameraTransformMatrix(),
 						mousePos,
 						nil,
 					)
 				},
+				cameraGroups,
 			)
 			return camera, nil
 		})
@@ -104,6 +110,10 @@ func (Pkg) Register(b ioc.Builder) {
 				return mgl32.Perspective(p.FovY, p.AspectRatio, p.Near, p.Far)
 			}
 
+			cameraGroups, err := ecs.GetComponent[groups.Groups](world.Components(), entity)
+			if err != nil {
+				cameraGroups = groups.DefaultGroups()
+			}
 			camera := cameras.NewCamera(
 				func() mgl32.Mat4 {
 					projMatrix := getProjectionMatrix()
@@ -113,12 +123,13 @@ func (Pkg) Register(b ioc.Builder) {
 				func(mousePos mgl32.Vec2) collider.Ray {
 					cameraTransform := getCameraTransform(transformArray, entity)
 					return ShootRay(
-						getCameraTransformMatrix(),
 						getProjectionMatrix(),
+						getCameraTransformMatrix(),
 						mousePos,
 						&cameraTransform.Pos,
 					)
 				},
+				cameraGroups,
 			)
 			return camera, nil
 		})

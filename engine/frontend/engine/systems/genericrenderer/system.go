@@ -2,6 +2,7 @@ package genericrenderer
 
 import (
 	_ "embed"
+	"frontend/engine/components/groups"
 	meshcomponent "frontend/engine/components/mesh"
 	"frontend/engine/components/projection"
 	texturecomponent "frontend/engine/components/texture"
@@ -67,6 +68,7 @@ func (r releasable) Release() {
 type System struct {
 	world                ecs.World
 	transformArray       ecs.ComponentsArray[transform.Transform]
+	groupsArray          ecs.ComponentsArray[groups.Groups]
 	usedProjectionsArray ecs.ComponentsArray[projection.UsedProjection]
 	textureArray         ecs.ComponentsArray[texturecomponent.Texture]
 	meshArray            ecs.ComponentsArray[meshcomponent.Mesh]
@@ -123,6 +125,7 @@ func NewSystem(
 	system := &System{
 		world:                world,
 		transformArray:       ecs.GetComponentsArray[transform.Transform](world.Components()),
+		groupsArray:          ecs.GetComponentsArray[groups.Groups](world.Components()),
 		usedProjectionsArray: ecs.GetComponentsArray[projection.UsedProjection](world.Components()),
 		textureArray:         ecs.GetComponentsArray[texturecomponent.Texture](world.Components()),
 		meshArray:            ecs.GetComponentsArray[meshcomponent.Mesh](world.Components()),
@@ -201,6 +204,11 @@ func (m *System) Listen(render.RenderEvent) error {
 		}
 		model := transformComponent.Mat4()
 
+		entityGroups, err := m.groupsArray.GetComponent(entity)
+		if err != nil {
+			entityGroups = groups.DefaultGroups()
+		}
+
 		textureComponent, err := m.textureArray.GetComponent(entity)
 		if err != nil {
 			continue
@@ -232,6 +240,13 @@ func (m *System) Listen(render.RenderEvent) error {
 		meshAsset.Use()
 
 		for _, cameraEntity := range camerasQuery.Entities() {
+			cameraGroups, err := m.groupsArray.GetComponent(cameraEntity)
+			if err != nil {
+				cameraGroups = groups.DefaultGroups()
+			}
+			if !entityGroups.SharesAnyGroup(cameraGroups) {
+				continue
+			}
 			camera, err := m.camerasCtors.Get(cameraEntity, usedProjection.ProjectionComponent)
 			if err != nil {
 				continue

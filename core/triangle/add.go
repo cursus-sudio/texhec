@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"frontend/engine/components/anchor"
 	"frontend/engine/components/collider"
+	"frontend/engine/components/groups"
 	"frontend/engine/components/mesh"
 	"frontend/engine/components/mouse"
 	"frontend/engine/components/projection"
@@ -33,6 +34,11 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
+const (
+	UiGroup groups.Group = iota + 1
+	GameGroup
+)
+
 func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 	type MobileCamera struct{}
 	ioc.WrapService(b, scenes.LoadWorld, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
@@ -50,14 +56,16 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				1000,
 			))
 			ecs.SaveComponent(ctx.World.Components(), camera, MobileCamera{})
+			ecs.SaveComponent(ctx.World.Components(), camera, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
+
 			uiCamera := ctx.World.NewEntity()
-			ecs.SaveComponent(ctx.World.Components(), uiCamera, transform.NewTransform().Ptr().
-				SetPos(mgl32.Vec3{0, 0, 10000}).Val())
+			ecs.SaveComponent(ctx.World.Components(), uiCamera, transform.NewTransform())
 			ecs.SaveComponent(ctx.World.Components(), uiCamera, projection.NewDynamicOrtho(
 				-1000,
 				+1000,
 				1,
 			))
+			ecs.SaveComponent(ctx.World.Components(), uiCamera, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
 			type QuitEvent struct{}
 
@@ -80,6 +88,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				// AddMouseHoverEvents(QuitEvent{}).
 				AddLeftClickEvents(QuitEvent{}),
 			)
+			ecs.SaveComponent(ctx.World.Components(), exitBtn, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 		})
 		return b
 	})
@@ -117,8 +126,8 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			ecs.SaveComponent(ctx.World.Components(), entity, texture.NewTexture(Texture2AssetID))
 			ecs.SaveComponent(ctx.World.Components(), entity, genericrenderer.PipelineComponent{})
 			ecs.SaveComponent(ctx.World.Components(), entity, projection.NewUsedProjection[projection.Perspective]())
-			// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
 			ecs.SaveComponent(ctx.World.Components(), entity, ChangeTransformOverTimeComponent{})
+			ecs.SaveComponent(ctx.World.Components(), entity, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 		})
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			pipeline, err := genericrenderer.NewSystem(
@@ -178,12 +187,12 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				ecs.SaveComponent(ctx.World.Components(), entity, texture.NewTexture(Texture1AssetID))
 				ecs.SaveComponent(ctx.World.Components(), entity, genericrenderer.PipelineComponent{})
 				ecs.SaveComponent(ctx.World.Components(), entity, projection.NewUsedProjection[projection.Ortho]())
-				// ctx.World.SaveComponent(entity, projection.NewUsedProjection[projection.Perspective]())
 				ecs.SaveComponent(ctx.World.Components(), entity, collider.NewCollider(ColliderAssetID))
 				ecs.SaveComponent(ctx.World.Components(), entity, mouse.NewMouseEvents().
 					AddLeftClickEvents(OnClickDomainEvent{entity, row, col}).
 					AddMouseHoverEvents(OnHoveredDomainEvent{entity, row, col}),
 				)
+				ecs.SaveComponent(ctx.World.Components(), entity, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 			}
 		})
 

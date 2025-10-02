@@ -3,6 +3,7 @@ package broadcollision
 import (
 	"errors"
 	"frontend/engine/components/collider"
+	"frontend/engine/components/groups"
 	"frontend/engine/components/transform"
 	"frontend/services/assets"
 	"math"
@@ -13,6 +14,7 @@ import (
 
 // TODO 1
 type CollisionDetectionService interface {
+	// todo add collision groups
 	// narrow
 	CollidesWithRay(ecs.EntityID, collider.Ray) (ObjectRayCollision, error)
 	CollidesWithObject(ecs.EntityID, ecs.EntityID) (ObjectObjectCollision, error)
@@ -25,6 +27,7 @@ type CollisionDetectionService interface {
 type collisionDetectionService struct {
 	// world           ecs.World
 	transformsArray ecs.ComponentsArray[transform.Transform]
+	groupsArray     ecs.ComponentsArray[groups.Groups]
 	colliderArray   ecs.ComponentsArray[collider.Collider]
 	assets          assets.Assets
 	worldCollider   worldCollider
@@ -34,6 +37,7 @@ func newCollisionDetectionService(world ecs.World, assets assets.Assets, worldCo
 	return &collisionDetectionService{
 		// world,
 		ecs.GetComponentsArray[transform.Transform](world.Components()),
+		ecs.GetComponentsArray[groups.Groups](world.Components()),
 		ecs.GetComponentsArray[collider.Collider](world.Components()),
 		assets,
 		worldCollider,
@@ -41,6 +45,14 @@ func newCollisionDetectionService(world ecs.World, assets assets.Assets, worldCo
 }
 
 func (c *collisionDetectionService) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) (ObjectRayCollision, error) {
+	entityGroups, err := c.groupsArray.GetComponent(entity)
+	if err != nil {
+		entityGroups = groups.DefaultGroups()
+	}
+	if entityGroups.GetSharedWith(ray.Groups).Mask == 0 {
+		return nil, nil
+	}
+
 	transformComponent, err := c.transformsArray.GetComponent(entity)
 	if err != nil {
 		return nil, err

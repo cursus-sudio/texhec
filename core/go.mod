@@ -8,7 +8,7 @@ require (
 	github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71
 	github.com/go-gl/mathgl v1.2.0
 	github.com/ogiusek/events v1.0.6
-	github.com/ogiusek/ioc/v2 v2.0.12
+	github.com/ogiusek/ioc/v2 v2.0.13
 	github.com/ogiusek/relay/v2 v2.0.6
 	github.com/veandco/go-sdl2 v0.4.40
 	golang.org/x/image v0.30.0
@@ -24,8 +24,8 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-sqlite3 v1.14.28 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
-	github.com/ogiusek/lockset v1.0.1 // indirect
 	github.com/optimus-hft/lockset v0.1.0 // indirect
+	github.com/optimus-hft/lockset/v2 v2.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/exp v0.0.0-20250911091902-df9299821621 // indirect

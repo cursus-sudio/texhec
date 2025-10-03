@@ -7,7 +7,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/mattn/go-sqlite3 v1.14.28
 	github.com/ogiusek/events v1.0.6
-	github.com/ogiusek/ioc/v2 v2.0.12
+	github.com/ogiusek/ioc/v2 v2.0.13
 	github.com/ogiusek/relay/v2 v2.0.6
 	golang.org/x/exp v0.0.0-20250911091902-df9299821621
 )
@@ -17,7 +17,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
-	github.com/ogiusek/lockset v1.0.1 // indirect
+	github.com/optimus-hft/lockset/v2 v2.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/mod v0.28.0 // indirect

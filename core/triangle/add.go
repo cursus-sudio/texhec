@@ -26,6 +26,7 @@ import (
 	"frontend/services/graphics/vao/vbo"
 	"frontend/services/media/window"
 	"frontend/services/scenes"
+	"math/rand/v2"
 	"shared/services/ecs"
 	"shared/services/logger"
 	"shared/services/runtime"
@@ -205,15 +206,31 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				events.Listen(ctx.EventsBuilder, s.Listen)
 			}
 
+			rand := rand.New(rand.NewPCG(2077, 7137))
+
 			rows := 100
 			cols := 100
 			for i := 0; i < rows*cols; i++ {
 				row := i % cols
 				col := i / cols
 				entity := ctx.World.NewEntity()
+				tileType := TileMountain
+
+				num := rand.IntN(4)
+
+				switch num {
+				case 0:
+					tileType = TileMountain
+				case 1:
+					tileType = TileForest
+				case 2:
+					tileType = TileGround
+				case 3:
+					tileType = TileWater
+				}
 				ecs.SaveComponent(ctx.World.Components(), entity, tile.TileComponent{
 					Pos:  tile.TilePos{X: int32(row), Y: int32(col)},
-					Type: TileMountain,
+					Type: tileType,
 				})
 			}
 		})

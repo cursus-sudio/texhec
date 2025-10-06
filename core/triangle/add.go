@@ -284,29 +284,6 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				events.ListenE(ctx.EventsBuilder, s.Listen)
 			}
 
-			// dynamicOrthoArray := ecs.GetComponentsArray[projection.DynamicOrtho](ctx.World.Components())
-			// events.ListenE(ctx.EventsBuilder, func(event sdl.MouseWheelEvent) error {
-			// 	if event.Y == 0 {
-			// 		return nil
-			// 	}
-			// 	cameras := camerasQuery.Entities()
-			// 	var mul = float32(math.Pow(10, float64(event.Y)/50))
-			// 	for _, camera := range cameras {
-			// 		ortho, err := dynamicOrthoArray.GetComponent(camera)
-			// 		if err != nil {
-			// 			return err
-			// 		}
-			//
-			// 		ortho.Zoom *= mul
-			// 		ortho.Zoom = max(min(ortho.Zoom, 5), 0.1)
-			//
-			// 		if err := dynamicOrthoArray.SaveComponent(camera, ortho); err != nil {
-			// 			return err
-			// 		}
-			// 	}
-			// 	return nil
-			// })
-
 			events.Listen(ctx.EventsBuilder, func(event sdl.KeyboardEvent) {
 				pressed := event.State == sdl.PRESSED
 				switch event.Keysym.Sym {

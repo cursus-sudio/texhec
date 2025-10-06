@@ -6,9 +6,11 @@ import (
 	"core/example"
 	"core/ping"
 	"core/tacticalmap"
+	"core/tile"
 	"core/triangle"
 	"errors"
 	"fmt"
+	"frontend/engine/components/groups"
 	"frontend/engine/components/projection"
 	"frontend/engine/systems/genericrenderer"
 	"frontend/engine/tools/broadcollision"
@@ -21,6 +23,7 @@ import (
 	"frontend/services/console"
 	"frontend/services/dbpkg"
 	"frontend/services/frames"
+	"frontend/services/graphics/texturearray"
 	"frontend/services/media"
 	windowapi "frontend/services/media/window"
 	"frontend/services/scenes"
@@ -125,6 +128,9 @@ func frontendDic(
 
 		genericrenderer.Package(),
 		broadcollision.Package(),
+
+		texturearray.Package(),
+		tile.Package(100, groups.EmptyGroups().Ptr().Enable(triangle.GameGroup).Val()),
 
 		// mods
 		ping.FrontendPackage(),

@@ -1,6 +1,6 @@
 package groups
 
-type Group int
+type Group uint
 
 const (
 	Groupless Group = 0

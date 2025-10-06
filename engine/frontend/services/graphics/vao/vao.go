@@ -27,7 +27,9 @@ func NewVAO(VBO vbo.VBO, EBO ebo.EBO) VAO {
 
 	gl.BindVertexArray(id)
 	VBO.Configure()
-	EBO.Configure()
+	if EBO != nil {
+		EBO.Configure()
+	}
 	gl.BindVertexArray(0)
 
 	return &vao{
@@ -48,7 +50,9 @@ func (vao *vao) ReleaseVAO() {
 
 func (vao *vao) Release() {
 	vao.vbo.Release()
-	vao.ebo.Release()
+	if vao.ebo != nil {
+		vao.ebo.Release()
+	}
 	vao.ReleaseVAO()
 }
 

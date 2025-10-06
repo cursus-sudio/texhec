@@ -1,6 +1,7 @@
 package triangle
 
 import (
+	"core/tile"
 	_ "embed"
 	"fmt"
 	"frontend/engine/components/anchor"
@@ -130,7 +131,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			ecs.SaveComponent(ctx.World.Components(), entity, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 		})
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			pipeline, err := genericrenderer.NewSystem(
+			genericRenderer, err := genericrenderer.NewSystem(
 				ctx.World,
 				ioc.Get[window.Api](c),
 				ioc.Get[assets.AssetsStorage](c),
@@ -142,7 +143,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			if err != nil {
 				ioc.Get[logger.Logger](c).Error(err)
 			}
-			events.ListenE(ctx.EventsBuilder, pipeline.Listen)
+			events.ListenE(ctx.EventsBuilder, genericRenderer.Listen)
 			system := NewChangeTransformOverTimeSystem(ctx.World, ioc.Get[logger.Logger](c))
 			events.Listen(ctx.EventsBuilder, system.Listen)
 		})
@@ -155,6 +156,30 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			type OnClickDomainEvent struct {
 				entity   ecs.EntityID
 				row, col int
+			}
+
+			{
+				// add listener to add all related components with grid
+				tileArray := ecs.GetComponentsArray[tile.TileComponent](ctx.World.Components())
+				colliderArray := ecs.GetComponentsArray[collider.Collider](ctx.World.Components())
+				mouseEventsArray := ecs.GetComponentsArray[mouse.MouseEvents](ctx.World.Components())
+				onChangeOrAdd := func(ei []ecs.EntityID) {
+					for _, entity := range ei {
+						tile, err := tileArray.GetComponent(entity)
+						if err != nil {
+							continue
+						}
+
+						colliderArray.SaveComponent(entity, collider.NewCollider(ColliderAssetID))
+						mouseEventsArray.SaveComponent(entity, mouse.NewMouseEvents().
+							AddLeftClickEvents(OnClickDomainEvent{entity, int(tile.Pos.X), int(tile.Pos.Y)}).
+							AddMouseHoverEvents(OnHoveredDomainEvent{entity, int(tile.Pos.X), int(tile.Pos.Y)}),
+						)
+					}
+				}
+
+				tileArray.OnAdd(onChangeOrAdd)
+				tileArray.OnChange(onChangeOrAdd)
 			}
 
 			{
@@ -171,28 +196,25 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				})
 			}
 
-			rows := 10
-			cols := 10
-			var size float32 = 100
-			var gap float32 = 0
+			{
+				tileFactory := ioc.Get[tile.TileRenderSystemFactory](c)
+				s, err := tileFactory.NewSystem(ctx.World)
+				if err != nil {
+					ioc.Get[logger.Logger](c).Error(err)
+				}
+				events.Listen(ctx.EventsBuilder, s.Listen)
+			}
+
+			rows := 1000
+			cols := 1000
 			for i := 0; i < rows*cols; i++ {
-				row := i / cols
-				col := i % cols
+				row := i % cols
+				col := i / cols
 				entity := ctx.World.NewEntity()
-				ecs.SaveComponent(ctx.World.Components(), entity, transform.NewTransform().Ptr().
-					SetPos([3]float32{float32(col) * (size + gap), float32(row) * (size + gap), 0}).
-					SetSize([3]float32{size, size, 1}).Val())
-				ecs.SaveComponent(ctx.World.Components(), entity, transform.NewStatic())
-				ecs.SaveComponent(ctx.World.Components(), entity, mesh.NewMesh(MeshAssetID))
-				ecs.SaveComponent(ctx.World.Components(), entity, texture.NewTexture(Texture1AssetID))
-				ecs.SaveComponent(ctx.World.Components(), entity, genericrenderer.PipelineComponent{})
-				ecs.SaveComponent(ctx.World.Components(), entity, projection.NewUsedProjection[projection.Ortho]())
-				ecs.SaveComponent(ctx.World.Components(), entity, collider.NewCollider(ColliderAssetID))
-				ecs.SaveComponent(ctx.World.Components(), entity, mouse.NewMouseEvents().
-					AddLeftClickEvents(OnClickDomainEvent{entity, row, col}).
-					AddMouseHoverEvents(OnHoveredDomainEvent{entity, row, col}),
-				)
-				ecs.SaveComponent(ctx.World.Components(), entity, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
+				ecs.SaveComponent(ctx.World.Components(), entity, tile.TileComponent{
+					Pos:  tile.TilePos{X: int32(row), Y: int32(col)},
+					Type: TileMountain,
+				})
 			}
 		})
 

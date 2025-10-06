@@ -2,6 +2,7 @@ package triangle
 
 import (
 	"bytes"
+	"core/tile"
 	_ "embed"
 	"frontend/engine/components/collider"
 	"frontend/engine/components/mesh"
@@ -57,7 +58,19 @@ func flipImage(img image.Image) image.Image {
 	return newImg
 }
 
+const (
+	TileMountain uint32 = iota
+	TileGround
+	TileForest
+	TileWater
+)
+
 func registerAssets(b ioc.Builder) {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.TileRenderSystemFactory) tile.TileRenderSystemFactory {
+		s.AddType(Texture1AssetID, Texture2AssetID, Texture3AssetID, Texture4AssetID)
+		return s
+	})
+
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b assets.AssetsStorageBuilder) assets.AssetsStorageBuilder {
 		b.RegisterAsset(MeshAssetID, func() (any, error) {
 			vertices := []genericrenderer.Vertex{
@@ -142,9 +155,6 @@ func registerAssets(b ioc.Builder) {
 			return asset, nil
 		})
 
-		// colliders.NewCollider([]colliders.Shape{
-		// 	shapes.NewRect2D(transform.NewTransform().SetSize([3]float32{1, 1})),
-		// })
 		b.RegisterAsset(ColliderAssetID, func() (any, error) {
 			asset := collider.NewColliderStorageAsset(
 				[]collider.AABB{collider.NewAABB(mgl32.Vec3{-1, -1}, mgl32.Vec3{1, 1})},

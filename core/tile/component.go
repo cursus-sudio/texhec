@@ -1,10 +1,8 @@
 package tile
 
-type TileTypeID uint16
-
-type TilePos struct{ X, Y int }
+type TilePos struct{ X, Y int32 }
 
 type TileComponent struct {
 	Pos  TilePos
-	Type TileTypeID
+	Type uint32
 }

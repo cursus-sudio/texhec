@@ -8,12 +8,14 @@ import (
 	"frontend/engine/components/collider"
 	"frontend/engine/components/groups"
 	"frontend/engine/components/mesh"
+	"frontend/engine/components/mobilecamera"
 	"frontend/engine/components/mouse"
 	"frontend/engine/components/projection"
 	"frontend/engine/components/texture"
 	"frontend/engine/components/transform"
 	"frontend/engine/systems/anchorsystem"
 	"frontend/engine/systems/genericrenderer"
+	mobilecamerasystem "frontend/engine/systems/mobilecamera"
 	"frontend/engine/systems/projections"
 	"frontend/engine/systems/transformsystem"
 	"frontend/engine/tools/cameras"
@@ -24,7 +26,6 @@ import (
 	"frontend/services/graphics/vao/vbo"
 	"frontend/services/media/window"
 	"frontend/services/scenes"
-	"math"
 	"shared/services/ecs"
 	"shared/services/logger"
 	"shared/services/runtime"
@@ -41,7 +42,6 @@ const (
 )
 
 func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
-	type MobileCamera struct{}
 	ioc.WrapService(b, scenes.LoadWorld, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			camera := ctx.World.NewEntity()
@@ -56,7 +56,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				0.01,
 				1000,
 			))
-			ecs.SaveComponent(ctx.World.Components(), camera, MobileCamera{})
+			ecs.SaveComponent(ctx.World.Components(), camera, mobilecamera.Component{})
 			ecs.SaveComponent(ctx.World.Components(), camera, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 
 			uiCamera := ctx.World.NewEntity()
@@ -205,8 +205,8 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				events.Listen(ctx.EventsBuilder, s.Listen)
 			}
 
-			rows := 1000
-			cols := 1000
+			rows := 100
+			cols := 100
 			for i := 0; i < rows*cols; i++ {
 				row := i % cols
 				col := i / cols
@@ -227,7 +227,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			camerasQuery := ctx.World.QueryEntitiesWithComponents(
 				ecs.GetComponentType(transform.Transform{}),
 				ecs.GetComponentType(projection.DynamicOrtho{}),
-				ecs.GetComponentType(MobileCamera{}),
+				ecs.GetComponentType(mobilecamera.Component{}),
 			)
 			transformArray := ecs.GetComponentsArray[transform.Transform](ctx.World.Components())
 
@@ -273,28 +273,39 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 
 			events.ListenE(ctx.EventsBuilder, moveCameraSystem)
 
-			dynamicOrthoArray := ecs.GetComponentsArray[projection.DynamicOrtho](ctx.World.Components())
-			events.ListenE(ctx.EventsBuilder, func(event sdl.MouseWheelEvent) error {
-				if event.Y == 0 {
-					return nil
-				}
-				cameras := camerasQuery.Entities()
-				var mul = float32(math.Pow(10, float64(event.Y)/50))
-				for _, camera := range cameras {
-					ortho, err := dynamicOrthoArray.GetComponent(camera)
-					if err != nil {
-						return err
-					}
+			{
+				s := mobilecamerasystem.NewScrollSystem(
+					ctx.World,
+					ioc.Get[logger.Logger](c),
+					ioc.Get[cameras.CameraConstructors](c),
+					ioc.Get[window.Api](c),
+					0.1, 5,
+				)
+				events.ListenE(ctx.EventsBuilder, s.Listen)
+			}
 
-					ortho.Zoom *= mul
-					ortho.Zoom = max(min(ortho.Zoom, 5), 0.1)
-
-					if err := dynamicOrthoArray.SaveComponent(camera, ortho); err != nil {
-						return err
-					}
-				}
-				return nil
-			})
+			// dynamicOrthoArray := ecs.GetComponentsArray[projection.DynamicOrtho](ctx.World.Components())
+			// events.ListenE(ctx.EventsBuilder, func(event sdl.MouseWheelEvent) error {
+			// 	if event.Y == 0 {
+			// 		return nil
+			// 	}
+			// 	cameras := camerasQuery.Entities()
+			// 	var mul = float32(math.Pow(10, float64(event.Y)/50))
+			// 	for _, camera := range cameras {
+			// 		ortho, err := dynamicOrthoArray.GetComponent(camera)
+			// 		if err != nil {
+			// 			return err
+			// 		}
+			//
+			// 		ortho.Zoom *= mul
+			// 		ortho.Zoom = max(min(ortho.Zoom, 5), 0.1)
+			//
+			// 		if err := dynamicOrthoArray.SaveComponent(camera, ortho); err != nil {
+			// 			return err
+			// 		}
+			// 	}
+			// 	return nil
+			// })
 
 			events.Listen(ctx.EventsBuilder, func(event sdl.KeyboardEvent) {
 				pressed := event.State == sdl.PRESSED

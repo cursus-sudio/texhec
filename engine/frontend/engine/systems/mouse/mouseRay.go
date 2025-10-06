@@ -56,7 +56,7 @@ func NewCameraRaySystem(
 }
 
 func (s *CameraRaySystem) Listen(args ShootRayEvent) error {
-	mousePos := s.window.NormalizeMouseClick(s.window.GetMousePos())
+	mousePos := s.window.NormalizeMousePos(s.window.GetMousePos())
 
 	p, err := ecs.GetRegister[worldprojections.WorldProjectionsRegister](s.world)
 	if err != nil {

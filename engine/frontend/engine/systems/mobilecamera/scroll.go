@@ -1,0 +1,105 @@
+package mobilecamera
+
+import (
+	"frontend/engine/components/mobilecamera"
+	"frontend/engine/components/projection"
+	"frontend/engine/components/transform"
+	"frontend/engine/tools/cameras"
+	"frontend/services/media/window"
+	"math"
+	"shared/services/ecs"
+	"shared/services/logger"
+
+	"github.com/go-gl/mathgl/mgl32"
+	"github.com/veandco/go-sdl2/sdl"
+)
+
+type ScrollSystem struct {
+	window      window.Api
+	cameraCtors cameras.CameraConstructors
+	logger      logger.Logger
+
+	world             ecs.World
+	dynamicOrthoArray ecs.ComponentsArray[projection.DynamicOrtho]
+	transformArray    ecs.ComponentsArray[transform.Transform]
+	query             ecs.LiveQuery
+
+	minZoom, maxZoom float32
+}
+
+func NewScrollSystem(
+	world ecs.World,
+	logger logger.Logger,
+	cameraCtors cameras.CameraConstructors,
+	window window.Api,
+	minZoom, maxZoom float32,
+) ScrollSystem {
+	return ScrollSystem{
+		window:      window,
+		cameraCtors: cameraCtors,
+		logger:      logger,
+
+		world:             world,
+		dynamicOrthoArray: ecs.GetComponentsArray[projection.DynamicOrtho](world.Components()),
+		transformArray:    ecs.GetComponentsArray[transform.Transform](world.Components()),
+		query: world.QueryEntitiesWithComponents(
+			ecs.GetComponentType(mobilecamera.Component{}),
+		),
+
+		minZoom: minZoom, // e.g. 0.1
+		maxZoom: maxZoom, // e.g. 5
+	}
+}
+
+func (s ScrollSystem) Listen(event sdl.MouseWheelEvent) error {
+	if event.Y == 0 {
+		return nil
+	}
+
+	var mul = float32(math.Pow(10, float64(event.Y)/50))
+
+	mousePos := s.window.NormalizeMousePos(s.window.GetMousePos())
+
+	for _, cameraEntity := range s.query.Entities() {
+		ortho, err := s.dynamicOrthoArray.GetComponent(cameraEntity)
+		if err != nil {
+			continue
+		}
+
+		transformComponent, err := s.transformArray.GetComponent(cameraEntity)
+		if err != nil {
+			transformComponent = transform.NewTransform()
+		}
+
+		camera, err := s.cameraCtors.Get(cameraEntity, ecs.GetComponentType(projection.Ortho{}))
+		if err != nil {
+			continue
+		}
+
+		rayBefore := camera.ShootRay(mousePos)
+
+		// apply zoom
+		ortho.Zoom *= mul
+		ortho.Zoom = max(min(ortho.Zoom, s.maxZoom), s.minZoom)
+
+		if err := s.dynamicOrthoArray.SaveComponent(cameraEntity, ortho); err != nil {
+			return err
+		}
+
+		// read after
+		rayAfter := camera.ShootRay(mousePos)
+
+		// apply transform
+		transformComponent.Pos = transformComponent.Pos.Add(rayBefore.Pos.Sub(rayAfter.Pos))
+
+		rotationDifference := mgl32.QuatBetweenVectors(rayBefore.Direction, rayAfter.Direction)
+		transformComponent.Rotation = rotationDifference.Mul(transformComponent.Rotation)
+
+		if err := s.transformArray.SaveComponent(cameraEntity, transformComponent); err != nil {
+			return err
+		}
+
+	}
+
+	return nil
+}

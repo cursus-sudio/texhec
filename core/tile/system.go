@@ -43,7 +43,8 @@ type System struct {
 	vertices      vbo.VBOSetter[TileComponent]
 	verticesCount int32
 
-	tileSize int32
+	tileSize  int32
+	gridDepth float32
 
 	world       ecs.World
 	cameraQuery ecs.LiveQuery
@@ -57,8 +58,9 @@ type System struct {
 }
 
 type locations struct {
-	Camera   int32 `uniform:"camera"`   // mat4
-	TileSize int32 `uniform:"tileSize"` // int
+	Camera    int32 `uniform:"camera"`    // mat4
+	TileSize  int32 `uniform:"tileSize"`  // int
+	GridDepth int32 `uniform:"gridDepth"` // float32
 }
 
 func (s *System) Listen(render.RenderEvent) {
@@ -75,6 +77,7 @@ func (s *System) Listen(render.RenderEvent) {
 	s.vao.Use()
 
 	gl.Uniform1i(s.locations.TileSize, s.tileSize)
+	gl.Uniform1f(s.locations.GridDepth, s.gridDepth)
 
 	for _, cameraEntity := range s.cameraQuery.Entities() {
 		camera, err := s.cameraCtors.Get(cameraEntity, ecs.GetComponentType(projection.Ortho{}))

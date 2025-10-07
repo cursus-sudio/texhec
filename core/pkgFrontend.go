@@ -130,7 +130,7 @@ func frontendDic(
 		broadcollision.Package(),
 
 		texturearray.Package(),
-		tile.Package(100, groups.EmptyGroups().Ptr().Enable(triangle.GameGroup).Val()),
+		tile.Package(100, 0., groups.EmptyGroups().Ptr().Enable(triangle.GameGroup).Val()),
 
 		// mods
 		ping.FrontendPackage(),

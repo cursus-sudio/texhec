@@ -37,9 +37,12 @@ type TileRenderSystemFactory struct {
 	logger              logger.Logger
 	textureArrayFactory texturearray.Factory
 	vboFactory          vbo.VBOFactory[TileComponent]
-	tileSize            int32
-	groups              groups.Groups
-	cameraCtors         cameras.CameraConstructors
+
+	tileSize  int32
+	gridDepth float32
+
+	groups      groups.Groups
+	cameraCtors cameras.CameraConstructors
 }
 
 func newTileRenderSystemFactory(
@@ -47,6 +50,7 @@ func newTileRenderSystemFactory(
 	logger logger.Logger,
 	vboFactory vbo.VBOFactory[TileComponent],
 	tileSize int32,
+	gridDepth float32,
 	groups groups.Groups,
 	cameraCtors cameras.CameraConstructors,
 ) TileRenderSystemFactory {
@@ -54,9 +58,12 @@ func newTileRenderSystemFactory(
 		textureArrayFactory: textureArrayFactory,
 		logger:              logger,
 		vboFactory:          vboFactory,
-		tileSize:            tileSize,
-		groups:              groups,
-		cameraCtors:         cameraCtors,
+
+		tileSize:  tileSize,
+		gridDepth: gridDepth,
+
+		groups:      groups,
+		cameraCtors: cameraCtors,
 	}
 }
 
@@ -124,7 +131,8 @@ func (factory TileRenderSystemFactory) NewSystem(world ecs.World) (*System, erro
 		vertices:      VBO,
 		verticesCount: 0,
 
-		tileSize: factory.tileSize,
+		tileSize:  factory.tileSize,
+		gridDepth: factory.gridDepth,
 
 		world:       world,
 		groupsArray: ecs.GetComponentsArray[groups.Groups](world.Components()),
@@ -160,7 +168,7 @@ func (factory TileRenderSystemFactory) NewSystem(world ecs.World) (*System, erro
 
 			usedArray.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
 			transformArray.SaveComponent(entity, transform.NewTransform().Ptr().
-				SetSize(mgl32.Vec3{float32(factory.tileSize), float32(factory.tileSize), float32(factory.tileSize)}).
+				SetSize(mgl32.Vec3{float32(factory.tileSize), float32(factory.tileSize), factory.gridDepth}).
 				SetPos(mgl32.Vec3{
 					float32(factory.tileSize)*float32(tile.Pos.X) + float32(factory.tileSize)/2,
 					float32(factory.tileSize)*float32(tile.Pos.Y) + float32(factory.tileSize)/2,

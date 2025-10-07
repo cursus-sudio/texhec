@@ -21,6 +21,7 @@ out FS {
 
 uniform mat4 camera;
 uniform int tileSize;
+uniform float gridDepth;
 
 void main() {
     int xIn = gs_in[0].x;
@@ -31,7 +32,7 @@ void main() {
             int x = xIn + cornerX;
             int y = yIn + cornerY;
 
-            vec4 pos = vec4(x * tileSize, y * tileSize, 0., 1.);
+            vec4 pos = vec4(x * tileSize, y * tileSize, gridDepth, 1.);
 
             gl_Position = camera * pos;
             gs_out.uv = vec2(cornerX, cornerY);

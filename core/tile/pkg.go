@@ -14,11 +14,12 @@ import (
 
 type Pkg struct {
 	tileSize   int32
+	gridDepth  float32
 	gridGroups groups.Groups
 }
 
-func Package(tileSize int32, groups groups.Groups) ioc.Pkg {
-	return Pkg{tileSize, groups}
+func Package(tileSize int32, gridDepth float32, groups groups.Groups) ioc.Pkg {
+	return Pkg{tileSize, gridDepth, groups}
 }
 
 func (pkg Pkg) Register(b ioc.Builder) {
@@ -28,6 +29,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 			ioc.Get[logger.Logger](c),
 			ioc.Get[vbo.VBOFactory[TileComponent]](c),
 			pkg.tileSize,
+			pkg.gridDepth,
 			pkg.gridGroups,
 			ioc.Get[cameras.CameraConstructors](c),
 		)

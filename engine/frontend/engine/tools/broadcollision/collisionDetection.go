@@ -8,6 +8,7 @@ import (
 	"frontend/services/assets"
 	"math"
 	"shared/services/ecs"
+	"shared/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -31,9 +32,10 @@ type collisionDetectionService struct {
 	colliderArray   ecs.ComponentsArray[collider.Collider]
 	assets          assets.Assets
 	worldCollider   worldCollider
+	logger          logger.Logger
 }
 
-func newCollisionDetectionService(world ecs.World, assets assets.Assets, worldCollider worldCollider) CollisionDetectionService {
+func newCollisionDetectionService(world ecs.World, assets assets.Assets, worldCollider worldCollider, logger logger.Logger) CollisionDetectionService {
 	return &collisionDetectionService{
 		// world,
 		ecs.GetComponentsArray[transform.Transform](world.Components()),
@@ -41,6 +43,7 @@ func newCollisionDetectionService(world ecs.World, assets assets.Assets, worldCo
 		ecs.GetComponentsArray[collider.Collider](world.Components()),
 		assets,
 		worldCollider,
+		logger,
 	}
 }
 
@@ -57,7 +60,7 @@ func (c *collisionDetectionService) CollidesWithRay(entity ecs.EntityID, ray col
 	if err != nil {
 		return nil, err
 	}
-	if ok, _ := rayAABBIntersect(ray, collider.TransformAABB(transformComponent), math.MaxFloat32); !ok {
+	if ok, _ := rayAABBIntersect(ray, collider.TransformAABB(transformComponent)); !ok {
 		return nil, nil
 	}
 
@@ -72,15 +75,7 @@ func (c *collisionDetectionService) CollidesWithRay(entity ecs.EntityID, ray col
 
 	//
 
-	{
-		inverseTransform := transformComponent.Mat4().Inv()
-		inverseTranspose := inverseTransform.Transpose()
-		ray = collider.NewRay(
-			inverseTransform.Mul4x1(ray.Pos.Vec4(1.0)).Vec3(),
-			inverseTranspose.Mul4x1(ray.Direction.Vec4(1.0)).Vec3(),
-			ray.MaxDistance,
-		)
-	}
+	ray.Apply(transformComponent.Mat4().Inv())
 
 	aabbs := colliderAsset.AABBs()
 	ranges := colliderAsset.Ranges()
@@ -100,11 +95,11 @@ func (c *collisionDetectionService) CollidesWithRay(entity ecs.EntityID, ray col
 		if currentRange.Target == collider.Branch {
 			for i := currentRange.First; i < currentRange.First+currentRange.Count; i++ {
 				aabb := aabbs[i]
-				var maxDistance float32 = math.MaxFloat32
+				ray := ray
 				if closestHit != nil {
-					maxDistance = closestHit.Distance
+					ray.MaxDistance = closestHit.Distance
 				}
-				intersects, _ := rayAABBIntersect(ray, aabb, maxDistance)
+				intersects, _ := rayAABBIntersect(ray, aabb)
 				if !intersects {
 					continue
 				}
@@ -125,6 +120,9 @@ func (c *collisionDetectionService) CollidesWithRay(entity ecs.EntityID, ray col
 			}
 		}
 	}
+
+	// fmt.Printf("ray: %v; aabb: %v; collides %t;", ray, aabbs, closestHit != nil)
+	// panic("!")
 
 	if closestHit == nil {
 		return nil, nil

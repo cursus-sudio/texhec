@@ -137,7 +137,6 @@ func (factory TileRenderSystemFactory) NewSystem(world ecs.World) (*System, erro
 		world:       world,
 		groupsArray: ecs.GetComponentsArray[groups.Groups](world.Components()),
 		gridGroups:  factory.groups,
-		// gridGroups  groups.Groups
 		cameraQuery: world.QueryEntitiesWithComponents(ecs.GetComponentType(projection.Ortho{})),
 		cameraCtors: factory.cameraCtors,
 

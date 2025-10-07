@@ -2,6 +2,7 @@ package projection
 
 import (
 	"frontend/engine/components/collider"
+	"frontend/engine/components/groups"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -42,5 +43,5 @@ func ShootRay(
 	} else {
 		rayOrigin = nearWorld.Vec3()
 	}
-	return collider.NewRay(rayOrigin, direction, maxDistance)
+	return collider.NewRay(rayOrigin, direction, maxDistance, groups.DefaultGroups())
 }

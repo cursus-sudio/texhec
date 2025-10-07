@@ -54,11 +54,11 @@ func factory(assets assets.Assets, logger logger.Logger) CollisionServiceFactory
 }
 
 func (s *collisionsService) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) (ObjectRayCollision, error) {
-	return newCollisionDetectionService(s.world, s.assets, nil).
+	return newCollisionDetectionService(s.world, s.assets, nil, s.logger).
 		CollidesWithRay(entity, ray)
 }
 func (s *collisionsService) CollidesWithObject(entityA ecs.EntityID, entityB ecs.EntityID) (ObjectObjectCollision, error) {
-	return newCollisionDetectionService(s.world, s.assets, nil).
+	return newCollisionDetectionService(s.world, s.assets, nil, s.logger).
 		CollidesWithObject(entityA, entityB)
 }
 
@@ -69,11 +69,11 @@ func (s *collisionsService) ShootRay(ray collider.Ray) (ObjectRayCollision, erro
 	}
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	c1, err := newCollisionDetectionService(s.world, s.assets, r.staticWorldCollider).ShootRay(ray)
+	c1, err := newCollisionDetectionService(s.world, s.assets, r.staticWorldCollider, s.logger).ShootRay(ray)
 	if err != nil {
 		return nil, err
 	}
-	c2, err := newCollisionDetectionService(s.world, s.assets, r.dynamicWorldCollider).ShootRay(ray)
+	c2, err := newCollisionDetectionService(s.world, s.assets, r.dynamicWorldCollider, s.logger).ShootRay(ray)
 	if err != nil {
 		return nil, err
 	}
@@ -95,11 +95,11 @@ func (s *collisionsService) NarrowCollisions(entity ecs.EntityID) ([]ecs.EntityI
 	}
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	c1, err := newCollisionDetectionService(s.world, s.assets, r.staticWorldCollider).NarrowCollisions(entity)
+	c1, err := newCollisionDetectionService(s.world, s.assets, r.staticWorldCollider, s.logger).NarrowCollisions(entity)
 	if err != nil {
 		return nil, err
 	}
-	c2, err := newCollisionDetectionService(s.world, s.assets, r.dynamicWorldCollider).NarrowCollisions(entity)
+	c2, err := newCollisionDetectionService(s.world, s.assets, r.dynamicWorldCollider, s.logger).NarrowCollisions(entity)
 	if err != nil {
 		return nil, err
 	}

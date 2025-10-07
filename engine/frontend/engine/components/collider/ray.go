@@ -14,13 +14,36 @@ type Ray struct {
 	Groups      groups.Groups // collision mask
 }
 
-func NewRay(pos mgl32.Vec3, direction mgl32.Vec3, maxDistance float32) Ray {
+func NewRay(pos mgl32.Vec3, direction mgl32.Vec3, maxDistance float32, groups groups.Groups) Ray {
 	return Ray{
 		Pos:         pos,
 		Direction:   direction.Normalize(),
 		MaxDistance: max(0, maxDistance),
-		Groups:      groups.DefaultGroups(),
+		Groups:      groups,
 	}
+}
+
+func (r *Ray) Apply(transform mgl32.Mat4) {
+	newPos := transform.Mul4x1(r.Pos.Vec4(1.0)).Vec3()
+	r.Pos = newPos
+
+	newDirection := transform.Transpose().Mat3().Mul3x1(r.Direction)
+	scaleFactor := newDirection.Len()
+	if scaleFactor < mgl32.Epsilon {
+		newDirection = r.Direction
+		scaleFactor = 1
+	}
+	r.Direction = newDirection.Normalize()
+
+	newDirection = newDirection.Normalize()
+
+	var newMaxDistance float32
+	if r.MaxDistance == 0.0 {
+		newMaxDistance = 0.0
+	} else {
+		newMaxDistance = r.MaxDistance * scaleFactor
+	}
+	r.MaxDistance = newMaxDistance
 }
 
 func (r Ray) HitPoint() mgl32.Vec3 { return r.Pos.Add(r.Direction.Mul(r.MaxDistance)) }

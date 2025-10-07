@@ -2,10 +2,16 @@ package broadcollision
 
 import (
 	"frontend/engine/components/collider"
+	"math"
+
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-func rayAABBIntersect(r collider.Ray, box collider.AABB, maxDist float32) (bool, float32) {
+func rayAABBIntersect(r collider.Ray, box collider.AABB) (bool, float32) {
+	maxDist := r.MaxDistance
+	if maxDist == 0 {
+		maxDist = math.MaxFloat32
+	}
 	var tMin, tMax float32 = 0.0, maxDist
 
 	for i := 0; i < 3; i++ {
@@ -26,7 +32,7 @@ func rayAABBIntersect(r collider.Ray, box collider.AABB, maxDist float32) (bool,
 		tMin = max(t0, tMin)
 		tMax = min(t1, tMax)
 
-		if tMax < tMin {
+		if tMax < tMin || r.MaxDistance == 0 {
 			return false, 0.0
 		}
 	}
@@ -70,5 +76,5 @@ func rayTriangleIntersect(r collider.Ray, poly collider.Polygon) (collider.Ray, 
 		return collider.Ray{}, false
 	}
 
-	return collider.NewRay(r.Pos, r.Direction, t), true
+	return collider.NewRay(r.Pos, r.Direction, t, r.Groups), true
 }

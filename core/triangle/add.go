@@ -207,30 +207,37 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 
 			rand := rand.New(rand.NewPCG(2077, 7137))
 
+			tilesArray := ecs.GetComponentsArray[tile.TileComponent](ctx.World.Components())
+			tilesTransaction := tilesArray.Transaction()
 			rows := 100
 			cols := 100
 			for i := 0; i < rows*cols; i++ {
 				row := i % cols
 				col := i / cols
 				entity := ctx.World.NewEntity()
-				tileType := TileMountain
+				tileType := tile.TileMountain
 
 				num := rand.IntN(4)
 
 				switch num {
 				case 0:
-					tileType = TileMountain
+					tileType = tile.TileMountain
 				case 1:
-					tileType = TileForest
+					tileType = tile.TileForest
 				case 2:
-					tileType = TileGround
+					tileType = tile.TileGround
 				case 3:
-					tileType = TileWater
+					tileType = tile.TileWater
 				}
-				ecs.SaveComponent(ctx.World.Components(), entity, tile.TileComponent{
+				tile := tile.TileComponent{
 					Pos:  tile.TilePos{X: int32(row), Y: int32(col)},
 					Type: tileType,
-				})
+				}
+
+				tilesTransaction.SaveComponent(entity, tile)
+			}
+			if err := tilesTransaction.Flush(); err != nil {
+				ioc.Get[logger.Logger](c).Error(err)
 			}
 		})
 

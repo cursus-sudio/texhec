@@ -58,13 +58,6 @@ func flipImage(img image.Image) image.Image {
 	return newImg
 }
 
-const (
-	TileMountain uint32 = iota
-	TileGround
-	TileForest
-	TileWater
-)
-
 func registerAssets(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.TileRenderSystemFactory) tile.TileRenderSystemFactory {
 		s.AddType(Texture1AssetID, Texture2AssetID, Texture3AssetID, Texture4AssetID)

@@ -22,7 +22,6 @@ import (
 	"frontend/engine/tools/worldprojections"
 	"frontend/services/assets"
 	"frontend/services/console"
-	"frontend/services/frames"
 	"frontend/services/graphics/vao/vbo"
 	"frontend/services/media/window"
 	"frontend/services/scenes"
@@ -237,87 +236,97 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			// move camera system inline
-			wPressed := false
-			aPressed := false
-			sPressed := false
-			dPressed := false
-			camerasQuery := ctx.World.QueryEntitiesWithComponents(
-				ecs.GetComponentType(transform.Transform{}),
-				ecs.GetComponentType(projection.DynamicOrtho{}),
-				ecs.GetComponentType(mobilecamera.Component{}),
-			)
-			transformArray := ecs.GetComponentsArray[transform.Transform](ctx.World.Components())
-
-			moveCameraSystem := func(event frames.FrameEvent) error {
-				xAxis := 0
-				if dPressed {
-					xAxis = 1
-				} else if aPressed {
-					xAxis = -1
-				}
-				yAxis := 0
-				if wPressed {
-					yAxis = 1
-				} else if sPressed {
-					yAxis = -1
-				}
-
-				cameras := camerasQuery.Entities()
-				for _, camera := range cameras {
-					cameraTransform, err := transformArray.GetComponent(camera)
-					if err != nil {
-						return err
-					}
-					{
-						pos := cameraTransform.Pos
-						mul := 1000 * float32(event.Delta.Seconds())
-						pos[0] += mul * float32(xAxis)
-						pos[1] += mul * float32(yAxis)
-						cameraTransform.SetPos(pos)
-					}
-					// rotation := cameraTransform.Rotation
-					// mul := 100 * float32(event.Delta.Seconds())
-					// rotation = rotation.Mul(mgl32.QuatRotate(mgl32.DegToRad(mul*float32(xAxis)), mgl32.Vec3{0, 1, 0}))
-					// rotation = rotation.Mul(mgl32.QuatRotate(mgl32.DegToRad(mul*float32(yAxis)), mgl32.Vec3{-1, 0, 0}))
-					// cameraTransform.Rotation = rotation
-
-					if err := transformArray.SaveComponent(camera, cameraTransform); err != nil {
-						return err
-					}
-				}
-				return nil
-			}
-
-			events.ListenE(ctx.EventsBuilder, moveCameraSystem)
+			// wPressed := false
+			// aPressed := false
+			// sPressed := false
+			// dPressed := false
+			// camerasQuery := ctx.World.QueryEntitiesWithComponents(
+			// 	ecs.GetComponentType(transform.Transform{}),
+			// 	ecs.GetComponentType(projection.DynamicOrtho{}),
+			// 	ecs.GetComponentType(mobilecamera.Component{}),
+			// )
+			// transformArray := ecs.GetComponentsArray[transform.Transform](ctx.World.Components())
+			//
+			// moveCameraSystem := func(event frames.FrameEvent) error {
+			// 	xAxis := 0
+			// 	if dPressed {
+			// 		xAxis = 1
+			// 	} else if aPressed {
+			// 		xAxis = -1
+			// 	}
+			// 	yAxis := 0
+			// 	if wPressed {
+			// 		yAxis = 1
+			// 	} else if sPressed {
+			// 		yAxis = -1
+			// 	}
+			//
+			// 	cameras := camerasQuery.Entities()
+			// 	for _, camera := range cameras {
+			// 		cameraTransform, err := transformArray.GetComponent(camera)
+			// 		if err != nil {
+			// 			return err
+			// 		}
+			// 		{
+			// 			pos := cameraTransform.Pos
+			// 			mul := 1000 * float32(event.Delta.Seconds())
+			// 			pos[0] += mul * float32(xAxis)
+			// 			pos[1] += mul * float32(yAxis)
+			// 			cameraTransform.SetPos(pos)
+			// 		}
+			// 		// rotation := cameraTransform.Rotation
+			// 		// mul := 100 * float32(event.Delta.Seconds())
+			// 		// rotation = rotation.Mul(mgl32.QuatRotate(mgl32.DegToRad(mul*float32(xAxis)), mgl32.Vec3{0, 1, 0}))
+			// 		// rotation = rotation.Mul(mgl32.QuatRotate(mgl32.DegToRad(mul*float32(yAxis)), mgl32.Vec3{-1, 0, 0}))
+			// 		// cameraTransform.Rotation = rotation
+			//
+			// 		if err := transformArray.SaveComponent(camera, cameraTransform); err != nil {
+			// 			return err
+			// 		}
+			// 	}
+			// 	return nil
+			// }
+			//
+			// events.ListenE(ctx.EventsBuilder, moveCameraSystem)
+			//
+			// events.Listen(ctx.EventsBuilder, func(event sdl.KeyboardEvent) {
+			// 	pressed := event.State == sdl.PRESSED
+			// 	switch event.Keysym.Sym {
+			// 	case sdl.K_w:
+			// 		wPressed = pressed
+			// 		break
+			// 	case sdl.K_a:
+			// 		aPressed = pressed
+			// 		break
+			// 	case sdl.K_s:
+			// 		sPressed = pressed
+			// 		break
+			// 	case sdl.K_d:
+			// 		dPressed = pressed
+			// 		break
+			// 	}
+			// })
 
 			{
-				s := mobilecamerasystem.NewScrollSystem(
+				scrollSys := mobilecamerasystem.NewScrollSystem(
 					ctx.World,
 					ioc.Get[logger.Logger](c),
 					ioc.Get[cameras.CameraConstructors](c),
 					ioc.Get[window.Api](c),
 					0.1, 5,
 				)
-				events.ListenE(ctx.EventsBuilder, s.Listen)
-			}
+				events.ListenE(ctx.EventsBuilder, scrollSys.Listen)
 
-			events.Listen(ctx.EventsBuilder, func(event sdl.KeyboardEvent) {
-				pressed := event.State == sdl.PRESSED
-				switch event.Keysym.Sym {
-				case sdl.K_w:
-					wPressed = pressed
-					break
-				case sdl.K_a:
-					aPressed = pressed
-					break
-				case sdl.K_s:
-					sPressed = pressed
-					break
-				case sdl.K_d:
-					dPressed = pressed
-					break
-				}
-			})
+				dragSys := mobilecamerasystem.NewDragSystem(
+					sdl.BUTTON_LEFT,
+					ctx.World,
+					ioc.Get[cameras.CameraConstructors](c),
+					ioc.Get[window.Api](c),
+					ioc.Get[logger.Logger](c),
+				)
+				events.Listen(ctx.EventsBuilder, dragSys.Listen1)
+				events.Listen(ctx.EventsBuilder, dragSys.Listen2)
+			}
 		})
 		return b
 	})

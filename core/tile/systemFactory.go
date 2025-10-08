@@ -167,10 +167,11 @@ func (factory TileRenderSystemFactory) NewSystem(world ecs.World) (*System, erro
 
 			usedArray.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
 			transformArray.SaveComponent(entity, transform.NewTransform().Ptr().
-				SetSize(mgl32.Vec3{float32(factory.tileSize), float32(factory.tileSize), factory.gridDepth}).
+				SetSize(mgl32.Vec3{float32(factory.tileSize), float32(factory.tileSize), 1}).
 				SetPos(mgl32.Vec3{
 					float32(factory.tileSize)*float32(tile.Pos.X) + float32(factory.tileSize)/2,
 					float32(factory.tileSize)*float32(tile.Pos.Y) + float32(factory.tileSize)/2,
+					factory.gridDepth,
 				}).Val())
 			groupsArray.SaveComponent(entity, factory.groups)
 		}

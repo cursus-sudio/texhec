@@ -1,4 +1,4 @@
-package genericrenderer
+package genericrenderersys
 
 import (
 	_ "embed"
@@ -189,7 +189,7 @@ func (m *System) getMesh(asset assets.AssetID) (vao.VAO, error) {
 	return VAO, nil
 }
 
-func (m *System) Listen(render.RenderEvent) error {
+func (m *System) Listen(rendersys.RenderEvent) error {
 	m.program.Use()
 
 	locations, err := program.GetProgramLocations[locations](m.program)

@@ -1,4 +1,4 @@
-package projections
+package projectionssys
 
 import (
 	"frontend/engine/components/projection"

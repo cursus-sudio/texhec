@@ -95,10 +95,6 @@ func (c *collisionDetectionService) CollidesWithRay(entity ecs.EntityID, ray col
 		if currentRange.Target == collider.Branch {
 			for i := currentRange.First; i < currentRange.First+currentRange.Count; i++ {
 				aabb := aabbs[i]
-				ray := ray
-				if closestHit != nil {
-					ray.MaxDistance = closestHit.Distance
-				}
 				intersects, _ := rayAABBIntersect(ray, aabb)
 				if !intersects {
 					continue
@@ -108,21 +104,23 @@ func (c *collisionDetectionService) CollidesWithRay(entity ecs.EntityID, ray col
 		} else if currentRange.Target == collider.Leaf {
 			polygons := polygons[currentRange.First : currentRange.First+currentRange.Count]
 			for _, polygon := range polygons {
-				collisionRay, intersect := rayTriangleIntersect(ray, polygon)
+				intersect, dist := rayTriangleIntersect(ray, polygon)
 				if !intersect {
 					continue
 				}
-				ray = collisionRay
+				if closestHit != nil && closestHit.Distance < dist {
+					continue
+				}
+
+				ray := ray
+				ray.MaxDistance = dist
 
 				normal := polygon.B.Sub(polygon.A).Cross(polygon.C.Sub(polygon.A)).Normalize()
-				hit := collider.NewRayHit(collisionRay, normal)
+				hit := collider.NewRayHit(ray, normal)
 				closestHit = &hit
 			}
 		}
 	}
-
-	// fmt.Printf("ray: %v; aabb: %v; collides %t;", ray, aabbs, closestHit != nil)
-	// panic("!")
 
 	if closestHit == nil {
 		return nil, nil
@@ -160,7 +158,7 @@ func (c *collisionDetectionService) ShootRay(ray collider.Ray) (ObjectRayCollisi
 			continue
 		}
 
-		if closestHit != nil && collision.Hit().Distance <= closestHit.Distance {
+		if closestHit != nil && closestHit.Distance < collision.Hit().Distance {
 			continue
 		}
 

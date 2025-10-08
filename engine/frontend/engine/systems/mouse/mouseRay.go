@@ -1,4 +1,4 @@
-package mouse
+package mousesys
 
 import (
 	"frontend/engine/components/projection"

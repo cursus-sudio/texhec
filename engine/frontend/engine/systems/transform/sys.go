@@ -1,4 +1,4 @@
-package transformsystem
+package transformsys
 
 import (
 	"frontend/engine/components/transform"

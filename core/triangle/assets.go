@@ -66,7 +66,7 @@ func registerAssets(b ioc.Builder) {
 
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b assets.AssetsStorageBuilder) assets.AssetsStorageBuilder {
 		b.RegisterAsset(MeshAssetID, func() (any, error) {
-			vertices := []genericrenderer.Vertex{
+			vertices := []genericrenderersys.Vertex{
 				// Front face
 				{Pos: [3]float32{-1, 1, 1}, TexturePos: [2]float32{0, 1}},
 				{Pos: [3]float32{-1, -1, 1}, TexturePos: [2]float32{0, 0}},

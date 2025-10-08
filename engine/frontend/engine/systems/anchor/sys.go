@@ -1,4 +1,4 @@
-package anchorsystem
+package anchorsys
 
 import (
 	"frontend/engine/components/anchor"

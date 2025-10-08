@@ -1,4 +1,4 @@
-package collidersystem
+package collidersys
 
 import (
 	"frontend/engine/components/collider"

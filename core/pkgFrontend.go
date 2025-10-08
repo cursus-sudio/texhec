@@ -126,11 +126,11 @@ func frontendDic(
 		cameras.Package(),
 		projection.Package(),
 
-		genericrenderer.Package(),
+		genericrenderersys.Package(),
 		broadcollision.Package(),
 
 		texturearray.Package(),
-		tile.Package(100, 0., groups.EmptyGroups().Ptr().Enable(triangle.GameGroup).Val()),
+		tile.Package(100, -1., groups.EmptyGroups().Ptr().Enable(triangle.GameGroup).Val()),
 
 		// mods
 		ping.FrontendPackage(),

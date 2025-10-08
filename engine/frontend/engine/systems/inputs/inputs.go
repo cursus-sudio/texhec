@@ -1,4 +1,4 @@
-package inputs
+package inputssys
 
 import (
 	"frontend/services/frames"

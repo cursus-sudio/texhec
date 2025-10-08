@@ -1,4 +1,4 @@
-package mobilecamera
+package mobilecamerasys
 
 type WasdSystem struct {
 }

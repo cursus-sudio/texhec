@@ -1,4 +1,4 @@
-package mobilecamera
+package mobilecamerasys
 
 import (
 	"frontend/engine/components/mobilecamera"

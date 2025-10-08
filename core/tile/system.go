@@ -63,7 +63,7 @@ type locations struct {
 	GridDepth int32 `uniform:"gridDepth"` // float32
 }
 
-func (s *System) Listen(render.RenderEvent) {
+func (s *System) Listen(rendersys.RenderEvent) {
 	if s.changed {
 		s.changeMutex.Lock()
 		s.vertices.SetVertices(s.tiles.GetValues())

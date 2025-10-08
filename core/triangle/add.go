@@ -13,11 +13,11 @@ import (
 	"frontend/engine/components/projection"
 	"frontend/engine/components/texture"
 	"frontend/engine/components/transform"
-	"frontend/engine/systems/anchorsystem"
+	"frontend/engine/systems/anchor"
 	"frontend/engine/systems/genericrenderer"
 	mobilecamerasystem "frontend/engine/systems/mobilecamera"
 	"frontend/engine/systems/projections"
-	"frontend/engine/systems/transformsystem"
+	"frontend/engine/systems/transform"
 	"frontend/engine/tools/cameras"
 	"frontend/engine/tools/worldprojections"
 	"frontend/services/assets"
@@ -82,7 +82,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, transform.NewPivotPoint(mgl32.Vec3{1, 0, .5}))
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, mesh.NewMesh(MeshAssetID))
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, texture.NewTexture(Texture4AssetID))
-			ecs.SaveComponent(ctx.World.Components(), exitBtn, genericrenderer.PipelineComponent{})
+			ecs.SaveComponent(ctx.World.Components(), exitBtn, genericrenderersys.PipelineComponent{})
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, projection.NewUsedProjection[projection.Ortho]())
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, collider.NewCollider(ColliderAssetID))
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, mouse.NewMouseEvents().
@@ -96,15 +96,15 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 
 	ioc.WrapService(b, scenes.LoadInitialEvents, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			events.Emit(ctx.Events, projections.NewUpdateProjectionsEvent())
+			events.Emit(ctx.Events, projectionssys.NewUpdateProjectionsEvent())
 		})
 		return b
 	})
 
 	ioc.WrapService(b, scenes.LoadFirst, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			anchorsystem.NewAnchorSystem(ctx.World, ioc.Get[logger.Logger](c))
-			transformsystem.NewPivotPointSystem(ctx.World, ioc.Get[logger.Logger](c))
+			anchorsys.NewAnchorSystem(ctx.World, ioc.Get[logger.Logger](c))
+			transformsys.NewPivotPointSystem(ctx.World, ioc.Get[logger.Logger](c))
 		})
 		return b
 	})
@@ -125,18 +125,18 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				SetSize(mgl32.Vec3{100, 100, 100}).Val())
 			ecs.SaveComponent(ctx.World.Components(), entity, mesh.NewMesh(MeshAssetID))
 			ecs.SaveComponent(ctx.World.Components(), entity, texture.NewTexture(Texture2AssetID))
-			ecs.SaveComponent(ctx.World.Components(), entity, genericrenderer.PipelineComponent{})
+			ecs.SaveComponent(ctx.World.Components(), entity, genericrenderersys.PipelineComponent{})
 			ecs.SaveComponent(ctx.World.Components(), entity, projection.NewUsedProjection[projection.Perspective]())
 			ecs.SaveComponent(ctx.World.Components(), entity, ChangeTransformOverTimeComponent{})
 			ecs.SaveComponent(ctx.World.Components(), entity, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 		})
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			genericRenderer, err := genericrenderer.NewSystem(
+			genericRenderer, err := genericrenderersys.NewSystem(
 				ctx.World,
 				ioc.Get[window.Api](c),
 				ioc.Get[assets.AssetsStorage](c),
 				ioc.Get[logger.Logger](c),
-				ioc.Get[vbo.VBOFactory[genericrenderer.Vertex]](c),
+				ioc.Get[vbo.VBOFactory[genericrenderersys.Vertex]](c),
 				ioc.Get[cameras.CameraConstructors](c),
 				[]ecs.ComponentType{},
 			)

@@ -1,4 +1,4 @@
-package render
+package rendersys
 
 import (
 	"frontend/services/assets"

@@ -1,4 +1,4 @@
-package genericrenderer
+package genericrenderersys
 
 import (
 	"frontend/services/graphics/vao/vbo"

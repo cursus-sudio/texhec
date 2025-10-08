@@ -158,6 +158,10 @@ func (factory TileRenderSystemFactory) NewSystem(world ecs.World) (*System, erro
 		defer changeMutex.Unlock()
 		s.changed = true
 
+		transformTransaction := transformArray.Transaction()
+		usedTransaction := usedArray.Transaction()
+		groupsTransaction := groupsArray.Transaction()
+
 		for _, entity := range ei {
 			tile, err := tileArray.GetComponent(entity)
 			if err != nil {
@@ -165,15 +169,20 @@ func (factory TileRenderSystemFactory) NewSystem(world ecs.World) (*System, erro
 			}
 			tiles.Set(entity, tile)
 
-			usedArray.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
-			transformArray.SaveComponent(entity, transform.NewTransform().Ptr().
+			usedTransaction.SaveComponent(entity, projection.NewUsedProjection[projection.Ortho]())
+			transformTransaction.SaveComponent(entity, transform.NewTransform().Ptr().
 				SetSize(mgl32.Vec3{float32(factory.tileSize), float32(factory.tileSize), 1}).
 				SetPos(mgl32.Vec3{
 					float32(factory.tileSize)*float32(tile.Pos.X) + float32(factory.tileSize)/2,
 					float32(factory.tileSize)*float32(tile.Pos.Y) + float32(factory.tileSize)/2,
 					factory.gridDepth,
 				}).Val())
-			groupsArray.SaveComponent(entity, factory.groups)
+			groupsTransaction.SaveComponent(entity, factory.groups)
+		}
+
+		err := ecs.FlushMany(transformTransaction, usedTransaction, groupsTransaction)
+		if err != nil {
+			factory.logger.Error(err)
 		}
 	}
 	query.OnAdd(onChangeOrAdd)

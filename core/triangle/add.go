@@ -164,17 +164,23 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				colliderArray := ecs.GetComponentsArray[collider.Collider](ctx.World.Components())
 				mouseEventsArray := ecs.GetComponentsArray[mouse.MouseEvents](ctx.World.Components())
 				onChangeOrAdd := func(ei []ecs.EntityID) {
+					colliderTransaction := colliderArray.Transaction()
+					mouseEventsTransaction := mouseEventsArray.Transaction()
 					for _, entity := range ei {
 						tile, err := tileArray.GetComponent(entity)
 						if err != nil {
 							continue
 						}
 
-						colliderArray.SaveComponent(entity, collider.NewCollider(ColliderAssetID))
-						mouseEventsArray.SaveComponent(entity, mouse.NewMouseEvents().
+						colliderTransaction.SaveComponent(entity, collider.NewCollider(ColliderAssetID))
+						mouseEventsTransaction.SaveComponent(entity, mouse.NewMouseEvents().
 							AddLeftClickEvents(OnClickDomainEvent{entity, int(tile.Pos.X), int(tile.Pos.Y)}).
 							AddMouseHoverEvents(OnHoveredDomainEvent{entity, int(tile.Pos.X), int(tile.Pos.Y)}),
 						)
+					}
+					err := ecs.FlushMany(colliderTransaction, mouseEventsTransaction)
+					if err != nil {
+						ioc.Get[logger.Logger](c).Error(err)
 					}
 				}
 

@@ -27,6 +27,10 @@ void main() {
     int xIn = gs_in[0].x;
     int yIn = gs_in[0].y;
     int tileType = gs_in[0].tileType;
+
+    // shared outputs
+    gs_out.tileType = tileType;
+
     for (int cornerX = 0; cornerX < 2; cornerX++) {
         for (int cornerY = 0; cornerY < 2; cornerY++) {
             int x = xIn + cornerX;
@@ -34,9 +38,9 @@ void main() {
 
             vec4 pos = vec4(x * tileSize, y * tileSize, gridDepth, 1.);
 
+            // unique outputs
             gl_Position = camera * pos;
             gs_out.uv = vec2(cornerX, cornerY);
-            gs_out.tileType = tileType;
             EmitVertex();
         }
     }

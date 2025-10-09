@@ -13,6 +13,7 @@ import (
 	"image"
 	"image/draw"
 	_ "image/png"
+	"shared/services/datastructures"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
@@ -60,7 +61,12 @@ func flipImage(img image.Image) image.Image {
 
 func registerAssets(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.TileRenderSystemFactory) tile.TileRenderSystemFactory {
-		s.AddType(Texture1AssetID, Texture2AssetID, Texture3AssetID, Texture4AssetID)
+		assets := datastructures.NewSparseArray[uint32, assets.AssetID]()
+		assets.Set(tile.TileMountain, Texture1AssetID)
+		assets.Set(tile.TileGround, Texture2AssetID)
+		assets.Set(tile.TileForest, Texture3AssetID)
+		assets.Set(tile.TileWater, Texture4AssetID)
+		s.AddType(assets)
 		return s
 	})
 

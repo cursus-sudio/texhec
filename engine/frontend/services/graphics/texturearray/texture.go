@@ -24,31 +24,35 @@ func (r TextureArray) Use() {
 }
 
 type Factory interface {
-	Add(asset ...assets.AssetID)
+	Add(asset datastructures.SparseArray[uint32, assets.AssetID])
 	New() (TextureArray, error)
 }
 
 type factory struct {
 	assetsStorage assets.AssetsStorage
-	assets        []assets.AssetID
+	assets        datastructures.SparseArray[uint32, assets.AssetID]
 }
 
 var (
 	ErrTexturesHaveToShareSize error = errors.New("all textures have to match size")
 )
 
-func (r *factory) Add(asset ...assets.AssetID) {
-	r.assets = append(r.assets, asset...)
+func (r *factory) Add(asset datastructures.SparseArray[uint32, assets.AssetID]) {
+	for _, index := range asset.GetIndices() {
+		value, _ := asset.Get(index)
+		r.assets.Set(index, value)
+	}
 }
 
 func (r *factory) New() (TextureArray, error) {
 	register := TextureArray{
 		Assets: datastructures.NewSet[assets.AssetID](),
 	}
-	images := []image.Image{}
+	images := datastructures.NewSparseArray[uint32, image.Image]()
 
 	w, h := 0, 0
-	for i, assetID := range r.assets {
+	for _, i := range r.assets.GetIndices() {
+		assetID, _ := r.assets.Get(i)
 		asset, err := assets.StorageGet[texture.TextureAsset](r.assetsStorage, assetID)
 		if err != nil {
 			err := errors.Join(
@@ -66,7 +70,7 @@ func (r *factory) New() (TextureArray, error) {
 			return TextureArray{}, ErrTexturesHaveToShareSize
 		}
 
-		images = append(images, image)
+		images.Set(i, image)
 		register.Assets.Add(assetID)
 	}
 

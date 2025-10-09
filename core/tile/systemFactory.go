@@ -67,8 +67,8 @@ func newTileRenderSystemFactory(
 	}
 }
 
-func (factory TileRenderSystemFactory) AddType(assets ...assets.AssetID) {
-	factory.textureArrayFactory.Add(assets...)
+func (factory TileRenderSystemFactory) AddType(assets datastructures.SparseArray[uint32, assets.AssetID]) {
+	factory.textureArrayFactory.Add(assets)
 }
 
 func (factory TileRenderSystemFactory) NewSystem(world ecs.World) (*System, error) {

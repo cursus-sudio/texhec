@@ -3,19 +3,29 @@ package texturearray
 import (
 	"image"
 	"image/draw"
+	"shared/services/datastructures"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
-func createTexs(w, h int, imgs []image.Image) uint32 {
+func createTexs(w, h int, imgs datastructures.SparseArray[uint32, image.Image]) uint32 {
 	var texs uint32
 
 	gl.GenTextures(1, &texs)
 	gl.ActiveTexture(gl.TEXTURE1)
 	gl.BindTexture(gl.TEXTURE_2D_ARRAY, texs)
-	gl.TexStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.RGBA8, int32(w), int32(h), int32(len(imgs)))
+	indices := imgs.GetIndices()
+	var maxIndex uint32
+	for _, index := range indices {
+		if index > maxIndex {
+			maxIndex = index
+		}
+	}
+	// x := max[uint32](indices[0], indices...)
+	gl.TexStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.RGBA8, int32(w), int32(h), int32(maxIndex))
 
-	for i, img := range imgs {
+	for _, i := range imgs.GetIndices() {
+		img, _ := imgs.Get(i)
 		rgbaImg, ok := img.(*image.RGBA)
 		if !ok {
 			rgbaImg = image.NewRGBA(img.Bounds())

@@ -21,8 +21,7 @@ func createTexs(w, h int, imgs datastructures.SparseArray[uint32, image.Image]) 
 			maxIndex = index
 		}
 	}
-	// x := max[uint32](indices[0], indices...)
-	gl.TexStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.RGBA8, int32(w), int32(h), int32(maxIndex))
+	gl.TexStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.RGBA8, int32(w), int32(h), int32(maxIndex+1))
 
 	for _, i := range imgs.GetIndices() {
 		img, _ := imgs.Get(i)

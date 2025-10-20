@@ -3,6 +3,7 @@ package tile
 import (
 	"frontend/engine/components/groups"
 	"frontend/engine/tools/cameras"
+	"frontend/services/assets"
 	"frontend/services/graphics/texturearray"
 	"frontend/services/graphics/vao/vbo"
 	"shared/services/logger"
@@ -28,6 +29,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 			ioc.Get[texturearray.Factory](c),
 			ioc.Get[logger.Logger](c),
 			ioc.Get[vbo.VBOFactory[TileComponent]](c),
+			ioc.Get[assets.AssetsStorage](c),
 			pkg.tileSize,
 			pkg.gridDepth,
 			pkg.gridGroups,

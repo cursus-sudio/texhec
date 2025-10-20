@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"frontend/engine/components/collider"
 	"frontend/engine/components/mesh"
+	"frontend/engine/components/text"
 	"frontend/engine/components/texture"
 	"frontend/engine/systems/genericrenderer"
 	"frontend/services/assets"
@@ -17,6 +18,8 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
+	"golang.org/x/image/font/gofont/goregular"
+	"golang.org/x/image/font/opentype"
 )
 
 //go:embed assets/1.png
@@ -31,6 +34,8 @@ var texture3Source []byte
 //go:embed assets/4.png
 var texture4Source []byte
 
+var fontSource []byte = goregular.TTF
+
 const (
 	MeshAssetID     assets.AssetID = "vao_asset"
 	Texture1AssetID assets.AssetID = "texture1_asset"
@@ -38,6 +43,7 @@ const (
 	Texture3AssetID assets.AssetID = "texture3_asset"
 	Texture4AssetID assets.AssetID = "texture4_asset"
 	ColliderAssetID assets.AssetID = "collider_asset"
+	FontAssetID     assets.AssetID = "font_asset"
 )
 
 func flipImage(img image.Image) image.Image {
@@ -162,6 +168,15 @@ func registerAssets(b ioc.Builder) {
 					collider.NewPolygon(mgl32.Vec3{-1, -1, 0}, mgl32.Vec3{+1, -1, 0}, [3]float32{-1, +1, 0}),
 					collider.NewPolygon(mgl32.Vec3{+1, +1, 0}, mgl32.Vec3{+1, -1, 0}, [3]float32{-1, +1, 0}),
 				})
+			return asset, nil
+		})
+
+		b.RegisterAsset(FontAssetID, func() (any, error) {
+			font, err := opentype.Parse(fontSource)
+			if err != nil {
+				return nil, err
+			}
+			asset := text.NewFontFaceAsset(*font)
 			return asset, nil
 		})
 		return b

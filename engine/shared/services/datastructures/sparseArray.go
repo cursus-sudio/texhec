@@ -4,7 +4,7 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-type SparseArray[Index constraints.Unsigned, Value any] interface {
+type SparseArray[Index constraints.Integer, Value any] interface {
 	Get(index Index) (value Value, ok bool)
 	GetValues() []Value
 	GetIndices() []Index
@@ -13,7 +13,7 @@ type SparseArray[Index constraints.Unsigned, Value any] interface {
 	Remove(index Index) (removed bool)
 }
 
-type sparseArray[Index constraints.Unsigned, Value any] struct {
+type sparseArray[Index constraints.Integer, Value any] struct {
 	EmptyValue    Index
 	valuesIndices []Index // here some indices have special meaning (read constants above)
 
@@ -22,7 +22,7 @@ type sparseArray[Index constraints.Unsigned, Value any] struct {
 	indices []Index // here value means index in sparse array
 }
 
-func NewSparseArray[Index constraints.Unsigned, Value any]() SparseArray[Index, Value] {
+func NewSparseArray[Index constraints.Integer, Value any]() SparseArray[Index, Value] {
 	var zero Index
 	return &sparseArray[Index, Value]{
 		EmptyValue: ^zero,

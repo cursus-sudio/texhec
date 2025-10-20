@@ -53,6 +53,10 @@ func (vbo *vbo[Vertex]) SetVertices(vertices []Vertex) {
 	vbo.len = len(vertices)
 	verticesSize := int(unsafe.Sizeof(vertices[0]) * uintptr(vbo.len))
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo.id)
-	gl.BufferData(gl.ARRAY_BUFFER, verticesSize, gl.Ptr(vertices), gl.STATIC_DRAW)
+	var ptr unsafe.Pointer
+	if vbo.len != 0 {
+		ptr = gl.Ptr(vertices)
+	}
+	gl.BufferData(gl.ARRAY_BUFFER, verticesSize, ptr, gl.STATIC_DRAW)
 	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 }

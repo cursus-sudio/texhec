@@ -11,12 +11,14 @@ import (
 	"frontend/engine/components/mobilecamera"
 	"frontend/engine/components/mouse"
 	"frontend/engine/components/projection"
+	"frontend/engine/components/text"
 	"frontend/engine/components/texture"
 	"frontend/engine/components/transform"
 	"frontend/engine/systems/anchor"
 	"frontend/engine/systems/genericrenderer"
 	mobilecamerasystem "frontend/engine/systems/mobilecamera"
 	"frontend/engine/systems/projections"
+	textsys "frontend/engine/systems/text"
 	"frontend/engine/systems/transform"
 	"frontend/engine/tools/cameras"
 	"frontend/engine/tools/worldprojections"
@@ -73,6 +75,7 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			events.Listen(ctx.EventsBuilder, func(e QuitEvent) {
 				ioc.Get[runtime.Runtime](c).Stop()
 			})
+
 			exitBtn := ctx.World.NewEntity()
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, transform.NewTransform().Ptr().
 				SetSize(mgl32.Vec3{100, 100, 1}).Val())
@@ -90,6 +93,42 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				AddLeftClickEvents(QuitEvent{}),
 			)
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
+
+			{
+				otherBtn := ctx.World.NewEntity()
+				ecs.SaveComponent(ctx.World.Components(), otherBtn, transform.NewTransform().Ptr().
+					SetPos(mgl32.Vec3{-100, -100, 0}).
+					SetSize(mgl32.Vec3{100, 100, 2}).Val())
+
+				ecs.SaveComponent(ctx.World.Components(), otherBtn, mesh.NewMesh(MeshAssetID))
+				ecs.SaveComponent(ctx.World.Components(), otherBtn, texture.NewTexture(Texture4AssetID))
+				// ecs.SaveComponent(ctx.World.Components(), otherBtn, genericrenderersys.PipelineComponent{})
+				ecs.SaveComponent(ctx.World.Components(), otherBtn, projection.NewUsedProjection[projection.Ortho]())
+				// ecs.SaveComponent(ctx.World.Components(), otherBtn, anchor.NewParentAnchor(otherBtn).Ptr().
+				// 	SetPivotPoint(mgl32.Vec3{0, 1, .5}).
+				// 	Val())
+				// ecs.SaveComponent(ctx.World.Components(), otherBtn, transform.NewPivotPoint(mgl32.Vec3{0, 1, .5}))
+
+				// ecs.SaveComponent(ctx.World.Components(), otherBtn, text.Text{Text: "1\n2\n"})
+				ecs.SaveComponent(ctx.World.Components(), otherBtn, text.Text{
+					// Text: "1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 ",
+					Text: "123412341234123412341234123412341234123412341234",
+				})
+				ecs.SaveComponent(ctx.World.Components(), otherBtn, text.Break{Break: text.BreakAny})
+				// ecs.SaveComponent(ctx.World.Components(), otherBtn, text.Break{Break: text.BreakWord})
+				ecs.SaveComponent(ctx.World.Components(), otherBtn, text.FontSize{FontSize: 16})
+				// ecs.SaveComponent(ctx.World.Components(), otherBtn, text.FontSize{FontSize: 300})
+
+				ecs.SaveComponent(ctx.World.Components(), otherBtn, projection.NewUsedProjection[projection.Ortho]())
+				ecs.SaveComponent(ctx.World.Components(), otherBtn, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
+
+				textRenderer, err := ioc.Get[textsys.TextRendererFactory](c).New(ctx.World)
+				if err != nil {
+					ioc.Get[logger.Logger](c).Error(err)
+					return
+				}
+				events.Listen(ctx.EventsBuilder, textRenderer.Listen)
+			}
 		})
 		return b
 	})
@@ -119,17 +158,18 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		})
 
 		b.OnLoad(func(ctx scenes.SceneCtx) { // cube
-			entity := ctx.World.NewEntity()
-			ecs.SaveComponent(ctx.World.Components(), entity, transform.NewTransform().Ptr().
-				SetPos(mgl32.Vec3{0, 0, -300}).
-				SetSize(mgl32.Vec3{100, 100, 100}).Val())
-			ecs.SaveComponent(ctx.World.Components(), entity, mesh.NewMesh(MeshAssetID))
-			ecs.SaveComponent(ctx.World.Components(), entity, texture.NewTexture(Texture2AssetID))
-			ecs.SaveComponent(ctx.World.Components(), entity, genericrenderersys.PipelineComponent{})
-			ecs.SaveComponent(ctx.World.Components(), entity, projection.NewUsedProjection[projection.Perspective]())
-			ecs.SaveComponent(ctx.World.Components(), entity, ChangeTransformOverTimeComponent{})
-			ecs.SaveComponent(ctx.World.Components(), entity, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
+			// entity := ctx.World.NewEntity()
+			// ecs.SaveComponent(ctx.World.Components(), entity, transform.NewTransform().Ptr().
+			// 	SetPos(mgl32.Vec3{0, 0, -300}).
+			// 	SetSize(mgl32.Vec3{100, 100, 100}).Val())
+			// ecs.SaveComponent(ctx.World.Components(), entity, mesh.NewMesh(MeshAssetID))
+			// ecs.SaveComponent(ctx.World.Components(), entity, texture.NewTexture(Texture2AssetID))
+			// ecs.SaveComponent(ctx.World.Components(), entity, genericrenderersys.PipelineComponent{})
+			// ecs.SaveComponent(ctx.World.Components(), entity, projection.NewUsedProjection[projection.Perspective]())
+			// ecs.SaveComponent(ctx.World.Components(), entity, ChangeTransformOverTimeComponent{})
+			// ecs.SaveComponent(ctx.World.Components(), entity, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 		})
+
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			genericRenderer, err := genericrenderersys.NewSystem(
 				ctx.World,
@@ -203,12 +243,12 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			}
 
 			{
-				tileFactory := ioc.Get[tile.TileRenderSystemFactory](c)
-				s, err := tileFactory.NewSystem(ctx.World)
-				if err != nil {
-					ioc.Get[logger.Logger](c).Error(err)
-				}
-				events.Listen(ctx.EventsBuilder, s.Listen)
+				// tileFactory := ioc.Get[tile.TileRenderSystemFactory](c)
+				// s, err := tileFactory.NewSystem(ctx.World)
+				// if err != nil {
+				// 	ioc.Get[logger.Logger](c).Error(err)
+				// }
+				// events.Listen(ctx.EventsBuilder, s.Listen)
 			}
 
 			rand := rand.New(rand.NewPCG(2077, 7137))
@@ -248,98 +288,24 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		})
 
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			// move camera system inline
-			// wPressed := false
-			// aPressed := false
-			// sPressed := false
-			// dPressed := false
-			// camerasQuery := ctx.World.QueryEntitiesWithComponents(
-			// 	ecs.GetComponentType(transform.Transform{}),
-			// 	ecs.GetComponentType(projection.DynamicOrtho{}),
-			// 	ecs.GetComponentType(mobilecamera.Component{}),
-			// )
-			// transformArray := ecs.GetComponentsArray[transform.Transform](ctx.World.Components())
-			//
-			// moveCameraSystem := func(event frames.FrameEvent) error {
-			// 	xAxis := 0
-			// 	if dPressed {
-			// 		xAxis = 1
-			// 	} else if aPressed {
-			// 		xAxis = -1
-			// 	}
-			// 	yAxis := 0
-			// 	if wPressed {
-			// 		yAxis = 1
-			// 	} else if sPressed {
-			// 		yAxis = -1
-			// 	}
-			//
-			// 	cameras := camerasQuery.Entities()
-			// 	for _, camera := range cameras {
-			// 		cameraTransform, err := transformArray.GetComponent(camera)
-			// 		if err != nil {
-			// 			return err
-			// 		}
-			// 		{
-			// 			pos := cameraTransform.Pos
-			// 			mul := 1000 * float32(event.Delta.Seconds())
-			// 			pos[0] += mul * float32(xAxis)
-			// 			pos[1] += mul * float32(yAxis)
-			// 			cameraTransform.SetPos(pos)
-			// 		}
-			// 		// rotation := cameraTransform.Rotation
-			// 		// mul := 100 * float32(event.Delta.Seconds())
-			// 		// rotation = rotation.Mul(mgl32.QuatRotate(mgl32.DegToRad(mul*float32(xAxis)), mgl32.Vec3{0, 1, 0}))
-			// 		// rotation = rotation.Mul(mgl32.QuatRotate(mgl32.DegToRad(mul*float32(yAxis)), mgl32.Vec3{-1, 0, 0}))
-			// 		// cameraTransform.Rotation = rotation
-			//
-			// 		if err := transformArray.SaveComponent(camera, cameraTransform); err != nil {
-			// 			return err
-			// 		}
-			// 	}
-			// 	return nil
-			// }
-			//
-			// events.ListenE(ctx.EventsBuilder, moveCameraSystem)
-			//
-			// events.Listen(ctx.EventsBuilder, func(event sdl.KeyboardEvent) {
-			// 	pressed := event.State == sdl.PRESSED
-			// 	switch event.Keysym.Sym {
-			// 	case sdl.K_w:
-			// 		wPressed = pressed
-			// 		break
-			// 	case sdl.K_a:
-			// 		aPressed = pressed
-			// 		break
-			// 	case sdl.K_s:
-			// 		sPressed = pressed
-			// 		break
-			// 	case sdl.K_d:
-			// 		dPressed = pressed
-			// 		break
-			// 	}
-			// })
+			scrollSys := mobilecamerasystem.NewScrollSystem(
+				ctx.World,
+				ioc.Get[logger.Logger](c),
+				ioc.Get[cameras.CameraConstructors](c),
+				ioc.Get[window.Api](c),
+				0.1, 5,
+			)
+			events.ListenE(ctx.EventsBuilder, scrollSys.Listen)
 
-			{
-				scrollSys := mobilecamerasystem.NewScrollSystem(
-					ctx.World,
-					ioc.Get[logger.Logger](c),
-					ioc.Get[cameras.CameraConstructors](c),
-					ioc.Get[window.Api](c),
-					0.1, 5,
-				)
-				events.ListenE(ctx.EventsBuilder, scrollSys.Listen)
-
-				dragSys := mobilecamerasystem.NewDragSystem(
-					sdl.BUTTON_LEFT,
-					ctx.World,
-					ioc.Get[cameras.CameraConstructors](c),
-					ioc.Get[window.Api](c),
-					ioc.Get[logger.Logger](c),
-				)
-				events.Listen(ctx.EventsBuilder, dragSys.Listen1)
-				events.Listen(ctx.EventsBuilder, dragSys.Listen2)
-			}
+			dragSys := mobilecamerasystem.NewDragSystem(
+				sdl.BUTTON_LEFT,
+				ctx.World,
+				ioc.Get[cameras.CameraConstructors](c),
+				ioc.Get[window.Api](c),
+				ioc.Get[logger.Logger](c),
+			)
+			events.Listen(ctx.EventsBuilder, dragSys.Listen1)
+			events.Listen(ctx.EventsBuilder, dragSys.Listen2)
 		})
 		return b
 	})

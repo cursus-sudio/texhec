@@ -4,14 +4,14 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-type SparseSet[Index constraints.Unsigned] interface {
+type SparseSet[Index constraints.Integer] interface {
 	Get(index Index) (ok bool)
 	GetIndices() []Index
 	Add(index Index) (added bool)
 	Remove(index Index) (removed bool)
 }
 
-type sparseSet[Index constraints.Unsigned] struct {
+type sparseSet[Index constraints.Integer] struct {
 	EmptyValue    Index
 	valuesIndices []Index // here some indices have special meaning (read constants above)
 
@@ -19,7 +19,7 @@ type sparseSet[Index constraints.Unsigned] struct {
 	indices []Index // here value means index in sparse array
 }
 
-func NewSparseSet[Index constraints.Unsigned]() SparseSet[Index] {
+func NewSparseSet[Index constraints.Integer]() SparseSet[Index] {
 	var zero Index
 	return &sparseSet[Index]{
 		EmptyValue: ^zero,

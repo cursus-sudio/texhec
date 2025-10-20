@@ -10,6 +10,7 @@ require (
 	github.com/ogiusek/events v1.0.6
 	github.com/ogiusek/ioc/v2 v2.0.13
 	github.com/veandco/go-sdl2 v0.4.40
+	golang.org/x/image v0.32.0
 )
 
 require (
@@ -28,6 +29,7 @@ require (
 	golang.org/x/mod v0.28.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/text v0.30.0 // indirect
 	golang.org/x/tools v0.37.0 // indirect
 	lukechampine.com/uint128 v1.2.0 // indirect
 	modernc.org/cc/v3 v3.36.3 // indirect

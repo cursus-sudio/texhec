@@ -3,6 +3,7 @@ package tile
 import (
 	"frontend/engine/components/groups"
 	"frontend/engine/components/projection"
+	"frontend/engine/components/texture"
 	"frontend/engine/components/transform"
 	"frontend/engine/tools/cameras"
 	"frontend/services/assets"
@@ -12,6 +13,7 @@ import (
 	"frontend/services/graphics/vao"
 	"frontend/services/graphics/vao/ebo"
 	"frontend/services/graphics/vao/vbo"
+	"image"
 	"shared/services/datastructures"
 	"shared/services/ecs"
 	"shared/services/logger"
@@ -35,8 +37,10 @@ func (r register) Release() {
 
 type TileRenderSystemFactory struct {
 	logger              logger.Logger
+	textures            datastructures.SparseArray[uint32, image.Image]
 	textureArrayFactory texturearray.Factory
 	vboFactory          vbo.VBOFactory[TileComponent]
+	assetsStorage       assets.AssetsStorage
 
 	tileSize  int32
 	gridDepth float32
@@ -49,15 +53,18 @@ func newTileRenderSystemFactory(
 	textureArrayFactory texturearray.Factory,
 	logger logger.Logger,
 	vboFactory vbo.VBOFactory[TileComponent],
+	assetsStorage assets.AssetsStorage,
 	tileSize int32,
 	gridDepth float32,
 	groups groups.Groups,
 	cameraCtors cameras.CameraConstructors,
 ) TileRenderSystemFactory {
 	return TileRenderSystemFactory{
-		textureArrayFactory: textureArrayFactory,
 		logger:              logger,
+		textures:            datastructures.NewSparseArray[uint32, image.Image](),
+		textureArrayFactory: textureArrayFactory,
 		vboFactory:          vboFactory,
+		assetsStorage:       assetsStorage,
 
 		tileSize:  tileSize,
 		gridDepth: gridDepth,
@@ -67,8 +74,16 @@ func newTileRenderSystemFactory(
 	}
 }
 
-func (factory TileRenderSystemFactory) AddType(assets datastructures.SparseArray[uint32, assets.AssetID]) {
-	factory.textureArrayFactory.Add(assets)
+func (factory TileRenderSystemFactory) AddType(addedAssets datastructures.SparseArray[uint32, assets.AssetID]) {
+	for _, assetIndex := range addedAssets.GetIndices() {
+		asset, _ := addedAssets.Get(assetIndex)
+		texture, err := assets.StorageGet[texture.TextureAsset](factory.assetsStorage, asset)
+		if err != nil {
+			continue
+		}
+
+		factory.textures.Set(assetIndex, texture.Image())
+	}
 }
 
 func (factory TileRenderSystemFactory) NewSystem(world ecs.World) (*System, error) {
@@ -105,7 +120,7 @@ func (factory TileRenderSystemFactory) NewSystem(world ecs.World) (*System, erro
 		return nil, err
 	}
 
-	textureArray, err := factory.textureArrayFactory.New()
+	textureArray, err := factory.textureArrayFactory.New(factory.textures)
 	if err != nil {
 		return nil, err
 	}

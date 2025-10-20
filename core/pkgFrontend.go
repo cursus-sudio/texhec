@@ -12,7 +12,9 @@ import (
 	"fmt"
 	"frontend/engine/components/groups"
 	"frontend/engine/components/projection"
+	"frontend/engine/components/text"
 	"frontend/engine/systems/genericrenderer"
+	"frontend/engine/systems/text"
 	"frontend/engine/tools/broadcollision"
 	"frontend/engine/tools/cameras"
 	frontendapi "frontend/services/api"
@@ -31,11 +33,14 @@ import (
 	"os"
 	"path/filepath"
 	"shared/services/api"
+	"shared/services/datastructures"
 	"shared/services/logger"
 	"shared/services/uuid"
 	"shared/utils/connection"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"golang.org/x/image/font/opentype"
+
 	// "github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/ogiusek/ioc/v2"
 	"github.com/veandco/go-sdl2/sdl"
@@ -74,6 +79,12 @@ func frontendDic(
 	gl.Enable(gl.DEPTH_TEST)
 	gl.Disable(gl.CULL_FACE)
 	gl.DepthFunc(gl.LESS)
+
+	// gl.Disable(gl.BLEND)
+	// gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	// gl.DepthMask(false)
+
 	// gl.DepthFunc(gl.GREATER)
 	if err := window.GLMakeCurrent(ctx); err != nil {
 		panic(fmt.Errorf("could not make OpenGL context current: %v", err))
@@ -131,6 +142,45 @@ func frontendDic(
 
 		texturearray.Package(),
 		tile.Package(100, -1., groups.EmptyGroups().Ptr().Enable(triangle.GameGroup).Val()),
+
+		textsys.Package(
+			text.FontFamily{FontAsset: triangle.FontAssetID},
+			text.FontSize{FontSize: 16},
+			text.Overflow{Visible: false},
+			text.Break{Break: text.BreakWord},
+			text.TextAlign{TextAlign: 0},
+			func() datastructures.SparseSet[rune] {
+				set := datastructures.NewSparseSet[rune]()
+				for i := int32('a'); i <= int32('z'); i++ {
+					set.Add(rune(i))
+				}
+				for i := int32('A'); i <= int32('Z'); i++ {
+					set.Add(rune(i))
+				}
+				for i := int32('0'); i <= int32('9'); i++ {
+					set.Add(rune(i))
+				}
+				for i := int32('!'); i <= int32('/'); i++ {
+					set.Add(rune(i))
+				}
+				for i := int32(':'); i <= int32('@'); i++ {
+					set.Add(rune(i))
+				}
+				for i := int32('['); i <= int32('`'); i++ {
+					set.Add(rune(i))
+				}
+				for i := int32('{'); i <= int32('~'); i++ {
+					set.Add(rune(i))
+				}
+				set.Add(' ')
+
+				return set
+			}(),
+			opentype.FaceOptions{
+				Size: 64,
+				DPI:  72,
+			},
+		),
 
 		// mods
 		ping.FrontendPackage(),

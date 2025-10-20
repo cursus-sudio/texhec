@@ -11,7 +11,7 @@ require (
 	github.com/ogiusek/ioc/v2 v2.0.13
 	github.com/ogiusek/relay/v2 v2.0.6
 	github.com/veandco/go-sdl2 v0.4.40
-	golang.org/x/image v0.30.0
+	golang.org/x/image v0.32.0
 	shared v0.0.0
 )
 
@@ -30,7 +30,7 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/exp v0.0.0-20250911091902-df9299821621 // indirect
 	golang.org/x/sys v0.36.0 // indirect
-	golang.org/x/text v0.28.0 // indirect
+	golang.org/x/text v0.30.0 // indirect
 	modernc.org/libc v1.66.3 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect

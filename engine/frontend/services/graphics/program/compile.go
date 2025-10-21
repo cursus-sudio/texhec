@@ -52,7 +52,11 @@ func createLocations(t reflect.Type, program uint32) (any, error) {
 		uniformName := field.Tag.Get("uniform")
 
 		if uniformName == "" {
-			continue
+			err := errors.Join(
+				ErrNotALocation,
+				fmt.Errorf("all locations fields has to have `uniform` struct tag"),
+			)
+			return nil, err
 		}
 
 		if field.Type.Kind() != reflect.Int32 {

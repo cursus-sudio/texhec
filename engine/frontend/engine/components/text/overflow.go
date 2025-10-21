@@ -1,8 +1,8 @@
 package text
 
-type Overflow struct {
-	Visible bool
-}
+// type Overflow struct {
+// 	Visible bool
+// }
 
 const (
 	BreakNone uint8 = iota

@@ -17,9 +17,9 @@ type layoutServiceFactory struct {
 
 	defaultFontFamily text.FontFamily
 	defaultFontSize   text.FontSize
-	defaultOverflow   text.Overflow
-	defaultBreak      text.Break
-	defaultTextAlign  text.TextAlign
+	// defaultOverflow   text.Overflow
+	defaultBreak     text.Break
+	defaultTextAlign text.TextAlign
 }
 
 func newLayoutServiceFactory(
@@ -29,7 +29,7 @@ func newLayoutServiceFactory(
 
 	defaultFontFamily text.FontFamily,
 	defaultFontSize text.FontSize,
-	defaultOverflow text.Overflow,
+	// defaultOverflow text.Overflow,
 	defaultBreak text.Break,
 	defaultTextAlign text.TextAlign,
 ) LayoutServiceFactory {
@@ -40,9 +40,9 @@ func newLayoutServiceFactory(
 
 		defaultFontFamily: defaultFontFamily,
 		defaultFontSize:   defaultFontSize,
-		defaultOverflow:   defaultOverflow,
-		defaultBreak:      defaultBreak,
-		defaultTextAlign:  defaultTextAlign,
+		// defaultOverflow:   defaultOverflow,
+		defaultBreak:     defaultBreak,
+		defaultTextAlign: defaultTextAlign,
 	}
 }
 
@@ -54,7 +54,7 @@ func (f *layoutServiceFactory) New(world ecs.World) LayoutService {
 		f.fontsKeys,
 		f.defaultFontFamily,
 		f.defaultFontSize,
-		f.defaultOverflow,
+		// f.defaultOverflow,
 		f.defaultBreak,
 		f.defaultTextAlign,
 	)

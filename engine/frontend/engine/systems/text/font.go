@@ -29,6 +29,8 @@ type fontService struct {
 	usedGlyphs  datastructures.SparseSet[rune]
 	faceOptions opentype.FaceOptions
 	logger      logger.Logger
+
+	cellSize, yBaseline int
 }
 
 func newFontService(
@@ -36,12 +38,15 @@ func newFontService(
 	usedGlyphs datastructures.SparseSet[rune],
 	face opentype.FaceOptions,
 	logger logger.Logger,
+	cellSize, yBaseline int,
 ) FontService {
 	return &fontService{
 		assets,
 		usedGlyphs,
 		face,
 		logger,
+		cellSize,
+		yBaseline,
 	}
 }
 
@@ -72,44 +77,23 @@ func (s *fontService) AssetFont(assetID assets.AssetID) (Font, error) {
 			Src:  image.NewUniform(color.White),
 			Face: fontFace,
 		}
-		image := getLetterImage(drawer, glyph)
+		image := s.getLetterImage(drawer, glyph)
 		fontMeta.Images.Set(glyphID, image)
 	}
 
 	return fontMeta, nil
 }
 
-//	func getTextImage(drawer font.Drawer, text string) *image.RGBA {
-//		textBounds, _ := drawer.BoundString(text)
-//		// textWidth := textBounds.Max.X - textBounds.Min.X
-//		// textHeight := textBounds.Max.Y - textBounds.Min.Y
-//
-//		drawer.Dot = fixed.Point26_6{
-//			X: fixed.I(0) - textBounds.Min.X,
-//			Y: fixed.I(0) - textBounds.Min.Y,
-//		}
-//
-//		// rect := image.Rect(0, 0, textWidth.Ceil(), textHeight.Ceil())
-//		rect := image.Rect(0, 0, 64, 64)
-//		img := image.NewRGBA(rect)
-//		drawer.Dst = img
-//		drawer.DrawString(text)
-//		return img
-//	}
-
-const cellSize = 64
-const yBaseline = 52
-
-func getLetterImage(drawer font.Drawer, letter rune) *image.RGBA {
+func (s *fontService) getLetterImage(drawer font.Drawer, letter rune) *image.RGBA {
 	var text string = string(letter)
 	textBounds, _ := drawer.BoundString(text)
 
-	rect := image.Rect(0, 0, cellSize, cellSize)
+	rect := image.Rect(0, 0, s.cellSize, s.cellSize)
 	img := image.NewRGBA(rect)
 	drawer.Dst = img
 
 	dotX := fixed.I(0) - textBounds.Min.X
-	dotY := fixed.I(yBaseline)
+	dotY := fixed.I(s.yBaseline)
 
 	drawer.Dot = fixed.Point26_6{
 		X: dotX,

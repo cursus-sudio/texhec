@@ -2,7 +2,6 @@ package textsys
 
 import (
 	_ "embed"
-	"fmt"
 	"frontend/engine/components/groups"
 	"frontend/engine/components/projection"
 	"frontend/engine/components/text"
@@ -133,7 +132,6 @@ func (f *textRendererFactory) New(world ecs.World) (TextRenderer, error) {
 	)
 
 	addOrChangeListener := func(ei []ecs.EntityID) {
-		f.logger.Info(fmt.Sprintf("added len is %v\n", len(ei)))
 		for _, entity := range ei {
 			if prevBatch, ok := renderer.layoutsBatches.Get(entity); ok {
 				prevBatch.Release()
@@ -148,7 +146,6 @@ func (f *textRendererFactory) New(world ecs.World) (TextRenderer, error) {
 			batch := newLayoutBatch(f.vboFactory, layout)
 			renderer.layoutsBatches.Set(entity, batch)
 		}
-		f.logger.Info(fmt.Sprintf("after add existing len is %v\n", len(renderer.layoutsBatches.GetIndices())))
 	}
 	rmListener := func(ei []ecs.EntityID) {
 		for _, entity := range ei {
@@ -157,7 +154,6 @@ func (f *textRendererFactory) New(world ecs.World) (TextRenderer, error) {
 			}
 			renderer.layoutsBatches.Remove(entity)
 		}
-		f.logger.Info(fmt.Sprintf("after length existing len is %v\n", len(renderer.layoutsBatches.GetIndices())))
 	}
 
 	query.OnAdd(addOrChangeListener)
@@ -167,7 +163,7 @@ func (f *textRendererFactory) New(world ecs.World) (TextRenderer, error) {
 	arrays := []ecs.AnyComponentArray{
 		ecs.GetComponentsArray[text.Break](world.Components()),
 		ecs.GetComponentsArray[text.FontFamily](world.Components()),
-		ecs.GetComponentsArray[text.Overflow](world.Components()),
+		// ecs.GetComponentsArray[text.Overflow](world.Components()),
 		ecs.GetComponentsArray[text.FontSize](world.Components()),
 		ecs.GetComponentsArray[text.TextAlign](world.Components()),
 	}
@@ -180,7 +176,6 @@ func (f *textRendererFactory) New(world ecs.World) (TextRenderer, error) {
 
 	fontArray := ecs.GetComponentsArray[text.FontFamily](world.Components())
 	addFonts := func(ei []ecs.EntityID) {
-		f.logger.Info(fmt.Sprintf("added fonts %v\n", len(ei)))
 		for _, entity := range ei {
 			family, err := fontArray.GetComponent(entity)
 			if err != nil {

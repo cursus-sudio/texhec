@@ -17,7 +17,7 @@ out FS {
 } gs_out;
 
 uniform mat4 mvp;
-uniform float height;
+uniform vec2 offset;
 
 layout(std430, binding = 0) buffer GlyphWidths {
     float glyphWidths[];
@@ -28,11 +28,8 @@ layout(std430, binding = 0) buffer GlyphWidths {
 void main() {
     vec3 posIn = vec3(gs_in[0].pos, 0.);
     int glyph = gs_in[0].glyph;
-    float width = glyphWidths[glyph];
-    float height = 1;
 
     vec2 size = vec2(max(glyphWidths[glyph], 1), 1.);
-    size *= 2.5;
 
     // shared output
     gs_out.glyph = glyph;
@@ -40,8 +37,8 @@ void main() {
     for (int cornerX = 0; cornerX < 2; cornerX++) {
         for (int cornerY = 0; cornerY < 2; cornerY++) {
             vec4 pos = vec4(
-                    size.x * (posIn.x + cornerX),
-                    size.y * (posIn.y + cornerY) + height,
+                    size.x * (posIn.x + cornerX) + offset.x,
+                    size.y * (posIn.y + cornerY) + offset.y,
                     posIn.z,
                     1.);
 

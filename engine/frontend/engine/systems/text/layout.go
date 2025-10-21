@@ -1,7 +1,6 @@
 package textsys
 
 import (
-	"fmt"
 	"frontend/engine/components/text"
 	"frontend/engine/components/transform"
 	"shared/services/ecs"
@@ -11,7 +10,8 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-// note: glyph size is (0-1, 1) and in shader its multiplied in shader by font size
+// note: glyph size is (0-1(width is between), 1 (height is const)) and
+// in shader its multiplied in shader by font size
 type Glyph struct {
 	Pos   mgl32.Vec2
 	Glyph int32
@@ -33,9 +33,9 @@ type layoutService struct {
 	textArray       ecs.ComponentsArray[text.Text]
 	fontFamilyArray ecs.ComponentsArray[text.FontFamily]
 	fontSizeArray   ecs.ComponentsArray[text.FontSize]
-	overflowArray   ecs.ComponentsArray[text.Overflow]
-	breakArray      ecs.ComponentsArray[text.Break]
-	textAlignArray  ecs.ComponentsArray[text.TextAlign]
+	// overflowArray   ecs.ComponentsArray[text.Overflow]
+	breakArray     ecs.ComponentsArray[text.Break]
+	textAlignArray ecs.ComponentsArray[text.TextAlign]
 
 	logger      logger.Logger
 	fontService FontService
@@ -43,9 +43,9 @@ type layoutService struct {
 
 	defaultFontFamily text.FontFamily
 	defaultFontSize   text.FontSize
-	defaultOverflow   text.Overflow
-	defaultBreak      text.Break
-	defaultTextAlign  text.TextAlign
+	// defaultOverflow   text.Overflow
+	defaultBreak     text.Break
+	defaultTextAlign text.TextAlign
 }
 
 func newLayoutService(
@@ -57,7 +57,7 @@ func newLayoutService(
 
 	defaultFontFamily text.FontFamily,
 	defaultFontSize text.FontSize,
-	defaultOverflow text.Overflow,
+	// defaultOverflow text.Overflow,
 	defaultBreak text.Break,
 	defaultTextAlign text.TextAlign,
 ) LayoutService {
@@ -67,9 +67,9 @@ func newLayoutService(
 		textArray:       ecs.GetComponentsArray[text.Text](world.Components()),
 		fontFamilyArray: ecs.GetComponentsArray[text.FontFamily](world.Components()),
 		fontSizeArray:   ecs.GetComponentsArray[text.FontSize](world.Components()),
-		overflowArray:   ecs.GetComponentsArray[text.Overflow](world.Components()),
-		breakArray:      ecs.GetComponentsArray[text.Break](world.Components()),
-		textAlignArray:  ecs.GetComponentsArray[text.TextAlign](world.Components()),
+		// overflowArray:   ecs.GetComponentsArray[text.Overflow](world.Components()),
+		breakArray:     ecs.GetComponentsArray[text.Break](world.Components()),
+		textAlignArray: ecs.GetComponentsArray[text.TextAlign](world.Components()),
 
 		logger:      logger,
 		fontService: fontService,
@@ -77,9 +77,9 @@ func newLayoutService(
 
 		defaultFontFamily: defaultFontFamily,
 		defaultFontSize:   defaultFontSize,
-		defaultOverflow:   defaultOverflow,
-		defaultBreak:      defaultBreak,
-		defaultTextAlign:  defaultTextAlign,
+		// defaultOverflow:   defaultOverflow,
+		defaultBreak:     defaultBreak,
+		defaultTextAlign: defaultTextAlign,
 	}
 
 }
@@ -138,9 +138,10 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 
 	// create lines letters
 	lines := []line{{}}
+	lineHeight := 1
 
 	maxWidth := transfromComponent.Size.X() / float32(fontSize.FontSize)
-	s.logger.Info(fmt.Sprintf("%v\n", maxWidth))
+	maxHeight := transfromComponent.Size.Y() / float32(fontSize.FontSize)
 
 	// generate lines
 	var nextLetterIndex int = 0
@@ -196,7 +197,7 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 				if updatedLine.letters[i].letter != ' ' {
 					continue
 				}
-				lastLineLetterIndex = i
+				lastLineLetterIndex = i + 1
 				break
 			}
 		}
@@ -205,7 +206,7 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 			updatedLine.width = updatedLine.letters[lastLineLetterIndex].xPos
 			updatedLine.letters = updatedLine.letters[:lastLineLetterIndex]
 		}
-		nextLetterIndex = letterIndex + 1 + (lastLineLetterIndex - defaultLastLineLetterIndex)
+		nextLetterIndex = letterIndex + (lastLineLetterIndex - defaultLastLineLetterIndex)
 
 		lines[len(lines)-1] = updatedLine
 		lines = append(lines, line{})
@@ -217,21 +218,27 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 
 	// modify lines
 	for _, line := range lines {
-		offset := (maxWidth - line.width) * textAlign.TextAlign
+		offset := (maxWidth - line.width) * textAlign.Vertical
 		for i := 0; i < len(line.letters); i++ {
 			line.letters[i].xPos += offset
 		}
 	}
 
+	var heightOffset float32 = 0
+	{
+		linesCount := float32(len(lines))
+		height := linesCount * float32(lineHeight)
+		heightOffset = (maxHeight - height) * textAlign.Horizontal
+	}
+
 	// generate glpyhs
 	glyphs := []Glyph{}
-	lineHeight := 1
 	for y, line := range lines {
 		for _, letter := range line.letters {
 			glyph := Glyph{
 				Pos: mgl32.Vec2{
 					letter.xPos,
-					float32(y * int(lineHeight)),
+					heightOffset + float32(y*int(lineHeight)),
 				},
 				Glyph: letter.letter,
 			}
@@ -244,8 +251,5 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 		FontSize: uint32(fontSize.FontSize),
 		Font:     s.fontsKeys.GetKey(fontFamily.FontAsset),
 	}
-	msg := fmt.Sprintf("text is \"%v\"\nlines are \"%v\"\nglyphs are \"%v\"", textComponent.Text, lines, glyphs)
-	print(fmt.Sprintf("%s\n", msg))
-	s.logger.Info(msg)
 	return layout, nil
 }

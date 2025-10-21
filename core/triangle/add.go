@@ -104,20 +104,12 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				ecs.SaveComponent(ctx.World.Components(), otherBtn, texture.NewTexture(Texture4AssetID))
 				// ecs.SaveComponent(ctx.World.Components(), otherBtn, genericrenderersys.PipelineComponent{})
 				ecs.SaveComponent(ctx.World.Components(), otherBtn, projection.NewUsedProjection[projection.Ortho]())
-				// ecs.SaveComponent(ctx.World.Components(), otherBtn, anchor.NewParentAnchor(otherBtn).Ptr().
-				// 	SetPivotPoint(mgl32.Vec3{0, 1, .5}).
-				// 	Val())
-				// ecs.SaveComponent(ctx.World.Components(), otherBtn, transform.NewPivotPoint(mgl32.Vec3{0, 1, .5}))
-
-				// ecs.SaveComponent(ctx.World.Components(), otherBtn, text.Text{Text: "1\n2\n"})
 				ecs.SaveComponent(ctx.World.Components(), otherBtn, text.Text{
-					// Text: "1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 ",
-					Text: "123412341234123412341234123412341234123412341234",
+					Text: "1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 1234 ",
 				})
-				ecs.SaveComponent(ctx.World.Components(), otherBtn, text.Break{Break: text.BreakAny})
-				// ecs.SaveComponent(ctx.World.Components(), otherBtn, text.Break{Break: text.BreakWord})
-				ecs.SaveComponent(ctx.World.Components(), otherBtn, text.FontSize{FontSize: 16})
-				// ecs.SaveComponent(ctx.World.Components(), otherBtn, text.FontSize{FontSize: 300})
+				ecs.SaveComponent(ctx.World.Components(), otherBtn, text.Break{Break: text.BreakWord})
+				ecs.SaveComponent(ctx.World.Components(), otherBtn, text.TextAlign{Vertical: .5, Horizontal: .5})
+				ecs.SaveComponent(ctx.World.Components(), otherBtn, text.FontSize{FontSize: 14})
 
 				ecs.SaveComponent(ctx.World.Components(), otherBtn, projection.NewUsedProjection[projection.Ortho]())
 				ecs.SaveComponent(ctx.World.Components(), otherBtn, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())

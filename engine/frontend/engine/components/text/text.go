@@ -10,7 +10,7 @@ type Text struct {
 
 type TextAlign struct {
 	// value between 0 and 1 where 0 means aligned to left and 1 aligned to right
-	TextAlign float32 // default is 0
+	Vertical, Horizontal float32 // default is 0
 }
 
 type FontFamily struct {

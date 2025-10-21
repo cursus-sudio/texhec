@@ -1,7 +1,6 @@
 package textsys
 
 import (
-	"fmt"
 	"frontend/engine/components/groups"
 	"frontend/engine/components/projection"
 	"frontend/engine/components/transform"
@@ -24,8 +23,8 @@ import (
 // - takes assets and returns (size, uv, texture in array)
 
 type locations struct {
-	Mvp    int32 `location:"mvp"`
-	Height int32 `location:"height"`
+	Mvp    int32 `uniform:"mvp"`
+	Offset int32 `uniform:"offset"`
 }
 
 type TextRenderer struct {
@@ -139,18 +138,17 @@ func (s *TextRenderer) ensureFontExists(asset assets.AssetID) error {
 
 func (s *TextRenderer) Listen(rendersys.RenderEvent) {
 	s.program.Use()
-
-	// s.logger.Info(fmt.Sprintf(
-	// 	"entities length during render is %v; ptr is %p\n",
-	// 	len(s.layoutsBatches.GetIndices()),
-	// 	s.layoutsBatches,
-	// ))
+	gl.Enable(gl.BLEND)
+	gl.DepthMask(false)
+	defer func() {
+		gl.Disable(gl.BLEND)
+		gl.DepthMask(true)
+	}()
 
 	for _, entity := range s.layoutsBatches.GetIndices() {
 		layout, _ := s.layoutsBatches.Get(entity)
 		font, ok := s.fontsBatches.Get(layout.Layout.Font)
 		if !ok {
-			s.logger.Info(fmt.Sprintf("fonts len is %v\n", len(s.fontsBatches.GetIndices())))
 			s.layoutsBatches.Remove(entity)
 			continue
 		}
@@ -159,7 +157,6 @@ func (s *TextRenderer) Listen(rendersys.RenderEvent) {
 		if err != nil {
 			entityTransform = transform.NewTransform()
 		}
-		entityTransform.SetSize(mgl32.Vec3{float32(layout.Layout.FontSize), float32(layout.Layout.FontSize), 1})
 
 		entityGroups, err := s.groupsArray.GetComponent(entity)
 		if err != nil {
@@ -171,9 +168,19 @@ func (s *TextRenderer) Listen(rendersys.RenderEvent) {
 		gl.BindBuffer(gl.SHADER_STORAGE_BUFFER, font.glyphsWidth.ID())
 		layout.vao.Use()
 
-		// s.logger.Info(fmt.Sprintf("glyphs are %v with widths %v\n", layout.Layout.Glyphs, font.font.GlyphsWidth.GetValues()))
-		// height := entityTransform.Size.Y()
-		var height float32 = 0
+		{
+			offset := mgl32.Vec2{
+				(-entityTransform.Size.X() / 2) / float32(layout.Layout.FontSize),
+				(entityTransform.Size.Y()/2 - float32(layout.Layout.FontSize)) / float32(layout.Layout.FontSize),
+			}
+			gl.Uniform2f(s.locations.Offset, offset.X(), offset.Y())
+		}
+
+		entityTransform.SetSize(mgl32.Vec3{
+			float32(layout.Layout.FontSize) * 2,
+			float32(layout.Layout.FontSize) * 2,
+			float32(layout.Layout.FontSize) * 2,
+		})
 
 		for _, cameraEntity := range s.cameraQuery.Entities() {
 			camera, err := s.cameraCtors.Get(cameraEntity, ecs.GetComponentType(projection.Ortho{}))
@@ -189,21 +196,11 @@ func (s *TextRenderer) Listen(rendersys.RenderEvent) {
 			if !cameraGroups.SharesAnyGroup(entityGroups) {
 				continue
 			}
-			entityTransform.SetSize(mgl32.Vec3{
-				float32(layout.Layout.FontSize),
-				float32(layout.Layout.FontSize),
-				float32(layout.Layout.FontSize),
-			})
 
 			mvp := camera.Mat4().Mul4(entityTransform.Mat4())
 			gl.UniformMatrix4fv(s.locations.Mvp, 1, false, &mvp[0])
-			gl.Uniform1f(s.locations.Height, height)
 
-			gl.Enable(gl.BLEND)
-			gl.DepthMask(false)
 			gl.DrawArrays(gl.POINTS, 0, layout.verticesCount)
-			gl.Disable(gl.BLEND)
-			gl.DepthMask(true)
 		}
 	}
 }

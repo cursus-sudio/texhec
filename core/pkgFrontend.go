@@ -80,10 +80,7 @@ func frontendDic(
 	gl.Disable(gl.CULL_FACE)
 	gl.DepthFunc(gl.LESS)
 
-	// gl.Disable(gl.BLEND)
-	// gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-	// gl.DepthMask(false)
 
 	// gl.DepthFunc(gl.GREATER)
 	if err := window.GLMakeCurrent(ctx); err != nil {
@@ -146,9 +143,9 @@ func frontendDic(
 		textsys.Package(
 			text.FontFamily{FontAsset: triangle.FontAssetID},
 			text.FontSize{FontSize: 16},
-			text.Overflow{Visible: false},
+			// text.Overflow{Visible: false},
 			text.Break{Break: text.BreakWord},
-			text.TextAlign{TextAlign: 0},
+			text.TextAlign{Vertical: 0, Horizontal: 0},
 			func() datastructures.SparseSet[rune] {
 				set := datastructures.NewSparseSet[rune]()
 				for i := int32('a'); i <= int32('z'); i++ {
@@ -180,6 +177,7 @@ func frontendDic(
 				Size: 64,
 				DPI:  72,
 			},
+			52,
 		),
 
 		// mods

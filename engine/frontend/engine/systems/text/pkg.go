@@ -18,32 +18,35 @@ import (
 type Pkg struct {
 	defaultFontFamily text.FontFamily
 	defaultFontSize   text.FontSize
-	defaultOverflow   text.Overflow
-	defaultBreak      text.Break
-	defaultTextAlign  text.TextAlign
+	// defaultOverflow   text.Overflow
+	defaultBreak     text.Break
+	defaultTextAlign text.TextAlign
 
 	usedGlyphs  datastructures.SparseSet[rune]
 	faceOptions opentype.FaceOptions
+	yBaseline   int
 }
 
 func Package(
 	defaultFontFamily text.FontFamily,
 	defaultFontSize text.FontSize,
-	defaultOverflow text.Overflow,
+	// defaultOverflow text.Overflow,
 	defaultBreak text.Break,
 	defaultTextAlign text.TextAlign,
 
 	usedGlyphs datastructures.SparseSet[rune],
 	faceOptions opentype.FaceOptions,
+	yBaseline int,
 ) ioc.Pkg {
 	return Pkg{
 		defaultFontFamily: defaultFontFamily,
 		defaultFontSize:   defaultFontSize,
-		defaultOverflow:   defaultOverflow,
-		defaultBreak:      defaultBreak,
-		defaultTextAlign:  defaultTextAlign,
-		usedGlyphs:        usedGlyphs,
-		faceOptions:       faceOptions,
+		// defaultOverflow:   defaultOverflow,
+		defaultBreak:     defaultBreak,
+		defaultTextAlign: defaultTextAlign,
+		usedGlyphs:       usedGlyphs,
+		faceOptions:      faceOptions,
+		yBaseline:        yBaseline,
 	}
 }
 
@@ -54,6 +57,8 @@ func (pkg Pkg) Register(b ioc.Builder) {
 			pkg.usedGlyphs,
 			pkg.faceOptions,
 			ioc.Get[logger.Logger](c),
+			int(pkg.faceOptions.Size),
+			pkg.yBaseline,
 		)
 	})
 
@@ -64,7 +69,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 			ioc.Get[FontKeys](c),
 			pkg.defaultFontFamily,
 			pkg.defaultFontSize,
-			pkg.defaultOverflow,
+			// pkg.defaultOverflow,
 			pkg.defaultBreak,
 			pkg.defaultTextAlign,
 		)
@@ -106,19 +111,4 @@ func (pkg Pkg) Register(b ioc.Builder) {
 			return vbo
 		}
 	})
-	// ioc.RegisterSingleton(b, func(c ioc.Dic) vbo.VBOFactory[Vertex] {
-	// 	return func() vbo.VBOSetter[Vertex] {
-	// 		vbo := vbo.NewVBO[Vertex](func() {
-	// 			gl.VertexAttribPointerWithOffset(0, 3, gl.FLOAT, false,
-	// 				int32(unsafe.Sizeof(Vertex{})), uintptr(unsafe.Offsetof(Vertex{}.Pos)))
-	// 			gl.EnableVertexAttribArray(0)
-	//
-	// 			gl.VertexAttribPointerWithOffset(1, 2, gl.FLOAT, false,
-	// 				int32(unsafe.Sizeof(Vertex{})), uintptr(unsafe.Offsetof(Vertex{}.TexturePos)))
-	// 			gl.EnableVertexAttribArray(1)
-	// 		})
-	// 		return vbo
-	// 	}
-	// })
-
 }

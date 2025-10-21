@@ -18,10 +18,6 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-// make a pipeline which:
-// - takes these components and returns vertices (glyphs)
-// - takes assets and returns (size, uv, texture in array)
-
 type locations struct {
 	Mvp    int32 `uniform:"mvp"`
 	Offset int32 `uniform:"offset"`
@@ -42,14 +38,11 @@ type TextRenderer struct {
 
 	textureFactory texturearray.Factory
 
-	// ensure font key service exists with available keys tracker
 	fontKeys     FontKeys
 	fontsBatches datastructures.SparseArray[FontKey, fontBatch]
 
 	layoutsBatches datastructures.SparseArray[ecs.EntityID, layoutBatch]
 }
-
-// this may be used in textRendererFactory.go
 
 func (s *TextRenderer) ensureOnlyFontsExist(assets []assets.AssetID) error {
 	wantedKeys := datastructures.NewSparseSet[FontKey]()

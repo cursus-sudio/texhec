@@ -11,5 +11,4 @@ out vec4 fragColor;
 
 void main() {
     fragColor = texture(tex, vec3(fs.uv.x, -fs.uv.y, fs.glyph));
-    // fragColor = vec4(fs.uv.x, fs.uv.y, 0, 1);
 }

@@ -235,12 +235,12 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			}
 
 			{
-				// tileFactory := ioc.Get[tile.TileRenderSystemFactory](c)
-				// s, err := tileFactory.NewSystem(ctx.World)
-				// if err != nil {
-				// 	ioc.Get[logger.Logger](c).Error(err)
-				// }
-				// events.Listen(ctx.EventsBuilder, s.Listen)
+				tileFactory := ioc.Get[tile.TileRenderSystemFactory](c)
+				s, err := tileFactory.NewSystem(ctx.World)
+				if err != nil {
+					ioc.Get[logger.Logger](c).Error(err)
+				}
+				events.Listen(ctx.EventsBuilder, s.Listen)
 			}
 
 			rand := rand.New(rand.NewPCG(2077, 7137))
@@ -298,6 +298,13 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			)
 			events.Listen(ctx.EventsBuilder, dragSys.Listen1)
 			events.Listen(ctx.EventsBuilder, dragSys.Listen2)
+
+			wasdSys := mobilecamerasystem.NewWasdSystem(
+				ctx.World,
+				ioc.Get[cameras.CameraConstructors](c),
+				1.0,
+			)
+			events.ListenE(ctx.EventsBuilder, wasdSys.Listen)
 		})
 		return b
 	})

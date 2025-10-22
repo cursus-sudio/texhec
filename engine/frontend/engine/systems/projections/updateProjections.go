@@ -108,8 +108,9 @@ func (s UpdateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
 		transformTransaction.SaveComponent(entity, transformComponent)
 
 		ortho := projection.NewOrtho(
-			w/resizeOrtho.Zoom, h/resizeOrtho.Zoom,
+			w, h,
 			resizeOrtho.Near, resizeOrtho.Far,
+			resizeOrtho.Zoom,
 		)
 		originalOrtho, _ := s.orthoArray.GetComponent(entity)
 		if originalOrtho == ortho {

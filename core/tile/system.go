@@ -17,6 +17,7 @@ import (
 	"sync"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/ogiusek/events"
 )
 
 //go:embed shader.vert
@@ -32,7 +33,7 @@ type TileType struct {
 	Texture image.Image
 }
 
-type System struct {
+type system struct {
 	program   program.Program
 	locations locations
 
@@ -63,7 +64,11 @@ type locations struct {
 	GridDepth int32 `uniform:"gridDepth"` // float32
 }
 
-func (s *System) Listen(rendersys.RenderEvent) {
+func (s *system) Register(b events.Builder) {
+	events.Listen(b, s.Listen)
+}
+
+func (s *system) Listen(rendersys.RenderEvent) {
 	if s.changed {
 		s.changeMutex.Lock()
 		s.vertices.SetVertices(s.tiles.GetValues())

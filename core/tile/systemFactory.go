@@ -24,11 +24,13 @@ import (
 )
 
 type register struct {
+	program      program.Program
 	textureArray texturearray.TextureArray
 	vao          vao.VAO
 }
 
 func (r register) Release() {
+	r.program.Release()
 	r.textureArray.Release()
 	r.vao.Release()
 }
@@ -86,7 +88,7 @@ func (factory TileRenderSystemFactory) AddType(addedAssets datastructures.Sparse
 	}
 }
 
-func (factory TileRenderSystemFactory) NewSystem(world ecs.World) (*System, error) {
+func (factory TileRenderSystemFactory) NewSystem(world ecs.World) (ecs.SystemRegister, error) {
 	vert, err := shader.NewShader(vertSource, shader.VertexShader)
 	if err != nil {
 		return nil, err
@@ -132,10 +134,10 @@ func (factory TileRenderSystemFactory) NewSystem(world ecs.World) (*System, erro
 	changeMutex := &sync.Mutex{}
 	tiles := datastructures.NewSparseArray[ecs.EntityID, TileComponent]()
 
-	r := register{textureArray, VAO}
+	r := register{p, textureArray, VAO}
 	world.SaveRegister(r)
 
-	s := &System{
+	s := system{
 		program:   p,
 		locations: locations,
 
@@ -212,5 +214,5 @@ func (factory TileRenderSystemFactory) NewSystem(world ecs.World) (*System, erro
 		}
 	})
 
-	return s, nil
+	return &s, nil
 }

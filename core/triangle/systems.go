@@ -9,13 +9,14 @@ import (
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/ogiusek/events"
 )
 
 type ChangeTransformOverTimeComponent struct {
 	T time.Duration
 }
 
-type ChangeTransformOverTimeSystem struct {
+type changeTransformOverTimeSystem struct {
 	World                ecs.World
 	ChangeTransformArray ecs.ComponentsArray[ChangeTransformOverTimeComponent]
 	TransformArray       ecs.ComponentsArray[transform.Transform]
@@ -26,12 +27,12 @@ type ChangeTransformOverTimeSystem struct {
 func NewChangeTransformOverTimeSystem(
 	world ecs.World,
 	logger logger.Logger,
-) *ChangeTransformOverTimeSystem {
+) ecs.SystemRegister {
 	liveQuery := world.QueryEntitiesWithComponents(
 		ecs.GetComponentType(ChangeTransformOverTimeComponent{}),
 		ecs.GetComponentType(transform.Transform{}),
 	)
-	return &ChangeTransformOverTimeSystem{
+	return &changeTransformOverTimeSystem{
 		World:                world,
 		ChangeTransformArray: ecs.GetComponentsArray[ChangeTransformOverTimeComponent](world.Components()),
 		TransformArray:       ecs.GetComponentsArray[transform.Transform](world.Components()),
@@ -40,7 +41,11 @@ func NewChangeTransformOverTimeSystem(
 	}
 }
 
-func (s *ChangeTransformOverTimeSystem) Listen(args frames.FrameEvent) {
+func (s *changeTransformOverTimeSystem) Register(b events.Builder) {
+	events.Listen(b, s.Listen)
+}
+
+func (s *changeTransformOverTimeSystem) Listen(args frames.FrameEvent) {
 	transformTransaction := s.TransformArray.Transaction()
 	changeTransaction := s.ChangeTransformArray.Transaction()
 	for _, entity := range s.LiveQuery.Entities() {
@@ -64,10 +69,6 @@ func (s *ChangeTransformOverTimeSystem) Listen(args frames.FrameEvent) {
 
 		scaleFactor := (1 + float32(t.Seconds())) / (1 + float32(t.Seconds()-args.Delta.Seconds()))
 		transformComponent.Size = transformComponent.Size.Mul(scaleFactor)
-		// transformComponent.Size[0]*= scaleFactor
-		// transformComponent.Size.Y *= scaleFactor
-		// transformComponent.Size.Z *= scaleFactor
-		// transformComponent.Pos.X = float32(t.Seconds()) * 100
 
 		transformTransaction.SaveComponent(entity, transformComponent)
 		changeTransaction.SaveComponent(entity, changeTransformOverTimeComponent)

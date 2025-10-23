@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ogiusek/events"
 	"github.com/ogiusek/relay/v2"
 )
 
@@ -46,9 +47,9 @@ func NewToggledSystem(
 	world ecs.World,
 	scene2 scenes.SceneId,
 	toggleTreshold time.Duration,
-) toggleSystem {
+) ecs.SystemRegister {
 	liveQuery := world.QueryEntitiesWithComponents(ecs.GetComponentType(someComponent{}))
-	return toggleSystem{
+	return &toggleSystem{
 		SceneManager:   sceneManager,
 		World:          world,
 		Toggled:        false,
@@ -56,6 +57,10 @@ func NewToggledSystem(
 		ToggleTreshold: toggleTreshold,
 		LiveQuery:      liveQuery,
 	}
+}
+
+func (s *toggleSystem) Register(b events.Builder) {
+	events.ListenE(b, s.Listen)
 }
 
 func (system *toggleSystem) Listen(args frames.FrameEvent) error {
@@ -98,15 +103,19 @@ func NewSomeSystem(
 	world ecs.World,
 	backend connection.Connection,
 	console console.Console,
-) someSystem {
+) ecs.SystemRegister {
 	liveQuery := world.QueryEntitiesWithComponents(ecs.GetComponentType(someComponent{}))
-	return someSystem{
+	return &someSystem{
 		SceneManager: sceneMagener,
 		World:        world,
 		Backend:      backend,
 		Console:      console,
 		LiveQuery:    liveQuery,
 	}
+}
+
+func (s *someSystem) Register(b events.Builder) {
+	events.ListenE(b, s.Listen)
 }
 
 var format = "02-01-2006 15:04:05"

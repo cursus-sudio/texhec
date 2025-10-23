@@ -179,9 +179,8 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			}
 			ecs.RegisterSystems(ctx.EventsBuilder,
 				genericRenderer,
+				NewChangeTransformOverTimeSystem(ctx.World, ioc.Get[logger.Logger](c)),
 			)
-			system := NewChangeTransformOverTimeSystem(ctx.World, ioc.Get[logger.Logger](c))
-			events.Listen(ctx.EventsBuilder, system.Listen)
 		})
 
 		b.OnLoad(func(ctx scenes.SceneCtx) {
@@ -244,7 +243,9 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				if err != nil {
 					ioc.Get[logger.Logger](c).Error(err)
 				}
-				events.Listen(ctx.EventsBuilder, s.Listen)
+				ecs.RegisterSystems(ctx.EventsBuilder,
+					s,
+				)
 			}
 
 			rand := rand.New(rand.NewPCG(2077, 7137))

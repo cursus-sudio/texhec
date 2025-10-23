@@ -24,7 +24,7 @@ type RayChangedTargetEvent struct {
 	EntityID       *ecs.EntityID
 }
 
-type CameraRaySystem struct {
+type cameraRaySystem struct {
 	world           ecs.World
 	transformArray  ecs.ComponentsArray[transform.Transform]
 	broadCollisions broadcollision.CollisionDetectionService
@@ -42,8 +42,8 @@ func NewCameraRaySystem(
 	window window.Api,
 	events events.Events,
 	cameraCtors cameras.CameraConstructors,
-) CameraRaySystem {
-	return CameraRaySystem{
+) ecs.SystemRegister {
+	return &cameraRaySystem{
 		world:           world,
 		transformArray:  ecs.GetComponentsArray[transform.Transform](world.Components()),
 		broadCollisions: collider,
@@ -55,7 +55,11 @@ func NewCameraRaySystem(
 	}
 }
 
-func (s *CameraRaySystem) Listen(args ShootRayEvent) error {
+func (s *cameraRaySystem) Register(b events.Builder) {
+	events.ListenE(b, s.Listen)
+}
+
+func (s *cameraRaySystem) Listen(args ShootRayEvent) error {
 	mousePos := s.window.NormalizeMousePos(s.window.GetMousePos())
 
 	p, err := ecs.GetRegister[worldprojections.WorldProjectionsRegister](s.world)

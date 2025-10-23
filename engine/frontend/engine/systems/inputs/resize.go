@@ -1,17 +1,24 @@
 package inputssys
 
 import (
+	"shared/services/ecs"
+
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/ogiusek/events"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-type ResizeSystem struct{}
+type resizeSystem struct{}
 
-func NewResizeSystem() ResizeSystem {
-	return ResizeSystem{}
+func NewResizeSystem() ecs.SystemRegister {
+	return &resizeSystem{}
 }
 
-func (system ResizeSystem) Listen(e sdl.WindowEvent) {
+func (s *resizeSystem) Register(b events.Builder) {
+	events.Listen(b, s.Listen)
+}
+
+func (system *resizeSystem) Listen(e sdl.WindowEvent) {
 	if e.Event != sdl.WINDOWEVENT_RESIZED {
 		return
 	}

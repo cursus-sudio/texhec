@@ -16,6 +16,7 @@ import (
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/ogiusek/events"
 )
 
 type locations struct {
@@ -23,7 +24,7 @@ type locations struct {
 	Offset int32 `uniform:"offset"`
 }
 
-type TextRenderer struct {
+type textRenderer struct {
 	world          ecs.World
 	groupsArray    ecs.ComponentsArray[groups.Groups]
 	transformArray ecs.ComponentsArray[transform.Transform]
@@ -44,7 +45,7 @@ type TextRenderer struct {
 	layoutsBatches datastructures.SparseArray[ecs.EntityID, layoutBatch]
 }
 
-func (s *TextRenderer) ensureOnlyFontsExist(assets []assets.AssetID) error {
+func (s *textRenderer) ensureOnlyFontsExist(assets []assets.AssetID) error {
 	wantedKeys := datastructures.NewSparseSet[FontKey]()
 	for _, asset := range assets {
 		wantedKeys.Add(s.fontKeys.GetKey(asset))
@@ -88,7 +89,7 @@ func (s *TextRenderer) ensureOnlyFontsExist(assets []assets.AssetID) error {
 	return nil
 }
 
-func (s *TextRenderer) ensureFontKeyExists(key FontKey) error {
+func (s *textRenderer) ensureFontKeyExists(key FontKey) error {
 	asset, ok := s.fontKeys.GetAsset(key)
 	if !ok {
 		return httperrors.Err500
@@ -110,7 +111,7 @@ func (s *TextRenderer) ensureFontKeyExists(key FontKey) error {
 	return nil
 }
 
-func (s *TextRenderer) ensureFontExists(asset assets.AssetID) error {
+func (s *textRenderer) ensureFontExists(asset assets.AssetID) error {
 	key := s.fontKeys.GetKey(asset)
 	if batch, ok := s.fontsBatches.Get(key); ok {
 		batch.Release()
@@ -129,7 +130,11 @@ func (s *TextRenderer) ensureFontExists(asset assets.AssetID) error {
 	return nil
 }
 
-func (s *TextRenderer) Listen(rendersys.RenderEvent) {
+func (s *textRenderer) Register(b events.Builder) {
+	events.Listen(b, s.Listen)
+}
+
+func (s *textRenderer) Listen(rendersys.RenderEvent) {
 	s.program.Use()
 	gl.Enable(gl.BLEND)
 	gl.DepthMask(false)
@@ -198,7 +203,7 @@ func (s *TextRenderer) Listen(rendersys.RenderEvent) {
 	}
 }
 
-func (s TextRenderer) Release() {
+func (s textRenderer) Release() {
 	for _, batch := range s.fontsBatches.GetValues() {
 		batch.Release()
 	}

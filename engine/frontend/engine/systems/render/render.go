@@ -13,7 +13,7 @@ import (
 
 type RenderEvent struct{}
 
-type RenderSystem struct {
+type renderSystem struct {
 	world  ecs.World
 	events events.Events
 	assets assets.Assets
@@ -29,8 +29,8 @@ func NewRenderSystem(
 	events events.Events,
 	window window.Api,
 	bufferCount int,
-) RenderSystem {
-	return RenderSystem{
+) ecs.SystemRegister {
+	return &renderSystem{
 		world:  world,
 		events: events,
 		window: window,
@@ -41,7 +41,11 @@ func NewRenderSystem(
 	}
 }
 
-func (s *RenderSystem) Listen(args frames.FrameEvent) error {
+func (s *renderSystem) Register(b events.Builder) {
+	events.ListenE(b, s.Listen)
+}
+
+func (s *renderSystem) Listen(args frames.FrameEvent) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 

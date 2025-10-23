@@ -5,16 +5,18 @@ import (
 	"frontend/engine/components/transform"
 	"frontend/engine/tools/broadcollision"
 	"shared/services/ecs"
+
+	"github.com/ogiusek/events"
 )
 
-type ColliderSystem struct {
+type colliderSystem struct {
 	world ecs.World
 }
 
 func NewColliderSystem(
 	world ecs.World,
 	serviceFactory broadcollision.CollisionServiceFactory,
-) ColliderSystem {
+) ecs.SystemRegister {
 	query := world.QueryEntitiesWithComponents(
 		ecs.GetComponentType(transform.Transform{}),
 		ecs.GetComponentType(collider.Collider{}),
@@ -31,5 +33,7 @@ func NewColliderSystem(
 		service := serviceFactory(world)
 		service.Remove(ei...)
 	})
-	return ColliderSystem{world}
+	return &colliderSystem{world}
 }
+
+func (s *colliderSystem) Register(b events.Builder) {}

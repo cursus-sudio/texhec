@@ -9,10 +9,11 @@ import (
 	"shared/services/ecs"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/ogiusek/events"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-type WasdMoveSystem struct {
+type wasdMoveSystem struct {
 	world                ecs.World
 	transformArray       ecs.ComponentsArray[transform.Transform]
 	orthoArray           ecs.ComponentsArray[projection.Ortho]
@@ -27,8 +28,8 @@ func NewWasdSystem(
 	world ecs.World,
 	cameraCtors cameras.CameraConstructors,
 	cameraSpeed float32,
-) WasdMoveSystem {
-	return WasdMoveSystem{
+) ecs.SystemRegister {
+	return &wasdMoveSystem{
 		world:                world,
 		transformArray:       ecs.GetComponentsArray[transform.Transform](world.Components()),
 		orthoArray:           ecs.GetComponentsArray[projection.Ortho](world.Components()),
@@ -44,7 +45,11 @@ func NewWasdSystem(
 	}
 }
 
-func (s *WasdMoveSystem) Listen(event frames.FrameEvent) error {
+func (s *wasdMoveSystem) Register(b events.Builder) {
+	events.ListenE(b, s.Listen)
+}
+
+func (s *wasdMoveSystem) Listen(event frames.FrameEvent) error {
 	var moveVerticaly float32 = 0
 	var moveHorizontaly float32 = 0
 	{

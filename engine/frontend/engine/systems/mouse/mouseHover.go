@@ -7,7 +7,7 @@ import (
 	"github.com/ogiusek/events"
 )
 
-type HoverSystem struct {
+type hoverSystem struct {
 	world            ecs.World
 	mouseEventsArray ecs.ComponentsArray[mouse.MouseEvents]
 	hoveredArray     ecs.ComponentsArray[mouse.Hovered]
@@ -15,8 +15,8 @@ type HoverSystem struct {
 	targets          map[ecs.ComponentType]ecs.EntityID
 }
 
-func NewHoverSystem(world ecs.World, events events.Events) HoverSystem {
-	return HoverSystem{
+func NewHoverSystem(world ecs.World, events events.Events) ecs.SystemRegister {
+	return &hoverSystem{
 		world:            world,
 		mouseEventsArray: ecs.GetComponentsArray[mouse.MouseEvents](world.Components()),
 		hoveredArray:     ecs.GetComponentsArray[mouse.Hovered](world.Components()),
@@ -25,7 +25,7 @@ func NewHoverSystem(world ecs.World, events events.Events) HoverSystem {
 	}
 }
 
-func (s *HoverSystem) handleMouseLeave(entity ecs.EntityID) {
+func (s *hoverSystem) handleMouseLeave(entity ecs.EntityID) {
 	s.hoveredArray.RemoveComponent(entity)
 
 	mouseEvents, err := s.mouseEventsArray.GetComponent(entity)
@@ -37,7 +37,11 @@ func (s *HoverSystem) handleMouseLeave(entity ecs.EntityID) {
 	}
 }
 
-func (s *HoverSystem) Listen(event RayChangedTargetEvent) {
+func (s *hoverSystem) Register(b events.Builder) {
+	events.Listen(b, s.Listen)
+}
+
+func (s *hoverSystem) Listen(event RayChangedTargetEvent) {
 	if entity, ok := s.targets[event.ProjectionType]; ok {
 		s.handleMouseLeave(entity)
 	}

@@ -6,9 +6,12 @@ import (
 	"shared/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/ogiusek/events"
 )
 
-func NewPivotPointSystem(world ecs.World, logger logger.Logger) {
+type pivotPointSystem struct{}
+
+func NewPivotPointSystem(world ecs.World, logger logger.Logger) ecs.SystemRegister {
 	query := world.QueryEntitiesWithComponents(
 		ecs.GetComponentType(transform.Transform{}),
 		ecs.GetComponentType(transform.PivotPoint{}),
@@ -41,4 +44,8 @@ func NewPivotPointSystem(world ecs.World, logger logger.Logger) {
 	}
 	query.OnAdd(listener)
 	query.OnChange(listener)
+
+	return &pivotPointSystem{}
 }
+
+func (s *pivotPointSystem) Register(b events.Builder) {}

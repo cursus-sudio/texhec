@@ -21,6 +21,7 @@ import (
 	"shared/services/logger"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/ogiusek/events"
 )
 
 //go:embed s.vert
@@ -65,7 +66,7 @@ func (r releasable) Release() {
 
 //
 
-type System struct {
+type system struct {
 	world                ecs.World
 	transformArray       ecs.ComponentsArray[transform.Transform]
 	groupsArray          ecs.ComponentsArray[groups.Groups]
@@ -92,7 +93,7 @@ func NewSystem(
 	vboFactory vbo.VBOFactory[Vertex],
 	camerasCtors cameras.CameraConstructors,
 	entitiesQueryAdditionalArguments []ecs.ComponentType,
-) (*System, error) {
+) (ecs.SystemRegister, error) {
 	vert, err := shader.NewShader(vertSource, shader.VertexShader)
 	if err != nil {
 		return nil, err
@@ -122,7 +123,7 @@ func NewSystem(
 
 	world.SaveRegister(releasable)
 
-	system := &System{
+	system := &system{
 		world:                world,
 		transformArray:       ecs.GetComponentsArray[transform.Transform](world.Components()),
 		groupsArray:          ecs.GetComponentsArray[groups.Groups](world.Components()),
@@ -153,9 +154,13 @@ func NewSystem(
 	return system, nil
 }
 
+func (s *system) Register(b events.Builder) {
+	events.ListenE(b, s.Listen)
+}
+
 //
 
-func (m *System) getTexture(asset assets.AssetID) (texture.Texture, error) {
+func (m *system) getTexture(asset assets.AssetID) (texture.Texture, error) {
 	if texture, ok := m.textures[asset]; ok {
 		return texture, nil
 	}
@@ -171,7 +176,7 @@ func (m *System) getTexture(asset assets.AssetID) (texture.Texture, error) {
 	return texture, nil
 }
 
-func (m *System) getMesh(asset assets.AssetID) (vao.VAO, error) {
+func (m *system) getMesh(asset assets.AssetID) (vao.VAO, error) {
 	if mesh, ok := m.meshes[asset]; ok {
 		return mesh, nil
 	}
@@ -189,7 +194,7 @@ func (m *System) getMesh(asset assets.AssetID) (vao.VAO, error) {
 	return VAO, nil
 }
 
-func (m *System) Listen(rendersys.RenderEvent) error {
+func (m *system) Listen(rendersys.RenderEvent) error {
 	m.program.Use()
 
 	locations, err := program.GetProgramLocations[locations](m.program)

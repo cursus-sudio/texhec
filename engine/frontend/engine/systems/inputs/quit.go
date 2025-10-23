@@ -1,23 +1,29 @@
 package inputssys
 
 import (
+	"shared/services/ecs"
 	"shared/services/runtime"
 
+	"github.com/ogiusek/events"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-type QuitSystem struct {
+type quitSystem struct {
 	runtime runtime.Runtime
 }
 
 func NewQuitSystem(
 	runtime runtime.Runtime,
-) QuitSystem {
-	return QuitSystem{
+) ecs.SystemRegister {
+	return &quitSystem{
 		runtime: runtime,
 	}
 }
 
-func (system *QuitSystem) Listen(args sdl.QuitEvent) {
+func (s *quitSystem) Register(b events.Builder) {
+	events.Listen(b, s.Listen)
+}
+
+func (system *quitSystem) Listen(args sdl.QuitEvent) {
 	system.runtime.Stop()
 }

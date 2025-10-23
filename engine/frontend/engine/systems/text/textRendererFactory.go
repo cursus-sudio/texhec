@@ -29,7 +29,7 @@ var geomSource string
 var fragSource string
 
 type TextRendererFactory interface {
-	New(ecs.World) (TextRenderer, error)
+	New(ecs.World) (ecs.SystemRegister, error)
 }
 
 type textRendererFactory struct {
@@ -70,22 +70,22 @@ func newTextRendererFactory(
 	}
 }
 
-func (f *textRendererFactory) New(world ecs.World) (TextRenderer, error) {
+func (f *textRendererFactory) New(world ecs.World) (ecs.SystemRegister, error) {
 	vert, err := shader.NewShader(vertSource, shader.VertexShader)
 	if err != nil {
-		return TextRenderer{}, err
+		return nil, err
 	}
 	defer vert.Release()
 
 	geom, err := shader.NewShader(geomSource, shader.GeomShader)
 	if err != nil {
-		return TextRenderer{}, err
+		return nil, err
 	}
 	defer geom.Release()
 
 	frag, err := shader.NewShader(fragSource, shader.FragmentShader)
 	if err != nil {
-		return TextRenderer{}, err
+		return nil, err
 	}
 	defer frag.Release()
 
@@ -96,16 +96,16 @@ func (f *textRendererFactory) New(world ecs.World) (TextRenderer, error) {
 
 	p, err := program.NewProgram(programID, nil)
 	if err != nil {
-		return TextRenderer{}, err
+		return nil, err
 	}
 
 	locations, err := program.GetProgramLocations[locations](p)
 	if err != nil {
 		p.Release()
-		return TextRenderer{}, err
+		return nil, err
 	}
 
-	renderer := TextRenderer{
+	renderer := textRenderer{
 		world:          world,
 		transformArray: ecs.GetComponentsArray[transform.Transform](world.Components()),
 		groupsArray:    ecs.GetComponentsArray[groups.Groups](world.Components()),
@@ -189,7 +189,7 @@ func (f *textRendererFactory) New(world ecs.World) (TextRenderer, error) {
 	}
 	if err := renderer.ensureFontExists(f.defaultTextAsset); err != nil {
 		p.Release()
-		return TextRenderer{}, err
+		return nil, err
 	}
 	fontArray.OnAdd(addFonts)
 	fontArray.OnChange(addFonts)
@@ -222,5 +222,5 @@ func (f *textRendererFactory) New(world ecs.World) (TextRenderer, error) {
 
 	world.SaveRegister(renderer)
 
-	return renderer, nil
+	return &renderer, nil
 }

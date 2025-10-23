@@ -33,12 +33,11 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 	})
 	ioc.WrapService(b, scenes.LoadBeforeDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			quitSytem := inputssys.NewQuitSystem(
-				ioc.Get[runtime.Runtime](c),
+			ecs.RegisterSystems(ctx.EventsBuilder,
+				inputssys.NewQuitSystem(
+					ioc.Get[runtime.Runtime](c),
+				),
 			)
-			events.Listen(ctx.EventsBuilder, func(e sdl.QuitEvent) {
-				quitSytem.Listen(e)
-			})
 		})
 
 		b.OnLoad(func(ctx scenes.SceneCtx) {
@@ -81,29 +80,25 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 
 	ioc.WrapService(b, scenes.LoadBeforeDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			cameraRaySystem := mousesystem.NewCameraRaySystem(
-				ctx.World,
-				ioc.Get[broadcollision.CollisionServiceFactory](c)(ctx.World),
-				ioc.Get[window.Api](c),
-				ctx.Events,
-				ioc.Get[cameras.CameraConstructors](c),
+			ecs.RegisterSystems(ctx.EventsBuilder,
+				mousesystem.NewCameraRaySystem(
+					ctx.World,
+					ioc.Get[broadcollision.CollisionServiceFactory](c)(ctx.World),
+					ioc.Get[window.Api](c),
+					ctx.Events,
+					ioc.Get[cameras.CameraConstructors](c),
+				),
 			)
-			events.Listen(ctx.EventsBuilder, func(event mousesystem.ShootRayEvent) {
-				if err := cameraRaySystem.Listen(event); err != nil {
-					ioc.Get[logger.Logger](c).Error(err)
-				}
-			})
 
 			collidersys.NewColliderSystem(ctx.World, ioc.Get[broadcollision.CollisionServiceFactory](c))
 
-			hoverSystem := mousesystem.NewHoverSystem(ctx.World, ctx.Events)
-			events.Listen(ctx.EventsBuilder, hoverSystem.Listen)
-
-			hoverEventsSystem := mousesystem.NewHoverEventsSystem(ctx.World, ctx.Events)
-			events.Listen(ctx.EventsBuilder, hoverEventsSystem.Listen)
-
-			clickSystem := mousesystem.NewClickSystem(ctx.World, ctx.Events, sdl.RELEASED)
-			events.Listen(ctx.EventsBuilder, clickSystem.Listen)
+			ecs.RegisterSystems(ctx.EventsBuilder,
+				mousesystem.NewHoverSystem(ctx.World, ctx.Events),
+				mousesystem.NewHoverEventsSystem(ctx.World, ctx.Events),
+				mousesystem.NewClickSystem(ctx.World, ctx.Events, sdl.RELEASED),
+				inputssys.NewResizeSystem(),
+				projectionssys.NewUpdateProjectionsSystem(ctx.World, ioc.Get[window.Api](c), ioc.Get[logger.Logger](c)),
+			)
 
 			events.Listen(ctx.EventsBuilder, func(event sdl.MouseMotionEvent) {
 				events.Emit(ctx.Events, mousesystem.NewShootRayEvent())
@@ -111,10 +106,7 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			events.Listen(ctx.EventsBuilder, func(event sdl.KeyboardEvent) {
 				events.Emit(ctx.Events, mousesystem.NewShootRayEvent())
 			})
-			events.Listen(ctx.EventsBuilder, inputssys.NewResizeSystem().Listen)
 
-			resizeCameraSystem := projectionssys.NewUpdateProjectionsSystem(ctx.World, ioc.Get[window.Api](c), ioc.Get[logger.Logger](c))
-			events.Listen(ctx.EventsBuilder, resizeCameraSystem.Listen)
 			events.Listen(ctx.EventsBuilder, func(e sdl.WindowEvent) {
 				if e.Event == sdl.WINDOWEVENT_RESIZED {
 					events.Emit(ctx.Events, projectionssys.NewUpdateProjectionsEvent())
@@ -126,8 +118,9 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 
 	ioc.WrapService(b, scenes.LoadBeforeDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			inputsSystem := inputssys.NewInputsSystem(ioc.Get[inputsmedia.Api](c))
-			events.Listen(ctx.EventsBuilder, inputsSystem.Listen)
+			ecs.RegisterSystems(ctx.EventsBuilder,
+				inputssys.NewInputsSystem(ioc.Get[inputsmedia.Api](c)),
+			)
 		})
 		return b
 	})
@@ -148,21 +141,23 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 	})
 	ioc.WrapService(b, scenes.LoadFirst, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			clearSystem := rendersys.NewClearSystem()
-			events.Listen(ctx.EventsBuilder, clearSystem.Listen)
+			ecs.RegisterSystems(ctx.EventsBuilder,
+				rendersys.NewClearSystem(),
+			)
 		})
 		return b
 	})
 
 	ioc.WrapService(b, scenes.LoadAfterDomain, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			renderSystem := rendersys.NewRenderSystem(
-				ctx.World,
-				ctx.Events,
-				ioc.Get[window.Api](c),
-				2,
+			ecs.RegisterSystems(ctx.EventsBuilder,
+				rendersys.NewRenderSystem(
+					ctx.World,
+					ctx.Events,
+					ioc.Get[window.Api](c),
+					2,
+				),
 			)
-			events.ListenE(ctx.EventsBuilder, renderSystem.Listen)
 		})
 		return b
 	})
@@ -210,12 +205,11 @@ func AddSceneThree(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneThreeBuilder { return scenes.NewSceneBuilder() })
 	ioc.WrapService(b, scenes.LoadDomain, func(c ioc.Dic, sceneBuilder SceneThreeBuilder) SceneThreeBuilder {
 		sceneBuilder.OnLoad(func(ctx scenes.SceneCtx) {
-			quitSytem := inputssys.NewQuitSystem(
-				ioc.Get[runtime.Runtime](c),
+			ecs.RegisterSystems(ctx.EventsBuilder,
+				inputssys.NewQuitSystem(
+					ioc.Get[runtime.Runtime](c),
+				),
 			)
-			events.Listen(ctx.EventsBuilder, func(e sdl.QuitEvent) {
-				quitSytem.Listen(e)
-			})
 		})
 		sceneBuilder.OnLoad(func(ctx scenes.SceneCtx) {
 			for i := 0; i < 1000000; i++ {
@@ -223,8 +217,9 @@ func AddSceneThree(b ioc.Builder) {
 			}
 		})
 		sceneBuilder.OnLoad(func(ctx scenes.SceneCtx) {
-			inputsSystem := inputssys.NewInputsSystem(ioc.Get[inputsmedia.Api](c))
-			events.Listen(ctx.EventsBuilder, inputsSystem.Listen)
+			ecs.RegisterSystems(ctx.EventsBuilder,
+				inputssys.NewInputsSystem(ioc.Get[inputsmedia.Api](c)),
+			)
 		})
 		sceneBuilder.OnLoad(func(ctx scenes.SceneCtx) {
 			someSystem := NewSomeSystem(

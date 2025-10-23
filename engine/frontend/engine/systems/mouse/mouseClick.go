@@ -8,7 +8,7 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-type ClickSystem struct {
+type clickSystem struct {
 	world            ecs.World
 	mouseEventsArray ecs.ComponentsArray[mouse.MouseEvents]
 	events           events.Events
@@ -21,12 +21,12 @@ func NewClickSystem(
 	world ecs.World,
 	events events.Events,
 	clickOn uint8,
-) ClickSystem {
+) ecs.SystemRegister {
 	liveQuery := world.QueryEntitiesWithComponents(
 		ecs.GetComponentType(mouse.Hovered{}),
 		ecs.GetComponentType(mouse.MouseEvents{}),
 	)
-	return ClickSystem{
+	return &clickSystem{
 		world:            world,
 		mouseEventsArray: ecs.GetComponentsArray[mouse.MouseEvents](world.Components()),
 		events:           events,
@@ -35,7 +35,11 @@ func NewClickSystem(
 	}
 }
 
-func (s ClickSystem) Listen(event sdl.MouseButtonEvent) {
+func (s *clickSystem) Register(b events.Builder) {
+	events.Listen(b, s.Listen)
+}
+
+func (s *clickSystem) Listen(event sdl.MouseButtonEvent) {
 	if event.State != s.clickOn {
 		return
 	}

@@ -119,7 +119,9 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 					ioc.Get[logger.Logger](c).Error(err)
 					return
 				}
-				events.Listen(ctx.EventsBuilder, textRenderer.Listen)
+				ecs.RegisterSystems(ctx.EventsBuilder,
+					textRenderer,
+				)
 			}
 		})
 		return b
@@ -175,7 +177,9 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			if err != nil {
 				ioc.Get[logger.Logger](c).Error(err)
 			}
-			events.ListenE(ctx.EventsBuilder, genericRenderer.Listen)
+			ecs.RegisterSystems(ctx.EventsBuilder,
+				genericRenderer,
+			)
 			system := NewChangeTransformOverTimeSystem(ctx.World, ioc.Get[logger.Logger](c))
 			events.Listen(ctx.EventsBuilder, system.Listen)
 		})
@@ -280,31 +284,27 @@ func AddToWorld[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		})
 
 		b.OnLoad(func(ctx scenes.SceneCtx) {
-			scrollSys := mobilecamerasystem.NewScrollSystem(
-				ctx.World,
-				ioc.Get[logger.Logger](c),
-				ioc.Get[cameras.CameraConstructors](c),
-				ioc.Get[window.Api](c),
-				0.1, 5,
+			ecs.RegisterSystems(ctx.EventsBuilder,
+				mobilecamerasystem.NewScrollSystem(
+					ctx.World,
+					ioc.Get[logger.Logger](c),
+					ioc.Get[cameras.CameraConstructors](c),
+					ioc.Get[window.Api](c),
+					0.1, 5,
+				),
+				mobilecamerasystem.NewDragSystem(
+					sdl.BUTTON_LEFT,
+					ctx.World,
+					ioc.Get[cameras.CameraConstructors](c),
+					ioc.Get[window.Api](c),
+					ioc.Get[logger.Logger](c),
+				),
+				mobilecamerasystem.NewWasdSystem(
+					ctx.World,
+					ioc.Get[cameras.CameraConstructors](c),
+					1.0,
+				),
 			)
-			events.ListenE(ctx.EventsBuilder, scrollSys.Listen)
-
-			dragSys := mobilecamerasystem.NewDragSystem(
-				sdl.BUTTON_LEFT,
-				ctx.World,
-				ioc.Get[cameras.CameraConstructors](c),
-				ioc.Get[window.Api](c),
-				ioc.Get[logger.Logger](c),
-			)
-			events.Listen(ctx.EventsBuilder, dragSys.Listen1)
-			events.Listen(ctx.EventsBuilder, dragSys.Listen2)
-
-			wasdSys := mobilecamerasystem.NewWasdSystem(
-				ctx.World,
-				ioc.Get[cameras.CameraConstructors](c),
-				1.0,
-			)
-			events.ListenE(ctx.EventsBuilder, wasdSys.Listen)
 		})
 		return b
 	})

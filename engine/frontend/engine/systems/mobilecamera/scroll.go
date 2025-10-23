@@ -11,10 +11,11 @@ import (
 	"shared/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/ogiusek/events"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-type ScrollSystem struct {
+type scrollSystem struct {
 	window      window.Api
 	cameraCtors cameras.CameraConstructors
 	logger      logger.Logger
@@ -33,8 +34,8 @@ func NewScrollSystem(
 	cameraCtors cameras.CameraConstructors,
 	window window.Api,
 	minZoom, maxZoom float32,
-) ScrollSystem {
-	return ScrollSystem{
+) ecs.SystemRegister {
+	return &scrollSystem{
 		window:      window,
 		cameraCtors: cameraCtors,
 		logger:      logger,
@@ -51,7 +52,11 @@ func NewScrollSystem(
 	}
 }
 
-func (s ScrollSystem) Listen(event sdl.MouseWheelEvent) error {
+func (s *scrollSystem) Register(b events.Builder) {
+	events.ListenE(b, s.Listen)
+}
+
+func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) error {
 	if event.Y == 0 {
 		return nil
 	}

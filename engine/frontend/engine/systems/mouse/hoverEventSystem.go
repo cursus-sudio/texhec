@@ -8,19 +8,19 @@ import (
 	"github.com/ogiusek/events"
 )
 
-type HoverEventSystem struct {
+type hoverEventSystem struct {
 	world            ecs.World
 	mouseEventsArray ecs.ComponentsArray[mouse.MouseEvents]
 	events           events.Events
 	query            ecs.LiveQuery
 }
 
-func NewHoverEventsSystem(world ecs.World, events events.Events) HoverEventSystem {
+func NewHoverEventsSystem(world ecs.World, events events.Events) ecs.SystemRegister {
 	query := world.QueryEntitiesWithComponents(
 		ecs.GetComponentType(mouse.MouseEvents{}),
 		ecs.GetComponentType(mouse.Hovered{}),
 	)
-	return HoverEventSystem{
+	return &hoverEventSystem{
 		world:            world,
 		mouseEventsArray: ecs.GetComponentsArray[mouse.MouseEvents](world.Components()),
 		events:           events,
@@ -28,7 +28,11 @@ func NewHoverEventsSystem(world ecs.World, events events.Events) HoverEventSyste
 	}
 }
 
-func (s *HoverEventSystem) Listen(event frames.FrameEvent) {
+func (s *hoverEventSystem) Register(b events.Builder) {
+	events.Listen(b, s.Listen)
+}
+
+func (s *hoverEventSystem) Listen(event frames.FrameEvent) {
 	for _, entity := range s.query.Entities() {
 		eventsComponent, err := s.mouseEventsArray.GetComponent(entity)
 		if err != nil {

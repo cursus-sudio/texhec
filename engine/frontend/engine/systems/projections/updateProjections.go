@@ -8,6 +8,7 @@ import (
 	"shared/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/ogiusek/events"
 )
 
 // events
@@ -21,7 +22,7 @@ func NewUpdateProjectionsEvent() UpdateProjectionsEvent {
 
 // system
 
-type UpdateProjetionsSystem struct {
+type updateProjetionsSystem struct {
 	world  ecs.World
 	window window.Api
 	logger logger.Logger
@@ -37,10 +38,10 @@ type UpdateProjetionsSystem struct {
 	orthoArray               ecs.ComponentsArray[projection.Ortho]
 }
 
-func NewUpdateProjectionsSystem(world ecs.World, window window.Api, logger logger.Logger) UpdateProjetionsSystem {
+func NewUpdateProjectionsSystem(world ecs.World, window window.Api, logger logger.Logger) ecs.SystemRegister {
 	perspectiveQuery := world.QueryEntitiesWithComponents(ecs.GetComponentType(projection.DynamicPerspective{}))
 	orthoQuery := world.QueryEntitiesWithComponents(ecs.GetComponentType(projection.DynamicOrtho{}))
-	s := UpdateProjetionsSystem{
+	s := &updateProjetionsSystem{
 		world:  world,
 		window: window,
 		logger: logger,
@@ -66,7 +67,11 @@ func NewUpdateProjectionsSystem(world ecs.World, window window.Api, logger logge
 	return s
 }
 
-func (s UpdateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
+func (s *updateProjetionsSystem) Register(b events.Builder) {
+	events.Listen(b, s.Listen)
+}
+
+func (s *updateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
 	transformTransaction := s.transformArray.Transaction()
 	perspectiveTransaction := s.perspectivesArray.Transaction()
 	orthoTransaction := s.orthoArray.Transaction()
@@ -126,5 +131,4 @@ func (s UpdateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
 	); err != nil {
 		s.logger.Error(err)
 	}
-
 }

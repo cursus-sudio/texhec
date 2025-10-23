@@ -3,17 +3,19 @@ package rendersys
 import (
 	"fmt"
 	"frontend/services/frames"
+	"shared/services/ecs"
 	"shared/services/logger"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/ogiusek/events"
 )
 
-type ErrorLogger struct {
+type errorLogger struct {
 	logger logger.Logger
 }
 
-func NewErrorLogger() ErrorLogger {
-	return ErrorLogger{}
+func NewErrorLogger(logger logger.Logger) ecs.SystemRegister {
+	return &errorLogger{logger}
 }
 
 var glErrorStrings = map[uint32]string{
@@ -29,7 +31,11 @@ var glErrorStrings = map[uint32]string{
 	// gl.TABLE_TOO_LARGE:               "GL_TABLE_TOO_LARGE", // Less common in modern GL
 }
 
-func (logger *ErrorLogger) Update(args frames.FrameEvent) {
+func (logger *errorLogger) Register(b events.Builder) {
+	events.Listen(b, logger.Update)
+}
+
+func (logger *errorLogger) Update(args frames.FrameEvent) {
 	if glErr := gl.GetError(); glErr != gl.NO_ERROR {
 		logger.logger.Error(fmt.Errorf("opengl error: %x %s\n", glErr, glErrorStrings[glErr]))
 	}

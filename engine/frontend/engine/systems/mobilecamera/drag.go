@@ -10,10 +10,11 @@ import (
 	"shared/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/ogiusek/events"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-type DragSystem struct {
+type dragSystem struct {
 	isHeld  bool
 	button  uint8
 	prevPos mgl32.Vec2
@@ -33,8 +34,8 @@ func NewDragSystem(
 	cameraCtors cameras.CameraConstructors,
 	window window.Api,
 	logger logger.Logger,
-) *DragSystem {
-	return &DragSystem{
+) ecs.SystemRegister {
+	return &dragSystem{
 		isHeld:  false,
 		button:  dragButton,
 		prevPos: mgl32.Vec2{0, 0},
@@ -51,7 +52,12 @@ func NewDragSystem(
 	}
 }
 
-func (s *DragSystem) Listen1(sdl.MouseMotionEvent) {
+func (s *dragSystem) Register(b events.Builder) {
+	events.Listen(b, s.Listen1)
+	events.Listen(b, s.Listen2)
+}
+
+func (s *dragSystem) Listen1(sdl.MouseMotionEvent) {
 	prevPos := s.prevPos
 	newPos := s.window.NormalizeMousePos(s.window.GetMousePos())
 	s.prevPos = newPos
@@ -83,7 +89,7 @@ func (s *DragSystem) Listen1(sdl.MouseMotionEvent) {
 	}
 }
 
-func (s *DragSystem) Listen2(event sdl.MouseButtonEvent) {
+func (s *dragSystem) Listen2(event sdl.MouseButtonEvent) {
 	if event.Button != s.button {
 		return
 	}

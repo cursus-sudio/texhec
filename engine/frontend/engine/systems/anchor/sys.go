@@ -8,6 +8,7 @@ import (
 	"shared/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/ogiusek/events"
 )
 
 func applyChildTransform(
@@ -38,7 +39,9 @@ func applyChildTransform(
 	return child
 }
 
-func NewAnchorSystem(world ecs.World, logger logger.Logger) {
+type system struct{}
+
+func NewAnchorSystem(world ecs.World, logger logger.Logger) ecs.SystemRegister {
 	parentsChildren := map[ecs.EntityID]datastructures.Set[ecs.EntityID]{}
 	childParent := map[ecs.EntityID]ecs.EntityID{}
 	{
@@ -145,4 +148,8 @@ func NewAnchorSystem(world ecs.World, logger logger.Logger) {
 		})
 		query.OnRemove(onRemove)
 	}
+	return &system{}
+}
+
+func (s *system) Register(b events.Builder) {
 }

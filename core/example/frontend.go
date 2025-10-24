@@ -257,9 +257,7 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				rendersys.NewClearSystem(),
 				anchorsys.NewAnchorSystem(ctx.World, ioc.Get[logger.Logger](c)),
 				transformsys.NewPivotPointSystem(ctx.World, ioc.Get[logger.Logger](c)),
-				inputssys.NewQuitSystem(
-					ioc.Get[runtime.Runtime](c),
-				),
+				inputssys.NewQuitSystem(ioc.Get[runtime.Runtime](c)),
 				collidersys.NewColliderSystem(ctx.World, ioc.Get[broadcollision.CollisionServiceFactory](c)),
 				mousesystem.NewCameraRaySystem(
 					ctx.World,

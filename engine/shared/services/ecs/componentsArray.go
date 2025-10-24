@@ -199,6 +199,7 @@ func (c *componentsArray[Component]) GetAnyComponent(entity EntityID) (any, erro
 }
 
 func (c *componentsArray[Component]) OnAdd(listener func([]EntityID)) {
+	listener(c.GetEntities())
 	c.onAdd = append(c.onAdd, listener)
 }
 

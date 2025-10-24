@@ -1,8 +1,10 @@
 package example
 
 import (
+	"frontend/services/assets"
 	"frontend/services/scenes"
 	"shared/services/ecs"
+	appruntime "shared/services/runtime"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -15,9 +17,8 @@ func FrontendPackage() FrontendPkg {
 }
 
 func (FrontendPkg) Register(b ioc.Builder) {
+	registerAssets(b)
 	AddSceneOne(b)
-	AddSceneTwo(b)
-	AddSceneThree(b)
 
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b scenes.SceneManagerBuilder) scenes.SceneManagerBuilder {
 		getPersistedComponentsArray := []func(ecs.ComponentsStorage) ecs.AnyComponentArray{
@@ -50,15 +51,24 @@ func (FrontendPkg) Register(b ioc.Builder) {
 		scene1 := scene1Builder.Build(scene1Id)
 		b.AddScene(scene1)
 
-		scene2Builder := ioc.Get[SceneTwoBuilder](c)
-		scene2 := scene2Builder.Build(scene2Id)
-		b.AddScene(scene2)
-
-		scene3Builder := ioc.Get[SceneThreeBuilder](c)
-		scene3 := scene3Builder.Build(scene3Id)
-		b.AddScene(scene3)
-
 		b.MakeActive(scene1Id)
+		return b
+	})
+
+	ioc.WrapService(b, appruntime.OrderCleanUp, func(c ioc.Dic, b appruntime.Builder) appruntime.Builder {
+		assets := ioc.Get[assets.Assets](c)
+		b.OnStop(func(r appruntime.Runtime) {
+			scene := ioc.Get[scenes.SceneManager](c).CurrentSceneCtx()
+			scene.World.Release()
+
+			assets.Release(
+				MeshAssetID,
+				Texture1AssetID,
+				Texture2AssetID,
+				Texture3AssetID,
+				Texture4AssetID,
+			)
+		})
 		return b
 	})
 }

@@ -7,7 +7,6 @@ import (
 	"core/ping"
 	"core/tacticalmap"
 	"core/tile"
-	"core/triangle"
 	"errors"
 	"fmt"
 	"frontend/engine/components/groups"
@@ -59,6 +58,9 @@ func frontendDic(
 	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
 	sdl.GLSetAttribute(sdl.GL_DOUBLEBUFFER, 1) // Essential for GLSwap
 	sdl.GLSetAttribute(sdl.GL_DEPTH_SIZE, 24)  // Good practice for depth testing
+
+	// sdl.GLSetAttribute(sdl.GL_MULTISAMPLEBUFFERS, 1)
+	// sdl.GLSetAttribute(sdl.GL_MULTISAMPLESAMPLES, 4)
 	window, err := sdl.CreateWindow(
 		"texhec",
 		sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
@@ -138,10 +140,10 @@ func frontendDic(
 		broadcollision.Package(),
 
 		texturearray.Package(),
-		tile.Package(100, -1., groups.EmptyGroups().Ptr().Enable(triangle.GameGroup).Val()),
+		tile.Package(100, -1., groups.EmptyGroups().Ptr().Enable(example.GameGroup).Val()),
 
 		textsys.Package(
-			text.FontFamily{FontAsset: triangle.FontAssetID},
+			text.FontFamily{FontAsset: example.FontAssetID},
 			text.FontSize{FontSize: 16},
 			// text.Overflow{Visible: false},
 			text.Break{Break: text.BreakWord},
@@ -183,7 +185,6 @@ func frontendDic(
 		// mods
 		ping.FrontendPackage(),
 		tacticalmap.FrontendPackage(),
-		triangle.FrontendPackage(),
 		example.FrontendPackage(),
 	}
 

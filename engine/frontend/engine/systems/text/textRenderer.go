@@ -136,12 +136,8 @@ func (s *textRenderer) Register(b events.Builder) {
 
 func (s *textRenderer) Listen(rendersys.RenderEvent) {
 	s.program.Use()
-	gl.Enable(gl.BLEND)
-	gl.DepthMask(false)
-	defer func() {
-		gl.Disable(gl.BLEND)
-		gl.DepthMask(true)
-	}()
+
+	// render
 
 	for _, entity := range s.layoutsBatches.GetIndices() {
 		layout, _ := s.layoutsBatches.Get(entity)

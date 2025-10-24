@@ -3,6 +3,7 @@ package textsys
 import (
 	"frontend/engine/components/text"
 	"frontend/services/assets"
+	"frontend/services/graphics/texture"
 	"image"
 	"image/color"
 	"shared/services/datastructures"
@@ -78,7 +79,7 @@ func (s *fontService) AssetFont(assetID assets.AssetID) (Font, error) {
 			Face: fontFace,
 		}
 		image := s.getLetterImage(drawer, glyph)
-		fontMeta.Images.Set(glyphID, image)
+		fontMeta.Images.Set(glyphID, texture.FlipImage(image))
 	}
 
 	return fontMeta, nil

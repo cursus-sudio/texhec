@@ -1,4 +1,4 @@
-package triangle
+package changetransform
 
 import (
 	_ "embed"
@@ -12,40 +12,40 @@ import (
 	"github.com/ogiusek/events"
 )
 
-type ChangeTransformOverTimeComponent struct {
+type Component struct {
 	T time.Duration
 }
 
-type changeTransformOverTimeSystem struct {
+type system struct {
 	World                ecs.World
-	ChangeTransformArray ecs.ComponentsArray[ChangeTransformOverTimeComponent]
+	ChangeTransformArray ecs.ComponentsArray[Component]
 	TransformArray       ecs.ComponentsArray[transform.Transform]
 	Logger               logger.Logger
 	LiveQuery            ecs.LiveQuery
 }
 
-func NewChangeTransformOverTimeSystem(
+func NewSystem(
 	world ecs.World,
 	logger logger.Logger,
 ) ecs.SystemRegister {
 	liveQuery := world.QueryEntitiesWithComponents(
-		ecs.GetComponentType(ChangeTransformOverTimeComponent{}),
+		ecs.GetComponentType(Component{}),
 		ecs.GetComponentType(transform.Transform{}),
 	)
-	return &changeTransformOverTimeSystem{
+	return &system{
 		World:                world,
-		ChangeTransformArray: ecs.GetComponentsArray[ChangeTransformOverTimeComponent](world.Components()),
+		ChangeTransformArray: ecs.GetComponentsArray[Component](world.Components()),
 		TransformArray:       ecs.GetComponentsArray[transform.Transform](world.Components()),
 		Logger:               logger,
 		LiveQuery:            liveQuery,
 	}
 }
 
-func (s *changeTransformOverTimeSystem) Register(b events.Builder) {
+func (s *system) Register(b events.Builder) {
 	events.Listen(b, s.Listen)
 }
 
-func (s *changeTransformOverTimeSystem) Listen(args frames.FrameEvent) {
+func (s *system) Listen(args frames.FrameEvent) {
 	transformTransaction := s.TransformArray.Transaction()
 	changeTransaction := s.ChangeTransformArray.Transaction()
 	for _, entity := range s.LiveQuery.Entities() {

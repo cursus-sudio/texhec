@@ -12,7 +12,7 @@ func createTexs(w, h int, imgs datastructures.SparseArray[uint32, image.Image]) 
 	var texs uint32
 
 	gl.GenTextures(1, &texs)
-	gl.ActiveTexture(gl.TEXTURE1)
+	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D_ARRAY, texs)
 	indices := imgs.GetIndices()
 	var maxIndex uint32

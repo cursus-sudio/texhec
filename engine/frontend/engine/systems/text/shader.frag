@@ -10,5 +10,9 @@ layout(binding = 0) uniform sampler2DArray tex;
 out vec4 fragColor;
 
 void main() {
-    fragColor = texture(tex, vec3(fs.uv.x, -fs.uv.y, fs.glyph));
+    vec4 color = texture(tex, vec3(fs.uv.xy, fs.glyph));
+    if (color.a <= 0.1) {
+        discard;
+    }
+    fragColor = color;
 }

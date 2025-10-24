@@ -1,4 +1,4 @@
-package triangle
+package example
 
 import (
 	"bytes"
@@ -10,9 +10,9 @@ import (
 	"frontend/engine/components/texture"
 	"frontend/engine/systems/genericrenderer"
 	"frontend/services/assets"
+	gtexture "frontend/services/graphics/texture"
 	"frontend/services/graphics/vao/ebo"
 	"image"
-	"image/draw"
 	_ "image/png"
 	"shared/services/datastructures"
 
@@ -45,25 +45,6 @@ const (
 	ColliderAssetID assets.AssetID = "collider_asset"
 	FontAssetID     assets.AssetID = "font_asset"
 )
-
-func flipImage(img image.Image) image.Image {
-	bounds := img.Bounds()
-	newImg := image.NewRGBA(bounds)
-
-	for y := 0; y < bounds.Dy(); y++ {
-		// Use draw.Draw to copy a row of pixels.
-		// The destination rectangle is a single row at the flipped Y coordinate.
-		destY := bounds.Dy() - 1 - y
-		destRect := image.Rect(0, destY, bounds.Dx(), destY+1)
-
-		// The source rectangle is a single row at the original Y coordinate.
-		srcRect := image.Rect(0, y, bounds.Dx(), y+1)
-
-		// Copy the source row to the destination row.
-		draw.Draw(newImg, destRect, img, srcRect.Min, draw.Src)
-	}
-	return newImg
-}
 
 func registerAssets(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.TileRenderSystemFactory) tile.TileRenderSystemFactory {
@@ -122,7 +103,8 @@ func registerAssets(b ioc.Builder) {
 			if err != nil {
 				return nil, err
 			}
-			imgInverse := flipImage(img)
+
+			imgInverse := gtexture.FlipImage(img)
 			asset := texture.NewTextureStorageAsset(imgInverse)
 			return asset, nil
 		})
@@ -133,7 +115,7 @@ func registerAssets(b ioc.Builder) {
 			if err != nil {
 				return nil, err
 			}
-			imgInverse := flipImage(img)
+			imgInverse := gtexture.FlipImage(img)
 			asset := texture.NewTextureStorageAsset(imgInverse)
 			return asset, nil
 		})
@@ -144,7 +126,7 @@ func registerAssets(b ioc.Builder) {
 			if err != nil {
 				return nil, err
 			}
-			imgInverse := flipImage(img)
+			imgInverse := gtexture.FlipImage(img)
 			asset := texture.NewTextureStorageAsset(imgInverse)
 			return asset, nil
 		})
@@ -155,7 +137,7 @@ func registerAssets(b ioc.Builder) {
 			if err != nil {
 				return nil, err
 			}
-			imgInverse := flipImage(img)
+			imgInverse := gtexture.FlipImage(img)
 			asset := texture.NewTextureStorageAsset(imgInverse)
 			return asset, nil
 		})

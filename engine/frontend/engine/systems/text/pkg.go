@@ -98,7 +98,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 			vbo := vbo.NewVBO[Glyph](func() {
 				var i uint32 = 0
 
-				gl.VertexAttribPointerWithOffset(0, 3, gl.FLOAT, false,
+				gl.VertexAttribPointerWithOffset(0, 2, gl.FLOAT, false,
 					int32(unsafe.Sizeof(Glyph{})), uintptr(unsafe.Offsetof(Glyph{}.Pos)))
 				gl.EnableVertexAttribArray(i)
 				i++

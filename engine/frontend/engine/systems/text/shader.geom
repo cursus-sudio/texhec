@@ -26,7 +26,7 @@ layout(std430, binding = 0) buffer GlyphWidths {
 //
 
 void main() {
-    vec3 posIn = vec3(gs_in[0].pos, 0.);
+    vec3 posIn = vec3(gs_in[0].pos, 1.);
     int glyph = gs_in[0].glyph;
 
     vec2 size = vec2(max(glyphWidths[glyph], 1), 1.);

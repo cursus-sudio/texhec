@@ -86,7 +86,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 			ioc.Get[vbo.VBOFactory[Glyph]](c),
 			ioc.Get[LayoutServiceFactory](c),
 			ioc.Get[logger.Logger](c),
-			pkg.defaultFontFamily.FontAsset,
+			pkg.defaultFontFamily.FontFamily,
 			ioc.Get[texturearray.Factory](c),
 			ioc.Get[FontKeys](c),
 			1,

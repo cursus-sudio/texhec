@@ -14,7 +14,7 @@ type TextAlign struct {
 }
 
 type FontFamily struct {
-	FontAsset assets.AssetID
+	FontFamily assets.AssetID
 }
 
 type FontSize struct {

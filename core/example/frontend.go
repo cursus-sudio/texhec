@@ -1,8 +1,9 @@
 package example
 
 import (
+	"core/gameassets"
 	"core/systems/changetransform"
-	"core/tile"
+	"core/systems/tile"
 	_ "embed"
 	"fmt"
 	"frontend/engine/components/anchor"
@@ -35,14 +36,15 @@ import (
 	inputsmedia "frontend/services/media/inputs"
 	"frontend/services/media/window"
 	"frontend/services/scenes"
-	"github.com/go-gl/mathgl/mgl32"
-	"github.com/ogiusek/events"
-	"github.com/ogiusek/ioc/v2"
-	"github.com/veandco/go-sdl2/sdl"
 	"math/rand/v2"
 	"shared/services/ecs"
 	"shared/services/logger"
 	"shared/services/runtime"
+
+	"github.com/go-gl/mathgl/mgl32"
+	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 const (
@@ -110,8 +112,8 @@ func AddCube[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 			ecs.SaveComponent(ctx.World.Components(), entity, transform.NewTransform().Ptr().
 				SetPos(mgl32.Vec3{0, 0, -300}).
 				SetSize(mgl32.Vec3{100, 100, 100}).Val())
-			ecs.SaveComponent(ctx.World.Components(), entity, mesh.NewMesh(MeshAssetID))
-			ecs.SaveComponent(ctx.World.Components(), entity, texture.NewTexture(Texture2AssetID))
+			ecs.SaveComponent(ctx.World.Components(), entity, mesh.NewMesh(gameassets.MeshAssetID))
+			ecs.SaveComponent(ctx.World.Components(), entity, texture.NewTexture(gameassets.Texture2AssetID))
 			ecs.SaveComponent(ctx.World.Components(), entity, genericrenderersys.PipelineComponent{})
 			ecs.SaveComponent(ctx.World.Components(), entity, projection.NewUsedProjection[projection.Perspective]())
 			ecs.SaveComponent(ctx.World.Components(), entity, changetransform.Component{})
@@ -160,11 +162,11 @@ func AddUi[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 				SetPivotPoint(mgl32.Vec3{0, 1, .5}).
 				Val())
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, transform.NewPivotPoint(mgl32.Vec3{1, 0, .5}))
-			ecs.SaveComponent(ctx.World.Components(), exitBtn, mesh.NewMesh(MeshAssetID))
-			ecs.SaveComponent(ctx.World.Components(), exitBtn, texture.NewTexture(Texture4AssetID))
+			ecs.SaveComponent(ctx.World.Components(), exitBtn, mesh.NewMesh(gameassets.MeshAssetID))
+			ecs.SaveComponent(ctx.World.Components(), exitBtn, texture.NewTexture(gameassets.Texture4AssetID))
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, genericrenderersys.PipelineComponent{})
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, projection.NewUsedProjection[projection.Ortho]())
-			ecs.SaveComponent(ctx.World.Components(), exitBtn, collider.NewCollider(ColliderAssetID))
+			ecs.SaveComponent(ctx.World.Components(), exitBtn, collider.NewCollider(gameassets.ColliderAssetID))
 			ecs.SaveComponent(ctx.World.Components(), exitBtn, mouse.NewMouseEvents().
 				AddLeftClickEvents(QuitEvent{}),
 			)
@@ -176,8 +178,8 @@ func AddUi[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 					SetPos(mgl32.Vec3{-100, -100, 0}).
 					SetSize(mgl32.Vec3{100, 100, 2}).Val())
 
-				ecs.SaveComponent(ctx.World.Components(), otherBtn, mesh.NewMesh(MeshAssetID))
-				ecs.SaveComponent(ctx.World.Components(), otherBtn, texture.NewTexture(Texture4AssetID))
+				ecs.SaveComponent(ctx.World.Components(), otherBtn, mesh.NewMesh(gameassets.MeshAssetID))
+				ecs.SaveComponent(ctx.World.Components(), otherBtn, texture.NewTexture(gameassets.Texture4AssetID))
 				// ecs.SaveComponent(ctx.World.Components(), otherBtn, genericrenderersys.PipelineComponent{})
 				ecs.SaveComponent(ctx.World.Components(), otherBtn, projection.NewUsedProjection[projection.Ortho]())
 				ecs.SaveComponent(ctx.World.Components(), otherBtn, text.Text{
@@ -197,8 +199,8 @@ func AddUi[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 					SetPos(mgl32.Vec3{-70, -70, 50}).
 					SetSize(mgl32.Vec3{100, 100, 2}).Val())
 
-				ecs.SaveComponent(ctx.World.Components(), otherBtn, mesh.NewMesh(MeshAssetID))
-				ecs.SaveComponent(ctx.World.Components(), otherBtn, texture.NewTexture(Texture3AssetID))
+				ecs.SaveComponent(ctx.World.Components(), otherBtn, mesh.NewMesh(gameassets.MeshAssetID))
+				ecs.SaveComponent(ctx.World.Components(), otherBtn, texture.NewTexture(gameassets.Texture3AssetID))
 				ecs.SaveComponent(ctx.World.Components(), otherBtn, genericrenderersys.PipelineComponent{})
 				ecs.SaveComponent(ctx.World.Components(), otherBtn, projection.NewUsedProjection[projection.Ortho]())
 				ecs.SaveComponent(ctx.World.Components(), otherBtn, text.Text{
@@ -380,7 +382,7 @@ func AddShared[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 							continue
 						}
 
-						colliderTransaction.SaveComponent(entity, collider.NewCollider(ColliderAssetID))
+						colliderTransaction.SaveComponent(entity, collider.NewCollider(gameassets.ColliderAssetID))
 						mouseEventsTransaction.SaveComponent(entity, mouse.NewMouseEvents().
 							AddLeftClickEvents(OnClickDomainEvent{entity, int(tile.Pos.X), int(tile.Pos.Y)}).
 							AddMouseHoverEvents(OnHoveredDomainEvent{entity, int(tile.Pos.X), int(tile.Pos.Y)}),

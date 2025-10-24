@@ -182,7 +182,7 @@ func (f *textRendererFactory) New(world ecs.World) (ecs.SystemRegister, error) {
 				continue
 			}
 
-			if err := renderer.ensureFontExists(family.FontAsset); err != nil {
+			if err := renderer.ensureFontExists(family.FontFamily); err != nil {
 				f.logger.Error(err)
 			}
 		}
@@ -210,7 +210,7 @@ func (f *textRendererFactory) New(world ecs.World) (ecs.SystemRegister, error) {
 				if err != nil {
 					continue
 				}
-				assets = append(assets, comp.FontAsset)
+				assets = append(assets, comp.FontFamily)
 			}
 			if err := renderer.ensureOnlyFontsExist(assets); err != nil {
 				f.logger.Error(err)

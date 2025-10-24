@@ -1,7 +1,7 @@
 package example
 
 import (
-	"core/tacticalmap"
+	"core/systems/tacticalmap"
 	"fmt"
 	"frontend/services/console"
 	"frontend/services/frames"

@@ -1,6 +1,7 @@
 package example
 
 import (
+	"core/gameassets"
 	"frontend/services/assets"
 	"frontend/services/scenes"
 	"shared/services/ecs"
@@ -17,7 +18,7 @@ func FrontendPackage() FrontendPkg {
 }
 
 func (FrontendPkg) Register(b ioc.Builder) {
-	registerAssets(b)
+	gameassets.RegisterAssets(b)
 	AddSceneOne(b)
 
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b scenes.SceneManagerBuilder) scenes.SceneManagerBuilder {
@@ -62,11 +63,11 @@ func (FrontendPkg) Register(b ioc.Builder) {
 			scene.World.Release()
 
 			assets.Release(
-				MeshAssetID,
-				Texture1AssetID,
-				Texture2AssetID,
-				Texture3AssetID,
-				Texture4AssetID,
+				gameassets.MeshAssetID,
+				gameassets.Texture1AssetID,
+				gameassets.Texture2AssetID,
+				gameassets.Texture3AssetID,
+				gameassets.Texture4AssetID,
 			)
 		})
 		return b

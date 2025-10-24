@@ -131,7 +131,7 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 		textAlign = s.defaultTextAlign
 	}
 
-	font, err := s.fontService.AssetFont(fontFamily.FontAsset)
+	font, err := s.fontService.AssetFont(fontFamily.FontFamily)
 	if err != nil {
 		return Layout{}, err
 	}
@@ -249,7 +249,7 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	layout := Layout{
 		Glyphs:   glyphs,
 		FontSize: uint32(fontSize.FontSize),
-		Font:     s.fontsKeys.GetKey(fontFamily.FontAsset),
+		Font:     s.fontsKeys.GetKey(fontFamily.FontFamily),
 	}
 	return layout, nil
 }

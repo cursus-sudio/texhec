@@ -1,8 +1,8 @@
-package example
+package gameassets
 
 import (
 	"bytes"
-	"core/tile"
+	"core/systems/tile"
 	_ "embed"
 	"frontend/engine/components/collider"
 	"frontend/engine/components/mesh"
@@ -22,16 +22,16 @@ import (
 	"golang.org/x/image/font/opentype"
 )
 
-//go:embed assets/1.png
+//go:embed files/1.png
 var texture1Source []byte
 
-//go:embed assets/2.png
+//go:embed files/2.png
 var texture2Source []byte
 
-//go:embed assets/3.png
+//go:embed files/3.png
 var texture3Source []byte
 
-//go:embed assets/4.png
+//go:embed files/4.png
 var texture4Source []byte
 
 var fontSource []byte = goregular.TTF
@@ -46,7 +46,7 @@ const (
 	FontAssetID     assets.AssetID = "font_asset"
 )
 
-func registerAssets(b ioc.Builder) {
+func RegisterAssets(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.TileRenderSystemFactory) tile.TileRenderSystemFactory {
 		assets := datastructures.NewSparseArray[uint32, assets.AssetID]()
 		assets.Set(tile.TileMountain, Texture1AssetID)
@@ -163,5 +163,4 @@ func registerAssets(b ioc.Builder) {
 		})
 		return b
 	})
-
 }

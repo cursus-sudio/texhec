@@ -4,9 +4,10 @@ import (
 	"backend/services/clients"
 	backendscopes "backend/services/scopes"
 	"core/example"
-	"core/ping"
-	"core/tacticalmap"
-	"core/tile"
+	"core/gameassets"
+	"core/systems/ping"
+	"core/systems/tacticalmap"
+	"core/systems/tile"
 	"errors"
 	"fmt"
 	"frontend/engine/components/groups"
@@ -143,7 +144,7 @@ func frontendDic(
 		tile.Package(100, -1., groups.EmptyGroups().Ptr().Enable(example.GameGroup).Val()),
 
 		textsys.Package(
-			text.FontFamily{FontAsset: example.FontAssetID},
+			text.FontFamily{FontFamily: gameassets.FontAssetID},
 			text.FontSize{FontSize: 16},
 			// text.Overflow{Visible: false},
 			text.Break{Break: text.BreakWord},

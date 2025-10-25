@@ -205,7 +205,7 @@ func (m *system) Listen(rendersys.RenderEvent) error {
 	for _, entity := range m.query.Entities() {
 		transformComponent, err := m.transformArray.GetComponent(entity)
 		if err != nil {
-			continue
+			transformComponent = transform.NewTransform()
 		}
 		model := transformComponent.Mat4()
 

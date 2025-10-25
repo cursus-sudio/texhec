@@ -44,12 +44,10 @@ type system struct{}
 func NewAnchorSystem(world ecs.World, logger logger.Logger) ecs.SystemRegister {
 	parentsChildren := map[ecs.EntityID]datastructures.Set[ecs.EntityID]{}
 	childParent := map[ecs.EntityID]ecs.EntityID{}
-	{
-		query := world.QueryEntitiesWithComponents(
-			ecs.GetComponentType(transform.Transform{}),
-		)
 
-		transformArray := ecs.GetComponentsArray[transform.Transform](world.Components())
+	transformArray := ecs.GetComponentsArray[transform.Transform](world.Components())
+	parentAnchorArray := ecs.GetComponentsArray[anchor.ParentAnchor](world.Components())
+	{
 		transformTransaction := transformArray.Transaction()
 
 		onChange := func(ei []ecs.EntityID) {
@@ -84,19 +82,15 @@ func NewAnchorSystem(world ecs.World, logger logger.Logger) ecs.SystemRegister {
 			}
 		}
 
+		query := world.QueryEntitiesWithComponents(
+			ecs.GetComponentType(transform.Transform{}),
+		)
 		query.OnAdd(onChange)
 		query.OnChange(onChange)
 		query.OnRemove(onRemove)
 	}
 
 	{
-		query := world.QueryEntitiesWithComponents(
-			ecs.GetComponentType(transform.Transform{}),
-			ecs.GetComponentType(anchor.ParentAnchor{}),
-		)
-
-		transformArray := ecs.GetComponentsArray[transform.Transform](world.Components())
-		parentAnchorArray := ecs.GetComponentsArray[anchor.ParentAnchor](world.Components())
 
 		onAdd := func(ei []ecs.EntityID) {
 			for _, child := range ei {
@@ -114,11 +108,11 @@ func NewAnchorSystem(world ecs.World, logger logger.Logger) ecs.SystemRegister {
 
 				childTransform, err := transformArray.GetComponent(child)
 				if err != nil {
-					continue
+					childTransform = transform.NewTransform()
 				}
 				parentTransform, err := transformArray.GetComponent(anchor.Parent)
 				if err != nil {
-					continue
+					parentTransform = transform.NewTransform()
 				}
 
 				childTransform = applyChildTransform(parentTransform, childTransform, anchor)
@@ -141,6 +135,11 @@ func NewAnchorSystem(world ecs.World, logger logger.Logger) ecs.SystemRegister {
 			}
 		}
 
+		query := world.QueryEntitiesWithComponents(
+			ecs.GetComponentType(transform.Transform{}),
+			ecs.GetComponentType(anchor.ParentAnchor{}),
+		)
+
 		query.OnAdd(onAdd)
 		query.OnChange(func(ei []ecs.EntityID) {
 			onRemove(ei)
@@ -148,8 +147,25 @@ func NewAnchorSystem(world ecs.World, logger logger.Logger) ecs.SystemRegister {
 		})
 		query.OnRemove(onRemove)
 	}
+
+	{
+		query := world.QueryEntitiesWithComponents(
+			ecs.GetComponentType(anchor.ParentAnchor{}),
+		)
+		listener := func(ei []ecs.EntityID) {
+			for _, entity := range ei {
+				if _, err := transformArray.GetComponent(entity); err == nil {
+					continue
+				}
+				transformArray.SaveComponent(entity, transform.NewTransform())
+			}
+		}
+		query.OnAdd(listener)
+		query.OnChange(listener)
+	}
 	return &system{}
 }
 
 func (s *system) Register(b events.Builder) {
+	// nothing to register since this system only listens to queries
 }

@@ -3,11 +3,12 @@ package main
 import (
 	"backend/services/clients"
 	backendscopes "backend/services/scopes"
-	"core/example"
-	"core/gameassets"
-	"core/systems/ping"
-	"core/systems/tacticalmap"
-	"core/systems/tile"
+	gameassets "core/assets"
+	gamescenes "core/scenes"
+	menuscene "core/scenes/menu"
+	"core/src/ping"
+	"core/src/tacticalmap"
+	"core/src/tile"
 	"errors"
 	"fmt"
 	"frontend/engine/components/groups"
@@ -130,8 +131,8 @@ func frontendDic(
 			windowapi.Package(window, ctx),
 		),
 		// ecs.Package(), // scenes register world so ecs package isn't registered
-		frames.Package(60),
-		// frames.Package(10000),
+		// frames.Package(60),
+		frames.Package(10000),
 		scenes.Package(),
 		frontendscopes.Package(),
 		cameras.Package(),
@@ -141,7 +142,7 @@ func frontendDic(
 		broadcollision.Package(),
 
 		texturearray.Package(),
-		tile.Package(100, -1., groups.EmptyGroups().Ptr().Enable(example.GameGroup).Val()),
+		tile.Package(100, -1., groups.DefaultGroups()),
 
 		textsys.Package(
 			text.FontFamily{FontFamily: gameassets.FontAssetID},
@@ -186,7 +187,10 @@ func frontendDic(
 		// mods
 		ping.FrontendPackage(),
 		tacticalmap.FrontendPackage(),
-		example.FrontendPackage(),
+
+		gamescenes.Package(),
+		gameassets.Package(),
+		menuscene.Package(),
 	}
 
 	b := ioc.NewBuilder()

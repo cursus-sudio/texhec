@@ -58,7 +58,7 @@ func (c *collisionDetectionService) CollidesWithRay(entity ecs.EntityID, ray col
 
 	transformComponent, err := c.transformsArray.GetComponent(entity)
 	if err != nil {
-		return nil, err
+		transformComponent = transform.NewTransform()
 	}
 	if ok, _ := rayAABBIntersect(ray, collider.TransformAABB(transformComponent)); !ok {
 		return nil, nil

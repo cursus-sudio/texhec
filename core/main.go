@@ -1,8 +1,8 @@
 package main
 
 import (
-	"core/systems/ping"
-	"core/systems/tacticalmap"
+	"core/src/ping"
+	"core/src/tacticalmap"
 	"fmt"
 	frontendtcp "frontend/services/api/tcp"
 	"frontend/services/backendconnection"

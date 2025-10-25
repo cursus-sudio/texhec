@@ -1,8 +1,8 @@
-package gameassets
+package assets
 
 import (
 	"bytes"
-	"core/systems/tile"
+	"core/src/tile"
 	_ "embed"
 	"frontend/engine/components/collider"
 	"frontend/engine/components/mesh"
@@ -12,9 +12,11 @@ import (
 	"frontend/services/assets"
 	gtexture "frontend/services/graphics/texture"
 	"frontend/services/graphics/vao/ebo"
+	"frontend/services/scenes"
 	"image"
 	_ "image/png"
 	"shared/services/datastructures"
+	appruntime "shared/services/runtime"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
@@ -23,42 +25,60 @@ import (
 )
 
 //go:embed files/1.png
-var texture1Source []byte
+var mountainSource []byte
 
 //go:embed files/2.png
-var texture2Source []byte
+var groundSource []byte
 
 //go:embed files/3.png
-var texture3Source []byte
+var forestSource []byte
 
 //go:embed files/4.png
-var texture4Source []byte
+var waterSource []byte
 
 var fontSource []byte = goregular.TTF
 
 const (
-	MeshAssetID     assets.AssetID = "vao_asset"
-	Texture1AssetID assets.AssetID = "texture1_asset"
-	Texture2AssetID assets.AssetID = "texture2_asset"
-	Texture3AssetID assets.AssetID = "texture3_asset"
-	Texture4AssetID assets.AssetID = "texture4_asset"
-	ColliderAssetID assets.AssetID = "collider_asset"
-	FontAssetID     assets.AssetID = "font_asset"
+	SquareMesh assets.AssetID = "square mesh"
+
+	MountainTileTextureID assets.AssetID = "mountain tile texture"
+	GroundTileTextureID   assets.AssetID = "ground tile texture"
+	ForestTileTextureID   assets.AssetID = "forest tile texture"
+	WaterTileTextureID    assets.AssetID = "water tile texture"
+
+	SquareColliderID assets.AssetID = "square collider"
+	FontAssetID      assets.AssetID = "font_asset"
 )
 
-func RegisterAssets(b ioc.Builder) {
+type Pkg struct{}
+
+func Package() ioc.Pkg {
+	return Pkg{}
+}
+
+func (Pkg) Register(b ioc.Builder) {
+	ioc.WrapService(b, appruntime.OrderCleanUp, func(c ioc.Dic, b appruntime.Builder) appruntime.Builder {
+		assets := ioc.Get[assets.Assets](c)
+		b.OnStop(func(r appruntime.Runtime) {
+			scene := ioc.Get[scenes.SceneManager](c).CurrentSceneCtx()
+			scene.World.Release()
+
+			assets.ReleaseAll()
+		})
+		return b
+	})
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.TileRenderSystemFactory) tile.TileRenderSystemFactory {
 		assets := datastructures.NewSparseArray[uint32, assets.AssetID]()
-		assets.Set(tile.TileMountain, Texture1AssetID)
-		assets.Set(tile.TileGround, Texture2AssetID)
-		assets.Set(tile.TileForest, Texture3AssetID)
-		assets.Set(tile.TileWater, Texture4AssetID)
+		assets.Set(tile.TileMountain, MountainTileTextureID)
+		assets.Set(tile.TileGround, GroundTileTextureID)
+		assets.Set(tile.TileForest, ForestTileTextureID)
+		assets.Set(tile.TileWater, WaterTileTextureID)
 		s.AddType(assets)
 		return s
 	})
 
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b assets.AssetsStorageBuilder) assets.AssetsStorageBuilder {
-		b.RegisterAsset(MeshAssetID, func() (any, error) {
+		b.RegisterAsset(SquareMesh, func() (any, error) {
 			vertices := []genericrenderersys.Vertex{
 				// Front face
 				{Pos: [3]float32{-1, 1, 1}, TexturePos: [2]float32{0, 1}},
@@ -97,8 +117,8 @@ func RegisterAssets(b ioc.Builder) {
 			return asset, nil
 		})
 
-		b.RegisterAsset(Texture1AssetID, func() (any, error) {
-			imgFile := bytes.NewBuffer(texture1Source)
+		b.RegisterAsset(MountainTileTextureID, func() (any, error) {
+			imgFile := bytes.NewBuffer(mountainSource)
 			img, _, err := image.Decode(imgFile)
 			if err != nil {
 				return nil, err
@@ -109,8 +129,8 @@ func RegisterAssets(b ioc.Builder) {
 			return asset, nil
 		})
 
-		b.RegisterAsset(Texture2AssetID, func() (any, error) {
-			imgFile := bytes.NewBuffer(texture2Source)
+		b.RegisterAsset(GroundTileTextureID, func() (any, error) {
+			imgFile := bytes.NewBuffer(groundSource)
 			img, _, err := image.Decode(imgFile)
 			if err != nil {
 				return nil, err
@@ -120,8 +140,8 @@ func RegisterAssets(b ioc.Builder) {
 			return asset, nil
 		})
 
-		b.RegisterAsset(Texture3AssetID, func() (any, error) {
-			imgFile := bytes.NewBuffer(texture3Source)
+		b.RegisterAsset(ForestTileTextureID, func() (any, error) {
+			imgFile := bytes.NewBuffer(forestSource)
 			img, _, err := image.Decode(imgFile)
 			if err != nil {
 				return nil, err
@@ -131,8 +151,8 @@ func RegisterAssets(b ioc.Builder) {
 			return asset, nil
 		})
 
-		b.RegisterAsset(Texture4AssetID, func() (any, error) {
-			imgFile := bytes.NewBuffer(texture4Source)
+		b.RegisterAsset(WaterTileTextureID, func() (any, error) {
+			imgFile := bytes.NewBuffer(waterSource)
 			img, _, err := image.Decode(imgFile)
 			if err != nil {
 				return nil, err
@@ -142,7 +162,7 @@ func RegisterAssets(b ioc.Builder) {
 			return asset, nil
 		})
 
-		b.RegisterAsset(ColliderAssetID, func() (any, error) {
+		b.RegisterAsset(SquareColliderID, func() (any, error) {
 			asset := collider.NewColliderStorageAsset(
 				[]collider.AABB{collider.NewAABB(mgl32.Vec3{-1, -1}, mgl32.Vec3{1, 1})},
 				[]collider.Range{collider.NewRange(collider.Leaf, 0, 2)},

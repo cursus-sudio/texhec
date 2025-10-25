@@ -23,7 +23,7 @@ func NewPivotPointSystem(world ecs.World, logger logger.Logger) ecs.SystemRegist
 		for _, entity := range ei {
 			transformComponent, err := transformArray.GetComponent(entity)
 			if err != nil {
-				continue
+				transformComponent = transform.NewTransform()
 			}
 			pivot, err := pivotPointsArray.GetComponent(entity)
 			if err != nil {

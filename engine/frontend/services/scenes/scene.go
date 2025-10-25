@@ -11,29 +11,9 @@ import (
 
 const (
 	_ ioc.Order = iota
-
-	LoadFirst
-
-	// load world
-	LoadWorld
-
-	// load event listeners
-	LoadBeforeDomain
-	_
-	_
-	_
-
-	LoadDomain
-	_
-	_
-	_
-
-	LoadAfterDomain
-	_
-	_
-	_
-
-	// call events affecting world state
+	LoadConfig
+	LoadObjects
+	LoadSystems
 	LoadInitialEvents
 )
 

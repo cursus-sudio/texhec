@@ -100,7 +100,7 @@ func (s *updateProjetionsSystem) Listen(e UpdateProjectionsEvent) {
 	for _, entity := range s.orthoQuery.Entities() {
 		transformComponent, err := s.transformArray.GetComponent(entity)
 		if err != nil {
-			continue
+			transformComponent = transform.NewTransform()
 		}
 		resizeOrtho, err := s.dynamicOrthoArray.GetComponent(entity)
 		if err != nil {

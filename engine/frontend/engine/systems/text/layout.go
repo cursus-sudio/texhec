@@ -102,8 +102,9 @@ type line struct {
 func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	// TODO add overflow read, text align read and transform modification
 
-	transfromComponent, err := s.transformArray.GetComponent(entity)
+	transformComponent, err := s.transformArray.GetComponent(entity)
 	if err != nil {
+		transformComponent = transform.NewTransform()
 		return Layout{}, err
 	}
 	textComponent, err := s.textArray.GetComponent(entity)
@@ -140,8 +141,8 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	lines := []line{{}}
 	lineHeight := 1
 
-	maxWidth := transfromComponent.Size.X() / float32(fontSize.FontSize)
-	maxHeight := transfromComponent.Size.Y() / float32(fontSize.FontSize)
+	maxWidth := transformComponent.Size.X() / float32(fontSize.FontSize)
+	maxHeight := transformComponent.Size.Y() / float32(fontSize.FontSize)
 
 	// generate lines
 	var nextLetterIndex int = 0

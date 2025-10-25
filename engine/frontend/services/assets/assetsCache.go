@@ -14,6 +14,7 @@ type AssetsCache interface {
 	Get(id AssetID) (any, error)             // 404
 	Set(id AssetID, asset CachedAsset) error // 409
 	Delete(id AssetID)
+	DeleteAll()
 }
 
 type cachedAssets struct {
@@ -62,4 +63,11 @@ func (assets *cachedAssets) Delete(id AssetID) {
 		releasableAsset.Release()
 	}
 	delete(assets.assets, id)
+}
+
+func (assets *cachedAssets) DeleteAll() {
+	for key, asset := range assets.assets {
+		delete(assets.assets, key)
+		asset.Release()
+	}
 }

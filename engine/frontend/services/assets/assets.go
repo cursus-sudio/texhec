@@ -20,6 +20,7 @@ type AssetID string
 type Assets interface {
 	Get(AssetID) (any, error)
 	Release(...AssetID)
+	ReleaseAll()
 }
 
 type assets struct {
@@ -76,6 +77,7 @@ func (a *assets) Release(ids ...AssetID) {
 		a.cachedAssets.Delete(id)
 	}
 }
+func (a *assets) ReleaseAll() { a.cachedAssets.DeleteAll() }
 
 var (
 	ErrAssetHasDifferentType error = errors.New("asset is not of requested type")

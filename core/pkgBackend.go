@@ -9,9 +9,8 @@ import (
 	"backend/services/saves"
 	"backend/services/scopes"
 	backendscopes "backend/services/scopes"
-	"core/example"
-	"core/systems/ping"
-	"core/systems/tacticalmap"
+	"core/src/ping"
+	"core/src/tacticalmap"
 	"errors"
 	"fmt"
 	"os"
@@ -54,7 +53,6 @@ func backendDic(
 		ecs.Package(),
 
 		// mods
-		example.BackendPackage(),
 		ping.BackendPackage(),
 		tacticalmap.BackendPackage(),
 	}

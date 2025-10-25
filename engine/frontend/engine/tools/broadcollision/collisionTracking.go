@@ -74,7 +74,7 @@ func (c *worldColliderImpl) Add(entities ...ecs.EntityID) {
 	for _, entity := range entities {
 		transformComponent, err := c.transformArray.GetComponent(entity)
 		if err != nil {
-			continue
+			transformComponent = transform.NewTransform()
 		}
 		positions := c.getPositions(collider.TransformAABB(transformComponent))
 		c.entitiesPositions[entity] = positions

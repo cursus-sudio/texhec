@@ -75,9 +75,9 @@ func (s *wasdMoveSystem) Listen(event frames.FrameEvent) error {
 	}
 
 	for _, camera := range s.query.Entities() {
-		transform, err := s.transformArray.GetComponent(camera)
+		transformComp, err := s.transformArray.GetComponent(camera)
 		if err != nil {
-			continue
+			transformComp = transform.NewTransform()
 		}
 
 		ortho, err := s.orthoArray.GetComponent(camera)
@@ -85,13 +85,13 @@ func (s *wasdMoveSystem) Listen(event frames.FrameEvent) error {
 			continue
 		}
 
-		transform.SetPos(mgl32.Vec3{
-			transform.Pos.X() + moveHorizontaly/ortho.Zoom,
-			transform.Pos.Y() + moveVerticaly/ortho.Zoom,
-			transform.Pos.Z(),
+		transformComp.SetPos(mgl32.Vec3{
+			transformComp.Pos.X() + moveHorizontaly/ortho.Zoom,
+			transformComp.Pos.Y() + moveVerticaly/ortho.Zoom,
+			transformComp.Pos.Z(),
 		})
 
-		s.transformTransaction.SaveComponent(camera, transform)
+		s.transformTransaction.SaveComponent(camera, transformComp)
 	}
 
 	return s.transformTransaction.Flush()

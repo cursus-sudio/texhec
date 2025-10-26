@@ -11,7 +11,7 @@ out vec4 fragColor;
 
 void main() {
     vec4 color = texture(tex, vec3(fs.uv.xy, fs.glyph));
-    if (color.a <= 0.1) {
+    if (color.a <= 0.5) {
         discard;
     }
     fragColor = color;

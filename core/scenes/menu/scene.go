@@ -36,6 +36,7 @@ import (
 	"shared/services/ecs"
 	"shared/services/logger"
 	"shared/services/runtime"
+	"slices"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/events"
@@ -102,46 +103,42 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 
 			buttonArea := world.NewEntity()
 			ecs.SaveComponent(world.Components(), buttonArea, transform.NewTransform().Ptr().
-				SetSize(mgl32.Vec3{500, 400, 1}).Val())
+				SetSize(mgl32.Vec3{500, 200, 1}).Val())
 			ecs.SaveComponent(world.Components(), buttonArea, anchor.NewParentAnchor(cameraEntity).Ptr().
 				SetPivotPoint(mgl32.Vec3{.5, .5, .5}).Val())
 
-			a1Btn := world.NewEntity()
-			ecs.SaveComponent(world.Components(), a1Btn, transform.NewTransform().Ptr().
-				SetSize(mgl32.Vec3{500, 50, 1}).Val())
-			ecs.SaveComponent(world.Components(), a1Btn, anchor.NewParentAnchor(buttonArea).Ptr().
-				SetPivotPoint(mgl32.Vec3{.5, 0, .5}).
-				Val())
+			type Button struct {
+				Text    string
+				OnClick any
+			}
+			buttons := []Button{
+				{Text: "play", OnClick: QuitEvent{}},
+				{Text: "settings", OnClick: QuitEvent{}},
+				{Text: "credits", OnClick: QuitEvent{}},
+				{Text: "exit", OnClick: QuitEvent{}},
+			}
+			slices.Reverse(buttons)
 
-			ecs.SaveComponent(world.Components(), a1Btn, mesh.NewMesh(gameassets.SquareMesh))
-			ecs.SaveComponent(world.Components(), a1Btn, texture.NewTexture(gameassets.WaterTileTextureID))
-			ecs.SaveComponent(world.Components(), a1Btn, genericrenderersys.PipelineComponent{})
+			for i, button := range buttons {
+				entity := world.NewEntity()
+				normalizedIndex := float32(i) / (float32(len(buttons)) - 1)
+				ecs.SaveComponent(world.Components(), entity, transform.NewTransform().Ptr().
+					SetSize(mgl32.Vec3{500, 50, 1}).Val())
+				ecs.SaveComponent(world.Components(), entity, anchor.NewParentAnchor(buttonArea).Ptr().
+					SetPivotPoint(mgl32.Vec3{.5, normalizedIndex, .5}).
+					Val())
 
-			ecs.SaveComponent(world.Components(), a1Btn, mouse.NewMouseEvents().AddLeftClickEvents(QuitEvent{}))
-			ecs.SaveComponent(world.Components(), a1Btn, collider.NewCollider(gameassets.SquareColliderID))
+				ecs.SaveComponent(world.Components(), entity, mesh.NewMesh(gameassets.SquareMesh))
+				ecs.SaveComponent(world.Components(), entity, texture.NewTexture(gameassets.WaterTileTextureID))
+				ecs.SaveComponent(world.Components(), entity, genericrenderersys.PipelineComponent{})
 
-			ecs.SaveComponent(world.Components(), a1Btn, text.Text{Text: "EXIT"})
-			ecs.SaveComponent(world.Components(), a1Btn, text.TextAlign{Vertical: .5, Horizontal: .5})
-			ecs.SaveComponent(world.Components(), a1Btn, text.FontSize{FontSize: 24})
+				ecs.SaveComponent(world.Components(), entity, mouse.NewMouseEvents().AddLeftClickEvents(button.OnClick))
+				ecs.SaveComponent(world.Components(), entity, collider.NewCollider(gameassets.SquareColliderID))
 
-			a2Btn := world.NewEntity()
-			ecs.SaveComponent(world.Components(), a2Btn, transform.NewTransform().Ptr().
-				SetSize(mgl32.Vec3{500, 50, 1}).Val())
-			ecs.SaveComponent(world.Components(), a2Btn, anchor.NewParentAnchor(buttonArea).Ptr().
-				SetPivotPoint(mgl32.Vec3{.5, 1, .5}).
-				Val())
-
-			ecs.SaveComponent(world.Components(), a2Btn, mesh.NewMesh(gameassets.SquareMesh))
-			ecs.SaveComponent(world.Components(), a2Btn, texture.NewTexture(gameassets.WaterTileTextureID))
-			ecs.SaveComponent(world.Components(), a2Btn, genericrenderersys.PipelineComponent{})
-
-			ecs.SaveComponent(world.Components(), a2Btn, collider.NewCollider(gameassets.SquareColliderID))
-			ecs.SaveComponent(world.Components(), a2Btn, mouse.NewMouseEvents().
-				AddLeftClickEvents(QuitEvent{}))
-
-			ecs.SaveComponent(world.Components(), a2Btn, text.Text{Text: "Start for some reason"})
-			ecs.SaveComponent(world.Components(), a2Btn, text.TextAlign{Vertical: .5, Horizontal: .5})
-			ecs.SaveComponent(world.Components(), a2Btn, text.FontSize{FontSize: 24})
+				ecs.SaveComponent(world.Components(), entity, text.Text{Text: button.Text})
+				ecs.SaveComponent(world.Components(), entity, text.TextAlign{Vertical: .5, Horizontal: .5})
+				ecs.SaveComponent(world.Components(), entity, text.FontSize{FontSize: 32})
+			}
 		})
 
 		return b

@@ -2,9 +2,9 @@ package genericrenderersys
 
 import (
 	_ "embed"
+	"frontend/engine/components/camera"
 	"frontend/engine/components/groups"
 	meshcomponent "frontend/engine/components/mesh"
-	"frontend/engine/components/projection"
 	texturecomponent "frontend/engine/components/texture"
 	"frontend/engine/components/transform"
 	"frontend/engine/systems/render"
@@ -67,12 +67,11 @@ func (r releasable) Release() {
 //
 
 type system struct {
-	world                ecs.World
-	transformArray       ecs.ComponentsArray[transform.Transform]
-	groupsArray          ecs.ComponentsArray[groups.Groups]
-	usedProjectionsArray ecs.ComponentsArray[projection.UsedProjection]
-	textureArray         ecs.ComponentsArray[texturecomponent.Texture]
-	meshArray            ecs.ComponentsArray[meshcomponent.Mesh]
+	world          ecs.World
+	transformArray ecs.ComponentsArray[transform.Transform]
+	groupsArray    ecs.ComponentsArray[groups.Groups]
+	textureArray   ecs.ComponentsArray[texturecomponent.Texture]
+	meshArray      ecs.ComponentsArray[meshcomponent.Mesh]
 
 	window        window.Api
 	assetsStorage assets.AssetsStorage
@@ -80,7 +79,8 @@ type system struct {
 	vboFactory    vbo.VBOFactory[Vertex]
 	camerasCtors  cameras.CameraConstructors
 
-	query ecs.LiveQuery
+	query       ecs.LiveQuery
+	cameraQuery ecs.LiveQuery
 
 	releasable
 }
@@ -124,12 +124,11 @@ func NewSystem(
 	world.SaveRegister(releasable)
 
 	system := &system{
-		world:                world,
-		transformArray:       ecs.GetComponentsArray[transform.Transform](world.Components()),
-		groupsArray:          ecs.GetComponentsArray[groups.Groups](world.Components()),
-		usedProjectionsArray: ecs.GetComponentsArray[projection.UsedProjection](world.Components()),
-		textureArray:         ecs.GetComponentsArray[texturecomponent.Texture](world.Components()),
-		meshArray:            ecs.GetComponentsArray[meshcomponent.Mesh](world.Components()),
+		world:          world,
+		transformArray: ecs.GetComponentsArray[transform.Transform](world.Components()),
+		groupsArray:    ecs.GetComponentsArray[groups.Groups](world.Components()),
+		textureArray:   ecs.GetComponentsArray[texturecomponent.Texture](world.Components()),
+		meshArray:      ecs.GetComponentsArray[meshcomponent.Mesh](world.Components()),
 
 		window:        window,
 		assetsStorage: assetsStorage,
@@ -142,10 +141,12 @@ func NewSystem(
 				entitiesQueryAdditionalArguments,
 				ecs.GetComponentType(PipelineComponent{}),
 				ecs.GetComponentType(transform.Transform{}),
-				ecs.GetComponentType(projection.UsedProjection{}),
 				ecs.GetComponentType(meshcomponent.Mesh{}),
 				ecs.GetComponentType(texturecomponent.Texture{}),
 			)...,
+		),
+		cameraQuery: world.QueryEntitiesWithComponents(
+			ecs.GetComponentType(camera.Camera{}),
 		),
 
 		releasable: releasable,
@@ -232,19 +233,10 @@ func (m *system) Listen(rendersys.RenderEvent) error {
 			continue
 		}
 
-		usedProjection, err := m.usedProjectionsArray.GetComponent(entity)
-		if err != nil {
-			continue
-		}
-
-		camerasQuery := m.world.QueryEntitiesWithComponents(
-			usedProjection.ProjectionComponent,
-		)
-
 		textureAsset.Use()
 		meshAsset.Use()
 
-		for _, cameraEntity := range camerasQuery.Entities() {
+		for _, cameraEntity := range m.cameraQuery.Entities() {
 			cameraGroups, err := m.groupsArray.GetComponent(cameraEntity)
 			if err != nil {
 				cameraGroups = groups.DefaultGroups()
@@ -252,7 +244,7 @@ func (m *system) Listen(rendersys.RenderEvent) error {
 			if !entityGroups.SharesAnyGroup(cameraGroups) {
 				continue
 			}
-			camera, err := m.camerasCtors.Get(cameraEntity, usedProjection.ProjectionComponent)
+			camera, err := m.camerasCtors.Get(m.world, cameraEntity)
 			if err != nil {
 				continue
 			}

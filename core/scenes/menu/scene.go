@@ -6,6 +6,7 @@ import (
 	"core/src/tile"
 	"fmt"
 	"frontend/engine/components/anchor"
+	"frontend/engine/components/camera"
 	"frontend/engine/components/collider"
 	"frontend/engine/components/mesh"
 	"frontend/engine/components/mouse"
@@ -25,7 +26,6 @@ import (
 	"frontend/engine/systems/transform"
 	"frontend/engine/tools/broadcollision"
 	"frontend/engine/tools/cameras"
-	"frontend/engine/tools/worldprojections"
 	"frontend/services/assets"
 	"frontend/services/console"
 	"frontend/services/frames"
@@ -85,43 +85,59 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			world := ctx.World
 			// load objects
-			camera := world.NewEntity()
-			ecs.SaveComponent(world.Components(), camera, transform.NewTransform())
-			ecs.SaveComponent(world.Components(), camera, projection.NewDynamicOrtho(-1000, +1000, 1))
+			cameraEntity := world.NewEntity()
+			ecs.SaveComponent(world.Components(), cameraEntity, transform.NewTransform())
+			ecs.SaveComponent(world.Components(), cameraEntity, projection.NewDynamicOrtho(-1000, +1000, 1))
+			ecs.SaveComponent(world.Components(),
+				cameraEntity,
+				camera.NewCamera(ecs.GetComponentType(projection.Ortho{})))
 
-			background := world.NewEntity()
-			ecs.SaveComponent(world.Components(), background, anchor.NewParentAnchor(camera).Ptr().
-				SetPivotPoint(mgl32.Vec3{.5, .5, .5}).
-				SetRelativeTransform(transform.NewTransform().Ptr().SetSize(mgl32.Vec3{.9, .9, 1}).Val()).Val(),
-			)
-			ecs.SaveComponent(world.Components(), background, mesh.NewMesh(gameassets.SquareMesh))
-			ecs.SaveComponent(world.Components(), background, texture.NewTexture(gameassets.WaterTileTextureID))
-			ecs.SaveComponent(world.Components(), background, projection.NewUsedProjection[projection.Ortho]())
-			ecs.SaveComponent(world.Components(), background, genericrenderersys.PipelineComponent{})
+			// background := world.NewEntity()
+			// ecs.SaveComponent(world.Components(), background, anchor.NewParentAnchor(cameraEntity).Ptr().
+			// 	SetPivotPoint(mgl32.Vec3{.5, .5, .5}).
+			// 	SetRelativeTransform(transform.NewTransform().Ptr().SetSize(mgl32.Vec3{1, 1, 1}).Val()).Val(),
+			// )
+			// ecs.SaveComponent(world.Components(), background, mesh.NewMesh(gameassets.SquareMesh))
+			// ecs.SaveComponent(world.Components(), background, texture.NewTexture(gameassets.WaterTileTextureID))
+			// ecs.SaveComponent(world.Components(), background, genericrenderersys.PipelineComponent{})
 
 			buttonArea := world.NewEntity()
 			ecs.SaveComponent(world.Components(), buttonArea, transform.NewTransform().Ptr().
 				SetSize(mgl32.Vec3{500, 400, 1}).Val())
-			ecs.SaveComponent(world.Components(), buttonArea, anchor.NewParentAnchor(camera).Ptr().
+			ecs.SaveComponent(world.Components(), buttonArea, anchor.NewParentAnchor(cameraEntity).Ptr().
 				SetPivotPoint(mgl32.Vec3{.5, .5, .5}).Val())
 
-			exitBtn := world.NewEntity()
-			ecs.SaveComponent(world.Components(), exitBtn, transform.NewTransform().Ptr().
-				SetSize(mgl32.Vec3{100, 30, 1}).Val())
-			ecs.SaveComponent(world.Components(), exitBtn, anchor.NewParentAnchor(buttonArea).Ptr().
-				SetPivotPoint(mgl32.Vec3{0, 1, .5}).
+			a1Btn := world.NewEntity()
+			ecs.SaveComponent(world.Components(), a1Btn, transform.NewTransform().Ptr().
+				SetSize(mgl32.Vec3{500, 50, 1}).Val())
+			ecs.SaveComponent(world.Components(), a1Btn, anchor.NewParentAnchor(buttonArea).Ptr().
+				SetPivotPoint(mgl32.Vec3{.5, 0, .5}).
 				Val())
-			ecs.SaveComponent(world.Components(), exitBtn, transform.NewPivotPoint(mgl32.Vec3{1, 0, .5}))
-			ecs.SaveComponent(world.Components(), exitBtn, mesh.NewMesh(gameassets.SquareMesh))
-			ecs.SaveComponent(world.Components(), exitBtn, texture.NewTexture(gameassets.WaterTileTextureID))
-			ecs.SaveComponent(world.Components(), exitBtn, genericrenderersys.PipelineComponent{})
-			ecs.SaveComponent(world.Components(), exitBtn, projection.NewUsedProjection[projection.Ortho]())
-			ecs.SaveComponent(world.Components(), exitBtn, collider.NewCollider(gameassets.SquareColliderID))
-			ecs.SaveComponent(world.Components(), exitBtn, mouse.NewMouseEvents().
+			ecs.SaveComponent(world.Components(), a1Btn, mesh.NewMesh(gameassets.SquareMesh))
+			ecs.SaveComponent(world.Components(), a1Btn, texture.NewTexture(gameassets.WaterTileTextureID))
+			ecs.SaveComponent(world.Components(), a1Btn, genericrenderersys.PipelineComponent{})
+			ecs.SaveComponent(world.Components(), a1Btn, collider.NewCollider(gameassets.SquareColliderID))
+			ecs.SaveComponent(world.Components(), a1Btn, mouse.NewMouseEvents().
 				AddLeftClickEvents(QuitEvent{}))
-			ecs.SaveComponent(world.Components(), exitBtn, text.Text{Text: "EXIT"})
-			ecs.SaveComponent(world.Components(), exitBtn, text.TextAlign{Vertical: .5, Horizontal: .5})
-			ecs.SaveComponent(world.Components(), exitBtn, text.FontSize{FontSize: 24})
+			ecs.SaveComponent(world.Components(), a1Btn, text.Text{Text: "EXIT"})
+			ecs.SaveComponent(world.Components(), a1Btn, text.TextAlign{Vertical: .5, Horizontal: .5})
+			ecs.SaveComponent(world.Components(), a1Btn, text.FontSize{FontSize: 24})
+
+			a2Btn := world.NewEntity()
+			ecs.SaveComponent(world.Components(), a2Btn, transform.NewTransform().Ptr().
+				SetSize(mgl32.Vec3{500, 50, 1}).Val())
+			ecs.SaveComponent(world.Components(), a2Btn, anchor.NewParentAnchor(a1Btn).Ptr().
+				SetPivotPoint(mgl32.Vec3{.5, 2, .5}).
+				Val())
+			ecs.SaveComponent(world.Components(), a2Btn, mesh.NewMesh(gameassets.SquareMesh))
+			ecs.SaveComponent(world.Components(), a2Btn, texture.NewTexture(gameassets.WaterTileTextureID))
+			ecs.SaveComponent(world.Components(), a2Btn, genericrenderersys.PipelineComponent{})
+			ecs.SaveComponent(world.Components(), a2Btn, collider.NewCollider(gameassets.SquareColliderID))
+			ecs.SaveComponent(world.Components(), a2Btn, mouse.NewMouseEvents().
+				AddLeftClickEvents(QuitEvent{}))
+			ecs.SaveComponent(world.Components(), a2Btn, text.Text{Text: "Start for some reason"})
+			ecs.SaveComponent(world.Components(), a2Btn, text.TextAlign{Vertical: .5, Horizontal: .5})
+			ecs.SaveComponent(world.Components(), a2Btn, text.FontSize{FontSize: 24})
 		})
 
 		return b
@@ -221,13 +237,6 @@ func (pkg Pkg) Loadsystems(b ioc.Builder) {
 					1.0,
 				),
 				ecs.NewSystemRegister(func(b events.Builder) {
-					projectionsRegister := worldprojections.NewWorldProjectionsRegister(
-						ecs.GetComponentType(projection.Ortho{}),
-						ecs.GetComponentType(projection.Perspective{}),
-					)
-					ctx.World.SaveRegister(projectionsRegister)
-				}),
-				ecs.NewSystemRegister(func(b events.Builder) {
 					events.Listen(b, func(e sdl.WindowEvent) {
 						if e.Event == sdl.WINDOWEVENT_RESIZED {
 							events.Emit(ctx.Events, projectionssys.NewUpdateProjectionsEvent())
@@ -321,6 +330,7 @@ func (Pkg) LoadInitialEvents(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadInitialEvents, func(c ioc.Dic, b Builder) Builder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			events.Emit(ctx.Events, projectionssys.NewUpdateProjectionsEvent())
+			events.Emit(ctx.Events, mousesystem.NewShootRayEvent())
 		})
 		return b
 	})

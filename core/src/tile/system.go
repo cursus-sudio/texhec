@@ -3,7 +3,6 @@ package tile
 import (
 	_ "embed"
 	"frontend/engine/components/groups"
-	"frontend/engine/components/projection"
 	"frontend/engine/systems/render"
 	"frontend/engine/tools/cameras"
 	"frontend/services/graphics/program"
@@ -85,7 +84,7 @@ func (s *system) Listen(rendersys.RenderEvent) {
 	gl.Uniform1f(s.locations.GridDepth, s.gridDepth)
 
 	for _, cameraEntity := range s.cameraQuery.Entities() {
-		camera, err := s.cameraCtors.Get(cameraEntity, ecs.GetComponentType(projection.Ortho{}))
+		camera, err := s.cameraCtors.Get(s.world, cameraEntity)
 		if err != nil {
 			continue
 		}

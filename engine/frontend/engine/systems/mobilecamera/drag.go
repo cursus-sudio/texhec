@@ -2,7 +2,6 @@ package mobilecamerasys
 
 import (
 	"frontend/engine/components/mobilecamera"
-	"frontend/engine/components/projection"
 	"frontend/engine/components/transform"
 	"frontend/engine/tools/cameras"
 	"frontend/services/media/window"
@@ -72,7 +71,7 @@ func (s *dragSystem) Listen1(sdl.MouseMotionEvent) {
 			transformComponent = transform.NewTransform()
 		}
 
-		camera, err := s.cameraCtors.Get(cameraEntity, ecs.GetComponentType(projection.Ortho{}))
+		camera, err := s.cameraCtors.Get(s.world, cameraEntity)
 		if err != nil {
 			continue
 		}

@@ -30,8 +30,7 @@ func (Pkg) Register(b ioc.Builder) {
 			return t
 		}
 
-		s.Register(ecs.GetComponentType(Ortho{}), func(entity ecs.EntityID) (cameras.Camera, error) {
-			world := ioc.Get[ecs.World](c)
+		s.Register(ecs.GetComponentType(Ortho{}), func(world ecs.World, entity ecs.EntityID) (cameras.Camera, error) {
 			transformArray := ecs.GetComponentsArray[transform.Transform](world.Components())
 			orthoArray := ecs.GetComponentsArray[Ortho](world.Components())
 
@@ -83,8 +82,7 @@ func (Pkg) Register(b ioc.Builder) {
 
 		//
 
-		s.Register(ecs.GetComponentType(Perspective{}), func(entity ecs.EntityID) (cameras.Camera, error) {
-			world := ioc.Get[ecs.World](c)
+		s.Register(ecs.GetComponentType(Perspective{}), func(world ecs.World, entity ecs.EntityID) (cameras.Camera, error) {
 			transformArray := ecs.GetComponentsArray[transform.Transform](world.Components())
 			perspectiveArray := ecs.GetComponentsArray[Perspective](world.Components())
 

@@ -2,7 +2,6 @@ package textsys
 
 import (
 	"frontend/engine/components/groups"
-	"frontend/engine/components/projection"
 	"frontend/engine/components/transform"
 	rendersys "frontend/engine/systems/render"
 	"frontend/engine/tools/cameras"
@@ -177,7 +176,7 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 		})
 
 		for _, cameraEntity := range s.cameraQuery.Entities() {
-			camera, err := s.cameraCtors.Get(cameraEntity, ecs.GetComponentType(projection.Ortho{}))
+			camera, err := s.cameraCtors.Get(s.world, cameraEntity)
 			if err != nil {
 				continue
 			}

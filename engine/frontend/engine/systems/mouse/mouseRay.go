@@ -1,11 +1,10 @@
 package mousesys
 
 import (
-	"frontend/engine/components/projection"
+	"frontend/engine/components/camera"
 	"frontend/engine/components/transform"
 	"frontend/engine/tools/broadcollision"
 	"frontend/engine/tools/cameras"
-	"frontend/engine/tools/worldprojections"
 	"frontend/services/assets"
 	"frontend/services/media/window"
 	"shared/services/ecs"
@@ -20,20 +19,20 @@ func NewShootRayEvent() ShootRayEvent {
 }
 
 type RayChangedTargetEvent struct {
-	ProjectionType ecs.ComponentType
-	EntityID       *ecs.EntityID
+	EntityID *ecs.EntityID
 }
 
 type cameraRaySystem struct {
 	world           ecs.World
 	transformArray  ecs.ComponentsArray[transform.Transform]
+	cameraArray     ecs.ComponentsArray[camera.Camera]
 	broadCollisions broadcollision.CollisionDetectionService
 	window          window.Api
 	events          events.Events
 	assets          assets.Assets
 	cameraCtors     cameras.CameraConstructors
 
-	hoversOverEntites map[ecs.ComponentType]ecs.EntityID
+	hoversOverEntity *ecs.EntityID
 }
 
 func NewCameraRaySystem(
@@ -46,12 +45,13 @@ func NewCameraRaySystem(
 	return &cameraRaySystem{
 		world:           world,
 		transformArray:  ecs.GetComponentsArray[transform.Transform](world.Components()),
+		cameraArray:     ecs.GetComponentsArray[camera.Camera](world.Components()),
 		broadCollisions: collider,
 		window:          window,
 		events:          events,
 		cameraCtors:     cameraCtors,
 
-		hoversOverEntites: map[ecs.ComponentType]ecs.EntityID{},
+		hoversOverEntity: nil,
 	}
 }
 
@@ -62,61 +62,49 @@ func (s *cameraRaySystem) Register(b events.Builder) {
 func (s *cameraRaySystem) Listen(args ShootRayEvent) error {
 	mousePos := s.window.NormalizeMousePos(s.window.GetMousePos())
 
-	p, err := ecs.GetRegister[worldprojections.WorldProjectionsRegister](s.world)
-	if err != nil {
-		return err
-	}
-
-	for _, projectionType := range p.Projections.Get() {
-		if projectionType == ecs.GetComponentType(projection.Perspective{}) {
-			continue
+	var nearestCollision broadcollision.ObjectRayCollision
+	for _, cameraEntity := range s.cameraArray.GetEntities() {
+		camera, err := s.cameraCtors.Get(s.world, cameraEntity)
+		if err != nil {
+			return err
 		}
-		query := s.world.QueryEntitiesWithComponents(projectionType)
-		cameras := query.Entities()
-		var nearestCollision broadcollision.ObjectRayCollision
-		for _, cameraEntity := range cameras {
-			camera, err := s.cameraCtors.Get(cameraEntity, projectionType)
-			if err != nil {
-				return err
-			}
 
-			ray := camera.ShootRay(mousePos)
+		ray := camera.ShootRay(mousePos)
 
-			collision, err := s.broadCollisions.ShootRay(ray)
-			if err != nil {
-				return err
-			}
-			if collision == nil {
-				continue
-			}
-			if nearestCollision == nil {
-				nearestCollision = collision
-				continue
-			}
-
-			if nearestCollision.Hit().Distance > collision.Hit().Distance {
-				nearestCollision = collision
-			}
+		collision, err := s.broadCollisions.ShootRay(ray)
+		if err != nil {
+			return err
+		}
+		if collision == nil {
+			continue
 		}
 		if nearestCollision == nil {
-			if _, ok := s.hoversOverEntites[projectionType]; ok {
-				delete(s.hoversOverEntites, projectionType)
-				event := RayChangedTargetEvent{ProjectionType: projectionType, EntityID: nil}
-				events.Emit(s.events, event)
-			}
+			nearestCollision = collision
 			continue
 		}
 
-		entity := nearestCollision.Entity()
-		hoversOverEntity, _ := s.hoversOverEntites[projectionType]
-		if hoversOverEntity == entity {
-			continue
+		if nearestCollision.Hit().Distance > collision.Hit().Distance {
+			nearestCollision = collision
 		}
-
-		s.hoversOverEntites[projectionType] = entity
-		event := RayChangedTargetEvent{ProjectionType: projectionType, EntityID: &entity}
-		events.Emit(s.events, event)
 	}
+
+	if nearestCollision == nil {
+		if s.hoversOverEntity != nil {
+			s.hoversOverEntity = nil
+			event := RayChangedTargetEvent{EntityID: nil}
+			events.Emit(s.events, event)
+		}
+		return nil
+	}
+
+	entity := nearestCollision.Entity()
+	if s.hoversOverEntity != nil && *s.hoversOverEntity == entity {
+		return nil
+	}
+
+	s.hoversOverEntity = &entity
+	event := RayChangedTargetEvent{EntityID: &entity}
+	events.Emit(s.events, event)
 
 	return nil
 }

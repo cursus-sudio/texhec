@@ -12,7 +12,7 @@ type hoverSystem struct {
 	mouseEventsArray ecs.ComponentsArray[mouse.MouseEvents]
 	hoveredArray     ecs.ComponentsArray[mouse.Hovered]
 	events           events.Events
-	targets          map[ecs.ComponentType]ecs.EntityID
+	target           *ecs.EntityID
 }
 
 func NewHoverSystem(world ecs.World, events events.Events) ecs.SystemRegister {
@@ -21,7 +21,7 @@ func NewHoverSystem(world ecs.World, events events.Events) ecs.SystemRegister {
 		mouseEventsArray: ecs.GetComponentsArray[mouse.MouseEvents](world.Components()),
 		hoveredArray:     ecs.GetComponentsArray[mouse.Hovered](world.Components()),
 		events:           events,
-		targets:          map[ecs.ComponentType]ecs.EntityID{},
+		target:           nil,
 	}
 }
 
@@ -42,14 +42,14 @@ func (s *hoverSystem) Register(b events.Builder) {
 }
 
 func (s *hoverSystem) Listen(event RayChangedTargetEvent) {
-	if entity, ok := s.targets[event.ProjectionType]; ok {
-		s.handleMouseLeave(entity)
+	if s.target != nil {
+		s.handleMouseLeave(*s.target)
 	}
 	if event.EntityID == nil {
-		delete(s.targets, event.ProjectionType)
+		s.target = nil
 		return
 	}
-	s.targets[event.ProjectionType] = *event.EntityID
+	s.target = event.EntityID
 	entity := *event.EntityID
 
 	mouseEvents, err := s.mouseEventsArray.GetComponent(entity)

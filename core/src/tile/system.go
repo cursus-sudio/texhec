@@ -84,7 +84,7 @@ func (s *system) Listen(rendersys.RenderEvent) {
 	gl.Uniform1f(s.locations.GridDepth, s.gridDepth)
 
 	for _, cameraEntity := range s.cameraQuery.Entities() {
-		camera, err := s.cameraCtors.Get(s.world, cameraEntity)
+		camera, err := s.cameraCtors.Get(cameraEntity)
 		if err != nil {
 			continue
 		}

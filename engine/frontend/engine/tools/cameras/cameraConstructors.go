@@ -10,16 +10,16 @@ import (
 var ErrMissingConstructor error = errors.New("missing camera type constructor")
 
 type CameraConstructors interface {
-	Get(ecs.World, ecs.EntityID) (Camera, error)
+	Get(ecs.EntityID) (Camera, error)
 }
 
 type cameraConstructors struct {
-	constructors map[ecs.ComponentType]func(ecs.World, ecs.EntityID) (Camera, error)
+	cameraArray  ecs.ComponentsArray[cameracomponent.Camera]
+	constructors map[ecs.ComponentType]func(ecs.EntityID) (Camera, error)
 }
 
-func (c *cameraConstructors) Get(world ecs.World, entity ecs.EntityID) (Camera, error) {
-	cameraArray := ecs.GetComponentsArray[cameracomponent.Camera](world.Components())
-	cameraComponent, err := cameraArray.GetComponent(entity)
+func (c *cameraConstructors) Get(entity ecs.EntityID) (Camera, error) {
+	cameraComponent, err := c.cameraArray.GetComponent(entity)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func (c *cameraConstructors) Get(world ecs.World, entity ecs.EntityID) (Camera, 
 		)
 	}
 
-	camera, err := constructor(world, entity)
+	camera, err := constructor(entity)
 	if err != nil {
 		return nil, err
 	}

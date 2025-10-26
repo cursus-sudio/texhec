@@ -71,7 +71,7 @@ func (s *dragSystem) Listen1(sdl.MouseMotionEvent) {
 			transformComponent = transform.NewTransform()
 		}
 
-		camera, err := s.cameraCtors.Get(s.world, cameraEntity)
+		camera, err := s.cameraCtors.Get(cameraEntity)
 		if err != nil {
 			continue
 		}

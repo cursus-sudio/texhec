@@ -203,51 +203,53 @@ func (m *system) Listen(rendersys.RenderEvent) error {
 		return err
 	}
 
-	for _, entity := range m.query.Entities() {
-		transformComponent, err := m.transformArray.GetComponent(entity)
+	for _, cameraEntity := range m.cameraQuery.Entities() {
+		cameraGroups, err := m.groupsArray.GetComponent(cameraEntity)
 		if err != nil {
-			transformComponent = transform.NewTransform()
-		}
-		model := transformComponent.Mat4()
-
-		entityGroups, err := m.groupsArray.GetComponent(entity)
-		if err != nil {
-			entityGroups = groups.DefaultGroups()
+			cameraGroups = groups.DefaultGroups()
 		}
 
-		textureComponent, err := m.textureArray.GetComponent(entity)
-		if err != nil {
-			continue
-		}
-		textureAsset, err := m.getTexture(textureComponent.ID)
+		camera, err := m.camerasCtors.Get(cameraEntity)
 		if err != nil {
 			continue
 		}
 
-		meshComponent, err := m.meshArray.GetComponent(entity)
-		if err != nil {
-			continue
-		}
-		meshAsset, err := m.getMesh(meshComponent.ID)
-		if err != nil {
-			continue
-		}
-
-		textureAsset.Use()
-		meshAsset.Use()
-
-		for _, cameraEntity := range m.cameraQuery.Entities() {
-			cameraGroups, err := m.groupsArray.GetComponent(cameraEntity)
+		for _, entity := range m.query.Entities() {
+			entityGroups, err := m.groupsArray.GetComponent(entity)
 			if err != nil {
-				cameraGroups = groups.DefaultGroups()
+				entityGroups = groups.DefaultGroups()
 			}
 			if !entityGroups.SharesAnyGroup(cameraGroups) {
 				continue
 			}
-			camera, err := m.camerasCtors.Get(m.world, cameraEntity)
+
+			transformComponent, err := m.transformArray.GetComponent(entity)
+			if err != nil {
+				transformComponent = transform.NewTransform()
+			}
+			model := transformComponent.Mat4()
+
+			textureComponent, err := m.textureArray.GetComponent(entity)
 			if err != nil {
 				continue
 			}
+			textureAsset, err := m.getTexture(textureComponent.ID)
+			if err != nil {
+				continue
+			}
+
+			meshComponent, err := m.meshArray.GetComponent(entity)
+			if err != nil {
+				continue
+			}
+			meshAsset, err := m.getMesh(meshComponent.ID)
+			if err != nil {
+				continue
+			}
+
+			textureAsset.Use()
+			meshAsset.Use()
+
 			mvp := camera.Mat4().Mul4(model)
 
 			gl.UniformMatrix4fv(locations.Mvp, 1, false, &mvp[0])

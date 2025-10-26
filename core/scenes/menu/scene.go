@@ -88,18 +88,17 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 			cameraEntity := world.NewEntity()
 			ecs.SaveComponent(world.Components(), cameraEntity, transform.NewTransform())
 			ecs.SaveComponent(world.Components(), cameraEntity, projection.NewDynamicOrtho(-1000, +1000, 1))
-			ecs.SaveComponent(world.Components(),
-				cameraEntity,
+			ecs.SaveComponent(world.Components(), cameraEntity,
 				camera.NewCamera(ecs.GetComponentType(projection.Ortho{})))
 
-			// background := world.NewEntity()
-			// ecs.SaveComponent(world.Components(), background, anchor.NewParentAnchor(cameraEntity).Ptr().
-			// 	SetPivotPoint(mgl32.Vec3{.5, .5, .5}).
-			// 	SetRelativeTransform(transform.NewTransform().Ptr().SetSize(mgl32.Vec3{1, 1, 1}).Val()).Val(),
-			// )
-			// ecs.SaveComponent(world.Components(), background, mesh.NewMesh(gameassets.SquareMesh))
-			// ecs.SaveComponent(world.Components(), background, texture.NewTexture(gameassets.WaterTileTextureID))
-			// ecs.SaveComponent(world.Components(), background, genericrenderersys.PipelineComponent{})
+			background := world.NewEntity()
+			ecs.SaveComponent(world.Components(), background, anchor.NewParentAnchor(cameraEntity).Ptr().
+				SetPivotPoint(mgl32.Vec3{.5, .5, .5}).
+				SetRelativeTransform(transform.NewTransform().Ptr().SetSize(mgl32.Vec3{1, 1, 1}).Val()).Val(),
+			)
+			ecs.SaveComponent(world.Components(), background, mesh.NewMesh(gameassets.SquareMesh))
+			ecs.SaveComponent(world.Components(), background, texture.NewTexture(gameassets.ForestTileTextureID))
+			ecs.SaveComponent(world.Components(), background, genericrenderersys.PipelineComponent{})
 
 			buttonArea := world.NewEntity()
 			ecs.SaveComponent(world.Components(), buttonArea, transform.NewTransform().Ptr().
@@ -113,12 +112,14 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world.Components(), a1Btn, anchor.NewParentAnchor(buttonArea).Ptr().
 				SetPivotPoint(mgl32.Vec3{.5, 0, .5}).
 				Val())
+
 			ecs.SaveComponent(world.Components(), a1Btn, mesh.NewMesh(gameassets.SquareMesh))
 			ecs.SaveComponent(world.Components(), a1Btn, texture.NewTexture(gameassets.WaterTileTextureID))
 			ecs.SaveComponent(world.Components(), a1Btn, genericrenderersys.PipelineComponent{})
+
+			ecs.SaveComponent(world.Components(), a1Btn, mouse.NewMouseEvents().AddLeftClickEvents(QuitEvent{}))
 			ecs.SaveComponent(world.Components(), a1Btn, collider.NewCollider(gameassets.SquareColliderID))
-			ecs.SaveComponent(world.Components(), a1Btn, mouse.NewMouseEvents().
-				AddLeftClickEvents(QuitEvent{}))
+
 			ecs.SaveComponent(world.Components(), a1Btn, text.Text{Text: "EXIT"})
 			ecs.SaveComponent(world.Components(), a1Btn, text.TextAlign{Vertical: .5, Horizontal: .5})
 			ecs.SaveComponent(world.Components(), a1Btn, text.FontSize{FontSize: 24})
@@ -126,15 +127,18 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 			a2Btn := world.NewEntity()
 			ecs.SaveComponent(world.Components(), a2Btn, transform.NewTransform().Ptr().
 				SetSize(mgl32.Vec3{500, 50, 1}).Val())
-			ecs.SaveComponent(world.Components(), a2Btn, anchor.NewParentAnchor(a1Btn).Ptr().
-				SetPivotPoint(mgl32.Vec3{.5, 2, .5}).
+			ecs.SaveComponent(world.Components(), a2Btn, anchor.NewParentAnchor(buttonArea).Ptr().
+				SetPivotPoint(mgl32.Vec3{.5, 1, .5}).
 				Val())
+
 			ecs.SaveComponent(world.Components(), a2Btn, mesh.NewMesh(gameassets.SquareMesh))
 			ecs.SaveComponent(world.Components(), a2Btn, texture.NewTexture(gameassets.WaterTileTextureID))
 			ecs.SaveComponent(world.Components(), a2Btn, genericrenderersys.PipelineComponent{})
+
 			ecs.SaveComponent(world.Components(), a2Btn, collider.NewCollider(gameassets.SquareColliderID))
 			ecs.SaveComponent(world.Components(), a2Btn, mouse.NewMouseEvents().
 				AddLeftClickEvents(QuitEvent{}))
+
 			ecs.SaveComponent(world.Components(), a2Btn, text.Text{Text: "Start for some reason"})
 			ecs.SaveComponent(world.Components(), a2Btn, text.TextAlign{Vertical: .5, Horizontal: .5})
 			ecs.SaveComponent(world.Components(), a2Btn, text.FontSize{FontSize: 24})
@@ -162,7 +166,7 @@ func (pkg Pkg) Loadsystems(b ioc.Builder) {
 				ioc.Get[assets.AssetsStorage](c),
 				logger,
 				ioc.Get[vbo.VBOFactory[genericrenderersys.Vertex]](c),
-				ioc.Get[cameras.CameraConstructors](c),
+				ioc.Get[cameras.CameraConstructorsFactory](c).Build(ctx.World),
 				[]ecs.ComponentType{},
 			)
 			if err != nil {
@@ -199,7 +203,7 @@ func (pkg Pkg) Loadsystems(b ioc.Builder) {
 					ioc.Get[broadcollision.CollisionServiceFactory](c)(ctx.World),
 					ioc.Get[window.Api](c),
 					ctx.Events,
-					ioc.Get[cameras.CameraConstructors](c),
+					ioc.Get[cameras.CameraConstructorsFactory](c).Build(ctx.World),
 				),
 				mousesystem.NewHoverSystem(ctx.World, ctx.Events),
 				mousesystem.NewHoverEventsSystem(ctx.World, ctx.Events),
@@ -220,20 +224,20 @@ func (pkg Pkg) Loadsystems(b ioc.Builder) {
 				mobilecamerasystem.NewScrollSystem(
 					ctx.World,
 					logger,
-					ioc.Get[cameras.CameraConstructors](c),
+					ioc.Get[cameras.CameraConstructorsFactory](c).Build(ctx.World),
 					ioc.Get[window.Api](c),
 					0.1, 5,
 				),
 				mobilecamerasystem.NewDragSystem(
 					sdl.BUTTON_LEFT,
 					ctx.World,
-					ioc.Get[cameras.CameraConstructors](c),
+					ioc.Get[cameras.CameraConstructorsFactory](c).Build(ctx.World),
 					ioc.Get[window.Api](c),
 					logger,
 				),
 				mobilecamerasystem.NewWasdSystem(
 					ctx.World,
-					ioc.Get[cameras.CameraConstructors](c),
+					ioc.Get[cameras.CameraConstructorsFactory](c).Build(ctx.World),
 					1.0,
 				),
 				ecs.NewSystemRegister(func(b events.Builder) {

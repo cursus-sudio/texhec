@@ -76,7 +76,7 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) error {
 			transformComponent = transform.NewTransform()
 		}
 
-		camera, err := s.cameraCtors.Get(s.world, cameraEntity)
+		camera, err := s.cameraCtors.Get(cameraEntity)
 		if err != nil {
 			continue
 		}

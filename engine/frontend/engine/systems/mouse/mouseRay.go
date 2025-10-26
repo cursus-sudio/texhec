@@ -64,7 +64,7 @@ func (s *cameraRaySystem) Listen(args ShootRayEvent) error {
 
 	var nearestCollision broadcollision.ObjectRayCollision
 	for _, cameraEntity := range s.cameraArray.GetEntities() {
-		camera, err := s.cameraCtors.Get(s.world, cameraEntity)
+		camera, err := s.cameraCtors.Get(cameraEntity)
 		if err != nil {
 			return err
 		}

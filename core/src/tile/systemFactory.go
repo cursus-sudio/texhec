@@ -47,8 +47,8 @@ type TileRenderSystemFactory struct {
 	tileSize  int32
 	gridDepth float32
 
-	groups      groups.Groups
-	cameraCtors cameras.CameraConstructors
+	groups             groups.Groups
+	cameraCtorsFactory cameras.CameraConstructorsFactory
 }
 
 func newTileRenderSystemFactory(
@@ -59,7 +59,7 @@ func newTileRenderSystemFactory(
 	tileSize int32,
 	gridDepth float32,
 	groups groups.Groups,
-	cameraCtors cameras.CameraConstructors,
+	cameraCtorsFactory cameras.CameraConstructorsFactory,
 ) TileRenderSystemFactory {
 	return TileRenderSystemFactory{
 		logger:              logger,
@@ -71,8 +71,8 @@ func newTileRenderSystemFactory(
 		tileSize:  tileSize,
 		gridDepth: gridDepth,
 
-		groups:      groups,
-		cameraCtors: cameraCtors,
+		groups:             groups,
+		cameraCtorsFactory: cameraCtorsFactory,
 	}
 }
 
@@ -155,7 +155,7 @@ func (factory TileRenderSystemFactory) NewSystem(world ecs.World) (ecs.SystemReg
 		groupsArray: ecs.GetComponentsArray[groups.Groups](world.Components()),
 		gridGroups:  factory.groups,
 		cameraQuery: world.QueryEntitiesWithComponents(ecs.GetComponentType(projection.Ortho{})),
-		cameraCtors: factory.cameraCtors,
+		cameraCtors: factory.cameraCtorsFactory.Build(world),
 
 		changed:     false,
 		changeMutex: changeMutex,

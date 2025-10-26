@@ -33,7 +33,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 			pkg.tileSize,
 			pkg.gridDepth,
 			pkg.gridGroups,
-			ioc.Get[cameras.CameraConstructors](c),
+			ioc.Get[cameras.CameraConstructorsFactory](c),
 		)
 	})
 

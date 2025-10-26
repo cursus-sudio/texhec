@@ -33,7 +33,7 @@ type TextRendererFactory interface {
 }
 
 type textRendererFactory struct {
-	cameraCtors          cameras.CameraConstructors
+	cameraCtorsFactory   cameras.CameraConstructorsFactory
 	fontService          FontService
 	vboFactory           vbo.VBOFactory[Glyph]
 	layoutServiceFactory LayoutServiceFactory
@@ -47,7 +47,7 @@ type textRendererFactory struct {
 }
 
 func newTextRendererFactory(
-	cameraCtors cameras.CameraConstructors,
+	cameraCtorsFactory cameras.CameraConstructorsFactory,
 	fontService FontService,
 	vboFactory vbo.VBOFactory[Glyph],
 	layoutServiceFactory LayoutServiceFactory,
@@ -58,7 +58,7 @@ func newTextRendererFactory(
 	removeOncePerNCalls uint16,
 ) TextRendererFactory {
 	return &textRendererFactory{
-		cameraCtors:          cameraCtors,
+		cameraCtorsFactory:   cameraCtorsFactory,
 		fontService:          fontService,
 		vboFactory:           vboFactory,
 		layoutServiceFactory: layoutServiceFactory,
@@ -112,7 +112,7 @@ func (f *textRendererFactory) New(world ecs.World) (ecs.SystemRegister, error) {
 		cameraQuery:    world.QueryEntitiesWithComponents(ecs.GetComponentType(projection.Ortho{})),
 
 		logger:      f.logger,
-		cameraCtors: f.cameraCtors,
+		cameraCtors: f.cameraCtorsFactory.Build(world),
 		fontService: f.fontService,
 
 		program:   p,

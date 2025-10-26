@@ -176,7 +176,7 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 		})
 
 		for _, cameraEntity := range s.cameraQuery.Entities() {
-			camera, err := s.cameraCtors.Get(s.world, cameraEntity)
+			camera, err := s.cameraCtors.Get(cameraEntity)
 			if err != nil {
 				continue
 			}

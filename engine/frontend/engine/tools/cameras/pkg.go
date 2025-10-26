@@ -14,12 +14,8 @@ func Package() ioc.Pkg {
 
 func (Pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) CameraConstructorsFactory {
-		return &cameraConstructorsFactory{&cameraConstructors{
-			constructors: make(map[ecs.ComponentType]func(ecs.World, ecs.EntityID) (Camera, error)),
-		}}
-	})
-
-	ioc.RegisterSingleton(b, func(c ioc.Dic) CameraConstructors {
-		return ioc.Get[CameraConstructorsFactory](c).Build()
+		return &cameraConstructorsFactory{
+			constructors: make(map[ecs.ComponentType]func(ecs.World) func(ecs.EntityID) (Camera, error)),
+		}
 	})
 }

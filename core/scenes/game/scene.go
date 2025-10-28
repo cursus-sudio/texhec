@@ -76,13 +76,13 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 			signature := world.NewEntity()
 			ecs.SaveComponent(world.Components(), signature, transform.NewTransform().Ptr().
 				SetSize(mgl32.Vec3{100, 50, 1}).Val())
-			ecs.SaveComponent(world.Components(), signature, transform.NewPivotPoint(mgl32.Vec3{1, 1, .5}))
+			ecs.SaveComponent(world.Components(), signature, transform.NewPivotPoint(mgl32.Vec3{1, .5, .5}))
 			ecs.SaveComponent(world.Components(), signature, anchor.NewParentAnchor(cameraEntity).Ptr().
 				SetPivotPoint(mgl32.Vec3{0, 0, .5}).
+				SetOffset(mgl32.Vec3{5, 5}).
 				Val())
 
 			ecs.SaveComponent(world.Components(), signature, text.Text{Text: "game"})
-			ecs.SaveComponent(world.Components(), signature, text.TextAlign{Vertical: .5, Horizontal: .5})
 			ecs.SaveComponent(world.Components(), signature, text.FontSize{FontSize: 32})
 
 			background := world.NewEntity()
@@ -108,7 +108,7 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 				{Text: "play", OnClick: scenessys.NewChangeSceneEvent(gamescenes.GameID)},
 				{Text: "settings", OnClick: scenessys.NewChangeSceneEvent(gamescenes.SettingsID)},
 				{Text: "credits", OnClick: scenessys.NewChangeSceneEvent(gamescenes.CreditsID)},
-				{Text: "exit", OnClick: QuitEvent{}},
+				{Text: "exit", OnClick: scenessys.NewChangeSceneEvent(gamescenes.MenuID)},
 			}
 			slices.Reverse(buttons)
 

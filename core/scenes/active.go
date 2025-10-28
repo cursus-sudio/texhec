@@ -65,7 +65,6 @@ func (Pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) CoreSystems {
 		return func(ctx scenes.SceneCtx) []ecs.SystemRegister {
 			logger := ioc.Get[logger.Logger](c)
-			logger.Info("loading scene core systems")
 
 			// systems
 

@@ -65,9 +65,7 @@ func (Pkg) LoadConfig(b ioc.Builder) {
 
 // ISSUES
 // TODO
-// 1. find TODO and you'll see not working button collision. you have to click to the bottom to collide
-// 1. done
-// 2. when changing scenes for some reason background stays
+// 1. when changing scenes for some reason background stays
 
 func (Pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.MenuBuilder) gamescenes.MenuBuilder {
@@ -82,13 +80,13 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 			signature := world.NewEntity()
 			ecs.SaveComponent(world.Components(), signature, transform.NewTransform().Ptr().
 				SetSize(mgl32.Vec3{100, 50, 1}).Val())
-			ecs.SaveComponent(world.Components(), signature, transform.NewPivotPoint(mgl32.Vec3{1, 1, .5}))
+			ecs.SaveComponent(world.Components(), signature, transform.NewPivotPoint(mgl32.Vec3{1, .5, .5}))
 			ecs.SaveComponent(world.Components(), signature, anchor.NewParentAnchor(cameraEntity).Ptr().
 				SetPivotPoint(mgl32.Vec3{0, 0, .5}).
+				SetOffset(mgl32.Vec3{5, 5}).
 				Val())
 
 			ecs.SaveComponent(world.Components(), signature, text.Text{Text: "menu"})
-			ecs.SaveComponent(world.Components(), signature, text.TextAlign{Vertical: .5, Horizontal: .5})
 			ecs.SaveComponent(world.Components(), signature, text.FontSize{FontSize: 32})
 
 			background := world.NewEntity()

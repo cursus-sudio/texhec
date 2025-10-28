@@ -22,6 +22,8 @@ type ParentAnchor struct {
 	// locks refer to object center
 	// every lock axis should be between 0 and 1
 	ParentPivot transform.PivotPoint
+	// offset is a tool to create margin
+	Offset mgl32.Vec3
 }
 
 func NewParentAnchor(parent ecs.EntityID) ParentAnchor {
@@ -30,6 +32,7 @@ func NewParentAnchor(parent ecs.EntityID) ParentAnchor {
 		Ignore,
 		transform.NewTransform(),
 		transform.NewPivotPoint(mgl32.Vec3{.5, .5, .5}),
+		mgl32.Vec3{},
 	}
 }
 
@@ -53,5 +56,10 @@ func (c *ParentAnchor) SetRelativeTransform(transform transform.Transform) *Pare
 
 func (c *ParentAnchor) SetPivotPoint(pivot mgl32.Vec3) *ParentAnchor {
 	c.ParentPivot = transform.NewPivotPoint(pivot)
+	return c
+}
+
+func (c *ParentAnchor) SetOffset(offset mgl32.Vec3) *ParentAnchor {
+	c.Offset = offset
 	return c
 }

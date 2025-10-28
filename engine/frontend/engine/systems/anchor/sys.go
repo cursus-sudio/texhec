@@ -22,7 +22,8 @@ func applyChildTransform(
 			parent.Size[1] * (anchor.ParentPivot.Point[1] - .5),
 			parent.Size[2] * (anchor.ParentPivot.Point[2] - .5),
 		}).
-		Add(anchor.RelativeTransform.Pos),
+		Add(anchor.RelativeTransform.Pos).
+		Add(anchor.Offset),
 	)
 
 	if anchor.RelativeTransform.Rotation != mgl32.QuatIdent() {
@@ -36,6 +37,7 @@ func applyChildTransform(
 			parent.Size[2] * anchor.RelativeTransform.Size[2],
 		})
 	}
+
 	return child
 }
 

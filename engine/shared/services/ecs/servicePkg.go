@@ -25,3 +25,11 @@ func RegisterSystems(b events.Builder, systems ...SystemRegister) {
 		system.Register(b)
 	}
 }
+
+func ReEmit[EventFrom any](emitter func(e EventFrom)) SystemRegister {
+	return NewSystemRegister(func(b events.Builder) {
+		events.Listen(b, func(from EventFrom) {
+			emitter(from)
+		})
+	})
+}

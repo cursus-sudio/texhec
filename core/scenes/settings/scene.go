@@ -17,6 +17,7 @@ import (
 	"frontend/services/scenes"
 	"shared/services/ecs"
 	"slices"
+	"strings"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
@@ -49,6 +50,7 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 
 			ecs.SaveComponent(world.Components(), signature, text.Text{Text: "settings"})
 			ecs.SaveComponent(world.Components(), signature, text.FontSize{FontSize: 32})
+			ecs.SaveComponent(world.Components(), signature, text.Break{Break: text.BreakNone})
 
 			background := world.NewEntity()
 			ecs.SaveComponent(world.Components(), background, anchor.NewParentAnchor(cameraEntity).Ptr().
@@ -70,10 +72,9 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 				OnClick any
 			}
 			buttons := []Button{
-				{Text: "play", OnClick: scenessys.NewChangeSceneEvent(gamescenes.GameID)},
-				{Text: "settings", OnClick: scenessys.NewChangeSceneEvent(gamescenes.SettingsID)},
-				{Text: "credits", OnClick: scenessys.NewChangeSceneEvent(gamescenes.CreditsID)},
-				{Text: "exit", OnClick: scenessys.NewChangeSceneEvent(gamescenes.MenuID)},
+				{Text: "mute", OnClick: nil},
+				{Text: "keybinds", OnClick: nil},
+				{Text: "return to menu", OnClick: scenessys.NewChangeSceneEvent(gamescenes.MenuID)},
 			}
 			slices.Reverse(buttons)
 
@@ -93,7 +94,7 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 				ecs.SaveComponent(world.Components(), entity, mouse.NewMouseEvents().AddLeftClickEvents(button.OnClick))
 				ecs.SaveComponent(world.Components(), entity, collider.NewCollider(gameassets.SquareColliderID))
 
-				ecs.SaveComponent(world.Components(), entity, text.Text{Text: button.Text})
+				ecs.SaveComponent(world.Components(), entity, text.Text{Text: strings.ToUpper(button.Text)})
 				ecs.SaveComponent(world.Components(), entity, text.TextAlign{Vertical: .5, Horizontal: .5})
 				ecs.SaveComponent(world.Components(), entity, text.FontSize{FontSize: 32})
 			}

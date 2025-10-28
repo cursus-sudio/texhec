@@ -1,4 +1,4 @@
-package logs
+package fpslogger
 
 import (
 	"fmt"
@@ -21,7 +21,7 @@ type logsSystem struct {
 	Fps   int
 }
 
-func NewLogsSystem(
+func NewFpsLoggerSystem(
 	sceneMagener scenes.SceneManager,
 	world ecs.World,
 	console console.Console,

@@ -3,7 +3,6 @@ package menuscene
 import (
 	gameassets "core/assets"
 	gamescenes "core/scenes"
-	"core/src/domain"
 	"frontend/engine/components/anchor"
 	"frontend/engine/components/camera"
 	"frontend/engine/components/collider"
@@ -14,10 +13,12 @@ import (
 	"frontend/engine/components/texture"
 	"frontend/engine/components/transform"
 	"frontend/engine/systems/genericrenderer"
+	quitsys "frontend/engine/systems/quit"
 	"frontend/engine/systems/scenes"
 	"frontend/services/scenes"
 	"shared/services/ecs"
 	"slices"
+	"strings"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
@@ -50,6 +51,7 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 
 			ecs.SaveComponent(world.Components(), signature, text.Text{Text: "menu"})
 			ecs.SaveComponent(world.Components(), signature, text.FontSize{FontSize: 32})
+			ecs.SaveComponent(world.Components(), signature, text.Break{Break: text.BreakNone})
 
 			background := world.NewEntity()
 			ecs.SaveComponent(world.Components(), background, anchor.NewParentAnchor(cameraEntity).Ptr().
@@ -74,7 +76,7 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 				{Text: "play", OnClick: scenessys.NewChangeSceneEvent(gamescenes.GameID)},
 				{Text: "settings", OnClick: scenessys.NewChangeSceneEvent(gamescenes.SettingsID)},
 				{Text: "credits", OnClick: scenessys.NewChangeSceneEvent(gamescenes.CreditsID)},
-				{Text: "exit", OnClick: domain.QuitEvent{}},
+				{Text: "exit", OnClick: quitsys.QuitEvent{}},
 			}
 			slices.Reverse(buttons)
 
@@ -94,7 +96,7 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 				ecs.SaveComponent(world.Components(), btn, mouse.NewMouseEvents().AddLeftClickEvents(button.OnClick))
 				ecs.SaveComponent(world.Components(), btn, collider.NewCollider(gameassets.SquareColliderID))
 
-				ecs.SaveComponent(world.Components(), btn, text.Text{Text: button.Text})
+				ecs.SaveComponent(world.Components(), btn, text.Text{Text: strings.ToUpper(button.Text)})
 				ecs.SaveComponent(world.Components(), btn, text.TextAlign{Vertical: .5, Horizontal: .5})
 				ecs.SaveComponent(world.Components(), btn, text.FontSize{FontSize: 32})
 			}

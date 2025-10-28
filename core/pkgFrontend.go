@@ -145,7 +145,7 @@ func frontendDic(
 		broadcollision.Package(),
 
 		texturearray.Package(),
-		tile.Package(100, -1., groups.DefaultGroups()),
+		tile.Package(100, -1., groups.EmptyGroups().Ptr().Enable(gamescene.GameGroup).Val()),
 
 		textsys.Package(
 			text.FontFamily{FontFamily: gameassets.FontAssetID},

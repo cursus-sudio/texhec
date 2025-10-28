@@ -1,8 +1,7 @@
 package gamescenes
 
 import (
-	"core/src/domain"
-	"core/src/logs"
+	"core/src/fpslogger"
 	"core/src/tile"
 	"frontend/engine/systems/anchor"
 	"frontend/engine/systems/collider"
@@ -11,6 +10,7 @@ import (
 	mobilecamerasystem "frontend/engine/systems/mobilecamera"
 	mousesystem "frontend/engine/systems/mouse"
 	"frontend/engine/systems/projections"
+	quitsys "frontend/engine/systems/quit"
 	"frontend/engine/systems/render"
 	"frontend/engine/systems/scenes"
 	textsys "frontend/engine/systems/text"
@@ -40,7 +40,7 @@ var (
 	CreditsID  = scenes.NewSceneId("credits")
 )
 
-type CoreSystems func(scenes.SceneCtx) []ecs.SystemRegister
+type CoreSystems func(scenes.SceneCtx)
 
 type MenuBuilder scenes.SceneBuilder
 type GameBuilder scenes.SceneBuilder
@@ -64,13 +64,9 @@ func AddDefaults[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		return b
 	})
 	ioc.WrapService(b, scenes.LoadSystems, func(c ioc.Dic, s SceneBuilder) SceneBuilder {
-		s.OnLoad(func(ctx scenes.SceneCtx) {
-			coreSystems := ioc.Get[CoreSystems](c)(ctx)
-			ecs.RegisterSystems(ctx.EventsBuilder, coreSystems...)
-		})
+		s.OnLoad(ioc.Get[CoreSystems](c))
 		return s
 	})
-
 	ioc.WrapService(b, scenes.LoadInitialEvents, func(c ioc.Dic, s SceneBuilder) SceneBuilder {
 		s.OnLoad(func(ctx scenes.SceneCtx) {
 			events.Emit(ctx.Events, projectionssys.NewUpdateProjectionsEvent())
@@ -91,11 +87,10 @@ func (Pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) CoreSystems {
-		return func(ctx scenes.SceneCtx) []ecs.SystemRegister {
+		return func(ctx scenes.SceneCtx) {
 			logger := ioc.Get[logger.Logger](c)
 
 			// systems
-
 			textRenderer, err := ioc.Get[textsys.TextRendererFactory](c).New(ctx.World)
 			if err != nil {
 				logger.Error(err)
@@ -114,16 +109,16 @@ func (Pkg) Register(b ioc.Builder) {
 				logger.Error(err)
 			}
 
-			tileService, err := ioc.Get[tile.TileRenderSystemFactory](c).
+			tileRenderer, err := ioc.Get[tile.TileRenderSystemFactory](c).
 				NewSystem(ctx.World)
 			if err != nil {
 				logger.Error(err)
 			}
 
 			ecs.RegisterSystems(ctx.EventsBuilder,
-				// core systems
 				anchorsys.NewAnchorSystem(ctx.World, logger),
 				transformsys.NewPivotPointSystem(ctx.World, logger),
+
 				collidersys.NewColliderSystem(ctx.World, ioc.Get[broadcollision.CollisionServiceFactory](c)),
 
 				// mouse systems
@@ -137,16 +132,12 @@ func (Pkg) Register(b ioc.Builder) {
 				mousesystem.NewHoverSystem(ctx.World, ctx.Events),
 				mousesystem.NewHoverEventsSystem(ctx.World, ctx.Events),
 				mousesystem.NewClickSystem(ctx.World, ctx.Events, sdl.RELEASED),
-				ecs.NewSystemRegister(func(b events.Builder) {
-					events.Listen(b, func(event frames.FrameEvent) {
-						events.Emit(ctx.Events, mousesystem.NewShootRayEvent())
-					})
-				}),
+				ecs.ReEmit(func(frames.FrameEvent) { events.Emit(ctx.Events, mousesystem.NewShootRayEvent()) }),
 
 				// inputs systems
 				inputssys.NewResizeSystem(),
-				inputssys.NewQuitSystem(ioc.Get[runtime.Runtime](c)),
 				inputssys.NewInputsSystem(ioc.Get[inputsmedia.Api](c)),
+				quitsys.NewQuitSystem(ioc.Get[runtime.Runtime](c)),
 
 				// render
 				rendersys.NewClearSystem(),
@@ -158,7 +149,7 @@ func (Pkg) Register(b ioc.Builder) {
 				),
 				genericRenderer,
 				textRenderer,
-				tileService,
+				tileRenderer,
 
 				// projection and camera systems
 				projectionssys.NewUpdateProjectionsSystem(ctx.World, ioc.Get[window.Api](c), logger),
@@ -179,54 +170,45 @@ func (Pkg) Register(b ioc.Builder) {
 				mobilecamerasystem.NewWasdSystem(
 					ctx.World,
 					ioc.Get[cameras.CameraConstructorsFactory](c).Build(ctx.World),
-					1.0,
+					1.0, // speed
 				),
-				ecs.NewSystemRegister(func(b events.Builder) {
-					events.Listen(b, func(e sdl.WindowEvent) {
-						if e.Event == sdl.WINDOWEVENT_RESIZED {
-							events.Emit(ctx.Events, projectionssys.NewUpdateProjectionsEvent())
-						}
-					})
+				ecs.ReEmit(func(sdl.QuitEvent) { events.Emit(ctx.Events, quitsys.NewQuitEvent()) }),
+				ecs.ReEmit(func(e sdl.WindowEvent) {
+					if e.Event == sdl.WINDOWEVENT_RESIZED {
+						events.Emit(ctx.Events, projectionssys.NewUpdateProjectionsEvent())
+					}
 				}),
+
+				//
 				scenessys.NewChangeSceneSystem(ioc.Get[scenes.SceneManager](c)),
 
 				// domain systems
-				logs.NewLogsSystem(
+				fpslogger.NewFpsLoggerSystem(
 					ioc.Get[scenes.SceneManager](c),
 					ctx.World,
 					ioc.Get[console.Console](c),
 				),
-
-				ecs.NewSystemRegister(func(b events.Builder) { // some key buttons
-					// export some of these to universal controlls (mainly 'F')
-					events.Listen(b, func(e sdl.KeyboardEvent) {
-						if e.Keysym.Sym == sdl.K_q {
-							logger.Info("quiting program due to pressing 'Q'")
-							ioc.Get[runtime.Runtime](c).Stop()
+				ecs.ReEmit(func(e sdl.KeyboardEvent) {
+					if e.Keysym.Sym == sdl.K_q {
+						logger.Info("quiting program due to pressing 'Q'")
+						events.Emit(ctx.Events, quitsys.NewQuitEvent())
+					}
+					if e.Keysym.Sym == sdl.K_ESCAPE {
+						logger.Info("quiting program due to pressing 'ESC'")
+						events.Emit(ctx.Events, quitsys.NewQuitEvent())
+					}
+					if e.State == sdl.PRESSED && e.Keysym.Sym == sdl.K_f {
+						logger.Info("toggling screen size due to pressing 'F'")
+						window := ioc.Get[window.Api](c)
+						flags := window.Window().GetFlags()
+						if flags&sdl.WINDOW_FULLSCREEN_DESKTOP == sdl.WINDOW_FULLSCREEN_DESKTOP {
+							window.Window().SetFullscreen(0)
+						} else {
+							window.Window().SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
 						}
-						if e.Keysym.Sym == sdl.K_ESCAPE {
-							logger.Info("quiting program due to pressing 'ESC'")
-							ioc.Get[runtime.Runtime](c).Stop()
-						}
-						if e.State == sdl.PRESSED && e.Keysym.Sym == sdl.K_f {
-							logger.Info("toggling screen size due to pressing 'F'")
-							window := ioc.Get[window.Api](c)
-							flags := window.Window().GetFlags()
-							if flags&sdl.WINDOW_FULLSCREEN_DESKTOP == sdl.WINDOW_FULLSCREEN_DESKTOP {
-								window.Window().SetFullscreen(0)
-							} else {
-								window.Window().SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
-							}
-						}
-					})
+					}
 				}),
-				domain.NewSys(ctx.World,
-					logger,
-					ioc.Get[runtime.Runtime](c),
-					ioc.Get[console.Console](c),
-				),
 			)
-			return []ecs.SystemRegister{}
 		}
 	})
 }

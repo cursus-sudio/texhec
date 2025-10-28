@@ -3,8 +3,6 @@ package settingsscene
 import (
 	gameassets "core/assets"
 	gamescenes "core/scenes"
-	"core/src/tile"
-	"fmt"
 	"frontend/engine/components/anchor"
 	"frontend/engine/components/camera"
 	"frontend/engine/components/collider"
@@ -15,52 +13,19 @@ import (
 	"frontend/engine/components/texture"
 	"frontend/engine/components/transform"
 	"frontend/engine/systems/genericrenderer"
-	mousesystem "frontend/engine/systems/mouse"
-	"frontend/engine/systems/projections"
 	"frontend/engine/systems/scenes"
-	"frontend/services/console"
 	"frontend/services/scenes"
 	"shared/services/ecs"
-	"shared/services/logger"
-	"shared/services/runtime"
 	"slices"
 
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
-
-//
-
-type QuitEvent struct{}
-type OnHoveredDomainEvent struct {
-	entity   ecs.EntityID
-	row, col int
-}
-type OnClickDomainEvent struct {
-	entity   ecs.EntityID
-	row, col int
-}
-
-//
 
 type Pkg struct{}
 
 func Package() ioc.Pkg {
 	return Pkg{}
-}
-
-func (Pkg) LoadConfig(b ioc.Builder) {
-	ioc.WrapService(b, scenes.LoadConfig, func(c ioc.Dic, b gamescenes.SettingsBuilder) gamescenes.SettingsBuilder {
-		logger := ioc.Get[logger.Logger](c)
-
-		b.OnLoad(func(ctx scenes.SceneCtx) {
-			events.GlobalErrHandler(ctx.EventsBuilder, func(err error) {
-				logger.Error(err)
-			})
-		})
-		return b
-	})
 }
 
 func (Pkg) LoadObjects(b ioc.Builder) {
@@ -138,80 +103,9 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 	})
 }
 
-func (pkg Pkg) Loadsystems(b ioc.Builder) {
-	ioc.WrapService(b, scenes.LoadSystems, func(c ioc.Dic, b gamescenes.SettingsBuilder) gamescenes.SettingsBuilder {
-		b.OnLoad(func(ctx scenes.SceneCtx) {
-			logger := ioc.Get[logger.Logger](c)
-
-			// systems
-			coreSystems := ioc.Get[gamescenes.CoreSystems](c)(ctx)
-			ecs.RegisterSystems(ctx.EventsBuilder, coreSystems...)
-
-			ecs.RegisterSystems(ctx.EventsBuilder,
-				ecs.NewSystemRegister(func(b events.Builder) {
-					tileArray := ecs.GetComponentsArray[tile.TileComponent](ctx.World.Components())
-					colliderArray := ecs.GetComponentsArray[collider.Collider](ctx.World.Components())
-					mouseEventsArray := ecs.GetComponentsArray[mouse.MouseEvents](ctx.World.Components())
-					onChangeOrAdd := func(ei []ecs.EntityID) {
-						colliderTransaction := colliderArray.Transaction()
-						mouseEventsTransaction := mouseEventsArray.Transaction()
-						for _, entity := range ei {
-							tile, err := tileArray.GetComponent(entity)
-							if err != nil {
-								continue
-							}
-
-							colliderTransaction.SaveComponent(entity, collider.NewCollider(gameassets.SquareColliderID))
-							mouseEventsTransaction.SaveComponent(entity, mouse.NewMouseEvents().
-								AddLeftClickEvents(OnClickDomainEvent{entity, int(tile.Pos.X), int(tile.Pos.Y)}).
-								AddMouseHoverEvents(OnHoveredDomainEvent{entity, int(tile.Pos.X), int(tile.Pos.Y)}),
-							)
-						}
-						err := ecs.FlushMany(colliderTransaction, mouseEventsTransaction)
-						if err != nil {
-							logger.Error(err)
-						}
-					}
-
-					tileArray.OnAdd(onChangeOrAdd)
-					tileArray.OnChange(onChangeOrAdd)
-				}),
-				ecs.NewSystemRegister(func(b events.Builder) {
-					events.Listen(b, func(e QuitEvent) {
-						ioc.Get[runtime.Runtime](c).Stop()
-					})
-					events.Listen(b, func(e OnHoveredDomainEvent) {
-						ioc.Get[console.Console](c).Print(
-							fmt.Sprintf("damn it really is hovered %v (%d, %d)\n", e.entity, e.col, e.row),
-						)
-					})
-					events.Listen(b, func(e OnClickDomainEvent) {
-						ioc.Get[console.Console](c).PrintPermanent(
-							fmt.Sprintf("damn it really is clicked %v (%d, %d)\n", e.entity, e.col, e.row),
-						)
-					})
-				}),
-			)
-		})
-		return b
-	})
-}
-
-func (Pkg) LoadInitialEvents(b ioc.Builder) {
-	ioc.WrapService(b, scenes.LoadInitialEvents, func(c ioc.Dic, b gamescenes.SettingsBuilder) gamescenes.SettingsBuilder {
-		b.OnLoad(func(ctx scenes.SceneCtx) {
-			events.Emit(ctx.Events, projectionssys.NewUpdateProjectionsEvent())
-			events.Emit(ctx.Events, mousesystem.NewShootRayEvent())
-		})
-		return b
-	})
-}
-
 func (pkg Pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) gamescenes.SettingsBuilder { return scenes.NewSceneBuilder() })
+	gamescenes.AddDefaults[gamescenes.SettingsBuilder](b)
 
-	pkg.LoadConfig(b)
 	pkg.LoadObjects(b)
-	pkg.Loadsystems(b)
-	pkg.LoadInitialEvents(b)
 }

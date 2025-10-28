@@ -1,6 +1,7 @@
 package gamescenes
 
 import (
+	"core/src/domain"
 	"core/src/logs"
 	"core/src/tile"
 	"frontend/engine/systems/anchor"
@@ -50,6 +51,33 @@ type Pkg struct{}
 
 func Package() ioc.Pkg {
 	return Pkg{}
+}
+
+func AddDefaults[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
+	ioc.WrapService(b, scenes.LoadConfig, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
+		logger := ioc.Get[logger.Logger](c)
+		b.OnLoad(func(ctx scenes.SceneCtx) {
+			events.GlobalErrHandler(ctx.EventsBuilder, func(err error) {
+				logger.Error(err)
+			})
+		})
+		return b
+	})
+	ioc.WrapService(b, scenes.LoadSystems, func(c ioc.Dic, s SceneBuilder) SceneBuilder {
+		s.OnLoad(func(ctx scenes.SceneCtx) {
+			coreSystems := ioc.Get[CoreSystems](c)(ctx)
+			ecs.RegisterSystems(ctx.EventsBuilder, coreSystems...)
+		})
+		return s
+	})
+
+	ioc.WrapService(b, scenes.LoadInitialEvents, func(c ioc.Dic, s SceneBuilder) SceneBuilder {
+		s.OnLoad(func(ctx scenes.SceneCtx) {
+			events.Emit(ctx.Events, projectionssys.NewUpdateProjectionsEvent())
+			events.Emit(ctx.Events, mousesystem.NewShootRayEvent())
+		})
+		return s
+	})
 }
 
 func (Pkg) Register(b ioc.Builder) {
@@ -162,8 +190,6 @@ func (Pkg) Register(b ioc.Builder) {
 				}),
 				scenessys.NewChangeSceneSystem(ioc.Get[scenes.SceneManager](c)),
 
-				// domain tiles system
-
 				// domain systems
 				logs.NewLogsSystem(
 					ioc.Get[scenes.SceneManager](c),
@@ -194,50 +220,11 @@ func (Pkg) Register(b ioc.Builder) {
 						}
 					})
 				}),
-				// our events
-				// ecs.NewSystemRegister(func(b events.Builder) {
-				// 	tileArray := ecs.GetComponentsArray[tile.TileComponent](ctx.World.Components())
-				// 	colliderArray := ecs.GetComponentsArray[collider.Collider](ctx.World.Components())
-				// 	mouseEventsArray := ecs.GetComponentsArray[mouse.MouseEvents](ctx.World.Components())
-				// 	onChangeOrAdd := func(ei []ecs.EntityID) {
-				// 		colliderTransaction := colliderArray.Transaction()
-				// 		mouseEventsTransaction := mouseEventsArray.Transaction()
-				// 		for _, entity := range ei {
-				// 			tile, err := tileArray.GetComponent(entity)
-				// 			if err != nil {
-				// 				continue
-				// 			}
-				//
-				// 			colliderTransaction.SaveComponent(entity, collider.NewCollider(gameassets.SquareColliderID))
-				// 			mouseEventsTransaction.SaveComponent(entity, mouse.NewMouseEvents().
-				// 				AddLeftClickEvents(OnClickDomainEvent{entity, int(tile.Pos.X), int(tile.Pos.Y)}).
-				// 				AddMouseHoverEvents(OnHoveredDomainEvent{entity, int(tile.Pos.X), int(tile.Pos.Y)}),
-				// 			)
-				// 		}
-				// 		err := ecs.FlushMany(colliderTransaction, mouseEventsTransaction)
-				// 		if err != nil {
-				// 			logger.Error(err)
-				// 		}
-				// 	}
-				//
-				// 	tileArray.OnAdd(onChangeOrAdd)
-				// 	tileArray.OnChange(onChangeOrAdd)
-				// }),
-				// ecs.NewSystemRegister(func(b events.Builder) {
-				// 	events.Listen(b, func(e QuitEvent) {
-				// 		ioc.Get[runtime.Runtime](c).Stop()
-				// 	})
-				// 	events.Listen(b, func(e OnHoveredDomainEvent) {
-				// 		ioc.Get[console.Console](c).Print(
-				// 			fmt.Sprintf("damn it really is hovered %v (%d, %d)\n", e.entity, e.col, e.row),
-				// 		)
-				// 	})
-				// 	events.Listen(b, func(e OnClickDomainEvent) {
-				// 		ioc.Get[console.Console](c).PrintPermanent(
-				// 			fmt.Sprintf("damn it really is clicked %v (%d, %d)\n", e.entity, e.col, e.row),
-				// 		)
-				// 	})
-				// }),
+				domain.NewSys(ctx.World,
+					logger,
+					ioc.Get[runtime.Runtime](c),
+					ioc.Get[console.Console](c),
+				),
 			)
 			return []ecs.SystemRegister{}
 		}

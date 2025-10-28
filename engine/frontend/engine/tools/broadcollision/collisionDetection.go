@@ -6,7 +6,6 @@ import (
 	"frontend/engine/components/groups"
 	"frontend/engine/components/transform"
 	"frontend/services/assets"
-	"math"
 	"shared/services/ecs"
 	"shared/services/logger"
 
@@ -60,7 +59,8 @@ func (c *collisionDetectionService) CollidesWithRay(entity ecs.EntityID, ray col
 	if err != nil {
 		transformComponent = transform.NewTransform()
 	}
-	if ok, _ := rayAABBIntersect(ray, collider.TransformAABB(transformComponent)); !ok {
+	aabb := collider.TransformAABB(transformComponent)
+	if ok, _ := rayAABBIntersect(ray, aabb); !ok {
 		return nil, nil
 	}
 
@@ -135,10 +135,12 @@ func (c *collisionDetectionService) CollidesWithObject(entityA ecs.EntityID, ent
 }
 
 func (c *collisionDetectionService) ShootRay(ray collider.Ray) (ObjectRayCollision, error) {
-	chunkCoordBefore := ray.Pos.Mul(1 / c.worldCollider.ChunkSize())
+	chunkSize := c.worldCollider.ChunkSize()
+	gridX := floorF32ToInt(ray.Pos[0] / chunkSize)
+	gridY := floorF32ToInt(ray.Pos[1] / chunkSize)
 	chunkCoord := mgl32.Vec2{
-		float32(math.Round(float64(chunkCoordBefore[0]))) * c.worldCollider.ChunkSize(),
-		float32(math.Round(float64(chunkCoordBefore[1]))) * c.worldCollider.ChunkSize(),
+		float32(gridX) * chunkSize,
+		float32(gridY) * chunkSize,
 	}
 
 	chunk, ok := c.worldCollider.Chunks()[chunkCoord]

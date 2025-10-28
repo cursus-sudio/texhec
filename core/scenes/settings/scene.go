@@ -1,4 +1,4 @@
-package menuscene
+package settingsscene
 
 import (
 	gameassets "core/assets"
@@ -51,7 +51,7 @@ func Package() ioc.Pkg {
 }
 
 func (Pkg) LoadConfig(b ioc.Builder) {
-	ioc.WrapService(b, scenes.LoadConfig, func(c ioc.Dic, b gamescenes.MenuBuilder) gamescenes.MenuBuilder {
+	ioc.WrapService(b, scenes.LoadConfig, func(c ioc.Dic, b gamescenes.SettingsBuilder) gamescenes.SettingsBuilder {
 		logger := ioc.Get[logger.Logger](c)
 
 		b.OnLoad(func(ctx scenes.SceneCtx) {
@@ -63,14 +63,8 @@ func (Pkg) LoadConfig(b ioc.Builder) {
 	})
 }
 
-// ISSUES
-// TODO
-// 1. find TODO and you'll see not working button collision. you have to click to the bottom to collide
-// 1. done
-// 2. when changing scenes for some reason background stays
-
 func (Pkg) LoadObjects(b ioc.Builder) {
-	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.MenuBuilder) gamescenes.MenuBuilder {
+	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.SettingsBuilder) gamescenes.SettingsBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			world := ctx.World
 			cameraEntity := world.NewEntity()
@@ -87,7 +81,7 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 				SetPivotPoint(mgl32.Vec3{0, 0, .5}).
 				Val())
 
-			ecs.SaveComponent(world.Components(), signature, text.Text{Text: "menu"})
+			ecs.SaveComponent(world.Components(), signature, text.Text{Text: "settings"})
 			ecs.SaveComponent(world.Components(), signature, text.TextAlign{Vertical: .5, Horizontal: .5})
 			ecs.SaveComponent(world.Components(), signature, text.FontSize{FontSize: 32})
 
@@ -97,7 +91,7 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 				SetRelativeTransform(transform.NewTransform().Ptr().SetSize(mgl32.Vec3{1, 1, 1}).Val()).Val(),
 			)
 			ecs.SaveComponent(world.Components(), background, mesh.NewMesh(gameassets.SquareMesh))
-			ecs.SaveComponent(world.Components(), background, texture.NewTexture(gameassets.ForestTileTextureID))
+			ecs.SaveComponent(world.Components(), background, texture.NewTexture(gameassets.GroundTileTextureID))
 			ecs.SaveComponent(world.Components(), background, genericrenderersys.PipelineComponent{})
 
 			buttonArea := world.NewEntity()
@@ -119,24 +113,24 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 			slices.Reverse(buttons)
 
 			for i, button := range buttons {
-				btn := world.NewEntity()
+				entity := world.NewEntity()
 				normalizedIndex := float32(i) / (float32(len(buttons)) - 1)
-				ecs.SaveComponent(world.Components(), btn, transform.NewTransform().Ptr().
+				ecs.SaveComponent(world.Components(), entity, transform.NewTransform().Ptr().
 					SetSize(mgl32.Vec3{500, 50, 1}).Val())
-				ecs.SaveComponent(world.Components(), btn, anchor.NewParentAnchor(buttonArea).Ptr().
+				ecs.SaveComponent(world.Components(), entity, anchor.NewParentAnchor(buttonArea).Ptr().
 					SetPivotPoint(mgl32.Vec3{.5, normalizedIndex, .5}).
 					Val())
 
-				ecs.SaveComponent(world.Components(), btn, mesh.NewMesh(gameassets.SquareMesh))
-				ecs.SaveComponent(world.Components(), btn, texture.NewTexture(gameassets.WaterTileTextureID))
-				ecs.SaveComponent(world.Components(), btn, genericrenderersys.PipelineComponent{})
+				ecs.SaveComponent(world.Components(), entity, mesh.NewMesh(gameassets.SquareMesh))
+				ecs.SaveComponent(world.Components(), entity, texture.NewTexture(gameassets.WaterTileTextureID))
+				ecs.SaveComponent(world.Components(), entity, genericrenderersys.PipelineComponent{})
 
-				ecs.SaveComponent(world.Components(), btn, mouse.NewMouseEvents().AddLeftClickEvents(button.OnClick))
-				ecs.SaveComponent(world.Components(), btn, collider.NewCollider(gameassets.SquareColliderID))
+				ecs.SaveComponent(world.Components(), entity, mouse.NewMouseEvents().AddLeftClickEvents(button.OnClick))
+				ecs.SaveComponent(world.Components(), entity, collider.NewCollider(gameassets.SquareColliderID))
 
-				ecs.SaveComponent(world.Components(), btn, text.Text{Text: button.Text})
-				ecs.SaveComponent(world.Components(), btn, text.TextAlign{Vertical: .5, Horizontal: .5})
-				ecs.SaveComponent(world.Components(), btn, text.FontSize{FontSize: 32})
+				ecs.SaveComponent(world.Components(), entity, text.Text{Text: button.Text})
+				ecs.SaveComponent(world.Components(), entity, text.TextAlign{Vertical: .5, Horizontal: .5})
+				ecs.SaveComponent(world.Components(), entity, text.FontSize{FontSize: 32})
 			}
 		})
 
@@ -145,7 +139,7 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 }
 
 func (pkg Pkg) Loadsystems(b ioc.Builder) {
-	ioc.WrapService(b, scenes.LoadSystems, func(c ioc.Dic, b gamescenes.MenuBuilder) gamescenes.MenuBuilder {
+	ioc.WrapService(b, scenes.LoadSystems, func(c ioc.Dic, b gamescenes.SettingsBuilder) gamescenes.SettingsBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			logger := ioc.Get[logger.Logger](c)
 
@@ -204,7 +198,7 @@ func (pkg Pkg) Loadsystems(b ioc.Builder) {
 }
 
 func (Pkg) LoadInitialEvents(b ioc.Builder) {
-	ioc.WrapService(b, scenes.LoadInitialEvents, func(c ioc.Dic, b gamescenes.MenuBuilder) gamescenes.MenuBuilder {
+	ioc.WrapService(b, scenes.LoadInitialEvents, func(c ioc.Dic, b gamescenes.SettingsBuilder) gamescenes.SettingsBuilder {
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			events.Emit(ctx.Events, projectionssys.NewUpdateProjectionsEvent())
 			events.Emit(ctx.Events, mousesystem.NewShootRayEvent())
@@ -214,7 +208,7 @@ func (Pkg) LoadInitialEvents(b ioc.Builder) {
 }
 
 func (pkg Pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) gamescenes.MenuBuilder { return scenes.NewSceneBuilder() })
+	ioc.RegisterSingleton(b, func(c ioc.Dic) gamescenes.SettingsBuilder { return scenes.NewSceneBuilder() })
 
 	pkg.LoadConfig(b)
 	pkg.LoadObjects(b)

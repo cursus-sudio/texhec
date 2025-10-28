@@ -3,6 +3,7 @@ package main
 import (
 	"core/src/ping"
 	"core/src/tacticalmap"
+	_ "embed"
 	"fmt"
 	frontendtcp "frontend/services/api/tcp"
 	"frontend/services/backendconnection"
@@ -17,6 +18,7 @@ import (
 
 func main() {
 	print("started\n")
+
 	runtime.LockOSThread()
 
 	isServer := false

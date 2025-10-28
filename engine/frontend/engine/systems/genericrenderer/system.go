@@ -49,9 +49,10 @@ type locations struct {
 //
 
 type releasable struct {
-	textures map[assets.AssetID]texture.Texture
-	meshes   map[assets.AssetID]vao.VAO
-	program  program.Program
+	textures  map[assets.AssetID]texture.Texture
+	meshes    map[assets.AssetID]vao.VAO
+	program   program.Program
+	locations locations
 }
 
 func (r releasable) Release() {
@@ -115,10 +116,16 @@ func NewSystem(
 		return nil, err
 	}
 
+	locations, err := program.GetProgramLocations[locations](p)
+	if err != nil {
+		return nil, err
+	}
+
 	releasable := releasable{
-		textures: make(map[assets.AssetID]texture.Texture),
-		meshes:   make(map[assets.AssetID]vao.VAO),
-		program:  p,
+		textures:  make(map[assets.AssetID]texture.Texture),
+		meshes:    make(map[assets.AssetID]vao.VAO),
+		program:   p,
+		locations: locations,
 	}
 
 	world.SaveRegister(releasable)
@@ -198,11 +205,6 @@ func (m *system) getMesh(asset assets.AssetID) (vao.VAO, error) {
 func (m *system) Listen(rendersys.RenderEvent) error {
 	m.program.Use()
 
-	locations, err := program.GetProgramLocations[locations](m.program)
-	if err != nil {
-		return err
-	}
-
 	for _, cameraEntity := range m.cameraQuery.Entities() {
 		cameraGroups, err := m.groupsArray.GetComponent(cameraEntity)
 		if err != nil {
@@ -252,7 +254,7 @@ func (m *system) Listen(rendersys.RenderEvent) error {
 
 			mvp := camera.Mat4().Mul4(model)
 
-			gl.UniformMatrix4fv(locations.Mvp, 1, false, &mvp[0])
+			gl.UniformMatrix4fv(m.locations.Mvp, 1, false, &mvp[0])
 			gl.DrawElementsWithOffset(gl.TRIANGLES, int32(meshAsset.EBO().Len()), gl.UNSIGNED_INT, 0)
 		}
 	}

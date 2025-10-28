@@ -5,7 +5,10 @@ import (
 	backendscopes "backend/services/scopes"
 	gameassets "core/assets"
 	gamescenes "core/scenes"
+	creditsscene "core/scenes/credits"
+	gamescene "core/scenes/game"
 	menuscene "core/scenes/menu"
+	settingsscene "core/scenes/settings"
 	"core/src/ping"
 	"core/src/tacticalmap"
 	"core/src/tile"
@@ -190,7 +193,11 @@ func frontendDic(
 
 		gamescenes.Package(),
 		gameassets.Package(),
+
+		creditsscene.Package(),
+		gamescene.Package(),
 		menuscene.Package(),
+		settingsscene.Package(),
 	}
 
 	b := ioc.NewBuilder()

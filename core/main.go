@@ -26,18 +26,8 @@ func main() {
 	sharedPkg := SharedPackage()
 
 	backendC := backendDic(sharedPkg)
-
 	if isServer {
 		backendRuntime := ioc.Get[appruntime.Runtime](backendC)
-		// go func() {
-		// 	time.Sleep(time.Second / 10)
-		// 	backendC := backendC.Scope(scopes.Request)
-		// 	s := ioc.Get[saves.Saves](backendC)
-		// 	factory := ioc.Get[saves.SaveMetaFactory](backendC)
-		// 	err := s.NewSave(factory.New("very funny save\n"))
-		// 	ioc.Get[scopes.RequestService](backendC).Clean(scopes.NewRequestEndArgs(err))
-		// 	ioc.Get[logger.Logger](backendC).Info("saved")
-		// }()
 		backendRuntime.Run()
 		return
 	}
@@ -49,9 +39,5 @@ func main() {
 
 	gl.ClearColor(0.2, 0.3, 0.3, 1.0)
 	frontendRuntime := ioc.Get[appruntime.Runtime](c)
-	// go func() {
-	// 	time.Sleep(time.Second / 10)
-	// 	frontendRuntime.Stop()
-	// }()
 	frontendRuntime.Run()
 }

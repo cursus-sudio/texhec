@@ -30,14 +30,12 @@ func (listSavesQuery *ListSavesQuery) Valid() []error {
 	switch listSavesQuery.OrderedBy {
 	case OrderedByCreated:
 	case OrderedByLastModified:
-		break
 	default:
 		errs = append(errs, ErrInvalidEnumValues)
 	}
 	switch listSavesQuery.SortOrder {
 	case AscOrder:
 	case DescOrder:
-		break
 	default:
 		errs = append(errs, ErrInvalidEnumValues)
 	}

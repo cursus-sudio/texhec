@@ -9,8 +9,6 @@ import (
 	"backend/services/saves"
 	"backend/services/scopes"
 	backendscopes "backend/services/scopes"
-	"core/src/ping"
-	"core/src/tacticalmap"
 	"errors"
 	"fmt"
 	"os"
@@ -51,10 +49,6 @@ func backendDic(
 		saves.Package(),
 		scopes.Package(),
 		ecs.Package(),
-
-		// mods
-		ping.BackendPackage(),
-		tacticalmap.BackendPackage(),
 	}
 
 	b := ioc.NewBuilder()

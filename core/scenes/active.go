@@ -90,8 +90,6 @@ func (Pkg) Register(b ioc.Builder) {
 		return func(ctx scenes.SceneCtx) {
 			logger := ioc.Get[logger.Logger](c)
 
-			// systems
-
 			ecs.RegisterSystems(ctx,
 				anchorsys.NewAnchorSystem(logger),
 				transformsys.NewPivotPointSystem(logger),
@@ -142,7 +140,7 @@ func (Pkg) Register(b ioc.Builder) {
 					logger,
 					ioc.Get[ecs.ToolFactory[cameras.CameraConstructors]](c),
 					ioc.Get[window.Api](c),
-					0.1, 5,
+					0.1, 5, // min and max zoom
 				),
 				mobilecamerasystem.NewDragSystem(
 					sdl.BUTTON_LEFT,

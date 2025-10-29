@@ -9,8 +9,6 @@ import (
 	gamescene "core/scenes/game"
 	menuscene "core/scenes/menu"
 	settingsscene "core/scenes/settings"
-	"core/src/ping"
-	"core/src/tacticalmap"
 	"core/src/tile"
 	"errors"
 	"fmt"
@@ -186,10 +184,6 @@ func frontendDic(
 			},
 			52,
 		),
-
-		// mods
-		ping.FrontendPackage(),
-		tacticalmap.FrontendPackage(),
 
 		gamescenes.Package(),
 		gameassets.Package(),

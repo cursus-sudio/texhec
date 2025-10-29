@@ -1,8 +1,21 @@
 package mouse
 
-type Hovered struct{}
+//
 
-func NewHovered() Hovered { return Hovered{} }
+// keeps element selected even if user drags outside
+type KeepSelected struct{}
+
+//
+
+type DragEvents struct {
+	Events []any
+}
+
+func NewDragEvents(events []any) DragEvents {
+	return DragEvents{events}
+}
+
+//
 
 type MouseEvents struct {
 	LeftClickEvents        []any

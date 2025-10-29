@@ -97,6 +97,7 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 
 			ecs.SaveComponent(world.Components(), quit, mouse.NewMouseEvents().
 				AddLeftClickEvents(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
+			ecs.SaveComponent(world.Components(), quit, mouse.KeepSelected{})
 			ecs.SaveComponent(world.Components(), quit, collider.NewCollider(gameassets.SquareColliderID))
 
 			ecs.SaveComponent(world.Components(), quit, text.Text{Text: "X"})

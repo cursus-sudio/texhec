@@ -104,7 +104,7 @@ func (Pkg) Register(b ioc.Builder) {
 				),
 				mousesystem.NewHoverSystem(),
 				mousesystem.NewHoverEventsSystem(),
-				mousesystem.NewClickSystem(sdl.RELEASED),
+				mousesystem.NewClickSystem(logger),
 				ecs.NewSystemRegister(func(w ecs.World) error {
 					events.Listen(w.EventsBuilder(), func(frames.FrameEvent) {
 						events.Emit(w.Events(), mousesystem.NewShootRayEvent())

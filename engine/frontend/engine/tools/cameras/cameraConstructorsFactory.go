@@ -10,7 +10,7 @@ type CameraConstructorsFactory interface {
 		ecs.ComponentType,
 		func(ecs.World) func(ecs.EntityID) (Camera, error),
 	)
-	Build(world ecs.World) CameraConstructors
+	ecs.ToolFactory[CameraConstructors]
 }
 
 type cameraConstructorsFactory struct {

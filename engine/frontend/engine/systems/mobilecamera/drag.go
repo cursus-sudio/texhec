@@ -29,7 +29,7 @@ type dragSystem struct {
 
 func NewDragSystem(
 	dragButton uint8,
-	cameraCtors cameras.CameraConstructorsFactory,
+	cameraCtors ecs.ToolFactory[cameras.CameraConstructors],
 	window window.Api,
 	logger logger.Logger,
 ) ecs.SystemRegister {

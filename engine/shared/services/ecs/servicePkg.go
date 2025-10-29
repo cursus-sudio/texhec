@@ -25,3 +25,15 @@ func RegisterSystems(w World, systems ...SystemRegister) []error {
 	}
 	return errors
 }
+
+//
+
+type ToolFactory[Tool any] interface {
+	Build(World) Tool
+}
+type toolFactory[Tool any] struct{ build func(World) Tool }
+
+func (f toolFactory[Tool]) Build(w World) Tool { return f.build(w) }
+func NewToolFactory[Tool any](l func(World) Tool) ToolFactory[Tool] {
+	return &toolFactory[Tool]{build: l}
+}

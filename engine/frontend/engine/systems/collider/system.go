@@ -8,23 +8,21 @@ import (
 )
 
 func NewColliderSystem(
-	serviceFactory broadcollision.CollisionServiceFactory,
+	serviceFactory ecs.ToolFactory[broadcollision.CollisionService],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		query := w.QueryEntitiesWithComponents(
 			ecs.GetComponentType(transform.Transform{}),
 			ecs.GetComponentType(collider.Collider{}),
 		)
+		service := serviceFactory.Build(w)
 		query.OnAdd(func(ei []ecs.EntityID) {
-			service := serviceFactory(w)
 			service.Add(ei...)
 		})
 		query.OnChange(func(ei []ecs.EntityID) {
-			service := serviceFactory(w)
 			service.Update(ei...)
 		})
 		query.OnRemove(func(ei []ecs.EntityID) {
-			service := serviceFactory(w)
 			service.Remove(ei...)
 		})
 		return nil

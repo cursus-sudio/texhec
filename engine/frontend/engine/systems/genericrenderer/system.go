@@ -91,7 +91,7 @@ func NewSystem(
 	assetsStorage assets.AssetsStorage,
 	logger logger.Logger,
 	vboFactory vbo.VBOFactory[Vertex],
-	camerasCtors cameras.CameraConstructorsFactory,
+	camerasCtors ecs.ToolFactory[cameras.CameraConstructors],
 	entitiesQueryAdditionalArguments []ecs.ComponentType,
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {

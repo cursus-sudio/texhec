@@ -49,7 +49,7 @@ type TileRenderSystemFactory struct {
 	gridDepth float32
 
 	groups             groups.Groups
-	cameraCtorsFactory cameras.CameraConstructorsFactory
+	cameraCtorsFactory ecs.ToolFactory[cameras.CameraConstructors]
 }
 
 func newTileRenderSystemFactory(
@@ -60,7 +60,7 @@ func newTileRenderSystemFactory(
 	tileSize int32,
 	gridDepth float32,
 	groups groups.Groups,
-	cameraCtorsFactory cameras.CameraConstructorsFactory,
+	cameraCtorsFactory ecs.ToolFactory[cameras.CameraConstructors],
 ) TileRenderSystemFactory {
 	return TileRenderSystemFactory{
 		logger:              logger,

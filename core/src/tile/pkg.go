@@ -6,6 +6,7 @@ import (
 	"frontend/services/assets"
 	"frontend/services/graphics/texturearray"
 	"frontend/services/graphics/vao/vbo"
+	"shared/services/ecs"
 	"shared/services/logger"
 	"unsafe"
 
@@ -33,7 +34,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 			pkg.tileSize,
 			pkg.gridDepth,
 			pkg.gridGroups,
-			ioc.Get[cameras.CameraConstructorsFactory](c),
+			ioc.Get[ecs.ToolFactory[cameras.CameraConstructors]](c),
 		)
 	})
 

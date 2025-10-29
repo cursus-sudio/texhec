@@ -36,16 +36,16 @@ type cameraRaySystem struct {
 }
 
 func NewCameraRaySystem(
-	colliderFactory broadcollision.CollisionServiceFactory,
+	colliderFactory ecs.ToolFactory[broadcollision.CollisionService],
 	window window.Api,
-	cameraCtors cameras.CameraConstructorsFactory,
+	cameraCtors ecs.ToolFactory[cameras.CameraConstructors],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := &cameraRaySystem{
 			world:           w,
 			transformArray:  ecs.GetComponentsArray[transform.Transform](w.Components()),
 			cameraArray:     ecs.GetComponentsArray[camera.Camera](w.Components()),
-			broadCollisions: colliderFactory(w),
+			broadCollisions: colliderFactory.Build(w),
 			window:          window,
 			events:          w.Events(),
 			cameraCtors:     cameraCtors.Build(w),

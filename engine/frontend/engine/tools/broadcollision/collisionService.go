@@ -9,8 +9,6 @@ import (
 	"sync"
 )
 
-type CollisionServiceFactory func(ecs.World) CollisionService
-
 type CollisionService interface {
 	CollisionDetectionService
 	CollidersTrackingService
@@ -42,15 +40,15 @@ type collisionsService struct {
 	logger               logger.Logger
 }
 
-func factory(assets assets.Assets, logger logger.Logger) CollisionServiceFactory {
-	return func(w ecs.World) CollisionService {
+func factory(assets assets.Assets, logger logger.Logger) ecs.ToolFactory[CollisionService] {
+	return ecs.NewToolFactory(func(w ecs.World) CollisionService {
 		return &collisionsService{
 			world:                w,
 			transformStaticArray: ecs.GetComponentsArray[transform.Static](w.Components()),
 			assets:               assets,
 			logger:               logger,
 		}
-	}
+	})
 }
 
 func (s *collisionsService) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) (ObjectRayCollision, error) {

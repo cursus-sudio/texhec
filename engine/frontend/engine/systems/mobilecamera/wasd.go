@@ -25,7 +25,7 @@ type wasdMoveSystem struct {
 }
 
 func NewWasdSystem(
-	cameraCtors cameras.CameraConstructorsFactory,
+	cameraCtors ecs.ToolFactory[cameras.CameraConstructors],
 	cameraSpeed float32,
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {

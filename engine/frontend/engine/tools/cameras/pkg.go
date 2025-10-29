@@ -18,4 +18,7 @@ func (Pkg) Register(b ioc.Builder) {
 			constructors: make(map[ecs.ComponentType]func(ecs.World) func(ecs.EntityID) (Camera, error)),
 		}
 	})
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[CameraConstructors] {
+		return ioc.Get[CameraConstructorsFactory](c)
+	})
 }

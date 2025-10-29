@@ -7,6 +7,7 @@ import (
 	"frontend/services/graphics/texturearray"
 	"frontend/services/graphics/vao/vbo"
 	"shared/services/datastructures"
+	"shared/services/ecs"
 	"shared/services/logger"
 	"unsafe"
 
@@ -81,7 +82,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) TextRendererFactory {
 		return newTextRendererFactory(
-			ioc.Get[cameras.CameraConstructorsFactory](c),
+			ioc.Get[ecs.ToolFactory[cameras.CameraConstructors]](c),
 			ioc.Get[FontService](c),
 			ioc.Get[vbo.VBOFactory[Glyph]](c),
 			ioc.Get[LayoutServiceFactory](c),

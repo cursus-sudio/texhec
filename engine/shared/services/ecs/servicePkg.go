@@ -1,35 +1,27 @@
 package ecs
 
-import (
-	"github.com/ogiusek/events"
-)
-
 type SystemRegister interface {
-	Register(b events.Builder)
+	Register(World) error
 }
 
 // impl
 
-type systemRegister struct{ register func(b events.Builder) }
+type systemRegister struct{ register func(World) error }
 
-func (s systemRegister) Register(b events.Builder)              { s.register(b) }
-func NewSystemRegister(l func(b events.Builder)) SystemRegister { return systemRegister{l} }
+func (s systemRegister) Register(w World) error            { return s.register(w) }
+func NewSystemRegister(l func(World) error) SystemRegister { return systemRegister{l} }
 
 // helpers
 
-func RegisterSystems(b events.Builder, systems ...SystemRegister) {
+func RegisterSystems(w World, systems ...SystemRegister) []error {
+	errors := []error{}
 	for _, system := range systems {
 		if system == nil {
 			continue
 		}
-		system.Register(b)
+		if err := system.Register(w); err != nil {
+			errors = append(errors, err)
+		}
 	}
-}
-
-func ReEmit[EventFrom any](emitter func(e EventFrom)) SystemRegister {
-	return NewSystemRegister(func(b events.Builder) {
-		events.Listen(b, func(from EventFrom) {
-			emitter(from)
-		})
-	})
+	return errors
 }

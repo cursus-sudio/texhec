@@ -1,11 +1,14 @@
 package ecs
 
+import "github.com/ogiusek/events"
+
 // interface
 
 type World interface {
 	entitiesInterface
 	componentsInterface
 	registryInterface
+	eventsInterface
 }
 
 //
@@ -14,17 +17,20 @@ type world struct {
 	entitiesInterface
 	*componentsImpl
 	registryInterface
+	eventsInterface
 }
 
 func NewWorld() World {
 	entitiesImpl := newEntities()
 	componentsImpl := newComponents(entitiesImpl.entities)
 	registryImpl := newRegistry()
+	eventsImpl := newEvents(events.NewBuilder())
 
 	return &world{
 		entitiesInterface: entitiesImpl,
 		componentsImpl:    componentsImpl,
 		registryInterface: registryImpl,
+		eventsInterface:   eventsImpl,
 	}
 }
 

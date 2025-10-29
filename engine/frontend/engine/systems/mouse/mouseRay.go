@@ -36,27 +36,25 @@ type cameraRaySystem struct {
 }
 
 func NewCameraRaySystem(
-	world ecs.World,
-	collider broadcollision.CollisionDetectionService,
+	colliderFactory broadcollision.CollisionServiceFactory,
 	window window.Api,
-	events events.Events,
-	cameraCtors cameras.CameraConstructors,
+	cameraCtors cameras.CameraConstructorsFactory,
 ) ecs.SystemRegister {
-	return &cameraRaySystem{
-		world:           world,
-		transformArray:  ecs.GetComponentsArray[transform.Transform](world.Components()),
-		cameraArray:     ecs.GetComponentsArray[camera.Camera](world.Components()),
-		broadCollisions: collider,
-		window:          window,
-		events:          events,
-		cameraCtors:     cameraCtors,
+	return ecs.NewSystemRegister(func(w ecs.World) error {
+		s := &cameraRaySystem{
+			world:           w,
+			transformArray:  ecs.GetComponentsArray[transform.Transform](w.Components()),
+			cameraArray:     ecs.GetComponentsArray[camera.Camera](w.Components()),
+			broadCollisions: colliderFactory(w),
+			window:          window,
+			events:          w.Events(),
+			cameraCtors:     cameraCtors.Build(w),
 
-		hoversOverEntity: nil,
-	}
-}
-
-func (s *cameraRaySystem) Register(b events.Builder) {
-	events.ListenE(b, s.Listen)
+			hoversOverEntity: nil,
+		}
+		events.ListenE(w.EventsBuilder(), s.Listen)
+		return nil
+	})
 }
 
 func (s *cameraRaySystem) Listen(args ShootRayEvent) error {

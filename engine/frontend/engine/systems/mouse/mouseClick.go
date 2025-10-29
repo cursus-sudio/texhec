@@ -18,25 +18,24 @@ type clickSystem struct {
 
 // use sdl.PRESSED or sdl.RELEASED or clickOn
 func NewClickSystem(
-	world ecs.World,
-	events events.Events,
 	clickOn uint8,
 ) ecs.SystemRegister {
-	liveQuery := world.QueryEntitiesWithComponents(
-		ecs.GetComponentType(mouse.Hovered{}),
-		ecs.GetComponentType(mouse.MouseEvents{}),
-	)
-	return &clickSystem{
-		world:            world,
-		mouseEventsArray: ecs.GetComponentsArray[mouse.MouseEvents](world.Components()),
-		events:           events,
-		liveQuery:        liveQuery,
-		clickOn:          clickOn,
-	}
-}
+	return ecs.NewSystemRegister(func(w ecs.World) error {
+		liveQuery := w.QueryEntitiesWithComponents(
+			ecs.GetComponentType(mouse.Hovered{}),
+			ecs.GetComponentType(mouse.MouseEvents{}),
+		)
+		s := &clickSystem{
+			world:            w,
+			mouseEventsArray: ecs.GetComponentsArray[mouse.MouseEvents](w.Components()),
+			events:           w.Events(),
+			liveQuery:        liveQuery,
+			clickOn:          clickOn,
+		}
 
-func (s *clickSystem) Register(b events.Builder) {
-	events.Listen(b, s.Listen)
+		events.Listen(w.EventsBuilder(), s.Listen)
+		return nil
+	})
 }
 
 func (s *clickSystem) Listen(event sdl.MouseButtonEvent) {

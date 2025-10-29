@@ -17,6 +17,7 @@ import (
 	"shared/services/logger"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/ogiusek/events"
 )
 
 //go:embed shader.vert
@@ -28,10 +29,7 @@ var geomSource string
 //go:embed shader.frag
 var fragSource string
 
-type TextRendererFactory interface {
-	New(ecs.World) (ecs.SystemRegister, error)
-}
-
+type TextRendererFactory ecs.SystemRegister
 type textRendererFactory struct {
 	cameraCtorsFactory   cameras.CameraConstructorsFactory
 	fontService          FontService
@@ -70,22 +68,22 @@ func newTextRendererFactory(
 	}
 }
 
-func (f *textRendererFactory) New(world ecs.World) (ecs.SystemRegister, error) {
+func (f *textRendererFactory) Register(w ecs.World) error {
 	vert, err := shader.NewShader(vertSource, shader.VertexShader)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer vert.Release()
 
 	geom, err := shader.NewShader(geomSource, shader.GeomShader)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer geom.Release()
 
 	frag, err := shader.NewShader(fragSource, shader.FragmentShader)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer frag.Release()
 
@@ -96,23 +94,23 @@ func (f *textRendererFactory) New(world ecs.World) (ecs.SystemRegister, error) {
 
 	p, err := program.NewProgram(programID, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	locations, err := program.GetProgramLocations[locations](p)
 	if err != nil {
 		p.Release()
-		return nil, err
+		return err
 	}
 
 	renderer := textRenderer{
-		world:          world,
-		transformArray: ecs.GetComponentsArray[transform.Transform](world.Components()),
-		groupsArray:    ecs.GetComponentsArray[groups.Groups](world.Components()),
-		cameraQuery:    world.QueryEntitiesWithComponents(ecs.GetComponentType(projection.Ortho{})),
+		world:          w,
+		transformArray: ecs.GetComponentsArray[transform.Transform](w.Components()),
+		groupsArray:    ecs.GetComponentsArray[groups.Groups](w.Components()),
+		cameraQuery:    w.QueryEntitiesWithComponents(ecs.GetComponentType(projection.Ortho{})),
 
 		logger:      f.logger,
-		cameraCtors: f.cameraCtorsFactory.Build(world),
+		cameraCtors: f.cameraCtorsFactory.Build(w),
 		fontService: f.fontService,
 
 		program:   p,
@@ -126,7 +124,7 @@ func (f *textRendererFactory) New(world ecs.World) (ecs.SystemRegister, error) {
 		layoutsBatches: datastructures.NewSparseArray[ecs.EntityID, layoutBatch](),
 	}
 
-	query := world.QueryEntitiesWithComponents(
+	query := w.QueryEntitiesWithComponents(
 		ecs.GetComponentType(text.Text{}),
 		ecs.GetComponentType(transform.Transform{}),
 	)
@@ -138,7 +136,7 @@ func (f *textRendererFactory) New(world ecs.World) (ecs.SystemRegister, error) {
 				renderer.layoutsBatches.Remove(entity)
 			}
 
-			layout, err := f.layoutServiceFactory.New(world).EntityLayout(entity)
+			layout, err := f.layoutServiceFactory.New(w).EntityLayout(entity)
 			if err != nil {
 				continue
 			}
@@ -161,11 +159,11 @@ func (f *textRendererFactory) New(world ecs.World) (ecs.SystemRegister, error) {
 	query.OnRemove(rmListener)
 
 	arrays := []ecs.AnyComponentArray{
-		ecs.GetComponentsArray[text.Break](world.Components()),
-		ecs.GetComponentsArray[text.FontFamily](world.Components()),
-		// ecs.GetComponentsArray[text.Overflow](world.Components()),
-		ecs.GetComponentsArray[text.FontSize](world.Components()),
-		ecs.GetComponentsArray[text.TextAlign](world.Components()),
+		ecs.GetComponentsArray[text.Break](w.Components()),
+		ecs.GetComponentsArray[text.FontFamily](w.Components()),
+		// ecs.GetComponentsArray[text.Overflow](w.Components()),
+		ecs.GetComponentsArray[text.FontSize](w.Components()),
+		ecs.GetComponentsArray[text.TextAlign](w.Components()),
 	}
 
 	for _, array := range arrays {
@@ -174,7 +172,7 @@ func (f *textRendererFactory) New(world ecs.World) (ecs.SystemRegister, error) {
 		array.OnRemove(rmListener)
 	}
 
-	fontArray := ecs.GetComponentsArray[text.FontFamily](world.Components())
+	fontArray := ecs.GetComponentsArray[text.FontFamily](w.Components())
 	addFonts := func(ei []ecs.EntityID) {
 		for _, entity := range ei {
 			family, err := fontArray.GetComponent(entity)
@@ -189,12 +187,12 @@ func (f *textRendererFactory) New(world ecs.World) (ecs.SystemRegister, error) {
 	}
 	if err := renderer.ensureFontExists(f.defaultTextAsset); err != nil {
 		p.Release()
-		return nil, err
+		return err
 	}
 	fontArray.OnAdd(addFonts)
 	fontArray.OnChange(addFonts)
 	{
-		fontFamilyArray := ecs.GetComponentsArray[text.FontFamily](world.Components())
+		fontFamilyArray := ecs.GetComponentsArray[text.FontFamily](w.Components())
 		var i uint16 = 0
 		removeUnused := func(_ []ecs.EntityID) {
 			i++
@@ -220,7 +218,9 @@ func (f *textRendererFactory) New(world ecs.World) (ecs.SystemRegister, error) {
 		fontArray.OnRemove(removeUnused)
 	}
 
-	world.SaveRegister(renderer)
+	w.SaveRegister(renderer)
 
-	return &renderer, nil
+	events.Listen(w.EventsBuilder(), renderer.Listen)
+
+	return nil
 }

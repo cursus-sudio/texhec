@@ -15,7 +15,11 @@ type errorLogger struct {
 }
 
 func NewErrorLogger(logger logger.Logger) ecs.SystemRegister {
-	return &errorLogger{logger}
+	return ecs.NewSystemRegister(func(w ecs.World) error {
+		s := &errorLogger{logger}
+		events.Listen(w.EventsBuilder(), s.Listen)
+		return nil
+	})
 }
 
 var glErrorStrings = map[uint32]string{
@@ -31,11 +35,7 @@ var glErrorStrings = map[uint32]string{
 	// gl.TABLE_TOO_LARGE:               "GL_TABLE_TOO_LARGE", // Less common in modern GL
 }
 
-func (logger *errorLogger) Register(b events.Builder) {
-	events.Listen(b, logger.Update)
-}
-
-func (logger *errorLogger) Update(args frames.FrameEvent) {
+func (logger *errorLogger) Listen(args frames.FrameEvent) {
 	if glErr := gl.GetError(); glErr != gl.NO_ERROR {
 		logger.logger.Error(fmt.Errorf("opengl error: %x %s\n", glErr, glErrorStrings[glErr]))
 	}

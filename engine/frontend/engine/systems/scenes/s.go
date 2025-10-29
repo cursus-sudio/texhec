@@ -20,13 +20,13 @@ type system struct {
 }
 
 func NewChangeSceneSystem(m scenes.SceneManager) ecs.SystemRegister {
-	return &system{
-		Manager: m,
-	}
-}
-
-func (s *system) Register(b events.Builder) {
-	events.ListenE(b, s.Listen)
+	return ecs.NewSystemRegister(func(w ecs.World) error {
+		s := &system{
+			Manager: m,
+		}
+		events.ListenE(w.EventsBuilder(), s.Listen)
+		return nil
+	})
 }
 
 func (s *system) Listen(event ChangeSceneEvent) error {

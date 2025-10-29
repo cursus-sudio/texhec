@@ -3,7 +3,6 @@ package scenes
 import (
 	"shared/services/ecs"
 
-	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -29,20 +28,10 @@ func NewSceneId(sceneId string) SceneId {
 
 //
 
-type sceneCtx struct {
-	World         ecs.World
-	EventsBuilder events.Builder
-	Events        events.Events
-}
+type SceneCtx ecs.World
 
-type SceneCtx *sceneCtx
-
-func NewSceneCtx(world ecs.World, eventsBuilder events.Builder) SceneCtx {
-	return &sceneCtx{
-		world,
-		eventsBuilder,
-		eventsBuilder.Events(),
-	}
+func NewSceneCtx(world ecs.World) SceneCtx {
+	return world
 }
 
 //
@@ -77,13 +66,10 @@ func (n *sceneBuilder) Build(sceneId SceneId) Scene {
 		for _, listener := range n.onUnload {
 			listener(ctx)
 		}
-		ctx.World.Release()
+		ctx.Release()
 	}
 	onLoad := func() SceneCtx {
-		ctx := NewSceneCtx(
-			ecs.NewWorld(),
-			events.NewBuilder(),
-		)
+		ctx := NewSceneCtx(ecs.NewWorld())
 		for _, listener := range n.onLoad {
 			listener(ctx)
 		}

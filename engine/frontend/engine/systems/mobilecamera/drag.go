@@ -29,31 +29,30 @@ type dragSystem struct {
 
 func NewDragSystem(
 	dragButton uint8,
-	world ecs.World,
-	cameraCtors cameras.CameraConstructors,
+	cameraCtors cameras.CameraConstructorsFactory,
 	window window.Api,
 	logger logger.Logger,
 ) ecs.SystemRegister {
-	return &dragSystem{
-		isHeld:  false,
-		button:  dragButton,
-		prevPos: mgl32.Vec2{0, 0},
+	return ecs.NewSystemRegister(func(w ecs.World) error {
+		s := &dragSystem{
+			isHeld:  false,
+			button:  dragButton,
+			prevPos: mgl32.Vec2{0, 0},
 
-		world:          world,
-		transformArray: ecs.GetComponentsArray[transform.Transform](world.Components()),
-		query: world.QueryEntitiesWithComponents(
-			ecs.GetComponentType(mobilecamera.Component{}),
-		),
+			world:          w,
+			transformArray: ecs.GetComponentsArray[transform.Transform](w.Components()),
+			query: w.QueryEntitiesWithComponents(
+				ecs.GetComponentType(mobilecamera.Component{}),
+			),
 
-		cameraCtors: cameraCtors,
-		window:      window,
-		logger:      logger,
-	}
-}
-
-func (s *dragSystem) Register(b events.Builder) {
-	events.Listen(b, s.Listen1)
-	events.Listen(b, s.Listen2)
+			cameraCtors: cameraCtors.Build(w),
+			window:      window,
+			logger:      logger,
+		}
+		events.Listen(w.EventsBuilder(), s.Listen1)
+		events.Listen(w.EventsBuilder(), s.Listen2)
+		return nil
+	})
 }
 
 func (s *dragSystem) Listen1(sdl.MouseMotionEvent) {

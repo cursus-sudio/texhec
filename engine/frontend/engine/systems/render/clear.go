@@ -10,11 +10,11 @@ import (
 type clearSystem struct{}
 
 func NewClearSystem() ecs.SystemRegister {
-	return &clearSystem{}
-}
-
-func (s *clearSystem) Register(b events.Builder) {
-	events.Listen(b, s.Listen)
+	return ecs.NewSystemRegister(func(w ecs.World) error {
+		s := &clearSystem{}
+		events.Listen(w.EventsBuilder(), s.Listen)
+		return nil
+	})
 }
 
 func (s *clearSystem) Listen(args RenderEvent) {

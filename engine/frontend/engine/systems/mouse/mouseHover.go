@@ -15,14 +15,19 @@ type hoverSystem struct {
 	target           *ecs.EntityID
 }
 
-func NewHoverSystem(world ecs.World, events events.Events) ecs.SystemRegister {
-	return &hoverSystem{
-		world:            world,
-		mouseEventsArray: ecs.GetComponentsArray[mouse.MouseEvents](world.Components()),
-		hoveredArray:     ecs.GetComponentsArray[mouse.Hovered](world.Components()),
-		events:           events,
-		target:           nil,
-	}
+func NewHoverSystem() ecs.SystemRegister {
+	return ecs.NewSystemRegister(func(w ecs.World) error {
+		s := &hoverSystem{
+			world:            w,
+			mouseEventsArray: ecs.GetComponentsArray[mouse.MouseEvents](w.Components()),
+			hoveredArray:     ecs.GetComponentsArray[mouse.Hovered](w.Components()),
+			events:           w.Events(),
+			target:           nil,
+		}
+
+		events.Listen(w.EventsBuilder(), s.Listen)
+		return nil
+	})
 }
 
 func (s *hoverSystem) handleMouseLeave(entity ecs.EntityID) {
@@ -35,10 +40,6 @@ func (s *hoverSystem) handleMouseLeave(entity ecs.EntityID) {
 	for _, event := range mouseEvents.MouseLeaveEvents {
 		events.EmitAny(s.events, event)
 	}
-}
-
-func (s *hoverSystem) Register(b events.Builder) {
-	events.Listen(b, s.Listen)
 }
 
 func (s *hoverSystem) Listen(event RayChangedTargetEvent) {

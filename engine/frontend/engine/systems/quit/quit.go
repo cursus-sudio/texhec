@@ -18,13 +18,13 @@ type sys struct {
 func NewQuitSystem(
 	runtime runtime.Runtime,
 ) ecs.SystemRegister {
-	return &sys{
-		runtime: runtime,
-	}
-}
-
-func (s *sys) Register(b events.Builder) {
-	events.Listen(b, s.Listen)
+	return ecs.NewSystemRegister(func(w ecs.World) error {
+		s := &sys{
+			runtime: runtime,
+		}
+		events.Listen(w.EventsBuilder(), s.Listen)
+		return nil
+	})
 }
 
 func (s *sys) Listen(QuitEvent) {

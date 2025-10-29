@@ -8,7 +8,6 @@ import (
 	"shared/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/ogiusek/events"
 )
 
 func applyChildTransform(
@@ -43,131 +42,129 @@ func applyChildTransform(
 
 type system struct{}
 
-func NewAnchorSystem(world ecs.World, logger logger.Logger) ecs.SystemRegister {
-	parentsChildren := map[ecs.EntityID]datastructures.Set[ecs.EntityID]{}
-	childParent := map[ecs.EntityID]ecs.EntityID{}
+func NewAnchorSystem(logger logger.Logger) ecs.SystemRegister {
+	return ecs.NewSystemRegister(func(w ecs.World) error {
+		parentsChildren := map[ecs.EntityID]datastructures.Set[ecs.EntityID]{}
+		childParent := map[ecs.EntityID]ecs.EntityID{}
 
-	transformArray := ecs.GetComponentsArray[transform.Transform](world.Components())
-	parentAnchorArray := ecs.GetComponentsArray[anchor.ParentAnchor](world.Components())
-	{
-		transformTransaction := transformArray.Transaction()
+		transformArray := ecs.GetComponentsArray[transform.Transform](w.Components())
+		parentAnchorArray := ecs.GetComponentsArray[anchor.ParentAnchor](w.Components())
+		{
+			transformTransaction := transformArray.Transaction()
 
-		onChange := func(ei []ecs.EntityID) {
-			for _, parent := range ei {
-				children, ok := parentsChildren[parent]
-				if !ok {
-					continue
+			onChange := func(ei []ecs.EntityID) {
+				for _, parent := range ei {
+					children, ok := parentsChildren[parent]
+					if !ok {
+						continue
+					}
+					for _, child := range children.Get() {
+						childTransform, err := transformArray.GetComponent(child)
+						if err != nil {
+							childTransform = transform.NewTransform()
+						}
+						transformTransaction.SaveComponent(child, childTransform)
+					}
 				}
-				for _, child := range children.Get() {
+				if err := transformTransaction.Flush(); err != nil {
+					logger.Error(err)
+				}
+			}
+
+			onRemove := func(ei []ecs.EntityID) {
+				for _, parent := range ei {
+					children, ok := parentsChildren[parent]
+					if !ok {
+						continue
+					}
+					delete(parentsChildren, parent)
+					for _, child := range children.Get() {
+						delete(childParent, child)
+					}
+				}
+			}
+
+			query := w.QueryEntitiesWithComponents(
+				ecs.GetComponentType(transform.Transform{}),
+			)
+			query.OnAdd(onChange)
+			query.OnChange(onChange)
+			query.OnRemove(onRemove)
+		}
+
+		{
+
+			onAdd := func(ei []ecs.EntityID) {
+				for _, child := range ei {
+					anchor, err := parentAnchorArray.GetComponent(child)
+					if err != nil {
+						continue
+					}
+
+					set, ok := parentsChildren[anchor.Parent]
+					if !ok {
+						set = datastructures.NewSet[ecs.EntityID]()
+						parentsChildren[anchor.Parent] = set
+					}
+					set.Add(child)
+
 					childTransform, err := transformArray.GetComponent(child)
 					if err != nil {
 						childTransform = transform.NewTransform()
 					}
-					transformTransaction.SaveComponent(child, childTransform)
-				}
-			}
-			if err := transformTransaction.Flush(); err != nil {
-				logger.Error(err)
-			}
-		}
+					parentTransform, err := transformArray.GetComponent(anchor.Parent)
+					if err != nil {
+						parentTransform = transform.NewTransform()
+					}
 
-		onRemove := func(ei []ecs.EntityID) {
-			for _, parent := range ei {
-				children, ok := parentsChildren[parent]
-				if !ok {
-					continue
+					childTransform = applyChildTransform(parentTransform, childTransform, anchor)
+					transformArray.DirtySaveComponent(child, childTransform)
 				}
-				delete(parentsChildren, parent)
-				for _, child := range children.Get() {
+			}
+
+			onRemove := func(ei []ecs.EntityID) {
+				for _, child := range ei {
+					parent, ok := childParent[child]
+					if !ok {
+						continue
+					}
 					delete(childParent, child)
+					children, ok := parentsChildren[parent]
+					children.RemoveElements(child)
+					if len(children.Get()) == 0 {
+						delete(parentsChildren, parent)
+					}
 				}
 			}
+
+			query := w.QueryEntitiesWithComponents(
+				ecs.GetComponentType(transform.Transform{}),
+				ecs.GetComponentType(anchor.ParentAnchor{}),
+			)
+
+			query.OnAdd(onAdd)
+			query.OnChange(func(ei []ecs.EntityID) {
+				onRemove(ei)
+				onAdd(ei)
+			})
+			query.OnRemove(onRemove)
 		}
 
-		query := world.QueryEntitiesWithComponents(
-			ecs.GetComponentType(transform.Transform{}),
-		)
-		query.OnAdd(onChange)
-		query.OnChange(onChange)
-		query.OnRemove(onRemove)
-	}
-
-	{
-
-		onAdd := func(ei []ecs.EntityID) {
-			for _, child := range ei {
-				anchor, err := parentAnchorArray.GetComponent(child)
-				if err != nil {
-					continue
-				}
-
-				set, ok := parentsChildren[anchor.Parent]
-				if !ok {
-					set = datastructures.NewSet[ecs.EntityID]()
-					parentsChildren[anchor.Parent] = set
-				}
-				set.Add(child)
-
-				childTransform, err := transformArray.GetComponent(child)
-				if err != nil {
-					childTransform = transform.NewTransform()
-				}
-				parentTransform, err := transformArray.GetComponent(anchor.Parent)
-				if err != nil {
-					parentTransform = transform.NewTransform()
-				}
-
-				childTransform = applyChildTransform(parentTransform, childTransform, anchor)
-				transformArray.DirtySaveComponent(child, childTransform)
-			}
-		}
-
-		onRemove := func(ei []ecs.EntityID) {
-			for _, child := range ei {
-				parent, ok := childParent[child]
-				if !ok {
-					continue
-				}
-				delete(childParent, child)
-				children, ok := parentsChildren[parent]
-				children.RemoveElements(child)
-				if len(children.Get()) == 0 {
-					delete(parentsChildren, parent)
+		{
+			query := w.QueryEntitiesWithComponents(
+				ecs.GetComponentType(anchor.ParentAnchor{}),
+			)
+			listener := func(ei []ecs.EntityID) {
+				for _, entity := range ei {
+					if _, err := transformArray.GetComponent(entity); err == nil {
+						continue
+					}
+					transformArray.SaveComponent(entity, transform.NewTransform())
 				}
 			}
+			query.OnAdd(listener)
+			query.OnChange(listener)
 		}
-
-		query := world.QueryEntitiesWithComponents(
-			ecs.GetComponentType(transform.Transform{}),
-			ecs.GetComponentType(anchor.ParentAnchor{}),
-		)
-
-		query.OnAdd(onAdd)
-		query.OnChange(func(ei []ecs.EntityID) {
-			onRemove(ei)
-			onAdd(ei)
-		})
-		query.OnRemove(onRemove)
-	}
-
-	{
-		query := world.QueryEntitiesWithComponents(
-			ecs.GetComponentType(anchor.ParentAnchor{}),
-		)
-		listener := func(ei []ecs.EntityID) {
-			for _, entity := range ei {
-				if _, err := transformArray.GetComponent(entity); err == nil {
-					continue
-				}
-				transformArray.SaveComponent(entity, transform.NewTransform())
-			}
-		}
-		query.OnAdd(listener)
-		query.OnChange(listener)
-	}
-	return &system{}
-}
-
-func (s *system) Register(b events.Builder) {
-	// nothing to register since this system only listens to queries
+		return nil
+	})
 }

@@ -25,24 +25,22 @@ type renderSystem struct {
 }
 
 func NewRenderSystem(
-	world ecs.World,
-	events events.Events,
 	window window.Api,
 	bufferCount int,
 ) ecs.SystemRegister {
-	return &renderSystem{
-		world:  world,
-		events: events,
-		window: window,
+	return ecs.NewSystemRegister(func(w ecs.World) error {
+		s := &renderSystem{
+			world:  w,
+			events: w.Events(),
+			window: window,
 
-		fences:       []uintptr{},
-		buffersCount: max(1, bufferCount),
-		mutex:        &sync.Mutex{},
-	}
-}
-
-func (s *renderSystem) Register(b events.Builder) {
-	events.ListenE(b, s.Listen)
+			fences:       []uintptr{},
+			buffersCount: max(1, bufferCount),
+			mutex:        &sync.Mutex{},
+		}
+		events.ListenE(w.EventsBuilder(), s.Listen)
+		return nil
+	})
 }
 
 func (s *renderSystem) Listen(args frames.FrameEvent) error {

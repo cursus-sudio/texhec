@@ -15,7 +15,6 @@ import (
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/ogiusek/events"
 )
 
 type locations struct {
@@ -127,10 +126,6 @@ func (s *textRenderer) ensureFontExists(asset assets.AssetID) error {
 	}
 	s.fontsBatches.Set(key, batch)
 	return nil
-}
-
-func (s *textRenderer) Register(b events.Builder) {
-	events.Listen(b, s.Listen)
 }
 
 func (s *textRenderer) Listen(rendersys.RenderEvent) {

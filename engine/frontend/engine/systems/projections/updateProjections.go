@@ -38,37 +38,36 @@ type updateProjetionsSystem struct {
 	orthoArray               ecs.ComponentsArray[projection.Ortho]
 }
 
-func NewUpdateProjectionsSystem(world ecs.World, window window.Api, logger logger.Logger) ecs.SystemRegister {
-	perspectiveQuery := world.QueryEntitiesWithComponents(ecs.GetComponentType(projection.DynamicPerspective{}))
-	orthoQuery := world.QueryEntitiesWithComponents(ecs.GetComponentType(projection.DynamicOrtho{}))
-	s := &updateProjetionsSystem{
-		world:  world,
-		window: window,
-		logger: logger,
+func NewUpdateProjectionsSystem(window window.Api, logger logger.Logger) ecs.SystemRegister {
+	return ecs.NewSystemRegister(func(w ecs.World) error {
+		perspectiveQuery := w.QueryEntitiesWithComponents(ecs.GetComponentType(projection.DynamicPerspective{}))
+		orthoQuery := w.QueryEntitiesWithComponents(ecs.GetComponentType(projection.DynamicOrtho{}))
+		s := &updateProjetionsSystem{
+			world:  w,
+			window: window,
+			logger: logger,
 
-		perspectivesQuery: perspectiveQuery,
-		orthoQuery:        orthoQuery,
+			perspectivesQuery: perspectiveQuery,
+			orthoQuery:        orthoQuery,
 
-		transformArray: ecs.GetComponentsArray[transform.Transform](world.Components()),
+			transformArray: ecs.GetComponentsArray[transform.Transform](w.Components()),
 
-		dynamicPerspectivesArray: ecs.GetComponentsArray[projection.DynamicPerspective](world.Components()),
-		dynamicOrthoArray:        ecs.GetComponentsArray[projection.DynamicOrtho](world.Components()),
-		perspectivesArray:        ecs.GetComponentsArray[projection.Perspective](world.Components()),
-		orthoArray:               ecs.GetComponentsArray[projection.Ortho](world.Components()),
-	}
-	listener := func(_ []ecs.EntityID) { s.Listen(UpdateProjectionsEvent{}) }
-	perspectiveQuery.OnAdd(listener)
-	perspectiveQuery.OnChange(listener)
-	perspectiveQuery.OnRemove(listener)
-	orthoQuery.OnAdd(listener)
-	orthoQuery.OnChange(listener)
-	orthoQuery.OnRemove(listener)
+			dynamicPerspectivesArray: ecs.GetComponentsArray[projection.DynamicPerspective](w.Components()),
+			dynamicOrthoArray:        ecs.GetComponentsArray[projection.DynamicOrtho](w.Components()),
+			perspectivesArray:        ecs.GetComponentsArray[projection.Perspective](w.Components()),
+			orthoArray:               ecs.GetComponentsArray[projection.Ortho](w.Components()),
+		}
+		listener := func(_ []ecs.EntityID) { s.Listen(UpdateProjectionsEvent{}) }
+		perspectiveQuery.OnAdd(listener)
+		perspectiveQuery.OnChange(listener)
+		perspectiveQuery.OnRemove(listener)
+		orthoQuery.OnAdd(listener)
+		orthoQuery.OnChange(listener)
+		orthoQuery.OnRemove(listener)
 
-	return s
-}
-
-func (s *updateProjetionsSystem) Register(b events.Builder) {
-	events.Listen(b, s.Listen)
+		events.Listen(w.EventsBuilder(), s.Listen)
+		return nil
+	})
 }
 
 func (s *updateProjetionsSystem) Listen(e UpdateProjectionsEvent) {

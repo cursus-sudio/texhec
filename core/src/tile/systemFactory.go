@@ -21,6 +21,7 @@ import (
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/ogiusek/events"
 )
 
 type register struct {
@@ -88,22 +89,22 @@ func (factory TileRenderSystemFactory) AddType(addedAssets datastructures.Sparse
 	}
 }
 
-func (factory TileRenderSystemFactory) NewSystem(world ecs.World) (ecs.SystemRegister, error) {
+func (factory TileRenderSystemFactory) Register(w ecs.World) error {
 	vert, err := shader.NewShader(vertSource, shader.VertexShader)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer vert.Release()
 
 	geom, err := shader.NewShader(geomSource, shader.GeomShader)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer geom.Release()
 
 	frag, err := shader.NewShader(fragSource, shader.FragmentShader)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer frag.Release()
 
@@ -114,17 +115,17 @@ func (factory TileRenderSystemFactory) NewSystem(world ecs.World) (ecs.SystemReg
 
 	p, err := program.NewProgram(programID, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	locations, err := program.GetProgramLocations[locations](p)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	textureArray, err := factory.textureArrayFactory.New(factory.textures)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	VBO := factory.vboFactory()
@@ -135,7 +136,7 @@ func (factory TileRenderSystemFactory) NewSystem(world ecs.World) (ecs.SystemReg
 	tiles := datastructures.NewSparseArray[ecs.EntityID, TileComponent]()
 
 	r := register{p, textureArray, VAO}
-	world.SaveRegister(r)
+	w.SaveRegister(r)
 
 	s := system{
 		program:   p,
@@ -151,22 +152,22 @@ func (factory TileRenderSystemFactory) NewSystem(world ecs.World) (ecs.SystemReg
 		tileSize:  factory.tileSize,
 		gridDepth: factory.gridDepth,
 
-		world:       world,
-		groupsArray: ecs.GetComponentsArray[groups.Groups](world.Components()),
+		world:       w,
+		groupsArray: ecs.GetComponentsArray[groups.Groups](w.Components()),
 		gridGroups:  factory.groups,
-		cameraQuery: world.QueryEntitiesWithComponents(ecs.GetComponentType(projection.Ortho{})),
-		cameraCtors: factory.cameraCtorsFactory.Build(world),
+		cameraQuery: w.QueryEntitiesWithComponents(ecs.GetComponentType(projection.Ortho{})),
+		cameraCtors: factory.cameraCtorsFactory.Build(w),
 
 		changed:     false,
 		changeMutex: changeMutex,
 		tiles:       tiles,
 	}
 
-	tileArray := ecs.GetComponentsArray[TileComponent](world.Components())
-	transformArray := ecs.GetComponentsArray[transform.Transform](world.Components())
-	groupsArray := ecs.GetComponentsArray[groups.Groups](world.Components())
+	tileArray := ecs.GetComponentsArray[TileComponent](w.Components())
+	transformArray := ecs.GetComponentsArray[transform.Transform](w.Components())
+	groupsArray := ecs.GetComponentsArray[groups.Groups](w.Components())
 
-	query := world.QueryEntitiesWithComponents(
+	query := w.QueryEntitiesWithComponents(
 		ecs.GetComponentType(TileComponent{}),
 	)
 	onChangeOrAdd := func(ei []ecs.EntityID) {
@@ -211,5 +212,6 @@ func (factory TileRenderSystemFactory) NewSystem(world ecs.World) (ecs.SystemReg
 		}
 	})
 
-	return &s, nil
+	events.Listen(w.EventsBuilder(), s.Listen)
+	return nil
 }

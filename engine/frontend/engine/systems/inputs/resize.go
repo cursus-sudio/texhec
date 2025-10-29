@@ -11,11 +11,11 @@ import (
 type resizeSystem struct{}
 
 func NewResizeSystem() ecs.SystemRegister {
-	return &resizeSystem{}
-}
-
-func (s *resizeSystem) Register(b events.Builder) {
-	events.Listen(b, s.Listen)
+	return ecs.NewSystemRegister(func(w ecs.World) error {
+		s := &resizeSystem{}
+		events.Listen(w.EventsBuilder(), s.Listen)
+		return nil
+	})
 }
 
 func (system *resizeSystem) Listen(e sdl.WindowEvent) {

@@ -32,8 +32,7 @@ func Package() ioc.Pkg {
 
 func (Pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.MenuBuilder) gamescenes.MenuBuilder {
-		b.OnLoad(func(ctx scenes.SceneCtx) {
-			world := ctx.World
+		b.OnLoad(func(world scenes.SceneCtx) {
 			cameraEntity := world.NewEntity()
 			ecs.SaveComponent(world.Components(), cameraEntity, transform.NewTransform())
 			ecs.SaveComponent(world.Components(), cameraEntity, projection.NewDynamicOrtho(-1000, +1000, 1))

@@ -23,18 +23,17 @@ type logsSystem struct {
 
 func NewFpsLoggerSystem(
 	sceneMagener scenes.SceneManager,
-	world ecs.World,
 	console console.Console,
 ) ecs.SystemRegister {
-	return &logsSystem{
-		SceneManager: sceneMagener,
-		World:        world,
-		Console:      console,
-	}
-}
-
-func (s *logsSystem) Register(b events.Builder) {
-	events.ListenE(b, s.Listen)
+	return ecs.NewSystemRegister(func(w ecs.World) error {
+		s := &logsSystem{
+			SceneManager: sceneMagener,
+			World:        w,
+			Console:      console,
+		}
+		events.ListenE(w.EventsBuilder(), s.Listen)
+		return nil
+	})
 }
 
 var format = "02-01-2006 15:04:05"

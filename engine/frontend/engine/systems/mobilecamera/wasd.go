@@ -25,28 +25,27 @@ type wasdMoveSystem struct {
 }
 
 func NewWasdSystem(
-	world ecs.World,
-	cameraCtors cameras.CameraConstructors,
+	cameraCtors cameras.CameraConstructorsFactory,
 	cameraSpeed float32,
 ) ecs.SystemRegister {
-	return &wasdMoveSystem{
-		world:                world,
-		transformArray:       ecs.GetComponentsArray[transform.Transform](world.Components()),
-		orthoArray:           ecs.GetComponentsArray[projection.Ortho](world.Components()),
-		transformTransaction: ecs.GetComponentsArray[transform.Transform](world.Components()).Transaction(),
-		query: world.QueryEntitiesWithComponents(
-			ecs.GetComponentType(transform.Transform{}),
-			ecs.GetComponentType(projection.Ortho{}),
-			ecs.GetComponentType(mobilecamera.Component{}),
-		),
+	return ecs.NewSystemRegister(func(w ecs.World) error {
+		s := &wasdMoveSystem{
+			world:                w,
+			transformArray:       ecs.GetComponentsArray[transform.Transform](w.Components()),
+			orthoArray:           ecs.GetComponentsArray[projection.Ortho](w.Components()),
+			transformTransaction: ecs.GetComponentsArray[transform.Transform](w.Components()).Transaction(),
+			query: w.QueryEntitiesWithComponents(
+				ecs.GetComponentType(transform.Transform{}),
+				ecs.GetComponentType(projection.Ortho{}),
+				ecs.GetComponentType(mobilecamera.Component{}),
+			),
 
-		cameraCtors: cameraCtors,
-		cameraSpeed: cameraSpeed,
-	}
-}
-
-func (s *wasdMoveSystem) Register(b events.Builder) {
-	events.ListenE(b, s.Listen)
+			cameraCtors: cameraCtors.Build(w),
+			cameraSpeed: cameraSpeed,
+		}
+		events.ListenE(w.EventsBuilder(), s.Listen)
+		return nil
+	})
 }
 
 func (s *wasdMoveSystem) Listen(event frames.FrameEvent) error {

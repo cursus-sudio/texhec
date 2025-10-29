@@ -16,7 +16,6 @@ import (
 	"sync"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
-	"github.com/ogiusek/events"
 )
 
 //go:embed shader.vert
@@ -61,10 +60,6 @@ type locations struct {
 	Camera    int32 `uniform:"camera"`    // mat4
 	TileSize  int32 `uniform:"tileSize"`  // int
 	GridDepth int32 `uniform:"gridDepth"` // float32
-}
-
-func (s *system) Register(b events.Builder) {
-	events.Listen(b, s.Listen)
 }
 
 func (s *system) Listen(rendersys.RenderEvent) {

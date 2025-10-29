@@ -39,8 +39,7 @@ const (
 
 func (Pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.GameBuilder) gamescenes.GameBuilder {
-		b.OnLoad(func(ctx scenes.SceneCtx) {
-			world := ctx.World
+		b.OnLoad(func(world scenes.SceneCtx) {
 			uiCamera := world.NewEntity()
 			ecs.SaveComponent(world.Components(), uiCamera, transform.NewTransform())
 			ecs.SaveComponent(world.Components(), uiCamera, projection.NewDynamicOrtho(-1000, +1000, 1))
@@ -106,14 +105,14 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 
 			rand := rand.New(rand.NewPCG(2077, 7137))
 
-			tilesArray := ecs.GetComponentsArray[tile.TileComponent](ctx.World.Components())
+			tilesArray := ecs.GetComponentsArray[tile.TileComponent](world.Components())
 			tilesTransaction := tilesArray.Transaction()
 			rows := 100
 			cols := 100
 			for i := 0; i < rows*cols; i++ {
 				row := i % cols
 				col := i / cols
-				entity := ctx.World.NewEntity()
+				entity := world.NewEntity()
 				tileType := tile.TileMountain
 
 				num := rand.IntN(4)

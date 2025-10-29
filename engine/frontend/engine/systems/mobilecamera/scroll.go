@@ -29,31 +29,30 @@ type scrollSystem struct {
 }
 
 func NewScrollSystem(
-	world ecs.World,
 	logger logger.Logger,
-	cameraCtors cameras.CameraConstructors,
+	cameraCtors cameras.CameraConstructorsFactory,
 	window window.Api,
 	minZoom, maxZoom float32,
 ) ecs.SystemRegister {
-	return &scrollSystem{
-		window:      window,
-		cameraCtors: cameraCtors,
-		logger:      logger,
+	return ecs.NewSystemRegister(func(w ecs.World) error {
+		s := &scrollSystem{
+			window:      window,
+			cameraCtors: cameraCtors.Build(w),
+			logger:      logger,
 
-		world:             world,
-		dynamicOrthoArray: ecs.GetComponentsArray[projection.DynamicOrtho](world.Components()),
-		transformArray:    ecs.GetComponentsArray[transform.Transform](world.Components()),
-		query: world.QueryEntitiesWithComponents(
-			ecs.GetComponentType(mobilecamera.Component{}),
-		),
+			world:             w,
+			dynamicOrthoArray: ecs.GetComponentsArray[projection.DynamicOrtho](w.Components()),
+			transformArray:    ecs.GetComponentsArray[transform.Transform](w.Components()),
+			query: w.QueryEntitiesWithComponents(
+				ecs.GetComponentType(mobilecamera.Component{}),
+			),
 
-		minZoom: minZoom, // e.g. 0.1
-		maxZoom: maxZoom, // e.g. 5
-	}
-}
-
-func (s *scrollSystem) Register(b events.Builder) {
-	events.ListenE(b, s.Listen)
+			minZoom: minZoom, // e.g. 0.1
+			maxZoom: maxZoom, // e.g. 5
+		}
+		events.ListenE(w.EventsBuilder(), s.Listen)
+		return nil
+	})
 }
 
 func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) error {

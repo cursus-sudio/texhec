@@ -15,21 +15,21 @@ type hoverEventSystem struct {
 	query            ecs.LiveQuery
 }
 
-func NewHoverEventsSystem(world ecs.World, events events.Events) ecs.SystemRegister {
-	query := world.QueryEntitiesWithComponents(
-		ecs.GetComponentType(mouse.MouseEvents{}),
-		ecs.GetComponentType(mouse.Hovered{}),
-	)
-	return &hoverEventSystem{
-		world:            world,
-		mouseEventsArray: ecs.GetComponentsArray[mouse.MouseEvents](world.Components()),
-		events:           events,
-		query:            query,
-	}
-}
-
-func (s *hoverEventSystem) Register(b events.Builder) {
-	events.Listen(b, s.Listen)
+func NewHoverEventsSystem() ecs.SystemRegister {
+	return ecs.NewSystemRegister(func(w ecs.World) error {
+		query := w.QueryEntitiesWithComponents(
+			ecs.GetComponentType(mouse.MouseEvents{}),
+			ecs.GetComponentType(mouse.Hovered{}),
+		)
+		s := &hoverEventSystem{
+			world:            w,
+			mouseEventsArray: ecs.GetComponentsArray[mouse.MouseEvents](w.Components()),
+			events:           w.Events(),
+			query:            query,
+		}
+		events.Listen(w.EventsBuilder(), s.Listen)
+		return nil
+	})
 }
 
 func (s *hoverEventSystem) Listen(event frames.FrameEvent) {

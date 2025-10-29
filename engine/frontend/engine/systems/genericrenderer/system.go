@@ -87,83 +87,82 @@ type system struct {
 }
 
 func NewSystem(
-	world ecs.World,
 	window window.Api,
 	assetsStorage assets.AssetsStorage,
 	logger logger.Logger,
 	vboFactory vbo.VBOFactory[Vertex],
-	camerasCtors cameras.CameraConstructors,
+	camerasCtors cameras.CameraConstructorsFactory,
 	entitiesQueryAdditionalArguments []ecs.ComponentType,
-) (ecs.SystemRegister, error) {
-	vert, err := shader.NewShader(vertSource, shader.VertexShader)
-	if err != nil {
-		return nil, err
-	}
-	defer vert.Release()
+) ecs.SystemRegister {
+	return ecs.NewSystemRegister(func(w ecs.World) error {
+		vert, err := shader.NewShader(vertSource, shader.VertexShader)
+		if err != nil {
+			return err
+		}
+		defer vert.Release()
 
-	frag, err := shader.NewShader(fragSource, shader.FragmentShader)
-	if err != nil {
-		return nil, err
-	}
-	defer frag.Release()
+		frag, err := shader.NewShader(fragSource, shader.FragmentShader)
+		if err != nil {
+			return err
+		}
+		defer frag.Release()
 
-	programID := gl.CreateProgram()
-	gl.AttachShader(programID, vert.ID())
-	gl.AttachShader(programID, frag.ID())
+		programID := gl.CreateProgram()
+		gl.AttachShader(programID, vert.ID())
+		gl.AttachShader(programID, frag.ID())
 
-	p, err := program.NewProgram(programID, nil)
-	if err != nil {
-		return nil, err
-	}
+		p, err := program.NewProgram(programID, nil)
+		if err != nil {
+			return err
+		}
 
-	locations, err := program.GetProgramLocations[locations](p)
-	if err != nil {
-		return nil, err
-	}
+		locations, err := program.GetProgramLocations[locations](p)
+		if err != nil {
+			return err
+		}
 
-	releasable := releasable{
-		textures:  make(map[assets.AssetID]texture.Texture),
-		meshes:    make(map[assets.AssetID]vao.VAO),
-		program:   p,
-		locations: locations,
-	}
+		releasable := releasable{
+			textures:  make(map[assets.AssetID]texture.Texture),
+			meshes:    make(map[assets.AssetID]vao.VAO),
+			program:   p,
+			locations: locations,
+		}
 
-	world.SaveRegister(releasable)
+		w.SaveRegister(releasable)
 
-	system := &system{
-		world:          world,
-		transformArray: ecs.GetComponentsArray[transform.Transform](world.Components()),
-		groupsArray:    ecs.GetComponentsArray[groups.Groups](world.Components()),
-		textureArray:   ecs.GetComponentsArray[texturecomponent.Texture](world.Components()),
-		meshArray:      ecs.GetComponentsArray[meshcomponent.Mesh](world.Components()),
+		system := &system{
+			world:          w,
+			transformArray: ecs.GetComponentsArray[transform.Transform](w.Components()),
+			groupsArray:    ecs.GetComponentsArray[groups.Groups](w.Components()),
+			textureArray:   ecs.GetComponentsArray[texturecomponent.Texture](w.Components()),
+			meshArray:      ecs.GetComponentsArray[meshcomponent.Mesh](w.Components()),
 
-		window:        window,
-		assetsStorage: assetsStorage,
-		logger:        logger,
-		vboFactory:    vboFactory,
-		camerasCtors:  camerasCtors,
+			window:        window,
+			assetsStorage: assetsStorage,
+			logger:        logger,
+			vboFactory:    vboFactory,
+			camerasCtors:  camerasCtors.Build(w),
 
-		query: world.QueryEntitiesWithComponents(
-			append(
-				entitiesQueryAdditionalArguments,
-				ecs.GetComponentType(PipelineComponent{}),
-				ecs.GetComponentType(transform.Transform{}),
-				ecs.GetComponentType(meshcomponent.Mesh{}),
-				ecs.GetComponentType(texturecomponent.Texture{}),
-			)...,
-		),
-		cameraQuery: world.QueryEntitiesWithComponents(
-			ecs.GetComponentType(camera.Camera{}),
-		),
+			query: w.QueryEntitiesWithComponents(
+				append(
+					entitiesQueryAdditionalArguments,
+					ecs.GetComponentType(PipelineComponent{}),
+					ecs.GetComponentType(transform.Transform{}),
+					ecs.GetComponentType(meshcomponent.Mesh{}),
+					ecs.GetComponentType(texturecomponent.Texture{}),
+				)...,
+			),
+			cameraQuery: w.QueryEntitiesWithComponents(
+				ecs.GetComponentType(camera.Camera{}),
+			),
 
-		releasable: releasable,
-	}
+			releasable: releasable,
+		}
 
-	return system, nil
-}
+		events.ListenE(w.EventsBuilder(), system.Listen)
+		return nil
+	})
 
-func (s *system) Register(b events.Builder) {
-	events.ListenE(b, s.Listen)
 }
 
 //

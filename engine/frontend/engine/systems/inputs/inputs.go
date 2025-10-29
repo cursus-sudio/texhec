@@ -15,11 +15,11 @@ type inputsSystem struct {
 func NewInputsSystem(
 	inputs inputs.Api,
 ) ecs.SystemRegister {
-	return &inputsSystem{inputs}
-}
-
-func (s *inputsSystem) Register(b events.Builder) {
-	events.Listen(b, s.Listen)
+	return ecs.NewSystemRegister(func(w ecs.World) error {
+		s := &inputsSystem{inputs: inputs}
+		events.Listen(w.EventsBuilder(), s.Listen)
+		return nil
+	})
 }
 
 func (system *inputsSystem) Listen(args frames.FrameEvent) {

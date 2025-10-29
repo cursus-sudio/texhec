@@ -61,7 +61,7 @@ func (Pkg) Register(b ioc.Builder) {
 		assets := ioc.Get[assets.Assets](c)
 		b.OnStop(func(r appruntime.Runtime) {
 			scene := ioc.Get[scenes.SceneManager](c).CurrentSceneCtx()
-			scene.World.Release()
+			scene.Release()
 
 			assets.ReleaseAll()
 		})

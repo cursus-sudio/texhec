@@ -167,9 +167,6 @@ func (factory TileRenderSystemFactory) Register(w ecs.World) error {
 	transformArray := ecs.GetComponentsArray[transform.Transform](w.Components())
 	groupsArray := ecs.GetComponentsArray[groups.Groups](w.Components())
 
-	query := w.QueryEntitiesWithComponents(
-		ecs.GetComponentType(TileComponent{}),
-	)
 	onChangeOrAdd := func(ei []ecs.EntityID) {
 		changeMutex.Lock()
 		defer changeMutex.Unlock()
@@ -193,6 +190,7 @@ func (factory TileRenderSystemFactory) Register(w ecs.World) error {
 					factory.gridDepth,
 				}).Val())
 			groupsTransaction.SaveComponent(entity, factory.groups)
+
 		}
 
 		err := ecs.FlushMany(transformTransaction, groupsTransaction)
@@ -200,9 +198,9 @@ func (factory TileRenderSystemFactory) Register(w ecs.World) error {
 			factory.logger.Error(err)
 		}
 	}
-	query.OnAdd(onChangeOrAdd)
-	query.OnChange(onChangeOrAdd)
-	query.OnRemove(func(ei []ecs.EntityID) {
+	tileArray.OnAdd(onChangeOrAdd)
+	tileArray.OnChange(onChangeOrAdd)
+	tileArray.OnRemove(func(ei []ecs.EntityID) {
 		changeMutex.Lock()
 		defer changeMutex.Unlock()
 		s.changed = true

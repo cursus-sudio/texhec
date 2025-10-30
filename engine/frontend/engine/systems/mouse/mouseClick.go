@@ -32,6 +32,8 @@ type clickSystem struct {
 	keepSelectedArray ecs.ComponentsArray[mouse.KeepSelected]
 	dragEventsArray   ecs.ComponentsArray[mouse.DragEvents]
 
+	moved       bool
+	emitDrag    bool
 	movedEntity *ecs.EntityID
 	movedFrom   *mgl32.Vec2
 }
@@ -70,8 +72,11 @@ func (s *clickSystem) ListenMove(event sdl.MouseMotionEvent) {
 	// persist in tool variables from and to.
 	// it can be needed for dependent systems
 
-	if s.movedEntity == nil {
+	if s.emitDrag {
 		events.Emit(s.world.Events(), DragEvent{From: from, To: to})
+	}
+
+	if s.movedEntity == nil {
 		goto cleanUp
 	}
 
@@ -88,6 +93,7 @@ func (s *clickSystem) ListenMove(event sdl.MouseMotionEvent) {
 	}
 
 cleanUp:
+	s.moved = true
 	s.movedFrom = &to
 }
 
@@ -106,7 +112,9 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
 
 	switch event.State {
 	case sdl.PRESSED:
+		s.moved = false
 		s.movedEntity = entity
+		s.emitDrag = true
 
 		if entity == nil {
 			s.movedFrom = &pos
@@ -114,6 +122,7 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
 		}
 
 		if _, err := s.keepSelectedArray.GetComponent(*entity); err == nil {
+			s.emitDrag = false
 			break
 		}
 		s.movedFrom = &pos
@@ -131,6 +140,10 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
 		s.movedEntity = nil
 		s.movedFrom = nil
 		if entity == nil || dragged == nil || *entity != *dragged {
+			break
+		}
+
+		if _, err := s.keepSelectedArray.GetComponent(*entity); err != nil && s.moved {
 			break
 		}
 

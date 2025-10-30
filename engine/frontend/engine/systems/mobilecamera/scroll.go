@@ -17,7 +17,7 @@ import (
 
 type scrollSystem struct {
 	window      window.Api
-	cameraCtors cameras.CameraConstructors
+	cameraCtors cameras.CameraResolver
 	logger      logger.Logger
 
 	world             ecs.World
@@ -30,7 +30,7 @@ type scrollSystem struct {
 
 func NewScrollSystem(
 	logger logger.Logger,
-	cameraCtors ecs.ToolFactory[cameras.CameraConstructors],
+	cameraCtors ecs.ToolFactory[cameras.CameraResolver],
 	window window.Api,
 	minZoom, maxZoom float32,
 ) ecs.SystemRegister {

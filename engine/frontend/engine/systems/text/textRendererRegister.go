@@ -31,7 +31,7 @@ var fragSource string
 
 type TextRendererRegister ecs.SystemRegister
 type textRendererRegister struct {
-	cameraCtorsFactory   ecs.ToolFactory[cameras.CameraConstructors]
+	cameraCtorsFactory   ecs.ToolFactory[cameras.CameraResolver]
 	fontService          FontService
 	vboFactory           vbo.VBOFactory[Glyph]
 	layoutServiceFactory LayoutServiceFactory
@@ -45,7 +45,7 @@ type textRendererRegister struct {
 }
 
 func newTextRendererRegister(
-	cameraCtorsFactory ecs.ToolFactory[cameras.CameraConstructors],
+	cameraCtorsFactory ecs.ToolFactory[cameras.CameraResolver],
 	fontService FontService,
 	vboFactory vbo.VBOFactory[Glyph],
 	layoutServiceFactory LayoutServiceFactory,

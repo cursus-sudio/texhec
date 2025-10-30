@@ -78,7 +78,7 @@ type system struct {
 	assetsStorage assets.AssetsStorage
 	logger        logger.Logger
 	vboFactory    vbo.VBOFactory[Vertex]
-	camerasCtors  cameras.CameraConstructors
+	camerasCtors  cameras.CameraResolver
 
 	query       ecs.LiveQuery
 	cameraQuery ecs.LiveQuery
@@ -91,7 +91,7 @@ func NewSystem(
 	assetsStorage assets.AssetsStorage,
 	logger logger.Logger,
 	vboFactory vbo.VBOFactory[Vertex],
-	camerasCtors ecs.ToolFactory[cameras.CameraConstructors],
+	camerasCtors ecs.ToolFactory[cameras.CameraResolver],
 	entitiesQueryAdditionalArguments []ecs.ComponentType,
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {

@@ -49,7 +49,7 @@ type system struct {
 	cameraQuery ecs.LiveQuery
 	groupsArray ecs.ComponentsArray[groups.Groups]
 	gridGroups  groups.Groups
-	cameraCtors cameras.CameraConstructors
+	cameraCtors cameras.CameraResolver
 
 	changed     bool
 	changeMutex sync.Locker

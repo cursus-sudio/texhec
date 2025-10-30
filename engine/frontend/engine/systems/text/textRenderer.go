@@ -29,7 +29,7 @@ type textRenderer struct {
 	cameraQuery    ecs.LiveQuery
 
 	logger      logger.Logger
-	cameraCtors cameras.CameraConstructors
+	cameraCtors cameras.CameraResolver
 	fontService FontService
 
 	program   program.Program

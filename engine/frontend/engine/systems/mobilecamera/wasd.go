@@ -20,12 +20,12 @@ type wasdMoveSystem struct {
 	transformTransaction ecs.ComponentsArrayTransaction[transform.Transform]
 	query                ecs.LiveQuery
 
-	cameraCtors cameras.CameraConstructors
+	cameraCtors cameras.CameraResolver
 	cameraSpeed float32
 }
 
 func NewWasdSystem(
-	cameraCtors ecs.ToolFactory[cameras.CameraConstructors],
+	cameraCtors ecs.ToolFactory[cameras.CameraResolver],
 	cameraSpeed float32,
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {

@@ -21,7 +21,7 @@ func (Pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) CameraUp { return CameraUp(mgl32.Vec3{0, 1, 0}) })
 	ioc.RegisterSingleton(b, func(c ioc.Dic) CameraForward { return CameraForward(mgl32.Vec3{0, 0, -1}) })
 
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s cameras.CameraConstructorsFactory) cameras.CameraConstructorsFactory {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s cameras.CameraResolverFactory) cameras.CameraResolverFactory {
 		getCameraTransform := func(transformArray ecs.ComponentsArray[transform.Transform], entity ecs.EntityID) transform.Transform {
 			t, err := transformArray.GetComponent(entity)
 			if err != nil {

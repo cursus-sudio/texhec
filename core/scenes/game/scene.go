@@ -107,8 +107,8 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 
 			tilesArray := ecs.GetComponentsArray[tile.TileComponent](world.Components())
 			tilesTransaction := tilesArray.Transaction()
-			rows := 1000
-			cols := 1000
+			rows := 100
+			cols := 100
 			for i := 0; i < rows*cols; i++ {
 				row := i % cols
 				col := i / cols

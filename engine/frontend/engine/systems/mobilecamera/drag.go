@@ -21,14 +21,14 @@ type dragSystem struct {
 	transformArray ecs.ComponentsArray[transform.Transform]
 	query          ecs.LiveQuery
 
-	cameraCtors cameras.CameraConstructors
+	cameraCtors cameras.CameraResolver
 	window      window.Api
 	logger      logger.Logger
 }
 
 func NewDragSystem(
 	dragButton uint8,
-	cameraCtors ecs.ToolFactory[cameras.CameraConstructors],
+	cameraCtors ecs.ToolFactory[cameras.CameraResolver],
 	window window.Api,
 	logger logger.Logger,
 ) ecs.SystemRegister {

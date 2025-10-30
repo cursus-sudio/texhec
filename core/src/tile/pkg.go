@@ -34,7 +34,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 			pkg.tileSize,
 			pkg.gridDepth,
 			pkg.gridGroups,
-			ioc.Get[ecs.ToolFactory[cameras.CameraConstructors]](c),
+			ioc.Get[ecs.ToolFactory[cameras.CameraResolver]](c),
 		)
 	})
 

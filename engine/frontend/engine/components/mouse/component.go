@@ -11,7 +11,7 @@ type DragEvents struct {
 	Events []any
 }
 
-func NewDragEvents(events []any) DragEvents {
+func NewDragEvents(events ...any) DragEvents {
 	return DragEvents{events}
 }
 

@@ -100,7 +100,7 @@ func (Pkg) Register(b ioc.Builder) {
 				mousesystem.NewCameraRaySystem(
 					ioc.Get[ecs.ToolFactory[broadcollision.CollisionService]](c),
 					ioc.Get[window.Api](c),
-					ioc.Get[ecs.ToolFactory[cameras.CameraConstructors]](c),
+					ioc.Get[ecs.ToolFactory[cameras.CameraResolver]](c),
 				),
 				mousesystem.NewHoverSystem(),
 				mousesystem.NewHoverEventsSystem(),
@@ -128,7 +128,7 @@ func (Pkg) Register(b ioc.Builder) {
 					ioc.Get[assets.AssetsStorage](c),
 					logger,
 					ioc.Get[vbo.VBOFactory[genericrenderersys.Vertex]](c),
-					ioc.Get[ecs.ToolFactory[cameras.CameraConstructors]](c),
+					ioc.Get[ecs.ToolFactory[cameras.CameraResolver]](c),
 					[]ecs.ComponentType{},
 				),
 				ioc.Get[textsys.TextRendererRegister](c),
@@ -138,18 +138,18 @@ func (Pkg) Register(b ioc.Builder) {
 				projectionssys.NewUpdateProjectionsSystem(ioc.Get[window.Api](c), logger),
 				mobilecamerasystem.NewScrollSystem(
 					logger,
-					ioc.Get[ecs.ToolFactory[cameras.CameraConstructors]](c),
+					ioc.Get[ecs.ToolFactory[cameras.CameraResolver]](c),
 					ioc.Get[window.Api](c),
 					0.1, 5, // min and max zoom
 				),
 				mobilecamerasystem.NewDragSystem(
 					sdl.BUTTON_LEFT,
-					ioc.Get[ecs.ToolFactory[cameras.CameraConstructors]](c),
+					ioc.Get[ecs.ToolFactory[cameras.CameraResolver]](c),
 					ioc.Get[window.Api](c),
 					logger,
 				),
 				mobilecamerasystem.NewWasdSystem(
-					ioc.Get[ecs.ToolFactory[cameras.CameraConstructors]](c),
+					ioc.Get[ecs.ToolFactory[cameras.CameraResolver]](c),
 					1.0, // speed
 				),
 				ecs.NewSystemRegister(func(w ecs.World) error {

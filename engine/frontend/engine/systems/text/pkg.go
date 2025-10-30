@@ -82,7 +82,7 @@ func (pkg Pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) TextRendererRegister {
 		return newTextRendererRegister(
-			ioc.Get[ecs.ToolFactory[cameras.CameraConstructors]](c),
+			ioc.Get[ecs.ToolFactory[cameras.CameraResolver]](c),
 			ioc.Get[FontService](c),
 			ioc.Get[vbo.VBOFactory[Glyph]](c),
 			ioc.Get[LayoutServiceFactory](c),

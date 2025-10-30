@@ -5,31 +5,31 @@ import (
 	"shared/services/ecs"
 )
 
-type CameraConstructorsFactory interface {
+type CameraResolverFactory interface {
 	Register(
 		ecs.ComponentType,
 		func(ecs.World) func(ecs.EntityID) (Camera, error),
 	)
-	ecs.ToolFactory[CameraConstructors]
+	ecs.ToolFactory[CameraResolver]
 }
 
-type cameraConstructorsFactory struct {
+type cameraResolverFactory struct {
 	constructors map[ecs.ComponentType]func(ecs.World) func(ecs.EntityID) (Camera, error)
 }
 
-func (f *cameraConstructorsFactory) Register(
+func (f *cameraResolverFactory) Register(
 	componentType ecs.ComponentType,
 	ctor func(ecs.World) func(ecs.EntityID) (Camera, error),
 ) {
 	f.constructors[componentType] = ctor
 }
 
-func (f *cameraConstructorsFactory) Build(world ecs.World) CameraConstructors {
+func (f *cameraResolverFactory) Build(world ecs.World) CameraResolver {
 	ctors := make(map[ecs.ComponentType]func(ecs.EntityID) (Camera, error))
 	for key, ctor := range f.constructors {
 		ctors[key] = ctor(world)
 	}
-	return &cameraConstructors{
+	return &cameraResolver{
 		cameraArray:  ecs.GetComponentsArray[cameracomponent.Camera](world.Components()),
 		constructors: ctors,
 	}

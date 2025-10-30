@@ -24,21 +24,21 @@ import (
 	"github.com/ogiusek/events"
 )
 
-type register struct {
+type global struct {
 	program      program.Program
 	textureArray texturearray.TextureArray
 	vao          vao.VAO
 }
 
-func (r register) Release() {
-	r.program.Release()
-	r.textureArray.Release()
-	r.vao.Release()
+func (g global) Release() {
+	g.program.Release()
+	g.textureArray.Release()
+	g.vao.Release()
 }
 
 //
 
-type TileRenderSystemFactory struct {
+type TileRenderSystemRegister struct {
 	logger              logger.Logger
 	textures            datastructures.SparseArray[uint32, image.Image]
 	textureArrayFactory texturearray.Factory
@@ -52,7 +52,7 @@ type TileRenderSystemFactory struct {
 	cameraCtorsFactory ecs.ToolFactory[cameras.CameraConstructors]
 }
 
-func newTileRenderSystemFactory(
+func newTileRenderSystemRegister(
 	textureArrayFactory texturearray.Factory,
 	logger logger.Logger,
 	vboFactory vbo.VBOFactory[TileComponent],
@@ -61,8 +61,8 @@ func newTileRenderSystemFactory(
 	gridDepth float32,
 	groups groups.Groups,
 	cameraCtorsFactory ecs.ToolFactory[cameras.CameraConstructors],
-) TileRenderSystemFactory {
-	return TileRenderSystemFactory{
+) TileRenderSystemRegister {
+	return TileRenderSystemRegister{
 		logger:              logger,
 		textures:            datastructures.NewSparseArray[uint32, image.Image](),
 		textureArrayFactory: textureArrayFactory,
@@ -77,19 +77,19 @@ func newTileRenderSystemFactory(
 	}
 }
 
-func (factory TileRenderSystemFactory) AddType(addedAssets datastructures.SparseArray[uint32, assets.AssetID]) {
+func (service TileRenderSystemRegister) AddType(addedAssets datastructures.SparseArray[uint32, assets.AssetID]) {
 	for _, assetIndex := range addedAssets.GetIndices() {
 		asset, _ := addedAssets.Get(assetIndex)
-		texture, err := assets.StorageGet[texture.TextureAsset](factory.assetsStorage, asset)
+		texture, err := assets.StorageGet[texture.TextureAsset](service.assetsStorage, asset)
 		if err != nil {
 			continue
 		}
 
-		factory.textures.Set(assetIndex, texture.Image())
+		service.textures.Set(assetIndex, texture.Image())
 	}
 }
 
-func (factory TileRenderSystemFactory) Register(w ecs.World) error {
+func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 	vert, err := shader.NewShader(vertSource, shader.VertexShader)
 	if err != nil {
 		return err
@@ -135,8 +135,8 @@ func (factory TileRenderSystemFactory) Register(w ecs.World) error {
 	changeMutex := &sync.Mutex{}
 	tiles := datastructures.NewSparseArray[ecs.EntityID, TileComponent]()
 
-	r := register{p, textureArray, VAO}
-	w.SaveRegister(r)
+	g := global{p, textureArray, VAO}
+	w.SaveGlobal(g)
 
 	s := system{
 		program:   p,

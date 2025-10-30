@@ -128,7 +128,7 @@ func NewSystem(
 			locations: locations,
 		}
 
-		w.SaveRegister(releasable)
+		w.SaveGlobal(releasable)
 
 		system := &system{
 			world:          w,

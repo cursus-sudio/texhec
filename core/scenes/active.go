@@ -131,8 +131,8 @@ func (Pkg) Register(b ioc.Builder) {
 					ioc.Get[ecs.ToolFactory[cameras.CameraConstructors]](c),
 					[]ecs.ComponentType{},
 				),
-				ioc.Get[textsys.TextRendererFactory](c),
-				ioc.Get[tile.TileRenderSystemFactory](c),
+				ioc.Get[textsys.TextRendererRegister](c),
+				ioc.Get[tile.TileRenderSystemRegister](c),
 
 				// projection and camera systems
 				projectionssys.NewUpdateProjectionsSystem(ioc.Get[window.Api](c), logger),

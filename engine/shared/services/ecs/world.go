@@ -7,7 +7,7 @@ import "github.com/ogiusek/events"
 type World interface {
 	entitiesInterface
 	componentsInterface
-	registryInterface
+	globalsInterface
 	eventsInterface
 }
 
@@ -16,20 +16,20 @@ type World interface {
 type world struct {
 	entitiesInterface
 	*componentsImpl
-	registryInterface
+	globalsInterface
 	eventsInterface
 }
 
 func NewWorld() World {
 	entitiesImpl := newEntities()
 	componentsImpl := newComponents(entitiesImpl.entities)
-	registryImpl := newRegistry()
+	globalsImpl := newGlobals()
 	eventsImpl := newEvents(events.NewBuilder())
 
 	return &world{
 		entitiesInterface: entitiesImpl,
 		componentsImpl:    componentsImpl,
-		registryInterface: registryImpl,
+		globalsInterface:  globalsImpl,
 		eventsInterface:   eventsImpl,
 	}
 }

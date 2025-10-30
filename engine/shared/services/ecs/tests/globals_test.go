@@ -18,13 +18,13 @@ func TestRegistry(t *testing.T) {
 	r1 := Register{&register{1}}
 	r2 := Register{&register{2}}
 
-	if _, err := ecs.GetRegister[Register](world); err == nil {
+	if _, err := ecs.GetGlobal[Register](world); err == nil {
 		t.Errorf("got register from empty world")
 		return
 	}
 
-	world.SaveRegister(r1)
-	if register, err := ecs.GetRegister[Register](world); err != nil {
+	world.SaveGlobal(r1)
+	if register, err := ecs.GetGlobal[Register](world); err != nil {
 		t.Errorf("expected to get register but got error \"%s\"", err)
 		return
 	} else if register != r1 {
@@ -32,8 +32,8 @@ func TestRegistry(t *testing.T) {
 		return
 	}
 
-	world.SaveRegister(r2)
-	if register, err := ecs.GetRegister[Register](world); err != nil {
+	world.SaveGlobal(r2)
+	if register, err := ecs.GetGlobal[Register](world); err != nil {
 		t.Errorf("expected to get register but got error \"%s\"", err)
 		return
 	} else if register != r2 {

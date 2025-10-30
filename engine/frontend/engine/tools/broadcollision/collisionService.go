@@ -14,19 +14,19 @@ type CollisionService interface {
 	CollidersTrackingService
 }
 
-type register struct {
+type global struct {
 	staticWorldCollider  worldCollider
 	dynamicWorldCollider worldCollider
 	mutex                sync.Locker
 }
 
-func newRegister(world ecs.World) register {
-	r := register{
+func newRegister(world ecs.World) global {
+	r := global{
 		newWorldCollider(world, 100),
 		newWorldCollider(world, 100),
 		&sync.Mutex{},
 	}
-	world.SaveRegister(r)
+	world.SaveGlobal(r)
 	return r
 }
 
@@ -58,7 +58,7 @@ func (s *collisionsService) CollidesWithObject(entityA ecs.EntityID, entityB ecs
 }
 
 func (s *collisionsService) ShootRay(ray collider.Ray) (ObjectRayCollision, error) {
-	r, err := ecs.GetRegister[register](s.world)
+	r, err := ecs.GetGlobal[global](s.world)
 	if err != nil {
 		r = newRegister(s.world)
 	}
@@ -84,7 +84,7 @@ func (s *collisionsService) ShootRay(ray collider.Ray) (ObjectRayCollision, erro
 	return c2, nil
 }
 func (s *collisionsService) NarrowCollisions(entity ecs.EntityID) ([]ecs.EntityID, error) {
-	r, err := ecs.GetRegister[register](s.world)
+	r, err := ecs.GetGlobal[global](s.world)
 	if err != nil {
 		r = newRegister(s.world)
 	}
@@ -103,7 +103,7 @@ func (s *collisionsService) NarrowCollisions(entity ecs.EntityID) ([]ecs.EntityI
 }
 
 func (s *collisionsService) Add(entities ...ecs.EntityID) {
-	r, err := ecs.GetRegister[register](s.world)
+	r, err := ecs.GetGlobal[global](s.world)
 	if err != nil {
 		r = newRegister(s.world)
 	}
@@ -126,7 +126,7 @@ func (s *collisionsService) Add(entities ...ecs.EntityID) {
 
 }
 func (s *collisionsService) Update(entities ...ecs.EntityID) {
-	r, err := ecs.GetRegister[register](s.world)
+	r, err := ecs.GetGlobal[global](s.world)
 	if err != nil {
 		r = newRegister(s.world)
 	}
@@ -135,7 +135,7 @@ func (s *collisionsService) Update(entities ...ecs.EntityID) {
 	r.dynamicWorldCollider.Update(entities...)
 }
 func (s *collisionsService) Remove(entities ...ecs.EntityID) {
-	r, err := ecs.GetRegister[register](s.world)
+	r, err := ecs.GetGlobal[global](s.world)
 	if err != nil {
 		r = newRegister(s.world)
 	}

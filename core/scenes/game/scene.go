@@ -79,7 +79,6 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world.Components(), background, mesh.NewMesh(gameassets.SquareMesh))
 			ecs.SaveComponent(world.Components(), background, texture.NewTexture(gameassets.WaterTileTextureID))
 			ecs.SaveComponent(world.Components(), background, genericrenderersys.PipelineComponent{})
-			ecs.SaveComponent(world.Components(), background, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
 			quit := world.NewEntity()
 			ecs.SaveComponent(world.Components(), quit, transform.NewTransform().Ptr().
@@ -108,8 +107,8 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 
 			tilesArray := ecs.GetComponentsArray[tile.TileComponent](world.Components())
 			tilesTransaction := tilesArray.Transaction()
-			rows := 100
-			cols := 100
+			rows := 1000
+			cols := 1000
 			for i := 0; i < rows*cols; i++ {
 				row := i % cols
 				col := i / cols

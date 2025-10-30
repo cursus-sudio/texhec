@@ -25,8 +25,8 @@ func Package(tileSize int32, gridDepth float32, groups groups.Groups) ioc.Pkg {
 }
 
 func (pkg Pkg) Register(b ioc.Builder) {
-	ioc.RegisterTransient(b, func(c ioc.Dic) TileRenderSystemFactory {
-		return newTileRenderSystemFactory(
+	ioc.RegisterTransient(b, func(c ioc.Dic) TileRenderSystemRegister {
+		return newTileRenderSystemRegister(
 			ioc.Get[texturearray.Factory](c),
 			ioc.Get[logger.Logger](c),
 			ioc.Get[vbo.VBOFactory[TileComponent]](c),

@@ -67,7 +67,7 @@ func (Pkg) Register(b ioc.Builder) {
 		})
 		return b
 	})
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.TileRenderSystemFactory) tile.TileRenderSystemFactory {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.TileRenderSystemRegister) tile.TileRenderSystemRegister {
 		assets := datastructures.NewSparseArray[uint32, assets.AssetID]()
 		assets.Set(tile.TileMountain, MountainTileTextureID)
 		assets.Set(tile.TileGround, GroundTileTextureID)

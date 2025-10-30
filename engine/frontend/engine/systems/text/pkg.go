@@ -80,8 +80,8 @@ func (pkg Pkg) Register(b ioc.Builder) {
 		return newFontKeys()
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) TextRendererFactory {
-		return newTextRendererFactory(
+	ioc.RegisterSingleton(b, func(c ioc.Dic) TextRendererRegister {
+		return newTextRendererRegister(
 			ioc.Get[ecs.ToolFactory[cameras.CameraConstructors]](c),
 			ioc.Get[FontService](c),
 			ioc.Get[vbo.VBOFactory[Glyph]](c),

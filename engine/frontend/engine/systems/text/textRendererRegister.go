@@ -29,8 +29,8 @@ var geomSource string
 //go:embed shader.frag
 var fragSource string
 
-type TextRendererFactory ecs.SystemRegister
-type textRendererFactory struct {
+type TextRendererRegister ecs.SystemRegister
+type textRendererRegister struct {
 	cameraCtorsFactory   ecs.ToolFactory[cameras.CameraConstructors]
 	fontService          FontService
 	vboFactory           vbo.VBOFactory[Glyph]
@@ -44,7 +44,7 @@ type textRendererFactory struct {
 	removeOncePerNCalls uint16
 }
 
-func newTextRendererFactory(
+func newTextRendererRegister(
 	cameraCtorsFactory ecs.ToolFactory[cameras.CameraConstructors],
 	fontService FontService,
 	vboFactory vbo.VBOFactory[Glyph],
@@ -54,8 +54,8 @@ func newTextRendererFactory(
 	textureArrayFactory texturearray.Factory,
 	fontsKeys FontKeys,
 	removeOncePerNCalls uint16,
-) TextRendererFactory {
-	return &textRendererFactory{
+) TextRendererRegister {
+	return &textRendererRegister{
 		cameraCtorsFactory:   cameraCtorsFactory,
 		fontService:          fontService,
 		vboFactory:           vboFactory,
@@ -68,7 +68,7 @@ func newTextRendererFactory(
 	}
 }
 
-func (f *textRendererFactory) Register(w ecs.World) error {
+func (f *textRendererRegister) Register(w ecs.World) error {
 	vert, err := shader.NewShader(vertSource, shader.VertexShader)
 	if err != nil {
 		return err
@@ -218,7 +218,7 @@ func (f *textRendererFactory) Register(w ecs.World) error {
 		fontArray.OnRemove(removeUnused)
 	}
 
-	w.SaveRegister(renderer)
+	w.SaveGlobal(renderer)
 
 	events.Listen(w.EventsBuilder(), renderer.Listen)
 

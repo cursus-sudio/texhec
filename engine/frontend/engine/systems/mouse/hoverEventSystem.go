@@ -38,7 +38,7 @@ func (s *hoverEventSystem) Listen(event frames.FrameEvent) {
 		if err != nil {
 			continue
 		}
-		for _, event := range eventsComponent.HoverEvent {
+		for _, event := range eventsComponent.HoverEvents {
 			events.EmitAny(s.events, event)
 		}
 	}

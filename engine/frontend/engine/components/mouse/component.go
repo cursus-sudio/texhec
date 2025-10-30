@@ -7,16 +7,6 @@ type KeepSelected struct{}
 
 //
 
-type DragEvents struct {
-	Events []any
-}
-
-func NewDragEvents(events ...any) DragEvents {
-	return DragEvents{events}
-}
-
-//
-
 type MouseEvents struct {
 	LeftClickEvents        []any
 	DoubleLeftClickEvents  []any
@@ -27,7 +17,8 @@ type MouseEvents struct {
 	MouseLeaveEvents []any
 
 	// hover event is triggered every frame object is hovered
-	HoverEvent []any
+	HoverEvents []any
+	DragEvents  []any
 }
 
 func NewMouseEvents() MouseEvents {
@@ -44,7 +35,8 @@ func (component MouseEvents) Clone() MouseEvents {
 		MouseEnterEvents: component.MouseEnterEvents,
 		MouseLeaveEvents: component.MouseLeaveEvents,
 
-		HoverEvent: component.HoverEvent,
+		HoverEvents: component.HoverEvents,
+		DragEvents:  component.DragEvents,
 	}
 }
 
@@ -84,8 +76,14 @@ func (component MouseEvents) AddMouseLeaveEvents(events ...any) MouseEvents {
 	return r
 }
 
-func (component MouseEvents) AddMouseHoverEvents(events ...any) MouseEvents {
+func (component MouseEvents) AddHoverEvents(events ...any) MouseEvents {
 	r := component.Clone()
-	r.HoverEvent = append(r.HoverEvent, events...)
+	r.HoverEvents = append(r.HoverEvents, events...)
+	return r
+}
+
+func (component MouseEvents) AddDragEvents(events ...any) MouseEvents {
+	r := component.Clone()
+	r.DragEvents = append(r.DragEvents, events...)
 	return r
 }

@@ -16,9 +16,11 @@ import (
 	"frontend/engine/systems/scenes"
 	"frontend/services/scenes"
 	"shared/services/ecs"
+	"shared/services/logger"
 	"strings"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -78,11 +80,16 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 			// 	AddLeftClickEvents(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
 			ecs.SaveComponent(world.Components(), draggable, collider.NewCollider(gameassets.SquareColliderID))
 			type Hehe struct{}
-			ecs.SaveComponent(world.Components(), draggable, mouse.NewDragEvents(Hehe{}))
+			events.Listen(world.EventsBuilder(), func(Hehe) {
+				ioc.Get[logger.Logger](c).Info("here we goo")
+			})
+			// events.Emit(world.Events(), Hehe{})
+			ecs.SaveComponent(world.Components(), draggable, mouse.NewMouseEvents().
+				AddDragEvents(Hehe{}))
 
-			ecs.SaveComponent(world.Components(), draggable, text.Text{Text: strings.ToUpper("return to menu")})
+			ecs.SaveComponent(world.Components(), draggable, text.Text{Text: strings.ToUpper("drag me")})
 			ecs.SaveComponent(world.Components(), draggable, text.TextAlign{Vertical: .5, Horizontal: .5})
-			ecs.SaveComponent(world.Components(), draggable, text.FontSize{FontSize: 32})
+			ecs.SaveComponent(world.Components(), draggable, text.FontSize{FontSize: 15})
 
 			button := world.NewEntity()
 			ecs.SaveComponent(world.Components(), button, transform.NewTransform().Ptr().
@@ -99,7 +106,7 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 				AddLeftClickEvents(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
 			ecs.SaveComponent(world.Components(), button, collider.NewCollider(gameassets.SquareColliderID))
 
-			ecs.SaveComponent(world.Components(), button, text.Text{Text: strings.ToUpper("drag me")})
+			ecs.SaveComponent(world.Components(), button, text.Text{Text: strings.ToUpper("return to menu")})
 			ecs.SaveComponent(world.Components(), button, text.TextAlign{Vertical: .5, Horizontal: .5})
 			ecs.SaveComponent(world.Components(), button, text.FontSize{FontSize: 32})
 		})

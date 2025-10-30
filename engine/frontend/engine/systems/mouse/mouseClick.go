@@ -30,7 +30,6 @@ type clickSystem struct {
 	mouseEventsArray ecs.ComponentsArray[mouse.MouseEvents]
 
 	keepSelectedArray ecs.ComponentsArray[mouse.KeepSelected]
-	dragEventsArray   ecs.ComponentsArray[mouse.DragEvents]
 
 	moved       bool
 	emitDrag    bool
@@ -47,7 +46,6 @@ func NewClickSystem(logger logger.Logger) ecs.SystemRegister {
 			mouseEventsArray: ecs.GetComponentsArray[mouse.MouseEvents](w.Components()),
 
 			keepSelectedArray: ecs.GetComponentsArray[mouse.KeepSelected](w.Components()),
-			dragEventsArray:   ecs.GetComponentsArray[mouse.DragEvents](w.Components()),
 
 			movedEntity: nil,
 			movedFrom:   nil,
@@ -76,19 +74,15 @@ func (s *clickSystem) ListenMove(event sdl.MouseMotionEvent) {
 		events.Emit(s.world.Events(), DragEvent{From: from, To: to})
 	}
 
-	if s.movedEntity == nil {
-		goto cleanUp
-	}
-
 	if s.movedEntity != nil {
 		entity := *s.movedEntity
-		dragEvents, err := s.dragEventsArray.GetComponent(entity)
+		mouseEvents, err := s.mouseEventsArray.GetComponent(entity)
 		if err != nil {
 			goto cleanUp
 		}
 
-		for _, e := range dragEvents.Events {
-			events.Emit(s.world.Events(), e)
+		for _, e := range mouseEvents.DragEvents {
+			events.EmitAny(s.world.Events(), e)
 		}
 	}
 
@@ -127,13 +121,13 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
 		}
 		s.movedFrom = &pos
 
-		dragEvents, err := s.dragEventsArray.GetComponent(*entity)
-		if err != nil {
-			break
-		}
-		for _, e := range dragEvents.Events {
-			events.EmitAny(s.world.Events(), e)
-		}
+		// dragEvents, err := s.dragEventsArray.GetComponent(*entity)
+		// if err != nil {
+		// 	break
+		// }
+		// for _, e := range dragEvents.Events {
+		// 	events.EmitAny(s.world.Events(), e)
+		// }
 
 	case sdl.RELEASED:
 		dragged := s.movedEntity

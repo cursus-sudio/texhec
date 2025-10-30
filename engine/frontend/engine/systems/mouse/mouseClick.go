@@ -67,7 +67,7 @@ func (s *clickSystem) ListenMove(event sdl.MouseMotionEvent) {
 	to := mgl32.Vec2{float32(event.X), float32(event.Y)}
 
 	// TODO
-	// persist in tool from and to.
+	// persist in tool variables from and to.
 	// it can be needed for dependent systems
 
 	if s.movedEntity == nil {

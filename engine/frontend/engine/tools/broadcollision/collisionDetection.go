@@ -12,7 +12,6 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-// TODO 1
 type CollisionDetectionService interface {
 	// todo add collision groups
 	// narrow

@@ -16,7 +16,6 @@ type CollidersTrackingService interface {
 	Remove(entities ...ecs.EntityID)
 }
 
-// TODO 2
 type worldCollider interface {
 	ChunkSize() float32
 	Chunks() map[mgl32.Vec2]datastructures.Set[ecs.EntityID]

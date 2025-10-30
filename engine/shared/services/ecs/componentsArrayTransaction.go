@@ -180,10 +180,6 @@ func (t *componentsArrayTransaction[Component]) Error() error {
 	return nil
 }
 
-// TODO
-// currently we don't check for copies due to memory footprint or performance cost.
-// best approach is to have one pre-defined array in struct
-// (so it doesn't have to be allocated each time).
 func (t *componentsArrayTransaction[Component]) Flush() error {
 	if !t.prepared {
 		t.array.applyTransactionMutex.Lock()

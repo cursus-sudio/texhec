@@ -14,9 +14,6 @@ type CollisionService interface {
 	CollidersTrackingService
 }
 
-// TODO 3
-// change visibility check in projection/occlusion
-
 type register struct {
 	staticWorldCollider  worldCollider
 	dynamicWorldCollider worldCollider

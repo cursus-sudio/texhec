@@ -91,24 +91,25 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world.Components(), draggable, text.TextAlign{Vertical: .5, Horizontal: .5})
 			ecs.SaveComponent(world.Components(), draggable, text.FontSize{FontSize: 15})
 
-			button := world.NewEntity()
-			ecs.SaveComponent(world.Components(), button, transform.NewTransform().Ptr().
+			btn := world.NewEntity()
+			ecs.SaveComponent(world.Components(), btn, transform.NewTransform().Ptr().
 				SetSize(mgl32.Vec3{500, 50, 1}).Val())
-			ecs.SaveComponent(world.Components(), button, anchor.NewParentAnchor(buttonArea).Ptr().
+			ecs.SaveComponent(world.Components(), btn, anchor.NewParentAnchor(buttonArea).Ptr().
 				SetPivotPoint(mgl32.Vec3{.5, 0, .5}).
 				Val())
 
-			ecs.SaveComponent(world.Components(), button, mesh.NewMesh(gameassets.SquareMesh))
-			ecs.SaveComponent(world.Components(), button, texture.NewTexture(gameassets.WaterTileTextureID))
-			ecs.SaveComponent(world.Components(), button, genericrenderersys.PipelineComponent{})
+			ecs.SaveComponent(world.Components(), btn, mesh.NewMesh(gameassets.SquareMesh))
+			ecs.SaveComponent(world.Components(), btn, texture.NewTexture(gameassets.WaterTileTextureID))
+			ecs.SaveComponent(world.Components(), btn, genericrenderersys.PipelineComponent{})
 
-			ecs.SaveComponent(world.Components(), button, mouse.NewMouseEvents().
+			ecs.SaveComponent(world.Components(), btn, mouse.NewMouseEvents().
 				AddLeftClickEvents(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
-			ecs.SaveComponent(world.Components(), button, collider.NewCollider(gameassets.SquareColliderID))
+			ecs.SaveComponent(world.Components(), btn, mouse.KeepSelected{})
+			ecs.SaveComponent(world.Components(), btn, collider.NewCollider(gameassets.SquareColliderID))
 
-			ecs.SaveComponent(world.Components(), button, text.Text{Text: strings.ToUpper("return to menu")})
-			ecs.SaveComponent(world.Components(), button, text.TextAlign{Vertical: .5, Horizontal: .5})
-			ecs.SaveComponent(world.Components(), button, text.FontSize{FontSize: 32})
+			ecs.SaveComponent(world.Components(), btn, text.Text{Text: strings.ToUpper("return to menu")})
+			ecs.SaveComponent(world.Components(), btn, text.TextAlign{Vertical: .5, Horizontal: .5})
+			ecs.SaveComponent(world.Components(), btn, text.FontSize{FontSize: 32})
 		})
 
 		return b

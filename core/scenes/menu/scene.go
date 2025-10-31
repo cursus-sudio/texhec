@@ -94,6 +94,7 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 
 				ecs.SaveComponent(world.Components(), btn, mouse.NewMouseEvents().AddLeftClickEvents(button.OnClick))
 				ecs.SaveComponent(world.Components(), btn, collider.NewCollider(gameassets.SquareColliderID))
+				ecs.SaveComponent(world.Components(), btn, mouse.KeepSelected{})
 
 				ecs.SaveComponent(world.Components(), btn, text.Text{Text: strings.ToUpper(button.Text)})
 				ecs.SaveComponent(world.Components(), btn, text.TextAlign{Vertical: .5, Horizontal: .5})

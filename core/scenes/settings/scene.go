@@ -78,24 +78,25 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 			slices.Reverse(buttons)
 
 			for i, button := range buttons {
-				entity := world.NewEntity()
+				btn := world.NewEntity()
 				normalizedIndex := float32(i) / (float32(len(buttons)) - 1)
-				ecs.SaveComponent(world.Components(), entity, transform.NewTransform().Ptr().
+				ecs.SaveComponent(world.Components(), btn, transform.NewTransform().Ptr().
 					SetSize(mgl32.Vec3{500, 50, 1}).Val())
-				ecs.SaveComponent(world.Components(), entity, anchor.NewParentAnchor(buttonArea).Ptr().
+				ecs.SaveComponent(world.Components(), btn, anchor.NewParentAnchor(buttonArea).Ptr().
 					SetPivotPoint(mgl32.Vec3{.5, normalizedIndex, .5}).
 					Val())
 
-				ecs.SaveComponent(world.Components(), entity, mesh.NewMesh(gameassets.SquareMesh))
-				ecs.SaveComponent(world.Components(), entity, texture.NewTexture(gameassets.WaterTileTextureID))
-				ecs.SaveComponent(world.Components(), entity, genericrenderersys.PipelineComponent{})
+				ecs.SaveComponent(world.Components(), btn, mesh.NewMesh(gameassets.SquareMesh))
+				ecs.SaveComponent(world.Components(), btn, texture.NewTexture(gameassets.WaterTileTextureID))
+				ecs.SaveComponent(world.Components(), btn, genericrenderersys.PipelineComponent{})
 
-				ecs.SaveComponent(world.Components(), entity, mouse.NewMouseEvents().AddLeftClickEvents(button.OnClick))
-				ecs.SaveComponent(world.Components(), entity, collider.NewCollider(gameassets.SquareColliderID))
+				ecs.SaveComponent(world.Components(), btn, mouse.NewMouseEvents().AddLeftClickEvents(button.OnClick))
+				ecs.SaveComponent(world.Components(), btn, collider.NewCollider(gameassets.SquareColliderID))
+				ecs.SaveComponent(world.Components(), btn, mouse.KeepSelected{})
 
-				ecs.SaveComponent(world.Components(), entity, text.Text{Text: strings.ToUpper(button.Text)})
-				ecs.SaveComponent(world.Components(), entity, text.TextAlign{Vertical: .5, Horizontal: .5})
-				ecs.SaveComponent(world.Components(), entity, text.FontSize{FontSize: 32})
+				ecs.SaveComponent(world.Components(), btn, text.Text{Text: strings.ToUpper(button.Text)})
+				ecs.SaveComponent(world.Components(), btn, text.TextAlign{Vertical: .5, Horizontal: .5})
+				ecs.SaveComponent(world.Components(), btn, text.FontSize{FontSize: 32})
 			}
 		})
 

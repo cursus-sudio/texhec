@@ -107,6 +107,8 @@ func TestComponentsArrays(t *testing.T) {
 
 func TestComponentsQuery(t *testing.T) {
 	type Component2 struct{}
+	type ForbiddenComponent struct{}
+	type TrackedComponent struct{}
 	world := ecs.NewWorld()
 
 	adds := 0
@@ -116,10 +118,12 @@ func TestComponentsQuery(t *testing.T) {
 	removes := 0
 	expectedRemoves := 0
 
-	query := world.Query().Require(
-		ecs.GetComponentType(Component{}),
-		ecs.GetComponentType(Component2{}),
-	).Build()
+	query := world.Query().
+		Require(ecs.GetComponentType(Component{})).
+		Require(ecs.GetComponentType(Component2{})).
+		Forbid(ecs.GetComponentType(ForbiddenComponent{})).
+		Track(ecs.GetComponentType(TrackedComponent{})).
+		Build()
 
 	query.OnAdd(func(ei []ecs.EntityID) { adds += 1 })
 	query.OnChange(func(ei []ecs.EntityID) { changes += 1 })
@@ -129,78 +133,123 @@ func TestComponentsQuery(t *testing.T) {
 
 	component := ecs.GetComponentsArray[Component](world.Components())
 	component2 := ecs.GetComponentsArray[Component2](world.Components())
+	forbiddenComponent := ecs.GetComponentsArray[ForbiddenComponent](world.Components())
+	trackedComponent := ecs.GetComponentsArray[TrackedComponent](world.Components())
+
+	expectNothing := func() bool {
+		if adds != expectedAdds {
+			t.Errorf("unexpected call on query onAdd")
+			return false
+		}
+		if changes != expectedChanges {
+			t.Errorf("unexpected call on query onChange")
+			return false
+		}
+		if removes != expectedRemoves {
+			t.Errorf("unexpected call on query onRemove")
+			return false
+		}
+		return true
+	}
+
+	expectAdd := func() bool {
+		expectedAdds += 1
+		if adds != expectedAdds {
+			t.Errorf("expected call on query onAdd")
+			return false
+		}
+		if changes != expectedChanges {
+			t.Errorf("unexpected call on query onChange expected call onAdd")
+			return false
+		}
+		if removes != expectedRemoves {
+			t.Errorf("unexpected call on query onRemove expected call onAdd")
+			return false
+		}
+		return true
+	}
+
+	expectChange := func() bool {
+		expectedChanges += 1
+		if adds != expectedAdds {
+			t.Errorf("unexpected call on query onAdd expected onChange")
+			return false
+		}
+		if changes != expectedChanges {
+			t.Errorf("expected call on query onChange")
+			return false
+		}
+		if removes != expectedRemoves {
+			t.Errorf("unexpected call on query onRemove expected call onChange")
+			return false
+		}
+		return true
+	}
+
+	expectRemove := func() bool {
+		expectedRemoves += 1
+		if adds != expectedAdds {
+			t.Errorf("unexpected call on query onAdd expected onRemove")
+			return false
+		}
+		if changes != expectedChanges {
+			t.Errorf("unexpected call on query onChange expected onRemove")
+			return false
+		}
+		if removes != expectedRemoves {
+			t.Errorf("expected call on query onRemove")
+			return false
+		}
+		return true
+	}
 
 	component.SaveComponent(entity, Component{})
-	if adds != expectedAdds {
-		t.Errorf("unexpected call on query onAdd")
-		return
-	}
-	if changes != expectedChanges {
-		t.Errorf("unexpected call on query onChange")
-		return
-	}
-	if removes != expectedRemoves {
-		t.Errorf("unexpected call on query onRemove")
+	if ok := expectNothing(); !ok {
 		return
 	}
 
 	component2.SaveComponent(entity, Component2{})
-	expectedAdds += 1
-	if adds != expectedAdds {
-		t.Errorf("expected call on query onAdd")
-		return
-	}
-	if changes != expectedChanges {
-		t.Errorf("unexpected call on query onChange expected call onAdd")
-		return
-	}
-	if removes != expectedRemoves {
-		t.Errorf("unexpected call on query onRemove expected call onAdd")
+	if ok := expectAdd(); !ok {
 		return
 	}
 
 	component2.SaveComponent(entity, Component2{})
-	expectedChanges += 1
-	if adds != expectedAdds {
-		t.Errorf("unexpected call on query onAdd expected onChange")
-		return
-	}
-	if changes != expectedChanges {
-		t.Errorf("expected call on query onChange")
-		return
-	}
-	if removes != expectedRemoves {
-		t.Errorf("unexpected call on query onRemove expected call onChange")
+	if ok := expectChange(); !ok {
 		return
 	}
 
 	component.SaveComponent(entity, Component{})
-	expectedChanges += 1
-	if adds != expectedAdds {
-		t.Errorf("unexpected call on query onAdd expected onChange")
+	if ok := expectChange(); !ok {
 		return
 	}
-	if changes != expectedChanges {
-		t.Errorf("expected call on query onChange")
+
+	trackedComponent.SaveComponent(entity, TrackedComponent{})
+	if ok := expectChange(); !ok {
 		return
 	}
-	if removes != expectedRemoves {
-		t.Errorf("unexpected call on query onRemove expected call onChange")
+
+	trackedComponent.SaveComponent(entity, TrackedComponent{})
+	if ok := expectChange(); !ok {
+		return
+	}
+
+	trackedComponent.RemoveComponent(entity)
+	if ok := expectChange(); !ok {
+		return
+	}
+
+	forbiddenComponent.SaveComponent(entity, ForbiddenComponent{})
+	if ok := expectRemove(); !ok {
+		return
+	}
+
+	forbiddenComponent.RemoveComponent(entity)
+	if ok := expectAdd(); !ok {
 		return
 	}
 
 	component.RemoveComponent(entity)
-	expectedRemoves += 1
-	if adds != expectedAdds {
-		t.Errorf("unexpected call on query onAdd expected onRemove")
-		return
-	}
-	if changes != expectedChanges {
-		t.Errorf("unexpected call on query onChange expected onRemove")
-		return
-	}
-	if removes != expectedRemoves {
-		t.Errorf("expected call on query onRemove")
+	if ok := expectRemove(); !ok {
 		return
 	}
 }

@@ -116,10 +116,10 @@ func TestComponentsQuery(t *testing.T) {
 	removes := 0
 	expectedRemoves := 0
 
-	query := world.QueryEntitiesWithComponents(
+	query := world.Query().Require(
 		ecs.GetComponentType(Component{}),
 		ecs.GetComponentType(Component2{}),
-	)
+	).Build()
 
 	query.OnAdd(func(ei []ecs.EntityID) { adds += 1 })
 	query.OnChange(func(ei []ecs.EntityID) { changes += 1 })

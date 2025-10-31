@@ -51,7 +51,7 @@ type componentsInterface interface {
 
 	// returns for with all listed component types
 	// the same live query should be returned for the same input
-	QueryEntitiesWithComponents(...ComponentType) LiveQuery
+	Query() LiveQueryFactory
 
 	GetAnyComponent(EntityID, ComponentType) (any, error)
 
@@ -64,7 +64,7 @@ type componentsInterface interface {
 type componentsImpl struct {
 	mutex sync.Locker
 
-	storage ComponentsStorage
+	storage *componentsStorage
 }
 
 func (components *componentsImpl) Components() ComponentsStorage { return components.storage }
@@ -93,9 +93,9 @@ type arraysSharedInterface interface {
 }
 
 type componentsStorage struct {
-	arrays     map[ComponentType]arraysSharedInterface // any is *componentsArray[ComponentType]
-	entities   datastructures.SparseSet[EntityID]
-	onArrayAdd map[ComponentType][]*liveQuery
+	arrays              map[ComponentType]arraysSharedInterface // any is *componentsArray[ComponentType]
+	entities            datastructures.SparseSet[EntityID]
+	onArrayAddListeners map[ComponentType][]func(arraysSharedInterface)
 
 	cachedQueries    map[queryKey]*liveQuery
 	dependentQueries map[ComponentType][]*liveQuery
@@ -105,57 +105,23 @@ type ComponentsStorage *componentsStorage
 
 func newComponentsStorage(entities datastructures.SparseSet[EntityID]) ComponentsStorage {
 	return &componentsStorage{
-		arrays:     make(map[ComponentType]arraysSharedInterface),
-		entities:   entities,
-		onArrayAdd: make(map[ComponentType][]*liveQuery),
+		arrays:              make(map[ComponentType]arraysSharedInterface),
+		entities:            entities,
+		onArrayAddListeners: make(map[ComponentType][]func(arraysSharedInterface)),
 
 		cachedQueries:    make(map[queryKey]*liveQuery, 0),
 		dependentQueries: make(map[ComponentType][]*liveQuery, 0),
 	}
 }
 
-func addDependentQueriesListeners(
-	components ComponentsStorage,
-	componentType ComponentType,
-) {
-	queries, ok := components.onArrayAdd[componentType]
-	if !ok {
+func (components *componentsStorage) whenArrExists(t ComponentType, l func(arraysSharedInterface)) {
+	if arr, ok := components.arrays[t]; ok {
+		l(arr)
 		return
 	}
-	array, ok := components.arrays[componentType]
-	if !ok {
-		return
-	}
-	delete(components.onArrayAdd, componentType)
-
-	for _, query := range queries {
-		arrays := make([]arraysSharedInterface, 0, len(query.dependencies.Get()))
-		missingArrays := query.dependencies.Get()
-		array.OnAdd(func(ei []EntityID) {
-			for _, missingArray := range missingArrays {
-				array, ok := components.arrays[missingArray]
-				if !ok {
-					return
-				}
-				missingArrays = missingArrays[1:]
-				arrays = append(arrays, array)
-			}
-			addedEntities := make([]EntityID, 0, len(ei))
-		entityLoop:
-			for _, entity := range ei {
-				for _, array := range arrays {
-					if _, err := array.GetAnyComponent(entity); err != nil {
-						continue entityLoop
-					}
-				}
-				addedEntities = append(addedEntities, entity)
-			}
-			if len(addedEntities) != 0 {
-				query.AddedEntities(addedEntities)
-			}
-		})
-	}
-	array.addQueries(queries)
+	onAdd, _ := components.onArrayAddListeners[t]
+	onAdd = append(onAdd, l)
+	components.onArrayAddListeners[t] = onAdd
 }
 
 func GetComponentsArray[Component any](components ComponentsStorage) ComponentsArray[Component] {
@@ -167,7 +133,12 @@ func GetComponentsArray[Component any](components ComponentsStorage) ComponentsA
 	}
 	array := NewComponentsArray[Component](components.entities)
 	components.arrays[componentType] = array
-	addDependentQueriesListeners(components, componentType)
+	//
+	listeners, _ := components.onArrayAddListeners[componentType]
+	for _, listener := range listeners {
+		listener(array)
+	}
+	delete(components.onArrayAddListeners, componentType)
 	return array
 }
 
@@ -228,30 +199,8 @@ arrayEntities:
 	return finalEntities
 }
 
-func (i *componentsImpl) QueryEntitiesWithComponents(componentTypes ...ComponentType) LiveQuery {
-	components := i.storage
-	key := newQueryKey(componentTypes)
-	if query, ok := components.cachedQueries[key]; ok {
-		return query
-	}
-	entities := GetEntitiesWithComponents(components, componentTypes...)
-	query := newLiveQuery(componentTypes)
-	query.AddedEntities(entities)
-	components.cachedQueries[key] = query
-	for _, componentType := range componentTypes {
-		dependentQueries, _ := components.dependentQueries[componentType]
-		dependentQueries = append(dependentQueries, query)
-		components.dependentQueries[componentType] = dependentQueries
-
-		onAdd, _ := components.onArrayAdd[componentType]
-		onAdd = append(onAdd, query)
-		components.onArrayAdd[componentType] = onAdd
-
-		if _, ok := components.arrays[componentType]; ok {
-			addDependentQueriesListeners(components, componentType)
-		}
-	}
-	return query
+func (i *componentsImpl) Query() LiveQueryFactory {
+	return newLiveQueryFactory(i)
 }
 func (i *componentsImpl) GetAnyComponent(entity EntityID, componentType ComponentType) (any, error) {
 	if array, ok := i.storage.arrays[componentType]; ok {

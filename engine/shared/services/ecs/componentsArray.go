@@ -79,37 +79,8 @@ func NewComponentsArray[Component any](entities datastructures.SparseSet[EntityI
 		components: datastructures.NewSparseArray[EntityID, Component](),
 
 		onAdd:    make([]func([]EntityID), 0),
-		onChange: make([]func([]EntityID), 1),
-		onRemove: make([]func([]EntityID), 1),
-	}
-	array.onChange[0] = func(ei []EntityID) {
-		for _, query := range array.queries {
-			changedEntities := make([]EntityID, 0, len(ei))
-			for _, entity := range ei {
-				if ok := query.entities.Get(entity); !ok {
-					continue
-				}
-				changedEntities = append(changedEntities, entity)
-			}
-			if len(changedEntities) != 0 {
-				query.Changed(changedEntities)
-			}
-		}
-	}
-	array.onRemove[0] = func(ei []EntityID) {
-		for _, query := range array.queries {
-			removedEntities := make([]EntityID, 0, len(ei))
-
-			for _, entity := range ei {
-				if ok := query.entities.Get(entity); !ok {
-					continue
-				}
-				removedEntities = append(removedEntities, entity)
-			}
-			if len(removedEntities) != 0 {
-				query.RemovedEntities(removedEntities)
-			}
-		}
+		onChange: make([]func([]EntityID), 0),
+		onRemove: make([]func([]EntityID), 0),
 	}
 	return array
 }

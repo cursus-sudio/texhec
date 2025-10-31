@@ -40,8 +40,8 @@ type updateProjetionsSystem struct {
 
 func NewUpdateProjectionsSystem(window window.Api, logger logger.Logger) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
-		perspectiveQuery := w.QueryEntitiesWithComponents(ecs.GetComponentType(projection.DynamicPerspective{}))
-		orthoQuery := w.QueryEntitiesWithComponents(ecs.GetComponentType(projection.DynamicOrtho{}))
+		perspectiveQuery := w.Query().Require(ecs.GetComponentType(projection.DynamicPerspective{})).Build()
+		orthoQuery := w.Query().Require(ecs.GetComponentType(projection.DynamicOrtho{})).Build()
 		s := &updateProjetionsSystem{
 			world:  w,
 			window: window,

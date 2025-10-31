@@ -59,6 +59,8 @@ func BenchmarkGetComponentInWorld(b *testing.B) {
 	}
 }
 
+var globalResult int
+
 func BenchmarkGetComponentInArray(b *testing.B) {
 	world := ecs.NewWorld()
 
@@ -67,10 +69,11 @@ func BenchmarkGetComponentInArray(b *testing.B) {
 		world.NewEntity()
 	}
 
-	entities := make([]ecs.EntityID, b.N)
+	entitiesCount := min(b.N, 10000)
+	entities := make([]ecs.EntityID, entitiesCount)
 	arr := ecs.GetComponentsArray[Component](world.Components())
 	transaction := arr.Transaction()
-	for i := 0; i < b.N; i++ {
+	for i := 0; i < entitiesCount; i++ {
 		entity := world.NewEntity()
 		transaction.SaveComponent(entity, Component{})
 		entities[i] = entity
@@ -78,9 +81,26 @@ func BenchmarkGetComponentInArray(b *testing.B) {
 	transaction.Flush()
 
 	b.ResetTimer()
+	sum := 0
 	for i := 0; i < b.N; i++ {
-		arr.GetComponent(entities[i])
+		entityIndex := i % entitiesCount
+		sum += entityIndex
+		entity := entities[entityIndex]
+		arr.GetComponent(entity)
 	}
+	globalResult = sum
+}
+
+func BenchmarkModuloToSubtractFromGetComponentInArray(b *testing.B) {
+	maxI := min(b.N, 10000)
+
+	b.ResetTimer()
+	sum := 0
+	for i := 0; i < b.N; i++ {
+		entityIndex := i % maxI
+		sum += entityIndex
+	}
+	globalResult = sum
 }
 
 func BenchmarkCreateComponentsInArray(b *testing.B) {

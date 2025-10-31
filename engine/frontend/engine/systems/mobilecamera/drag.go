@@ -39,9 +39,9 @@ func NewDragSystem(
 
 			world:          w,
 			transformArray: ecs.GetComponentsArray[transform.Transform](w.Components()),
-			query: w.QueryEntitiesWithComponents(
+			query: w.Query().Require(
 				ecs.GetComponentType(mobilecamera.Component{}),
-			),
+			).Build(),
 
 			cameraCtors: cameraCtors.Build(w),
 			window:      window,

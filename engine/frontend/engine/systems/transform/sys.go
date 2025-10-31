@@ -10,10 +10,10 @@ import (
 
 func NewPivotPointSystem(logger logger.Logger) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
-		query := w.QueryEntitiesWithComponents(
+		query := w.Query().Require(
 			ecs.GetComponentType(transform.Transform{}),
 			ecs.GetComponentType(transform.PivotPoint{}),
-		)
+		).Build()
 		transformArray := ecs.GetComponentsArray[transform.Transform](w.Components())
 		transformTransaction := transformArray.Transaction()
 		pivotPointsArray := ecs.GetComponentsArray[transform.PivotPoint](w.Components())

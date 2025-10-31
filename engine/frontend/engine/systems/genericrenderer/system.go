@@ -143,7 +143,7 @@ func NewSystem(
 			vboFactory:    vboFactory,
 			camerasCtors:  camerasCtors.Build(w),
 
-			query: w.QueryEntitiesWithComponents(
+			query: w.Query().Require(
 				append(
 					entitiesQueryAdditionalArguments,
 					ecs.GetComponentType(PipelineComponent{}),
@@ -151,10 +151,10 @@ func NewSystem(
 					ecs.GetComponentType(meshcomponent.Mesh{}),
 					ecs.GetComponentType(texturecomponent.Texture{}),
 				)...,
-			),
-			cameraQuery: w.QueryEntitiesWithComponents(
+			).Build(),
+			cameraQuery: w.Query().Require(
 				ecs.GetComponentType(camera.Camera{}),
-			),
+			).Build(),
 
 			releasable: releasable,
 		}

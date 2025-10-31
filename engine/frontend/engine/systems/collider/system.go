@@ -11,10 +11,10 @@ func NewColliderSystem(
 	serviceFactory ecs.ToolFactory[broadcollision.CollisionService],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
-		query := w.QueryEntitiesWithComponents(
+		query := w.Query().Require(
 			ecs.GetComponentType(transform.Transform{}),
 			ecs.GetComponentType(collider.Collider{}),
-		)
+		).Build()
 		service := serviceFactory.Build(w)
 		query.OnAdd(func(ei []ecs.EntityID) {
 			service.Add(ei...)

@@ -155,7 +155,7 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 		world:       w,
 		groupsArray: ecs.GetComponentsArray[groups.Groups](w.Components()),
 		gridGroups:  factory.groups,
-		cameraQuery: w.QueryEntitiesWithComponents(ecs.GetComponentType(projection.Ortho{})),
+		cameraQuery: w.Query().Require(ecs.GetComponentType(projection.Ortho{})).Build(),
 		cameraCtors: factory.cameraCtorsFactory.Build(w),
 
 		changed:     false,

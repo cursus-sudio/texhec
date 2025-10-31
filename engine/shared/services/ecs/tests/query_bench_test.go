@@ -7,10 +7,10 @@ import (
 
 func addQueries(world ecs.World, others ...ecs.ComponentType) {
 	for _, other := range others {
-		query := world.QueryEntitiesWithComponents(
+		query := world.Query().Require(
 			ecs.GetComponentType(Component{}),
 			other,
-		)
+		).Build()
 		query.OnAdd(func(ei []ecs.EntityID) {})
 		query.OnChange(func(ei []ecs.EntityID) {})
 		query.OnRemove(func(ei []ecs.EntityID) {})
@@ -35,7 +35,7 @@ func BenchmarkQueryEntitiesWithComponents(b *testing.B) {
 
 	componentType := ecs.GetComponentType(Component{})
 	for i := 0; i < b.N; i++ {
-		world.QueryEntitiesWithComponents(componentType)
+		world.Query().Require(componentType).Build()
 	}
 }
 

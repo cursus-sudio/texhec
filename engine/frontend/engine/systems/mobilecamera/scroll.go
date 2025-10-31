@@ -43,9 +43,9 @@ func NewScrollSystem(
 			world:             w,
 			dynamicOrthoArray: ecs.GetComponentsArray[projection.DynamicOrtho](w.Components()),
 			transformArray:    ecs.GetComponentsArray[transform.Transform](w.Components()),
-			query: w.QueryEntitiesWithComponents(
+			query: w.Query().Require(
 				ecs.GetComponentType(mobilecamera.Component{}),
-			),
+			).Build(),
 
 			minZoom: minZoom, // e.g. 0.1
 			maxZoom: maxZoom, // e.g. 5

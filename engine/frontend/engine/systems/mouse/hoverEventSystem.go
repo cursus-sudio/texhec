@@ -17,10 +17,10 @@ type hoverEventSystem struct {
 
 func NewHoverEventsSystem() ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
-		query := w.QueryEntitiesWithComponents(
+		query := w.Query().Require(
 			ecs.GetComponentType(mouse.MouseEvents{}),
 			ecs.GetComponentType(mouse.Hovered{}),
-		)
+		).Build()
 		s := &hoverEventSystem{
 			world:            w,
 			mouseEventsArray: ecs.GetComponentsArray[mouse.MouseEvents](w.Components()),

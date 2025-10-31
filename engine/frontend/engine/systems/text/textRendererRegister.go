@@ -107,7 +107,7 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 		world:          w,
 		transformArray: ecs.GetComponentsArray[transform.Transform](w.Components()),
 		groupsArray:    ecs.GetComponentsArray[groups.Groups](w.Components()),
-		cameraQuery:    w.QueryEntitiesWithComponents(ecs.GetComponentType(projection.Ortho{})),
+		cameraQuery:    w.Query().Require(ecs.GetComponentType(projection.Ortho{})).Build(),
 
 		logger:      f.logger,
 		cameraCtors: f.cameraCtorsFactory.Build(w),
@@ -124,10 +124,10 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 		layoutsBatches: datastructures.NewSparseArray[ecs.EntityID, layoutBatch](),
 	}
 
-	query := w.QueryEntitiesWithComponents(
+	query := w.Query().Require(
 		ecs.GetComponentType(text.Text{}),
 		ecs.GetComponentType(transform.Transform{}),
-	)
+	).Build()
 
 	addOrChangeListener := func(ei []ecs.EntityID) {
 		for _, entity := range ei {

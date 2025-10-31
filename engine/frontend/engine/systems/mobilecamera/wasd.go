@@ -34,11 +34,11 @@ func NewWasdSystem(
 			transformArray:       ecs.GetComponentsArray[transform.Transform](w.Components()),
 			orthoArray:           ecs.GetComponentsArray[projection.Ortho](w.Components()),
 			transformTransaction: ecs.GetComponentsArray[transform.Transform](w.Components()).Transaction(),
-			query: w.QueryEntitiesWithComponents(
+			query: w.Query().Require(
 				ecs.GetComponentType(transform.Transform{}),
 				ecs.GetComponentType(projection.Ortho{}),
 				ecs.GetComponentType(mobilecamera.Component{}),
-			),
+			).Build(),
 
 			cameraCtors: cameraCtors.Build(w),
 			cameraSpeed: cameraSpeed,

@@ -84,9 +84,9 @@ func NewAnchorSystem(logger logger.Logger) ecs.SystemRegister {
 				}
 			}
 
-			query := w.QueryEntitiesWithComponents(
+			query := w.Query().Require(
 				ecs.GetComponentType(transform.Transform{}),
-			)
+			).Build()
 			query.OnAdd(onChange)
 			query.OnChange(onChange)
 			query.OnRemove(onRemove)
@@ -137,10 +137,10 @@ func NewAnchorSystem(logger logger.Logger) ecs.SystemRegister {
 				}
 			}
 
-			query := w.QueryEntitiesWithComponents(
+			query := w.Query().Require(
 				ecs.GetComponentType(transform.Transform{}),
 				ecs.GetComponentType(anchor.ParentAnchor{}),
-			)
+			).Build()
 
 			query.OnAdd(onAdd)
 			query.OnChange(func(ei []ecs.EntityID) {
@@ -151,9 +151,9 @@ func NewAnchorSystem(logger logger.Logger) ecs.SystemRegister {
 		}
 
 		{
-			query := w.QueryEntitiesWithComponents(
+			query := w.Query().Require(
 				ecs.GetComponentType(anchor.ParentAnchor{}),
-			)
+			).Build()
 			listener := func(ei []ecs.EntityID) {
 				for _, entity := range ei {
 					if _, err := transformArray.GetComponent(entity); err == nil {

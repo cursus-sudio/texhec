@@ -9,20 +9,20 @@ import (
 	"github.com/ogiusek/relay/v2"
 )
 
-type Pkg struct {
+type pkg struct {
 	pkgs            []ioc.Pkg
 	getRequestScope func(c ioc.Dic) ioc.Dic
 }
 
 func Package(
 	getRequestScope func(c ioc.Dic) ioc.Dic,
-) Pkg {
-	return Pkg{
+) ioc.Pkg {
+	return pkg{
 		getRequestScope: getRequestScope,
 	}
 }
 
-func (pkg Pkg) Register(b ioc.Builder) {
+func (pkg pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, connection.OrderAttachServices, func(c ioc.Dic, con connection.Definition) connection.Definition {
 		con.MessageListener().Relay().RegisterMiddleware(func(ctx relay.AnyContext, next func()) {
 			c := reflect.ValueOf(pkg.getRequestScope(c))

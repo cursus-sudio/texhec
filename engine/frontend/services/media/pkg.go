@@ -10,23 +10,24 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-type Pkg struct {
+type pkg struct {
 	pkgs []ioc.Pkg
 }
 
 func Package(
-	windowPkg window.Pkg,
-) Pkg {
-	return Pkg{
+	w *sdl.Window,
+	ctx sdl.GLContext,
+) pkg {
+	return pkg{
 		pkgs: []ioc.Pkg{
 			audio.Package(),
 			inputs.Package(),
-			windowPkg,
+			window.Package(w, ctx),
 		},
 	}
 }
 
-func (pkg Pkg) Register(b ioc.Builder) {
+func (pkg pkg) Register(b ioc.Builder) {
 	for _, pkg := range pkg.pkgs {
 		pkg.Register(b)
 	}

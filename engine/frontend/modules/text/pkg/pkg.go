@@ -17,7 +17,7 @@ import (
 	"golang.org/x/image/font/opentype"
 )
 
-type Pkg struct {
+type pkg struct {
 	defaultFontFamily text.FontFamilyComponent
 	defaultFontSize   text.FontSizeComponent
 	// defaultOverflow   text.Overflow
@@ -40,7 +40,7 @@ func Package(
 	faceOptions opentype.FaceOptions,
 	yBaseline int,
 ) ioc.Pkg {
-	return Pkg{
+	return pkg{
 		defaultFontFamily: defaultFontFamily,
 		defaultFontSize:   defaultFontSize,
 		// defaultOverflow:   defaultOverflow,
@@ -52,7 +52,7 @@ func Package(
 	}
 }
 
-func (pkg Pkg) Register(b ioc.Builder) {
+func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) internal.FontService {
 		return internal.NewFontService(
 			ioc.Get[assets.Assets](c),

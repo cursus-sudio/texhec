@@ -12,7 +12,7 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
-func (pkg Pkg) hostServer(c ioc.Dic) {
+func (pkg pkg) hostServer(c ioc.Dic) {
 	logger := ioc.Get[logger.Logger](c)
 	runtime := ioc.Get[runtime.Runtime](c)
 	l, err := net.Listen(pkg.connType, pkg.host+":"+pkg.port)
@@ -51,7 +51,7 @@ func (pkg Pkg) hostServer(c ioc.Dic) {
 	}
 }
 
-type Pkg struct {
+type pkg struct {
 	host     string // CONN_HOST = "localhost"
 	port     string // CONN_PORT = "8080"
 	connType string // CONN_TYPE = "tcp"
@@ -64,15 +64,15 @@ func Package(
 	port string,
 	// e.g. tcp
 	connType string,
-) Pkg {
-	return Pkg{
+) ioc.Pkg {
+	return pkg{
 		host:     host,
 		port:     port,
 		connType: connType,
 	}
 }
 
-func (pkg Pkg) Register(b ioc.Builder) {
+func (pkg pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, r runtime.Builder) runtime.Builder {
 		r.OnStart(func(r runtime.Runtime) {
 			go pkg.hostServer(c)

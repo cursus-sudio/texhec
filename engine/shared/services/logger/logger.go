@@ -39,7 +39,7 @@ func (logger *logger) Fatal(err ...error) {
 	logger.Panic(message)
 }
 
-type Pkg struct {
+type pkg struct {
 	panicOnError bool
 	print        func(c ioc.Dic, message string)
 }
@@ -47,14 +47,14 @@ type Pkg struct {
 func Package(
 	panicOnError bool,
 	print func(c ioc.Dic, message string),
-) Pkg {
-	return Pkg{
+) ioc.Pkg {
+	return pkg{
 		panicOnError: panicOnError,
 		print:        print,
 	}
 }
 
-func (pkg Pkg) Register(b ioc.Builder) {
+func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) Logger {
 		return &logger{
 			PanicOnError: pkg.panicOnError,

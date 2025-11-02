@@ -10,13 +10,13 @@ import (
 	"github.com/optimus-hft/lockset"
 )
 
-type Pkg struct {
+type pkg struct {
 	BaseDir string
 }
 
 func Package(
 	baseDir string,
-) Pkg {
+) ioc.Pkg {
 	if err := os.MkdirAll(baseDir, os.ModePerm); err != nil {
 		panic(fmt.Sprintf("error creating directories %s", err.Error()))
 	}
@@ -27,12 +27,12 @@ func Package(
 	if !info.IsDir() {
 		panic("path is a file, not a directory: " + filepath.Clean(baseDir))
 	}
-	return Pkg{
+	return pkg{
 		BaseDir: baseDir,
 	}
 }
 
-func (pkg Pkg) Register(b ioc.Builder) {
+func (pkg pkg) Register(b ioc.Builder) {
 	lockSet := lockset.New()
 	ioc.RegisterScoped(b, scopes.Request, func(c ioc.Dic) FileStorage {
 		return NewDiskFileStorage(

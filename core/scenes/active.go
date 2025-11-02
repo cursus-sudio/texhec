@@ -36,10 +36,10 @@ type GameBuilder scenes.SceneBuilder
 type SettingsBuilder scenes.SceneBuilder
 type CreditsBuilder scenes.SceneBuilder
 
-type Pkg struct{}
+type pkg struct{}
 
 func Package() ioc.Pkg {
-	return Pkg{}
+	return pkg{}
 }
 
 func AddDefaults[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
@@ -58,7 +58,7 @@ func AddDefaults[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 	})
 }
 
-func (Pkg) Register(b ioc.Builder) {
+func (pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b scenes.SceneManagerBuilder) scenes.SceneManagerBuilder {
 		b.AddScene(ioc.Get[MenuBuilder](c).Build(MenuID))
 		b.AddScene(ioc.Get[GameBuilder](c).Build(GameID))

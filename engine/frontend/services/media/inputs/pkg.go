@@ -10,13 +10,13 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-type Pkg struct{}
+type pkg struct{}
 
-func Package() Pkg {
-	return Pkg{}
+func Package() ioc.Pkg {
+	return pkg{}
 }
 
-func (Pkg) Register(b ioc.Builder) {
+func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) Api {
 		return newInputsApi(
 			ioc.Get[logger.Logger](c),

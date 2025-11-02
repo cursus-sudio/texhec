@@ -8,17 +8,17 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
-type Pkg struct {
+type pkg struct {
 	fps int
 }
 
-func Package(fps int) Pkg {
-	return Pkg{
+func Package(fps int) ioc.Pkg {
+	return pkg{
 		fps: fps,
 	}
 }
 
-func (pkg Pkg) Register(b ioc.Builder) {
+func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) Builder {
 		return NewBuilder(pkg.fps)
 	})

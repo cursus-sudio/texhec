@@ -35,7 +35,6 @@ import (
 	"frontend/services/frames"
 	"frontend/services/graphics/texturearray"
 	"frontend/services/media"
-	windowapi "frontend/services/media/window"
 	"frontend/services/scenes"
 	frontendscopes "frontend/services/scopes"
 	"os"
@@ -134,9 +133,7 @@ func frontendDic(
 			return ioc.Get[localconnector.Connector](c).Connect()
 		}),
 		console.Package(),
-		media.Package(
-			windowapi.Package(window, ctx),
-		),
+		media.Package(window, ctx),
 		// ecs.Package(), // scenes register world so ecs package isn't registered
 		frames.Package(60),
 		// frames.Package(10000),

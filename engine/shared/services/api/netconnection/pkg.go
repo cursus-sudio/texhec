@@ -10,17 +10,17 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
-type Pkg struct {
+type pkg struct {
 	timeout time.Duration
 }
 
-func Package(timeout time.Duration) Pkg {
-	return Pkg{
+func Package(timeout time.Duration) ioc.Pkg {
+	return pkg{
 		timeout: timeout,
 	}
 }
 
-func (pkg Pkg) Register(b ioc.Builder) {
+func (pkg pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
 		b.Register(reflect.TypeFor[Msg]())
 		return b

@@ -66,7 +66,7 @@ func (tx Tx) Ok() bool {
 
 // pkg
 
-type Pkg struct {
+type pkg struct {
 	dbPath            string
 	migrations        embed.FS
 	txScope           ioc.ScopeID
@@ -78,8 +78,8 @@ func Package(
 	migrations embed.FS,
 	txScope ioc.ScopeID,
 	addOnScopeCleanUp func(c ioc.Dic, cleanUp func(err error)),
-) Pkg {
-	return Pkg{
+) ioc.Pkg {
+	return pkg{
 		dbPath:            dbPath,
 		migrations:        migrations,
 		txScope:           txScope,
@@ -87,7 +87,7 @@ func Package(
 	}
 }
 
-func (pkg Pkg) Register(b ioc.Builder) {
+func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) DB {
 		if err := os.MkdirAll(filepath.Dir(pkg.dbPath), os.ModePerm); err != nil {
 			panic(fmt.Sprintf("error creating directories %s", err.Error()))

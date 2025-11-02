@@ -9,19 +9,19 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
-type Pkg struct {
+type pkg struct {
 	network string
 }
 
 func Package(
 	network string,
-) Pkg {
-	return Pkg{
+) ioc.Pkg {
+	return pkg{
 		network: network,
 	}
 }
 
-func (pkg Pkg) Register(b ioc.Builder) {
+func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterTransient(b, func(c ioc.Dic) Connect {
 		return newConnect(
 			pkg.network,

@@ -10,11 +10,11 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
-type Pkg struct{}
+type pkg struct{}
 
-func Package() Pkg { return Pkg{} }
+func Package() ioc.Pkg { return pkg{} }
 
-func (Pkg) Register(b ioc.Builder) {
+func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) collider.System {
 		return collisions.NewColliderSystem(
 			ioc.Get[ecs.ToolFactory[collisions.CollisionService]](c),

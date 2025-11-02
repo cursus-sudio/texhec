@@ -6,19 +6,19 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
-type Pkg struct {
+type pkg struct {
 	loadDefault func(c ioc.Dic) connection.Connection
 }
 
 func Package(
 	loadDefaults func(c ioc.Dic) connection.Connection,
-) Pkg {
-	return Pkg{
+) ioc.Pkg {
+	return pkg{
 		loadDefault: loadDefaults,
 	}
 }
 
-func (pkg Pkg) Register(b ioc.Builder) {
+func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) Backend {
 		b := NewBuilder()
 		b.DefaultConnection(func() connection.Connection { return pkg.loadDefault(c) })

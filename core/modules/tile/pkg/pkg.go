@@ -16,17 +16,21 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
-type Pkg struct {
+type pkg struct {
 	tileSize   int32
 	gridDepth  float32
 	gridGroups groups.GroupsComponent
 }
 
-func Package(tileSize int32, gridDepth float32, groups groups.GroupsComponent) ioc.Pkg {
-	return Pkg{tileSize, gridDepth, groups}
+func Package(
+	tileSize int32,
+	gridDepth float32,
+	groups groups.GroupsComponent,
+) ioc.Pkg {
+	return pkg{tileSize, gridDepth, groups}
 }
 
-func (pkg Pkg) Register(b ioc.Builder) {
+func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) internal.TileRenderSystemRegister {
 		return internal.NewTileRenderSystemRegister(
 			ioc.Get[texturearray.Factory](c),

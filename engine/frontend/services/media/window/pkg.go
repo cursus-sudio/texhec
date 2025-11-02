@@ -9,7 +9,7 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-type Pkg struct {
+type pkg struct {
 	window  *sdl.Window
 	context sdl.GLContext
 }
@@ -17,14 +17,14 @@ type Pkg struct {
 func Package(
 	window *sdl.Window,
 	context sdl.GLContext,
-) Pkg {
-	return Pkg{
+) ioc.Pkg {
+	return pkg{
 		window:  window,
 		context: context,
 	}
 }
 
-func (pkg Pkg) Register(b ioc.Builder) {
+func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) Api {
 		return newApi(
 			pkg.window,

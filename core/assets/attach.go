@@ -49,13 +49,13 @@ const (
 	FontAssetID      assets.AssetID = "font_asset"
 )
 
-type Pkg struct{}
+type pkg struct{}
 
 func Package() ioc.Pkg {
-	return Pkg{}
+	return pkg{}
 }
 
-func (Pkg) Register(b ioc.Builder) {
+func (pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, appruntime.OrderCleanUp, func(c ioc.Dic, b appruntime.Builder) appruntime.Builder {
 		assets := ioc.Get[assets.Assets](c)
 		b.OnStop(func(r appruntime.Runtime) {

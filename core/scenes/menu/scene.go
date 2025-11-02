@@ -21,13 +21,13 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
-type Pkg struct{}
+type pkg struct{}
 
 func Package() ioc.Pkg {
-	return Pkg{}
+	return pkg{}
 }
 
-func (Pkg) LoadObjects(b ioc.Builder) {
+func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.MenuBuilder) gamescenes.MenuBuilder {
 		b.OnLoad(func(world scenes.SceneCtx) {
 			cameraEntity := world.NewEntity()
@@ -101,7 +101,7 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 	})
 }
 
-func (pkg Pkg) Register(b ioc.Builder) {
+func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) gamescenes.MenuBuilder { return scenes.NewSceneBuilder() })
 	gamescenes.AddDefaults[gamescenes.MenuBuilder](b)
 

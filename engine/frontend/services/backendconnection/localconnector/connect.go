@@ -24,17 +24,17 @@ func (connector *connector) Connect() connection.Connection {
 	return connector.connect()
 }
 
-type Pkg struct {
+type pkg struct {
 	connect func(connection.Connection) connection.Connection
 }
 
 func Package(
 	connect func(connection.Connection) connection.Connection,
-) Pkg {
-	return Pkg{connect: connect}
+) ioc.Pkg {
+	return pkg{connect: connect}
 }
 
-func (pkg Pkg) Register(b ioc.Builder) {
+func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) Connector {
 		return newConnector(func() connection.Connection {
 			return pkg.connect(ioc.Get[connection.Connection](c))

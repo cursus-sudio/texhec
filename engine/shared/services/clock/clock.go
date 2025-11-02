@@ -32,19 +32,19 @@ func (clock *clock) Now() time.Time {
 
 // package
 
-type Pkg struct {
+type pkg struct {
 	dateFormat DateFormat
 }
 
 func Package(
 	dateFormat DateFormat,
-) Pkg {
-	return Pkg{
+) ioc.Pkg {
+	return pkg{
 		dateFormat: dateFormat,
 	}
 }
 
-func (pkg Pkg) Register(b ioc.Builder) {
+func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) Clock { return &clock{} })
 	ioc.RegisterSingleton(b, func(c ioc.Dic) DateFormat { return pkg.dateFormat })
 }

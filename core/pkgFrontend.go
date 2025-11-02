@@ -94,6 +94,7 @@ func frontendDic(
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LEQUAL) // less or equal
 
+	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	if err := window.GLMakeCurrent(ctx); err != nil {

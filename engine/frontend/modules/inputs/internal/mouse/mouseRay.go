@@ -9,6 +9,7 @@ import (
 	"shared/services/ecs"
 
 	"github.com/ogiusek/events"
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 type ShootRayEvent struct{}
@@ -52,6 +53,10 @@ func NewCameraRaySystem(
 			hoversOverEntity: nil,
 		}
 		events.ListenE(w.EventsBuilder(), s.Listen)
+		events.Listen(w.EventsBuilder(), func(sdl.MouseButtonEvent) {
+			events.Emit(s.world.Events(), ShootRayEvent{})
+		})
+
 		return nil
 	})
 }

@@ -86,13 +86,16 @@ func frontendDic(
 	if err := gl.Init(); err != nil {
 		panic(fmt.Errorf("could not initialize OpenGL: %v", err))
 	}
+
+	gl.Enable(gl.CULL_FACE)
+	gl.CullFace(gl.FRONT)
+	gl.FrontFace(gl.CCW)
+
 	gl.Enable(gl.DEPTH_TEST)
-	gl.Disable(gl.CULL_FACE)
-	gl.DepthFunc(gl.LESS)
+	gl.DepthFunc(gl.LEQUAL) // less or equal
 
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-	// gl.DepthFunc(gl.GREATER)
 	if err := window.GLMakeCurrent(ctx); err != nil {
 		panic(fmt.Errorf("could not make OpenGL context current: %v", err))
 	}

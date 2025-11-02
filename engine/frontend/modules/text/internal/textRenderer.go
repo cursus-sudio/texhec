@@ -130,6 +130,10 @@ func (s *textRenderer) ensureFontExists(asset assets.AssetID) error {
 
 func (s *textRenderer) Listen(rendersys.RenderEvent) {
 	s.program.Use()
+	gl.Enable(gl.BLEND)
+	defer func() {
+		gl.Disable(gl.BLEND)
+	}()
 
 	// render
 

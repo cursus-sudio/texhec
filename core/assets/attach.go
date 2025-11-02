@@ -79,38 +79,15 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b assets.AssetsStorageBuilder) assets.AssetsStorageBuilder {
 		b.RegisterAsset(SquareMesh, func() (any, error) {
 			vertices := []genericrenderer.Vertex{
-				// Front face
-				{Pos: [3]float32{-1, 1, 1}, TexturePos: [2]float32{0, 1}},
-				{Pos: [3]float32{-1, -1, 1}, TexturePos: [2]float32{0, 0}},
-				{Pos: [3]float32{1, -1, 1}, TexturePos: [2]float32{1, 0}},
 				{Pos: [3]float32{1, 1, 1}, TexturePos: [2]float32{1, 1}},
-
-				// Back face
-				{Pos: [3]float32{-1, 1, -1}, TexturePos: [2]float32{1, 1}},
-				{Pos: [3]float32{-1, -1, -1}, TexturePos: [2]float32{1, 0}},
-				{Pos: [3]float32{1, -1, -1}, TexturePos: [2]float32{0, 0}},
-				{Pos: [3]float32{1, 1, -1}, TexturePos: [2]float32{0, 1}},
+				{Pos: [3]float32{1, -1, 1}, TexturePos: [2]float32{1, 0}},
+				{Pos: [3]float32{-1, -1, 1}, TexturePos: [2]float32{0, 0}},
+				{Pos: [3]float32{-1, 1, 1}, TexturePos: [2]float32{0, 1}},
 			}
 
 			indices := []ebo.Index{
-				// Front face
 				0, 1, 2,
 				0, 2, 3,
-				// Back face
-				4, 5, 6,
-				4, 6, 7,
-				// Top face
-				3, 7, 4,
-				3, 4, 0,
-				// Bottom face
-				1, 5, 6,
-				1, 6, 2,
-				// Right face
-				2, 6, 7,
-				2, 7, 3,
-				// Left face
-				5, 1, 0,
-				5, 0, 4,
 			}
 			asset := render.NewMeshStorageAsset(vertices, indices)
 			return asset, nil

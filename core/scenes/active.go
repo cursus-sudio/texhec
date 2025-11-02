@@ -108,8 +108,8 @@ func (pkg) Register(b ioc.Builder) {
 				// render
 				ioc.Get[render.System](c),
 				ioc.Get[genericrenderer.System](c),
-				ioc.Get[text.System](c),
 				ioc.Get[tile.System](c),
+				ioc.Get[text.System](c),
 				ioc.Get[fpslogger.System](c),
 
 				// after everything change scene

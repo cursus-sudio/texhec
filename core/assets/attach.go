@@ -6,9 +6,8 @@ import (
 	_ "embed"
 	"frontend/modules/collider"
 	"frontend/modules/genericrenderer"
-	"frontend/modules/mesh"
+	"frontend/modules/render"
 	"frontend/modules/text"
-	"frontend/modules/texture"
 	"frontend/services/assets"
 	gtexture "frontend/services/graphics/texture"
 	"frontend/services/graphics/vao/ebo"
@@ -113,7 +112,7 @@ func (Pkg) Register(b ioc.Builder) {
 				5, 1, 0,
 				5, 0, 4,
 			}
-			asset := mesh.NewMeshStorageAsset(vertices, indices)
+			asset := render.NewMeshStorageAsset(vertices, indices)
 			return asset, nil
 		})
 
@@ -125,7 +124,7 @@ func (Pkg) Register(b ioc.Builder) {
 			}
 
 			imgInverse := gtexture.FlipImage(img)
-			asset := texture.NewTextureStorageAsset(imgInverse)
+			asset := render.NewTextureStorageAsset(imgInverse)
 			return asset, nil
 		})
 
@@ -136,7 +135,7 @@ func (Pkg) Register(b ioc.Builder) {
 				return nil, err
 			}
 			imgInverse := gtexture.FlipImage(img)
-			asset := texture.NewTextureStorageAsset(imgInverse)
+			asset := render.NewTextureStorageAsset(imgInverse)
 			return asset, nil
 		})
 
@@ -147,7 +146,7 @@ func (Pkg) Register(b ioc.Builder) {
 				return nil, err
 			}
 			imgInverse := gtexture.FlipImage(img)
-			asset := texture.NewTextureStorageAsset(imgInverse)
+			asset := render.NewTextureStorageAsset(imgInverse)
 			return asset, nil
 		})
 
@@ -158,7 +157,7 @@ func (Pkg) Register(b ioc.Builder) {
 				return nil, err
 			}
 			imgInverse := gtexture.FlipImage(img)
-			asset := texture.NewTextureStorageAsset(imgInverse)
+			asset := render.NewTextureStorageAsset(imgInverse)
 			return asset, nil
 		})
 

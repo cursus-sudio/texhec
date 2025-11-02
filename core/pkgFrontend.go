@@ -20,12 +20,10 @@ import (
 	"frontend/modules/groups"
 	"frontend/modules/groups/pkg"
 	"frontend/modules/inputs/pkg"
-	"frontend/modules/mesh/pkg"
 	"frontend/modules/render/pkg"
 	"frontend/modules/scenes/pkg"
 	"frontend/modules/text"
 	"frontend/modules/text/pkg"
-	"frontend/modules/texture/pkg"
 	"frontend/modules/transform/pkg"
 	frontendapi "frontend/services/api"
 	frontendtcp "frontend/services/api/tcp"
@@ -157,7 +155,6 @@ func frontendDic(
 		genericrendererpkg.Package(),
 		groupspkg.Package(),
 		inputspkg.Package(),
-		meshpkg.Package(),
 		renderpkg.Package(),
 		scenespkg.Package(),
 		textpkg.Package(
@@ -199,7 +196,6 @@ func frontendDic(
 			},
 			52,
 		),
-		texturepkg.Package(),
 		transformpkg.Package(),
 
 		// game packages

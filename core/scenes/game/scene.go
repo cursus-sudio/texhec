@@ -10,10 +10,9 @@ import (
 	"frontend/modules/genericrenderer"
 	"frontend/modules/groups"
 	"frontend/modules/inputs"
-	"frontend/modules/mesh"
+	"frontend/modules/render"
 	scenessys "frontend/modules/scenes"
 	"frontend/modules/text"
-	"frontend/modules/texture"
 	"frontend/modules/transform"
 	"frontend/services/scenes"
 	"math/rand/v2"
@@ -70,8 +69,8 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 				SetRelativeTransform(transform.NewTransform().Ptr().SetSize(mgl32.Vec3{1, 1, 1}).Val()).Val(),
 			)
 			ecs.SaveComponent(world.Components(), background, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
-			ecs.SaveComponent(world.Components(), background, mesh.NewMesh(gameassets.SquareMesh))
-			ecs.SaveComponent(world.Components(), background, texture.NewTexture(gameassets.WaterTileTextureID))
+			ecs.SaveComponent(world.Components(), background, render.NewMesh(gameassets.SquareMesh))
+			ecs.SaveComponent(world.Components(), background, render.NewTexture(gameassets.WaterTileTextureID))
 			ecs.SaveComponent(world.Components(), background, genericrenderer.PipelineComponent{})
 
 			quit := world.NewEntity()
@@ -84,8 +83,8 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 				Val())
 			ecs.SaveComponent(world.Components(), quit, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
-			ecs.SaveComponent(world.Components(), quit, mesh.NewMesh(gameassets.SquareMesh))
-			ecs.SaveComponent(world.Components(), quit, texture.NewTexture(gameassets.WaterTileTextureID))
+			ecs.SaveComponent(world.Components(), quit, render.NewMesh(gameassets.SquareMesh))
+			ecs.SaveComponent(world.Components(), quit, render.NewTexture(gameassets.WaterTileTextureID))
 			ecs.SaveComponent(world.Components(), quit, genericrenderer.PipelineComponent{})
 
 			ecs.SaveComponent(world.Components(), quit, inputs.NewMouseEvents().

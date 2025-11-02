@@ -4,7 +4,7 @@ import (
 	"core/modules/tile"
 	"frontend/modules/camera"
 	"frontend/modules/groups"
-	"frontend/modules/texture"
+	"frontend/modules/render"
 	"frontend/modules/transform"
 	"frontend/services/assets"
 	"frontend/services/graphics/program"
@@ -80,7 +80,7 @@ func NewTileRenderSystemRegister(
 func (service TileRenderSystemRegister) AddType(addedAssets datastructures.SparseArray[uint32, assets.AssetID]) {
 	for _, assetIndex := range addedAssets.GetIndices() {
 		asset, _ := addedAssets.Get(assetIndex)
-		texture, err := assets.StorageGet[texture.TextureAsset](service.assetsStorage, asset)
+		texture, err := assets.StorageGet[render.TextureAsset](service.assetsStorage, asset)
 		if err != nil {
 			continue
 		}

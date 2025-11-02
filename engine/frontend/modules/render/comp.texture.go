@@ -1,4 +1,4 @@
-package texture
+package render
 
 import (
 	"frontend/services/assets"

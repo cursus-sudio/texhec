@@ -8,10 +8,9 @@ import (
 	"frontend/modules/collider"
 	"frontend/modules/genericrenderer"
 	"frontend/modules/inputs"
-	"frontend/modules/mesh"
+	"frontend/modules/render"
 	scenessys "frontend/modules/scenes"
 	"frontend/modules/text"
-	"frontend/modules/texture"
 	"frontend/modules/transform"
 	"frontend/services/scenes"
 	"shared/services/ecs"
@@ -53,8 +52,8 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 				SetPivotPoint(mgl32.Vec3{.5, .5, .5}).
 				SetRelativeTransform(transform.NewTransform().Ptr().SetSize(mgl32.Vec3{1, 1, 1}).Val()).Val(),
 			)
-			ecs.SaveComponent(world.Components(), background, mesh.NewMesh(gameassets.SquareMesh))
-			ecs.SaveComponent(world.Components(), background, texture.NewTexture(gameassets.ForestTileTextureID))
+			ecs.SaveComponent(world.Components(), background, render.NewMesh(gameassets.SquareMesh))
+			ecs.SaveComponent(world.Components(), background, render.NewTexture(gameassets.ForestTileTextureID))
 			ecs.SaveComponent(world.Components(), background, genericrenderer.PipelineComponent{})
 
 			buttonArea := world.NewEntity()
@@ -84,8 +83,8 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 					SetPivotPoint(mgl32.Vec3{.5, normalizedIndex, .5}).
 					Val())
 
-				ecs.SaveComponent(world.Components(), btn, mesh.NewMesh(gameassets.SquareMesh))
-				ecs.SaveComponent(world.Components(), btn, texture.NewTexture(gameassets.WaterTileTextureID))
+				ecs.SaveComponent(world.Components(), btn, render.NewMesh(gameassets.SquareMesh))
+				ecs.SaveComponent(world.Components(), btn, render.NewTexture(gameassets.WaterTileTextureID))
 				ecs.SaveComponent(world.Components(), btn, genericrenderer.PipelineComponent{})
 
 				ecs.SaveComponent(world.Components(), btn, inputs.NewMouseEvents().AddLeftClickEvents(button.OnClick))

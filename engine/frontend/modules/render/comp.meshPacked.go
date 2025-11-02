@@ -1,4 +1,4 @@
-package mesh
+package render
 
 // import "frontend/services/graphics/vao/ebo"
 //

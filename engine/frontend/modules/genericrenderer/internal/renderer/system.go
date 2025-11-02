@@ -5,9 +5,7 @@ import (
 	"frontend/modules/camera"
 	"frontend/modules/genericrenderer"
 	"frontend/modules/groups"
-	meshcomponent "frontend/modules/mesh"
 	"frontend/modules/render"
-	texturecomponent "frontend/modules/texture"
 	"frontend/modules/transform"
 	"frontend/services/assets"
 	"frontend/services/graphics/program"
@@ -61,8 +59,8 @@ type system struct {
 	world          ecs.World
 	transformArray ecs.ComponentsArray[transform.TransformComponent]
 	groupsArray    ecs.ComponentsArray[groups.GroupsComponent]
-	textureArray   ecs.ComponentsArray[texturecomponent.TextureComponent]
-	meshArray      ecs.ComponentsArray[meshcomponent.MeshComponent]
+	textureArray   ecs.ComponentsArray[render.TextureComponent]
+	meshArray      ecs.ComponentsArray[render.MeshComponent]
 
 	cameraArray ecs.ComponentsArray[camera.CameraComponent]
 
@@ -125,8 +123,8 @@ func NewSystem(
 			world:          w,
 			transformArray: ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
 			groupsArray:    ecs.GetComponentsArray[groups.GroupsComponent](w.Components()),
-			textureArray:   ecs.GetComponentsArray[texturecomponent.TextureComponent](w.Components()),
-			meshArray:      ecs.GetComponentsArray[meshcomponent.MeshComponent](w.Components()),
+			textureArray:   ecs.GetComponentsArray[render.TextureComponent](w.Components()),
+			meshArray:      ecs.GetComponentsArray[render.MeshComponent](w.Components()),
 
 			cameraArray: ecs.GetComponentsArray[camera.CameraComponent](w.Components()),
 
@@ -141,8 +139,8 @@ func NewSystem(
 				Require(
 					ecs.GetComponentType(genericrenderer.PipelineComponent{}),
 					ecs.GetComponentType(transform.TransformComponent{}),
-					ecs.GetComponentType(meshcomponent.MeshComponent{}),
-					ecs.GetComponentType(texturecomponent.TextureComponent{}),
+					ecs.GetComponentType(render.MeshComponent{}),
+					ecs.GetComponentType(render.TextureComponent{}),
 				).Build(),
 
 			releasable: releasable,
@@ -160,7 +158,7 @@ func (m *system) getTexture(asset assets.AssetID) (texture.Texture, error) {
 	if texture, ok := m.textures[asset]; ok {
 		return texture, nil
 	}
-	textureAsset, err := assets.StorageGet[texturecomponent.TextureAsset](m.assetsStorage, asset)
+	textureAsset, err := assets.StorageGet[render.TextureAsset](m.assetsStorage, asset)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +174,7 @@ func (m *system) getMesh(asset assets.AssetID) (vao.VAO, error) {
 	if mesh, ok := m.meshes[asset]; ok {
 		return mesh, nil
 	}
-	meshAsset, err := assets.StorageGet[meshcomponent.MeshAsset[genericrenderer.Vertex]](m.assetsStorage, asset)
+	meshAsset, err := assets.StorageGet[render.MeshAsset[genericrenderer.Vertex]](m.assetsStorage, asset)
 	if err != nil {
 		return nil, err
 	}

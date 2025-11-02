@@ -8,7 +8,7 @@ import (
 )
 
 type cameraResolver struct {
-	cameraArray  ecs.ComponentsArray[camera.Camera]
+	cameraArray  ecs.ComponentsArray[camera.CameraComponent]
 	constructors map[ecs.ComponentType]func(ecs.EntityID) (camera.CameraService, error)
 }
 

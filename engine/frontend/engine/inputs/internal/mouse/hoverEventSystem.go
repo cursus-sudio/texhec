@@ -10,7 +10,7 @@ import (
 
 type hoverEventSystem struct {
 	world            ecs.World
-	mouseEventsArray ecs.ComponentsArray[inputs.MouseEvents]
+	mouseEventsArray ecs.ComponentsArray[inputs.MouseEventsComponent]
 	events           events.Events
 	query            ecs.LiveQuery
 }
@@ -18,12 +18,12 @@ type hoverEventSystem struct {
 func NewHoverEventsSystem() ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		query := w.Query().Require(
-			ecs.GetComponentType(inputs.MouseEvents{}),
-			ecs.GetComponentType(inputs.Hovered{}),
+			ecs.GetComponentType(inputs.MouseEventsComponent{}),
+			ecs.GetComponentType(inputs.HoveredComponent{}),
 		).Build()
 		s := &hoverEventSystem{
 			world:            w,
-			mouseEventsArray: ecs.GetComponentsArray[inputs.MouseEvents](w.Components()),
+			mouseEventsArray: ecs.GetComponentsArray[inputs.MouseEventsComponent](w.Components()),
 			events:           w.Events(),
 			query:            query,
 		}

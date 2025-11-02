@@ -4,8 +4,8 @@ import (
 	"frontend/services/assets"
 )
 
-type Collider struct{ ID assets.AssetID }
+type ColliderComponent struct{ ID assets.AssetID }
 
-func NewCollider(id assets.AssetID) Collider {
-	return Collider{ID: id}
+func NewCollider(id assets.AssetID) ColliderComponent {
+	return ColliderComponent{ID: id}
 }

@@ -18,11 +18,11 @@ import (
 )
 
 type Pkg struct {
-	defaultFontFamily text.FontFamily
-	defaultFontSize   text.FontSize
+	defaultFontFamily text.FontFamilyComponent
+	defaultFontSize   text.FontSizeComponent
 	// defaultOverflow   text.Overflow
-	defaultBreak     text.Break
-	defaultTextAlign text.TextAlign
+	defaultBreak     text.BreakComponent
+	defaultTextAlign text.TextAlignComponent
 
 	usedGlyphs  datastructures.SparseSet[rune]
 	faceOptions opentype.FaceOptions
@@ -30,11 +30,11 @@ type Pkg struct {
 }
 
 func Package(
-	defaultFontFamily text.FontFamily,
-	defaultFontSize text.FontSize,
+	defaultFontFamily text.FontFamilyComponent,
+	defaultFontSize text.FontSizeComponent,
 	// defaultOverflow text.Overflow,
-	defaultBreak text.Break,
-	defaultTextAlign text.TextAlign,
+	defaultBreak text.BreakComponent,
+	defaultTextAlign text.TextAlignComponent,
 
 	usedGlyphs datastructures.SparseSet[rune],
 	faceOptions opentype.FaceOptions,

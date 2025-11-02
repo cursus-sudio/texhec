@@ -103,9 +103,9 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 
 	renderer := textRenderer{
 		world:          w,
-		transformArray: ecs.GetComponentsArray[transform.Transform](w.Components()),
-		groupsArray:    ecs.GetComponentsArray[groups.Groups](w.Components()),
-		cameraQuery:    w.Query().Require(ecs.GetComponentType(camera.Ortho{})).Build(),
+		transformArray: ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
+		groupsArray:    ecs.GetComponentsArray[groups.GroupsComponent](w.Components()),
+		cameraQuery:    w.Query().Require(ecs.GetComponentType(camera.OrthoComponent{})).Build(),
 
 		logger:      f.logger,
 		cameraCtors: f.cameraCtorsFactory.Build(w),
@@ -123,8 +123,8 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 	}
 
 	query := w.Query().Require(
-		ecs.GetComponentType(text.Text{}),
-		ecs.GetComponentType(transform.Transform{}),
+		ecs.GetComponentType(text.TextComponent{}),
+		ecs.GetComponentType(transform.TransformComponent{}),
 	).Build()
 
 	addOrChangeListener := func(ei []ecs.EntityID) {
@@ -157,11 +157,11 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 	query.OnRemove(rmListener)
 
 	arrays := []ecs.AnyComponentArray{
-		ecs.GetComponentsArray[text.Break](w.Components()),
-		ecs.GetComponentsArray[text.FontFamily](w.Components()),
+		ecs.GetComponentsArray[text.BreakComponent](w.Components()),
+		ecs.GetComponentsArray[text.FontFamilyComponent](w.Components()),
 		// ecs.GetComponentsArray[text.Overflow](w.Components()),
-		ecs.GetComponentsArray[text.FontSize](w.Components()),
-		ecs.GetComponentsArray[text.TextAlign](w.Components()),
+		ecs.GetComponentsArray[text.FontSizeComponent](w.Components()),
+		ecs.GetComponentsArray[text.TextAlignComponent](w.Components()),
 	}
 
 	for _, array := range arrays {
@@ -170,7 +170,7 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 		array.OnRemove(rmListener)
 	}
 
-	fontArray := ecs.GetComponentsArray[text.FontFamily](w.Components())
+	fontArray := ecs.GetComponentsArray[text.FontFamilyComponent](w.Components())
 	addFonts := func(ei []ecs.EntityID) {
 		for _, entity := range ei {
 			family, err := fontArray.GetComponent(entity)
@@ -190,7 +190,7 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 	fontArray.OnAdd(addFonts)
 	fontArray.OnChange(addFonts)
 	{
-		fontFamilyArray := ecs.GetComponentsArray[text.FontFamily](w.Components())
+		fontFamilyArray := ecs.GetComponentsArray[text.FontFamilyComponent](w.Components())
 		var i uint16 = 0
 		removeUnused := func(_ []ecs.EntityID) {
 			i++

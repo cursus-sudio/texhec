@@ -16,7 +16,7 @@ func NewAABB(min, max mgl32.Vec3) AABB {
 
 // TODO move to tool
 
-func TransformAABB(t transform.Transform) AABB {
+func TransformAABB(t transform.TransformComponent) AABB {
 	halfSize := t.Size.Mul(0.5)
 
 	corners := [8]mgl32.Vec3{

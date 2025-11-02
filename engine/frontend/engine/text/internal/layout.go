@@ -29,23 +29,23 @@ type LayoutService interface {
 
 type layoutService struct {
 	world           ecs.World
-	transformArray  ecs.ComponentsArray[transform.Transform]
-	textArray       ecs.ComponentsArray[text.Text]
-	fontFamilyArray ecs.ComponentsArray[text.FontFamily]
-	fontSizeArray   ecs.ComponentsArray[text.FontSize]
+	transformArray  ecs.ComponentsArray[transform.TransformComponent]
+	textArray       ecs.ComponentsArray[text.TextComponent]
+	fontFamilyArray ecs.ComponentsArray[text.FontFamilyComponent]
+	fontSizeArray   ecs.ComponentsArray[text.FontSizeComponent]
 	// overflowArray   ecs.ComponentsArray[text.Overflow]
-	breakArray     ecs.ComponentsArray[text.Break]
-	textAlignArray ecs.ComponentsArray[text.TextAlign]
+	breakArray     ecs.ComponentsArray[text.BreakComponent]
+	textAlignArray ecs.ComponentsArray[text.TextAlignComponent]
 
 	logger      logger.Logger
 	fontService FontService
 	fontsKeys   FontKeys
 
-	defaultFontFamily text.FontFamily
-	defaultFontSize   text.FontSize
+	defaultFontFamily text.FontFamilyComponent
+	defaultFontSize   text.FontSizeComponent
 	// defaultOverflow   text.Overflow
-	defaultBreak     text.Break
-	defaultTextAlign text.TextAlign
+	defaultBreak     text.BreakComponent
+	defaultTextAlign text.TextAlignComponent
 }
 
 func NewLayoutService(
@@ -55,21 +55,21 @@ func NewLayoutService(
 	fontService FontService,
 	fontsKeys FontKeys,
 
-	defaultFontFamily text.FontFamily,
-	defaultFontSize text.FontSize,
+	defaultFontFamily text.FontFamilyComponent,
+	defaultFontSize text.FontSizeComponent,
 	// defaultOverflow text.Overflow,
-	defaultBreak text.Break,
-	defaultTextAlign text.TextAlign,
+	defaultBreak text.BreakComponent,
+	defaultTextAlign text.TextAlignComponent,
 ) LayoutService {
 	return &layoutService{
 		world:           world,
-		transformArray:  ecs.GetComponentsArray[transform.Transform](world.Components()),
-		textArray:       ecs.GetComponentsArray[text.Text](world.Components()),
-		fontFamilyArray: ecs.GetComponentsArray[text.FontFamily](world.Components()),
-		fontSizeArray:   ecs.GetComponentsArray[text.FontSize](world.Components()),
+		transformArray:  ecs.GetComponentsArray[transform.TransformComponent](world.Components()),
+		textArray:       ecs.GetComponentsArray[text.TextComponent](world.Components()),
+		fontFamilyArray: ecs.GetComponentsArray[text.FontFamilyComponent](world.Components()),
+		fontSizeArray:   ecs.GetComponentsArray[text.FontSizeComponent](world.Components()),
 		// overflowArray:   ecs.GetComponentsArray[text.Overflow](world.Components()),
-		breakArray:     ecs.GetComponentsArray[text.Break](world.Components()),
-		textAlignArray: ecs.GetComponentsArray[text.TextAlign](world.Components()),
+		breakArray:     ecs.GetComponentsArray[text.BreakComponent](world.Components()),
+		textAlignArray: ecs.GetComponentsArray[text.TextAlignComponent](world.Components()),
 
 		logger:      logger,
 		fontService: fontService,

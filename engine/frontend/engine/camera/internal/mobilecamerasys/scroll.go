@@ -19,8 +19,8 @@ type scrollSystem struct {
 	logger      logger.Logger
 
 	world             ecs.World
-	dynamicOrthoArray ecs.ComponentsArray[camera.DynamicOrtho]
-	transformArray    ecs.ComponentsArray[transform.Transform]
+	dynamicOrthoArray ecs.ComponentsArray[camera.DynamicOrthoComponent]
+	transformArray    ecs.ComponentsArray[transform.TransformComponent]
 	query             ecs.LiveQuery
 
 	minZoom, maxZoom float32
@@ -39,10 +39,10 @@ func NewScrollSystem(
 			logger:      logger,
 
 			world:             w,
-			dynamicOrthoArray: ecs.GetComponentsArray[camera.DynamicOrtho](w.Components()),
-			transformArray:    ecs.GetComponentsArray[transform.Transform](w.Components()),
+			dynamicOrthoArray: ecs.GetComponentsArray[camera.DynamicOrthoComponent](w.Components()),
+			transformArray:    ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
 			query: w.Query().Require(
-				ecs.GetComponentType(camera.MobileCamera{}),
+				ecs.GetComponentType(camera.MobileCameraComponent{}),
 			).Build(),
 
 			minZoom: minZoom, // e.g. 0.1

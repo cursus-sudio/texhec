@@ -23,8 +23,8 @@ type RayChangedTargetEvent struct {
 
 type cameraRaySystem struct {
 	world           ecs.World
-	transformArray  ecs.ComponentsArray[transform.Transform]
-	cameraArray     ecs.ComponentsArray[camera.Camera]
+	transformArray  ecs.ComponentsArray[transform.TransformComponent]
+	cameraArray     ecs.ComponentsArray[camera.CameraComponent]
 	broadCollisions collider.CollisionTool
 	window          window.Api
 	events          events.Events
@@ -42,8 +42,8 @@ func NewCameraRaySystem(
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := &cameraRaySystem{
 			world:           w,
-			transformArray:  ecs.GetComponentsArray[transform.Transform](w.Components()),
-			cameraArray:     ecs.GetComponentsArray[camera.Camera](w.Components()),
+			transformArray:  ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
+			cameraArray:     ecs.GetComponentsArray[camera.CameraComponent](w.Components()),
 			broadCollisions: colliderFactory.Build(w),
 			window:          window,
 			events:          w.Events(),

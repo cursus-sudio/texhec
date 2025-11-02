@@ -161,11 +161,11 @@ func frontendDic(
 		renderpkg.Package(),
 		scenespkg.Package(),
 		textpkg.Package(
-			text.FontFamily{FontFamily: gameassets.FontAssetID},
-			text.FontSize{FontSize: 16},
+			text.FontFamilyComponent{FontFamily: gameassets.FontAssetID},
+			text.FontSizeComponent{FontSize: 16},
 			// text.Overflow{Visible: false},
-			text.Break{Break: text.BreakWord},
-			text.TextAlign{Vertical: 0, Horizontal: 0},
+			text.BreakComponent{Break: text.BreakWord},
+			text.TextAlignComponent{Vertical: 0, Horizontal: 0},
 			func() datastructures.SparseSet[rune] {
 				set := datastructures.NewSparseSet[rune]()
 				for i := int32('a'); i <= int32('z'); i++ {

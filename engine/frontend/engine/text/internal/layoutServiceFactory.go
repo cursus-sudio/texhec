@@ -15,11 +15,11 @@ type layoutServiceFactory struct {
 	fontService FontService
 	fontsKeys   FontKeys
 
-	defaultFontFamily text.FontFamily
-	defaultFontSize   text.FontSize
+	defaultFontFamily text.FontFamilyComponent
+	defaultFontSize   text.FontSizeComponent
 	// defaultOverflow   text.Overflow
-	defaultBreak     text.Break
-	defaultTextAlign text.TextAlign
+	defaultBreak     text.BreakComponent
+	defaultTextAlign text.TextAlignComponent
 }
 
 func NewLayoutServiceFactory(
@@ -27,11 +27,11 @@ func NewLayoutServiceFactory(
 	fontService FontService,
 	fontsKeys FontKeys,
 
-	defaultFontFamily text.FontFamily,
-	defaultFontSize text.FontSize,
+	defaultFontFamily text.FontFamilyComponent,
+	defaultFontSize text.FontSizeComponent,
 	// defaultOverflow text.Overflow,
-	defaultBreak text.Break,
-	defaultTextAlign text.TextAlign,
+	defaultBreak text.BreakComponent,
+	defaultTextAlign text.TextAlignComponent,
 ) LayoutServiceFactory {
 	return &layoutServiceFactory{
 		logger:      logger,

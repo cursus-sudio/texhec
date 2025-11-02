@@ -17,7 +17,7 @@ type dragSystem struct {
 	button uint8
 
 	world          ecs.World
-	transformArray ecs.ComponentsArray[transform.Transform]
+	transformArray ecs.ComponentsArray[transform.TransformComponent]
 	query          ecs.LiveQuery
 
 	cameraCtors camera.CameraTool
@@ -37,9 +37,9 @@ func NewDragSystem(
 			button: dragButton,
 
 			world:          w,
-			transformArray: ecs.GetComponentsArray[transform.Transform](w.Components()),
+			transformArray: ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
 			query: w.Query().Require(
-				ecs.GetComponentType(camera.MobileCamera{}),
+				ecs.GetComponentType(camera.MobileCameraComponent{}),
 			).Build(),
 
 			cameraCtors: cameraCtors.Build(w),

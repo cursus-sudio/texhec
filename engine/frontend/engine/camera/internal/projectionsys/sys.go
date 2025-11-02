@@ -20,13 +20,13 @@ type updateProjetionsSystem struct {
 	window window.Api
 	logger logger.Logger
 
-	transformArray ecs.ComponentsArray[transform.Transform]
+	transformArray ecs.ComponentsArray[transform.TransformComponent]
 
-	cameraArray              ecs.ComponentsArray[camera.Camera]
+	cameraArray              ecs.ComponentsArray[camera.CameraComponent]
 	dynamicPerspectivesArray ecs.ComponentsArray[camera.DynamicPerspective]
-	dynamicOrthoArray        ecs.ComponentsArray[camera.DynamicOrtho]
+	dynamicOrthoArray        ecs.ComponentsArray[camera.DynamicOrthoComponent]
 	perspectivesArray        ecs.ComponentsArray[camera.Perspective]
-	orthoArray               ecs.ComponentsArray[camera.Ortho]
+	orthoArray               ecs.ComponentsArray[camera.OrthoComponent]
 }
 
 func NewUpdateProjectionsSystem(window window.Api, logger logger.Logger) ecs.SystemRegister {
@@ -36,12 +36,12 @@ func NewUpdateProjectionsSystem(window window.Api, logger logger.Logger) ecs.Sys
 			window: window,
 			logger: logger,
 
-			transformArray: ecs.GetComponentsArray[transform.Transform](w.Components()),
+			transformArray: ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
 
 			dynamicPerspectivesArray: ecs.GetComponentsArray[camera.DynamicPerspective](w.Components()),
-			dynamicOrthoArray:        ecs.GetComponentsArray[camera.DynamicOrtho](w.Components()),
+			dynamicOrthoArray:        ecs.GetComponentsArray[camera.DynamicOrthoComponent](w.Components()),
 			perspectivesArray:        ecs.GetComponentsArray[camera.Perspective](w.Components()),
-			orthoArray:               ecs.GetComponentsArray[camera.Ortho](w.Components()),
+			orthoArray:               ecs.GetComponentsArray[camera.OrthoComponent](w.Components()),
 		}
 
 		s.dynamicPerspectivesArray.OnAdd(s.UpsertPerspective)

@@ -44,9 +44,9 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 				SetOffset(mgl32.Vec3{5, 5}).
 				Val())
 
-			ecs.SaveComponent(world.Components(), signature, text.Text{Text: "menu"})
-			ecs.SaveComponent(world.Components(), signature, text.FontSize{FontSize: 32})
-			ecs.SaveComponent(world.Components(), signature, text.Break{Break: text.BreakNone})
+			ecs.SaveComponent(world.Components(), signature, text.TextComponent{Text: "menu"})
+			ecs.SaveComponent(world.Components(), signature, text.FontSizeComponent{FontSize: 32})
+			ecs.SaveComponent(world.Components(), signature, text.BreakComponent{Break: text.BreakNone})
 
 			background := world.NewEntity()
 			ecs.SaveComponent(world.Components(), background, anchor.NewParentAnchor(cameraEntity).Ptr().
@@ -90,11 +90,11 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 
 				ecs.SaveComponent(world.Components(), btn, inputs.NewMouseEvents().AddLeftClickEvents(button.OnClick))
 				ecs.SaveComponent(world.Components(), btn, collider.NewCollider(gameassets.SquareColliderID))
-				ecs.SaveComponent(world.Components(), btn, inputs.KeepSelected{})
+				ecs.SaveComponent(world.Components(), btn, inputs.KeepSelectedComponent{})
 
-				ecs.SaveComponent(world.Components(), btn, text.Text{Text: strings.ToUpper(button.Text)})
-				ecs.SaveComponent(world.Components(), btn, text.TextAlign{Vertical: .5, Horizontal: .5})
-				ecs.SaveComponent(world.Components(), btn, text.FontSize{FontSize: 32})
+				ecs.SaveComponent(world.Components(), btn, text.TextComponent{Text: strings.ToUpper(button.Text)})
+				ecs.SaveComponent(world.Components(), btn, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+				ecs.SaveComponent(world.Components(), btn, text.FontSizeComponent{FontSize: 32})
 			}
 		})
 

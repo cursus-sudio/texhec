@@ -10,6 +10,6 @@ const (
 	BreakAny
 )
 
-type Break struct {
+type BreakComponent struct {
 	Break uint8
 }

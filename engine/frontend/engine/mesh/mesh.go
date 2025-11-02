@@ -5,12 +5,12 @@ import (
 	"frontend/services/graphics/vao/ebo"
 )
 
-type Mesh struct {
+type MeshComponent struct {
 	ID assets.AssetID
 }
 
-func NewMesh(id assets.AssetID) Mesh {
-	return Mesh{ID: id}
+func NewMesh(id assets.AssetID) MeshComponent {
+	return MeshComponent{ID: id}
 }
 
 //

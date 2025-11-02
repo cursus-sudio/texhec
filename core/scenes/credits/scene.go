@@ -45,9 +45,9 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 				SetOffset(mgl32.Vec3{5, 5}).
 				Val())
 
-			ecs.SaveComponent(world.Components(), signature, text.Text{Text: "credits"})
-			ecs.SaveComponent(world.Components(), signature, text.FontSize{FontSize: 32})
-			ecs.SaveComponent(world.Components(), signature, text.Break{Break: text.BreakNone})
+			ecs.SaveComponent(world.Components(), signature, text.TextComponent{Text: "credits"})
+			ecs.SaveComponent(world.Components(), signature, text.FontSizeComponent{FontSize: 32})
+			ecs.SaveComponent(world.Components(), signature, text.BreakComponent{Break: text.BreakNone})
 
 			background := world.NewEntity()
 			ecs.SaveComponent(world.Components(), background, anchor.NewParentAnchor(cameraEntity).Ptr().
@@ -84,9 +84,9 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world.Components(), draggable, inputs.NewMouseEvents().
 				AddDragEvents(Hehe{}))
 
-			ecs.SaveComponent(world.Components(), draggable, text.Text{Text: strings.ToUpper("drag me")})
-			ecs.SaveComponent(world.Components(), draggable, text.TextAlign{Vertical: .5, Horizontal: .5})
-			ecs.SaveComponent(world.Components(), draggable, text.FontSize{FontSize: 15})
+			ecs.SaveComponent(world.Components(), draggable, text.TextComponent{Text: strings.ToUpper("drag me")})
+			ecs.SaveComponent(world.Components(), draggable, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+			ecs.SaveComponent(world.Components(), draggable, text.FontSizeComponent{FontSize: 15})
 
 			btn := world.NewEntity()
 			ecs.SaveComponent(world.Components(), btn, transform.NewTransform().Ptr().
@@ -101,12 +101,12 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 
 			ecs.SaveComponent(world.Components(), btn, inputs.NewMouseEvents().
 				AddLeftClickEvents(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
-			ecs.SaveComponent(world.Components(), btn, inputs.KeepSelected{})
+			ecs.SaveComponent(world.Components(), btn, inputs.KeepSelectedComponent{})
 			ecs.SaveComponent(world.Components(), btn, collider.NewCollider(gameassets.SquareColliderID))
 
-			ecs.SaveComponent(world.Components(), btn, text.Text{Text: strings.ToUpper("return to menu")})
-			ecs.SaveComponent(world.Components(), btn, text.TextAlign{Vertical: .5, Horizontal: .5})
-			ecs.SaveComponent(world.Components(), btn, text.FontSize{FontSize: 32})
+			ecs.SaveComponent(world.Components(), btn, text.TextComponent{Text: strings.ToUpper("return to menu")})
+			ecs.SaveComponent(world.Components(), btn, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+			ecs.SaveComponent(world.Components(), btn, text.FontSizeComponent{FontSize: 32})
 		})
 
 		return b

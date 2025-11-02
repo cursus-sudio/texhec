@@ -48,7 +48,7 @@ type TileRenderSystemRegister struct {
 	tileSize  int32
 	gridDepth float32
 
-	groups             groups.Groups
+	groups             groups.GroupsComponent
 	cameraCtorsFactory ecs.ToolFactory[camera.CameraTool]
 }
 
@@ -59,7 +59,7 @@ func NewTileRenderSystemRegister(
 	assetsStorage assets.AssetsStorage,
 	tileSize int32,
 	gridDepth float32,
-	groups groups.Groups,
+	groups groups.GroupsComponent,
 	cameraCtorsFactory ecs.ToolFactory[camera.CameraTool],
 ) TileRenderSystemRegister {
 	return TileRenderSystemRegister{
@@ -153,9 +153,9 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 		gridDepth: factory.gridDepth,
 
 		world:       w,
-		groupsArray: ecs.GetComponentsArray[groups.Groups](w.Components()),
+		groupsArray: ecs.GetComponentsArray[groups.GroupsComponent](w.Components()),
 		gridGroups:  factory.groups,
-		cameraQuery: w.Query().Require(ecs.GetComponentType(camera.Ortho{})).Build(),
+		cameraQuery: w.Query().Require(ecs.GetComponentType(camera.OrthoComponent{})).Build(),
 		cameraCtors: factory.cameraCtorsFactory.Build(w),
 
 		changed:     false,
@@ -164,8 +164,8 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 	}
 
 	tileArray := ecs.GetComponentsArray[tile.TileComponent](w.Components())
-	transformArray := ecs.GetComponentsArray[transform.Transform](w.Components())
-	groupsArray := ecs.GetComponentsArray[groups.Groups](w.Components())
+	transformArray := ecs.GetComponentsArray[transform.TransformComponent](w.Components())
+	groupsArray := ecs.GetComponentsArray[groups.GroupsComponent](w.Components())
 
 	onChangeOrAdd := func(ei []ecs.EntityID) {
 		changeMutex.Lock()

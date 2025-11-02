@@ -36,7 +36,7 @@ func (f *cameraResolverFactory) Build(world ecs.World) camera.CameraTool {
 		ctors[key] = ctor(world)
 	}
 	return &cameraResolver{
-		cameraArray:  ecs.GetComponentsArray[camera.Camera](world.Components()),
+		cameraArray:  ecs.GetComponentsArray[camera.CameraComponent](world.Components()),
 		constructors: ctors,
 	}
 }

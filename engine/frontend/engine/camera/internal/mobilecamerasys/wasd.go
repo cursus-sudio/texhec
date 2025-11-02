@@ -13,9 +13,9 @@ import (
 
 type wasdMoveSystem struct {
 	world                ecs.World
-	transformArray       ecs.ComponentsArray[transform.Transform]
-	orthoArray           ecs.ComponentsArray[camera.Ortho]
-	transformTransaction ecs.ComponentsArrayTransaction[transform.Transform]
+	transformArray       ecs.ComponentsArray[transform.TransformComponent]
+	orthoArray           ecs.ComponentsArray[camera.OrthoComponent]
+	transformTransaction ecs.ComponentsArrayTransaction[transform.TransformComponent]
 	query                ecs.LiveQuery
 
 	cameraCtors camera.CameraTool
@@ -29,13 +29,13 @@ func NewWasdSystem(
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := &wasdMoveSystem{
 			world:                w,
-			transformArray:       ecs.GetComponentsArray[transform.Transform](w.Components()),
-			orthoArray:           ecs.GetComponentsArray[camera.Ortho](w.Components()),
-			transformTransaction: ecs.GetComponentsArray[transform.Transform](w.Components()).Transaction(),
+			transformArray:       ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
+			orthoArray:           ecs.GetComponentsArray[camera.OrthoComponent](w.Components()),
+			transformTransaction: ecs.GetComponentsArray[transform.TransformComponent](w.Components()).Transaction(),
 			query: w.Query().Require(
-				ecs.GetComponentType(transform.Transform{}),
-				ecs.GetComponentType(camera.Ortho{}),
-				ecs.GetComponentType(camera.MobileCamera{}),
+				ecs.GetComponentType(transform.TransformComponent{}),
+				ecs.GetComponentType(camera.OrthoComponent{}),
+				ecs.GetComponentType(camera.MobileCameraComponent{}),
 			).Build(),
 
 			cameraCtors: cameraCtors.Build(w),

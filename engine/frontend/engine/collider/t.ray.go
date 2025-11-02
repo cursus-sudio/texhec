@@ -11,10 +11,10 @@ type Ray struct {
 	Direction mgl32.Vec3
 	// max length is either 0 symbolizing infinity or a potive number
 	MaxDistance float32
-	Groups      groups.Groups // collision mask
+	Groups      groups.GroupsComponent // collision mask
 }
 
-func NewRay(pos mgl32.Vec3, direction mgl32.Vec3, maxDistance float32, groups groups.Groups) Ray {
+func NewRay(pos mgl32.Vec3, direction mgl32.Vec3, maxDistance float32, groups groups.GroupsComponent) Ray {
 	return Ray{
 		Pos:         pos,
 		Direction:   direction.Normalize(),

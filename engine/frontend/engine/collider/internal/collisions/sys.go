@@ -11,8 +11,8 @@ func NewColliderSystem(
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		query := w.Query().Require(
-			ecs.GetComponentType(transform.Transform{}),
-			ecs.GetComponentType(collider.Collider{}),
+			ecs.GetComponentType(transform.TransformComponent{}),
+			ecs.GetComponentType(collider.ColliderComponent{}),
 		).Build()
 		service := serviceFactory.Build(w)
 		query.OnAdd(func(ei []ecs.EntityID) {

@@ -19,10 +19,10 @@ import (
 type Pkg struct {
 	tileSize   int32
 	gridDepth  float32
-	gridGroups groups.Groups
+	gridGroups groups.GroupsComponent
 }
 
-func Package(tileSize int32, gridDepth float32, groups groups.Groups) ioc.Pkg {
+func Package(tileSize int32, gridDepth float32, groups groups.GroupsComponent) ioc.Pkg {
 	return Pkg{tileSize, gridDepth, groups}
 }
 

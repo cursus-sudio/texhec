@@ -48,8 +48,8 @@ type system struct {
 
 	world       ecs.World
 	cameraQuery ecs.LiveQuery
-	groupsArray ecs.ComponentsArray[groups.Groups]
-	gridGroups  groups.Groups
+	groupsArray ecs.ComponentsArray[groups.GroupsComponent]
+	gridGroups  groups.GroupsComponent
 	cameraCtors camera.CameraTool
 
 	changed     bool

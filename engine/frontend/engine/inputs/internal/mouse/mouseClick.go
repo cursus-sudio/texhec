@@ -21,10 +21,10 @@ type clickSystem struct {
 	logger logger.Logger
 
 	world            ecs.World
-	hoveredArray     ecs.ComponentsArray[inputs.Hovered]
-	mouseEventsArray ecs.ComponentsArray[inputs.MouseEvents]
+	hoveredArray     ecs.ComponentsArray[inputs.HoveredComponent]
+	mouseEventsArray ecs.ComponentsArray[inputs.MouseEventsComponent]
 
-	keepSelectedArray ecs.ComponentsArray[inputs.KeepSelected]
+	keepSelectedArray ecs.ComponentsArray[inputs.KeepSelectedComponent]
 
 	moved       bool
 	emitDrag    bool
@@ -37,10 +37,10 @@ func NewClickSystem(logger logger.Logger) ecs.SystemRegister {
 		s := &clickSystem{
 			logger:           logger,
 			world:            w,
-			hoveredArray:     ecs.GetComponentsArray[inputs.Hovered](w.Components()),
-			mouseEventsArray: ecs.GetComponentsArray[inputs.MouseEvents](w.Components()),
+			hoveredArray:     ecs.GetComponentsArray[inputs.HoveredComponent](w.Components()),
+			mouseEventsArray: ecs.GetComponentsArray[inputs.MouseEventsComponent](w.Components()),
 
-			keepSelectedArray: ecs.GetComponentsArray[inputs.KeepSelected](w.Components()),
+			keepSelectedArray: ecs.GetComponentsArray[inputs.KeepSelectedComponent](w.Components()),
 
 			movedEntity: nil,
 			movedFrom:   nil,

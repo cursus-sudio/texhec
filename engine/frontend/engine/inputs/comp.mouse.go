@@ -1,25 +1,25 @@
 package inputs
 
-type Hovered struct{}
+type HoveredComponent struct{}
 
-func NewHovered() Hovered { return Hovered{} }
+func NewHovered() HoveredComponent { return HoveredComponent{} }
 
 //
 
-type Dragged struct{}
+type DraggedComponent struct{}
 
-func NewDragged() Dragged { return Dragged{} }
+func NewDragged() DraggedComponent { return DraggedComponent{} }
 
 //
 
 //
 
 // keeps element selected even if user drags outside
-type KeepSelected struct{}
+type KeepSelectedComponent struct{}
 
 //
 
-type MouseEvents struct {
+type MouseEventsComponent struct {
 	LeftClickEvents        []any
 	DoubleLeftClickEvents  []any
 	RightClickEvents       []any
@@ -33,12 +33,12 @@ type MouseEvents struct {
 	DragEvents  []any
 }
 
-func NewMouseEvents() MouseEvents {
-	return MouseEvents{}
+func NewMouseEvents() MouseEventsComponent {
+	return MouseEventsComponent{}
 }
 
-func (component MouseEvents) Clone() MouseEvents {
-	return MouseEvents{
+func (component MouseEventsComponent) Clone() MouseEventsComponent {
+	return MouseEventsComponent{
 		LeftClickEvents:        component.LeftClickEvents,
 		DoubleLeftClickEvents:  component.DoubleLeftClickEvents,
 		RightClickEvents:       component.RightClickEvents,
@@ -52,49 +52,49 @@ func (component MouseEvents) Clone() MouseEvents {
 	}
 }
 
-func (component MouseEvents) AddLeftClickEvents(events ...any) MouseEvents {
+func (component MouseEventsComponent) AddLeftClickEvents(events ...any) MouseEventsComponent {
 	r := component.Clone()
 	r.LeftClickEvents = append(r.LeftClickEvents, events...)
 	return r
 }
 
-func (component MouseEvents) AddDoubleLeftClickEvents(events ...any) MouseEvents {
+func (component MouseEventsComponent) AddDoubleLeftClickEvents(events ...any) MouseEventsComponent {
 	r := component.Clone()
 	r.DoubleLeftClickEvents = append(r.DoubleLeftClickEvents, events...)
 	return r
 }
 
-func (component MouseEvents) AddRightClickEvents(events ...any) MouseEvents {
+func (component MouseEventsComponent) AddRightClickEvents(events ...any) MouseEventsComponent {
 	r := component.Clone()
 	r.RightClickEvents = append(r.RightClickEvents, events...)
 	return r
 }
 
-func (component MouseEvents) AddDoubleRightClickEvents(events ...any) MouseEvents {
+func (component MouseEventsComponent) AddDoubleRightClickEvents(events ...any) MouseEventsComponent {
 	r := component.Clone()
 	r.DoubleRightClickEvents = append(r.DoubleRightClickEvents, events...)
 	return r
 }
 
-func (component MouseEvents) AddMouseEnterEvents(events ...any) MouseEvents {
+func (component MouseEventsComponent) AddMouseEnterEvents(events ...any) MouseEventsComponent {
 	r := component.Clone()
 	r.MouseEnterEvents = append(r.MouseEnterEvents, events...)
 	return r
 }
 
-func (component MouseEvents) AddMouseLeaveEvents(events ...any) MouseEvents {
+func (component MouseEventsComponent) AddMouseLeaveEvents(events ...any) MouseEventsComponent {
 	r := component.Clone()
 	r.MouseLeaveEvents = append(r.MouseLeaveEvents, events...)
 	return r
 }
 
-func (component MouseEvents) AddHoverEvents(events ...any) MouseEvents {
+func (component MouseEventsComponent) AddHoverEvents(events ...any) MouseEventsComponent {
 	r := component.Clone()
 	r.HoverEvents = append(r.HoverEvents, events...)
 	return r
 }
 
-func (component MouseEvents) AddDragEvents(events ...any) MouseEvents {
+func (component MouseEventsComponent) AddDragEvents(events ...any) MouseEventsComponent {
 	r := component.Clone()
 	r.DragEvents = append(r.DragEvents, events...)
 	return r

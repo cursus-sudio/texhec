@@ -6,29 +6,29 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-type Camera struct {
+type CameraComponent struct {
 	Projection ecs.ComponentType
 }
 
-func NewCamera(projection ecs.ComponentType) Camera {
-	return Camera{projection}
+func NewCamera(projection ecs.ComponentType) CameraComponent {
+	return CameraComponent{projection}
 }
 
 //
 
 // component specifying that camera can be freely moved on map
-type MobileCamera struct{}
+type MobileCameraComponent struct{}
 
 //
 
-type Ortho struct {
+type OrthoComponent struct {
 	Width, Height float32
 	Near, Far     float32
 	Zoom          float32
 }
 
-func NewOrtho(w, h, near, far float32, zoom float32) Ortho {
-	return Ortho{
+func NewOrtho(w, h, near, far float32, zoom float32) OrthoComponent {
+	return OrthoComponent{
 		Width:  w / zoom,
 		Height: h / zoom,
 		Near:   min(near, far),
@@ -39,13 +39,13 @@ func NewOrtho(w, h, near, far float32, zoom float32) Ortho {
 
 //
 
-type DynamicOrtho struct {
+type DynamicOrthoComponent struct {
 	Near, Far float32
 	Zoom      float32
 }
 
-func NewDynamicOrtho(near, far float32, zoom float32) DynamicOrtho {
-	return DynamicOrtho{
+func NewDynamicOrtho(near, far float32, zoom float32) DynamicOrthoComponent {
+	return DynamicOrthoComponent{
 		Near: near,
 		Far:  far,
 		Zoom: zoom,

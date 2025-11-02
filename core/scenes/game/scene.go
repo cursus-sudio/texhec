@@ -46,7 +46,7 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 			gameCamera := world.NewEntity()
 			ecs.SaveComponent(world.Components(), gameCamera, transform.NewTransform())
 			ecs.SaveComponent(world.Components(), gameCamera, camera.NewDynamicOrtho(-1000, +1000, 1))
-			ecs.SaveComponent(world.Components(), gameCamera, camera.MobileCamera{})
+			ecs.SaveComponent(world.Components(), gameCamera, camera.MobileCameraComponent{})
 			ecs.SaveComponent(world.Components(), gameCamera, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 
 			signature := world.NewEntity()
@@ -59,9 +59,9 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 				Val())
 			ecs.SaveComponent(world.Components(), signature, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
-			ecs.SaveComponent(world.Components(), signature, text.Text{Text: "game"})
-			ecs.SaveComponent(world.Components(), signature, text.FontSize{FontSize: 32})
-			ecs.SaveComponent(world.Components(), signature, text.Break{Break: text.BreakNone})
+			ecs.SaveComponent(world.Components(), signature, text.TextComponent{Text: "game"})
+			ecs.SaveComponent(world.Components(), signature, text.FontSizeComponent{FontSize: 32})
+			ecs.SaveComponent(world.Components(), signature, text.BreakComponent{Break: text.BreakNone})
 
 			background := world.NewEntity()
 			ecs.SaveComponent(world.Components(), background, anchor.NewParentAnchor(uiCamera).Ptr().
@@ -90,12 +90,12 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 
 			ecs.SaveComponent(world.Components(), quit, inputs.NewMouseEvents().
 				AddLeftClickEvents(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
-			ecs.SaveComponent(world.Components(), quit, inputs.KeepSelected{})
+			ecs.SaveComponent(world.Components(), quit, inputs.KeepSelectedComponent{})
 			ecs.SaveComponent(world.Components(), quit, collider.NewCollider(gameassets.SquareColliderID))
 
-			ecs.SaveComponent(world.Components(), quit, text.Text{Text: "X"})
-			ecs.SaveComponent(world.Components(), quit, text.TextAlign{Vertical: .5, Horizontal: .5})
-			ecs.SaveComponent(world.Components(), quit, text.FontSize{FontSize: 32})
+			ecs.SaveComponent(world.Components(), quit, text.TextComponent{Text: "X"})
+			ecs.SaveComponent(world.Components(), quit, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+			ecs.SaveComponent(world.Components(), quit, text.FontSizeComponent{FontSize: 32})
 
 			rand := rand.New(rand.NewPCG(2077, 7137))
 

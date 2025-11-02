@@ -11,10 +11,10 @@ import (
 )
 
 func applyChildTransform(
-	parent transform.Transform,
-	child transform.Transform,
+	parent transform.TransformComponent,
+	child transform.TransformComponent,
 	anchor anchor.ParentAnchorComponent,
-) transform.Transform {
+) transform.TransformComponent {
 	child.SetPos(parent.Pos.
 		Add(mgl32.Vec3{
 			parent.Size[0] * (anchor.ParentPivot.Point[0] - .5),
@@ -47,7 +47,7 @@ func NewAnchorSystem(logger logger.Logger) ecs.SystemRegister {
 		parentsChildren := map[ecs.EntityID]datastructures.Set[ecs.EntityID]{}
 		childParent := map[ecs.EntityID]ecs.EntityID{}
 
-		transformArray := ecs.GetComponentsArray[transform.Transform](w.Components())
+		transformArray := ecs.GetComponentsArray[transform.TransformComponent](w.Components())
 		parentAnchorArray := ecs.GetComponentsArray[anchor.ParentAnchorComponent](w.Components())
 		{
 			transformTransaction := transformArray.Transaction()
@@ -85,7 +85,7 @@ func NewAnchorSystem(logger logger.Logger) ecs.SystemRegister {
 			}
 
 			query := w.Query().
-				Require(ecs.GetComponentType(transform.Transform{})).
+				Require(ecs.GetComponentType(transform.TransformComponent{})).
 				Build()
 			query.OnAdd(onChange)
 			query.OnChange(onChange)
@@ -139,7 +139,7 @@ func NewAnchorSystem(logger logger.Logger) ecs.SystemRegister {
 
 			query := w.Query().
 				Require(ecs.GetComponentType(anchor.ParentAnchorComponent{})).
-				Track(ecs.GetComponentType(transform.Transform{})).
+				Track(ecs.GetComponentType(transform.TransformComponent{})).
 				Build()
 
 			query.OnAdd(onAdd)

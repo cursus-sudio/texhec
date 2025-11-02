@@ -18,10 +18,10 @@ const (
 type ParentAnchorComponent struct {
 	Parent            ecs.EntityID
 	OnChildChange     RelativeChange
-	RelativeTransform transform.Transform
+	RelativeTransform transform.TransformComponent
 	// locks refer to object center
 	// every lock axis should be between 0 and 1
-	ParentPivot transform.PivotPoint
+	ParentPivot transform.PivotPointComponent
 	// offset is a tool to create margin
 	Offset mgl32.Vec3
 }
@@ -49,7 +49,7 @@ func (c *ParentAnchorComponent) SetChildChange(change RelativeChange) *ParentAnc
 	return c
 }
 
-func (c *ParentAnchorComponent) SetRelativeTransform(transform transform.Transform) *ParentAnchorComponent {
+func (c *ParentAnchorComponent) SetRelativeTransform(transform transform.TransformComponent) *ParentAnchorComponent {
 	c.RelativeTransform = transform
 	return c
 }

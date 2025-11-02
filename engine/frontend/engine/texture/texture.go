@@ -5,12 +5,12 @@ import (
 	"image"
 )
 
-type Texture struct {
+type TextureComponent struct {
 	ID assets.AssetID
 }
 
-func NewTexture(id assets.AssetID) Texture {
-	return Texture{ID: id}
+func NewTexture(id assets.AssetID) TextureComponent {
+	return TextureComponent{ID: id}
 }
 
 type TextureAsset interface {

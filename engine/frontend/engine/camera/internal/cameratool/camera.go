@@ -11,13 +11,13 @@ import (
 type cameraService struct {
 	mat4     func() mgl32.Mat4
 	shootRay func(mgl32.Vec2) collider.Ray
-	groups   groups.Groups
+	groups   groups.GroupsComponent
 }
 
 func NewCameraService(
 	mat4 func() mgl32.Mat4,
 	shootRay func(mgl32.Vec2) collider.Ray,
-	groups groups.Groups,
+	groups groups.GroupsComponent,
 ) camera.CameraService {
 	return &cameraService{mat4, shootRay, groups}
 }

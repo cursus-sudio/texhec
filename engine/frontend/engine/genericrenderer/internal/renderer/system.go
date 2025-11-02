@@ -59,12 +59,12 @@ func (r releasable) Release() {
 
 type system struct {
 	world          ecs.World
-	transformArray ecs.ComponentsArray[transform.Transform]
-	groupsArray    ecs.ComponentsArray[groups.Groups]
-	textureArray   ecs.ComponentsArray[texturecomponent.Texture]
-	meshArray      ecs.ComponentsArray[meshcomponent.Mesh]
+	transformArray ecs.ComponentsArray[transform.TransformComponent]
+	groupsArray    ecs.ComponentsArray[groups.GroupsComponent]
+	textureArray   ecs.ComponentsArray[texturecomponent.TextureComponent]
+	meshArray      ecs.ComponentsArray[meshcomponent.MeshComponent]
 
-	cameraArray ecs.ComponentsArray[camera.Camera]
+	cameraArray ecs.ComponentsArray[camera.CameraComponent]
 
 	window        window.Api
 	assetsStorage assets.AssetsStorage
@@ -123,12 +123,12 @@ func NewSystem(
 
 		system := &system{
 			world:          w,
-			transformArray: ecs.GetComponentsArray[transform.Transform](w.Components()),
-			groupsArray:    ecs.GetComponentsArray[groups.Groups](w.Components()),
-			textureArray:   ecs.GetComponentsArray[texturecomponent.Texture](w.Components()),
-			meshArray:      ecs.GetComponentsArray[meshcomponent.Mesh](w.Components()),
+			transformArray: ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
+			groupsArray:    ecs.GetComponentsArray[groups.GroupsComponent](w.Components()),
+			textureArray:   ecs.GetComponentsArray[texturecomponent.TextureComponent](w.Components()),
+			meshArray:      ecs.GetComponentsArray[meshcomponent.MeshComponent](w.Components()),
 
-			cameraArray: ecs.GetComponentsArray[camera.Camera](w.Components()),
+			cameraArray: ecs.GetComponentsArray[camera.CameraComponent](w.Components()),
 
 			window:        window,
 			assetsStorage: assetsStorage,
@@ -140,9 +140,9 @@ func NewSystem(
 				Require(entitiesQueryAdditionalArguments...).
 				Require(
 					ecs.GetComponentType(genericrenderer.PipelineComponent{}),
-					ecs.GetComponentType(transform.Transform{}),
-					ecs.GetComponentType(meshcomponent.Mesh{}),
-					ecs.GetComponentType(texturecomponent.Texture{}),
+					ecs.GetComponentType(transform.TransformComponent{}),
+					ecs.GetComponentType(meshcomponent.MeshComponent{}),
+					ecs.GetComponentType(texturecomponent.TextureComponent{}),
 				).Build(),
 
 			releasable: releasable,

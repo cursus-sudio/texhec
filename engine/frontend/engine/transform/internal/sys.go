@@ -11,12 +11,12 @@ import (
 func NewPivotPointSystem(logger logger.Logger) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		query := w.Query().Require(
-			ecs.GetComponentType(transform.Transform{}),
-			ecs.GetComponentType(transform.PivotPoint{}),
+			ecs.GetComponentType(transform.TransformComponent{}),
+			ecs.GetComponentType(transform.PivotPointComponent{}),
 		).Build()
-		transformArray := ecs.GetComponentsArray[transform.Transform](w.Components())
+		transformArray := ecs.GetComponentsArray[transform.TransformComponent](w.Components())
 		transformTransaction := transformArray.Transaction()
-		pivotPointsArray := ecs.GetComponentsArray[transform.PivotPoint](w.Components())
+		pivotPointsArray := ecs.GetComponentsArray[transform.PivotPointComponent](w.Components())
 		listener := func(ei []ecs.EntityID) {
 			for _, entity := range ei {
 				transformComponent, err := transformArray.GetComponent(entity)

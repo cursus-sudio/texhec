@@ -32,7 +32,7 @@ func newRegister(world ecs.World) global {
 
 type collisionsService struct {
 	world                ecs.World
-	transformStaticArray ecs.ComponentsArray[transform.Static]
+	transformStaticArray ecs.ComponentsArray[transform.StaticComponent]
 	assets               assets.Assets
 	logger               logger.Logger
 }
@@ -41,7 +41,7 @@ func Factory(assets assets.Assets, logger logger.Logger) ecs.ToolFactory[Collisi
 	return ecs.NewToolFactory(func(w ecs.World) CollisionService {
 		return &collisionsService{
 			world:                w,
-			transformStaticArray: ecs.GetComponentsArray[transform.Static](w.Components()),
+			transformStaticArray: ecs.GetComponentsArray[transform.StaticComponent](w.Components()),
 			assets:               assets,
 			logger:               logger,
 		}

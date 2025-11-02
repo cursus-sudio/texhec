@@ -14,9 +14,9 @@ import (
 
 type collisionDetectionService struct {
 	world           ecs.World
-	transformsArray ecs.ComponentsArray[transform.Transform]
-	groupsArray     ecs.ComponentsArray[groups.Groups]
-	colliderArray   ecs.ComponentsArray[collider.Collider]
+	transformsArray ecs.ComponentsArray[transform.TransformComponent]
+	groupsArray     ecs.ComponentsArray[groups.GroupsComponent]
+	colliderArray   ecs.ComponentsArray[collider.ColliderComponent]
 	assets          assets.Assets
 	worldCollider   worldCollider
 	logger          logger.Logger
@@ -30,9 +30,9 @@ func newCollisionDetectionService(
 ) collider.CollisionTool {
 	return &collisionDetectionService{
 		world,
-		ecs.GetComponentsArray[transform.Transform](world.Components()),
-		ecs.GetComponentsArray[groups.Groups](world.Components()),
-		ecs.GetComponentsArray[collider.Collider](world.Components()),
+		ecs.GetComponentsArray[transform.TransformComponent](world.Components()),
+		ecs.GetComponentsArray[groups.GroupsComponent](world.Components()),
+		ecs.GetComponentsArray[collider.ColliderComponent](world.Components()),
 		assets,
 		worldCollider,
 		logger,

@@ -24,8 +24,8 @@ type locations struct {
 
 type textRenderer struct {
 	world          ecs.World
-	groupsArray    ecs.ComponentsArray[groups.Groups]
-	transformArray ecs.ComponentsArray[transform.Transform]
+	groupsArray    ecs.ComponentsArray[groups.GroupsComponent]
+	transformArray ecs.ComponentsArray[transform.TransformComponent]
 	cameraQuery    ecs.LiveQuery
 
 	logger      logger.Logger

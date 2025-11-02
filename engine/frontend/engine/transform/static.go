@@ -1,8 +1,8 @@
 package transform
 
 // this says that his object doesn't change
-type Static struct{}
+type StaticComponent struct{}
 
-func NewStatic() Static {
-	return Static{}
+func NewStatic() StaticComponent {
+	return StaticComponent{}
 }

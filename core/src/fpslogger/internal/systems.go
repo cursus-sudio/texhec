@@ -1,4 +1,4 @@
-package fpslogger
+package internal
 
 import (
 	"fmt"

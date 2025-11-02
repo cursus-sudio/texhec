@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"core/src/tile"
 	_ "embed"
-	"frontend/engine/components/collider"
-	"frontend/engine/components/mesh"
-	"frontend/engine/components/text"
-	"frontend/engine/components/texture"
-	"frontend/engine/systems/genericrenderer"
+	"frontend/engine/collider"
+	"frontend/engine/genericrenderer"
+	"frontend/engine/mesh"
+	"frontend/engine/text"
+	"frontend/engine/texture"
 	"frontend/services/assets"
 	gtexture "frontend/services/graphics/texture"
 	"frontend/services/graphics/vao/ebo"
@@ -67,7 +67,7 @@ func (Pkg) Register(b ioc.Builder) {
 		})
 		return b
 	})
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.TileRenderSystemRegister) tile.TileRenderSystemRegister {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.TileTool) tile.TileTool {
 		assets := datastructures.NewSparseArray[uint32, assets.AssetID]()
 		assets.Set(tile.TileMountain, MountainTileTextureID)
 		assets.Set(tile.TileGround, GroundTileTextureID)
@@ -79,7 +79,7 @@ func (Pkg) Register(b ioc.Builder) {
 
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b assets.AssetsStorageBuilder) assets.AssetsStorageBuilder {
 		b.RegisterAsset(SquareMesh, func() (any, error) {
-			vertices := []genericrenderersys.Vertex{
+			vertices := []genericrenderer.Vertex{
 				// Front face
 				{Pos: [3]float32{-1, 1, 1}, TexturePos: [2]float32{0, 1}},
 				{Pos: [3]float32{-1, -1, 1}, TexturePos: [2]float32{0, 0}},

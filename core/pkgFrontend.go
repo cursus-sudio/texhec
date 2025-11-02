@@ -9,16 +9,24 @@ import (
 	gamescene "core/scenes/game"
 	menuscene "core/scenes/menu"
 	settingsscene "core/scenes/settings"
-	"core/src/tile"
+	"core/src/fpslogger/pkg"
+	tilepkg "core/src/tile/pkg"
 	"errors"
 	"fmt"
-	"frontend/engine/components/groups"
-	"frontend/engine/components/projection"
-	"frontend/engine/components/text"
-	"frontend/engine/systems/genericrenderer"
-	"frontend/engine/systems/text"
-	"frontend/engine/tools/broadcollision"
-	"frontend/engine/tools/cameras"
+	"frontend/engine/anchor/pkg"
+	"frontend/engine/camera/pkg"
+	"frontend/engine/collider/pkg"
+	"frontend/engine/genericrenderer/pkg"
+	"frontend/engine/groups"
+	"frontend/engine/groups/pkg"
+	"frontend/engine/inputs/pkg"
+	"frontend/engine/mesh/pkg"
+	"frontend/engine/render/pkg"
+	"frontend/engine/scenes/pkg"
+	"frontend/engine/text"
+	"frontend/engine/text/pkg"
+	"frontend/engine/texture/pkg"
+	"frontend/engine/transform/pkg"
 	frontendapi "frontend/services/api"
 	frontendtcp "frontend/services/api/tcp"
 	"frontend/services/assets"
@@ -136,16 +144,23 @@ func frontendDic(
 		// frames.Package(10000),
 		scenes.Package(),
 		frontendscopes.Package(),
-		cameras.Package(),
-		projection.Package(),
-
-		genericrenderersys.Package(),
-		broadcollision.Package(),
 
 		texturearray.Package(),
-		tile.Package(100, -1., groups.EmptyGroups().Ptr().Enable(gamescene.GameGroup).Val()),
+		tilepkg.Package(100, -1., groups.EmptyGroups().Ptr().Enable(gamescene.GameGroup).Val()),
 
-		textsys.Package(
+		//
+
+		// engine packages
+		anchorpkg.Package(),
+		camerapkg.Package(),
+		colliderpkg.Package(),
+		genericrendererpkg.Package(),
+		groupspkg.Package(),
+		inputspkg.Package(),
+		meshpkg.Package(),
+		renderpkg.Package(),
+		scenespkg.Package(),
+		textpkg.Package(
 			text.FontFamily{FontFamily: gameassets.FontAssetID},
 			text.FontSize{FontSize: 16},
 			// text.Overflow{Visible: false},
@@ -184,6 +199,11 @@ func frontendDic(
 			},
 			52,
 		),
+		texturepkg.Package(),
+		transformpkg.Package(),
+
+		// game packages
+		fpsloggerpkg.Package(),
 
 		gamescenes.Package(),
 		gameassets.Package(),

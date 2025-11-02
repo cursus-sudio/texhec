@@ -4,19 +4,17 @@ import (
 	gameassets "core/assets"
 	gamescenes "core/scenes"
 	"core/src/tile"
-	"frontend/engine/components/anchor"
-	"frontend/engine/components/camera"
-	"frontend/engine/components/collider"
-	"frontend/engine/components/groups"
-	"frontend/engine/components/mesh"
-	"frontend/engine/components/mobilecamera"
-	"frontend/engine/components/mouse"
-	"frontend/engine/components/projection"
-	"frontend/engine/components/text"
-	"frontend/engine/components/texture"
-	"frontend/engine/components/transform"
-	"frontend/engine/systems/genericrenderer"
-	"frontend/engine/systems/scenes"
+	"frontend/engine/anchor"
+	"frontend/engine/camera"
+	"frontend/engine/collider"
+	"frontend/engine/genericrenderer"
+	"frontend/engine/groups"
+	"frontend/engine/inputs"
+	"frontend/engine/mesh"
+	scenessys "frontend/engine/scenes"
+	"frontend/engine/text"
+	"frontend/engine/texture"
+	"frontend/engine/transform"
 	"frontend/services/scenes"
 	"math/rand/v2"
 	"shared/services/ecs"
@@ -42,17 +40,13 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 		b.OnLoad(func(world scenes.SceneCtx) {
 			uiCamera := world.NewEntity()
 			ecs.SaveComponent(world.Components(), uiCamera, transform.NewTransform())
-			ecs.SaveComponent(world.Components(), uiCamera, projection.NewDynamicOrtho(-1000, +1000, 1))
-			ecs.SaveComponent(world.Components(), uiCamera,
-				camera.NewCamera(ecs.GetComponentType(projection.Ortho{})))
+			ecs.SaveComponent(world.Components(), uiCamera, camera.NewDynamicOrtho(-1000, +1000, 1))
 			ecs.SaveComponent(world.Components(), uiCamera, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
 			gameCamera := world.NewEntity()
 			ecs.SaveComponent(world.Components(), gameCamera, transform.NewTransform())
-			ecs.SaveComponent(world.Components(), gameCamera, projection.NewDynamicOrtho(-1000, +1000, 1))
-			ecs.SaveComponent(world.Components(), gameCamera,
-				camera.NewCamera(ecs.GetComponentType(projection.Ortho{})))
-			ecs.SaveComponent(world.Components(), gameCamera, mobilecamera.Component{})
+			ecs.SaveComponent(world.Components(), gameCamera, camera.NewDynamicOrtho(-1000, +1000, 1))
+			ecs.SaveComponent(world.Components(), gameCamera, camera.MobileCamera{})
 			ecs.SaveComponent(world.Components(), gameCamera, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 
 			signature := world.NewEntity()
@@ -78,7 +72,7 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world.Components(), background, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 			ecs.SaveComponent(world.Components(), background, mesh.NewMesh(gameassets.SquareMesh))
 			ecs.SaveComponent(world.Components(), background, texture.NewTexture(gameassets.WaterTileTextureID))
-			ecs.SaveComponent(world.Components(), background, genericrenderersys.PipelineComponent{})
+			ecs.SaveComponent(world.Components(), background, genericrenderer.PipelineComponent{})
 
 			quit := world.NewEntity()
 			ecs.SaveComponent(world.Components(), quit, transform.NewTransform().Ptr().
@@ -92,11 +86,11 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 
 			ecs.SaveComponent(world.Components(), quit, mesh.NewMesh(gameassets.SquareMesh))
 			ecs.SaveComponent(world.Components(), quit, texture.NewTexture(gameassets.WaterTileTextureID))
-			ecs.SaveComponent(world.Components(), quit, genericrenderersys.PipelineComponent{})
+			ecs.SaveComponent(world.Components(), quit, genericrenderer.PipelineComponent{})
 
-			ecs.SaveComponent(world.Components(), quit, mouse.NewMouseEvents().
+			ecs.SaveComponent(world.Components(), quit, inputs.NewMouseEvents().
 				AddLeftClickEvents(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
-			ecs.SaveComponent(world.Components(), quit, mouse.KeepSelected{})
+			ecs.SaveComponent(world.Components(), quit, inputs.KeepSelected{})
 			ecs.SaveComponent(world.Components(), quit, collider.NewCollider(gameassets.SquareColliderID))
 
 			ecs.SaveComponent(world.Components(), quit, text.Text{Text: "X"})

@@ -1,10 +1,11 @@
-package tile
+package internal
 
 import (
+	"core/src/tile"
 	_ "embed"
-	"frontend/engine/components/groups"
-	"frontend/engine/systems/render"
-	"frontend/engine/tools/cameras"
+	"frontend/engine/camera"
+	"frontend/engine/groups"
+	"frontend/engine/render"
 	"frontend/services/graphics/program"
 	"frontend/services/graphics/texturearray"
 	"frontend/services/graphics/vao"
@@ -39,7 +40,7 @@ type system struct {
 
 	textureArray  texturearray.TextureArray
 	vao           vao.VAO
-	vertices      vbo.VBOSetter[TileComponent]
+	vertices      vbo.VBOSetter[tile.TileComponent]
 	verticesCount int32
 
 	tileSize  int32
@@ -49,11 +50,11 @@ type system struct {
 	cameraQuery ecs.LiveQuery
 	groupsArray ecs.ComponentsArray[groups.Groups]
 	gridGroups  groups.Groups
-	cameraCtors cameras.CameraResolver
+	cameraCtors camera.CameraTool
 
 	changed     bool
 	changeMutex sync.Locker
-	tiles       datastructures.SparseArray[ecs.EntityID, TileComponent]
+	tiles       datastructures.SparseArray[ecs.EntityID, tile.TileComponent]
 }
 
 type locations struct {
@@ -62,7 +63,7 @@ type locations struct {
 	GridDepth int32 `uniform:"gridDepth"` // float32
 }
 
-func (s *system) Listen(rendersys.RenderEvent) {
+func (s *system) Listen(render.RenderEvent) {
 	if s.changed {
 		s.changeMutex.Lock()
 		s.vertices.SetVertices(s.tiles.GetValues())

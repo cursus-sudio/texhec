@@ -1,11 +1,11 @@
-package tile
+package internal
 
 import (
-	"frontend/engine/components/groups"
-	"frontend/engine/components/projection"
-	"frontend/engine/components/texture"
-	"frontend/engine/components/transform"
-	"frontend/engine/tools/cameras"
+	"core/src/tile"
+	"frontend/engine/camera"
+	"frontend/engine/groups"
+	"frontend/engine/texture"
+	"frontend/engine/transform"
 	"frontend/services/assets"
 	"frontend/services/graphics/program"
 	"frontend/services/graphics/shader"
@@ -42,25 +42,25 @@ type TileRenderSystemRegister struct {
 	logger              logger.Logger
 	textures            datastructures.SparseArray[uint32, image.Image]
 	textureArrayFactory texturearray.Factory
-	vboFactory          vbo.VBOFactory[TileComponent]
+	vboFactory          vbo.VBOFactory[tile.TileComponent]
 	assetsStorage       assets.AssetsStorage
 
 	tileSize  int32
 	gridDepth float32
 
 	groups             groups.Groups
-	cameraCtorsFactory ecs.ToolFactory[cameras.CameraResolver]
+	cameraCtorsFactory ecs.ToolFactory[camera.CameraTool]
 }
 
-func newTileRenderSystemRegister(
+func NewTileRenderSystemRegister(
 	textureArrayFactory texturearray.Factory,
 	logger logger.Logger,
-	vboFactory vbo.VBOFactory[TileComponent],
+	vboFactory vbo.VBOFactory[tile.TileComponent],
 	assetsStorage assets.AssetsStorage,
 	tileSize int32,
 	gridDepth float32,
 	groups groups.Groups,
-	cameraCtorsFactory ecs.ToolFactory[cameras.CameraResolver],
+	cameraCtorsFactory ecs.ToolFactory[camera.CameraTool],
 ) TileRenderSystemRegister {
 	return TileRenderSystemRegister{
 		logger:              logger,
@@ -133,7 +133,7 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 	VAO := vao.NewVAO(VBO, EBO)
 
 	changeMutex := &sync.Mutex{}
-	tiles := datastructures.NewSparseArray[ecs.EntityID, TileComponent]()
+	tiles := datastructures.NewSparseArray[ecs.EntityID, tile.TileComponent]()
 
 	g := global{p, textureArray, VAO}
 	w.SaveGlobal(g)
@@ -155,7 +155,7 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 		world:       w,
 		groupsArray: ecs.GetComponentsArray[groups.Groups](w.Components()),
 		gridGroups:  factory.groups,
-		cameraQuery: w.Query().Require(ecs.GetComponentType(projection.Ortho{})).Build(),
+		cameraQuery: w.Query().Require(ecs.GetComponentType(camera.Ortho{})).Build(),
 		cameraCtors: factory.cameraCtorsFactory.Build(w),
 
 		changed:     false,
@@ -163,7 +163,7 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 		tiles:       tiles,
 	}
 
-	tileArray := ecs.GetComponentsArray[TileComponent](w.Components())
+	tileArray := ecs.GetComponentsArray[tile.TileComponent](w.Components())
 	transformArray := ecs.GetComponentsArray[transform.Transform](w.Components())
 	groupsArray := ecs.GetComponentsArray[groups.Groups](w.Components())
 

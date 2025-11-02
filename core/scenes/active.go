@@ -3,30 +3,19 @@ package gamescenes
 import (
 	"core/src/fpslogger"
 	"core/src/tile"
-	"frontend/engine/systems/anchor"
-	"frontend/engine/systems/collider"
-	genericrenderersys "frontend/engine/systems/genericrenderer"
-	"frontend/engine/systems/inputs"
-	mobilecamerasystem "frontend/engine/systems/mobilecamera"
-	mousesystem "frontend/engine/systems/mouse"
-	"frontend/engine/systems/projections"
-	quitsys "frontend/engine/systems/quit"
-	"frontend/engine/systems/render"
-	"frontend/engine/systems/scenes"
-	textsys "frontend/engine/systems/text"
-	"frontend/engine/systems/transform"
-	"frontend/engine/tools/broadcollision"
-	"frontend/engine/tools/cameras"
-	"frontend/services/assets"
-	"frontend/services/console"
-	"frontend/services/frames"
-	"frontend/services/graphics/vao/vbo"
-	inputsmedia "frontend/services/media/inputs"
+	"frontend/engine/anchor"
+	"frontend/engine/camera"
+	"frontend/engine/collider"
+	"frontend/engine/genericrenderer"
+	"frontend/engine/inputs"
+	"frontend/engine/render"
+	scenesys "frontend/engine/scenes"
+	"frontend/engine/text"
+	"frontend/engine/transform"
 	"frontend/services/media/window"
 	"frontend/services/scenes"
 	"shared/services/ecs"
 	"shared/services/logger"
-	"shared/services/runtime"
 
 	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
@@ -67,13 +56,6 @@ func AddDefaults[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		s.OnLoad(ioc.Get[CoreSystems](c))
 		return s
 	})
-	ioc.WrapService(b, scenes.LoadInitialEvents, func(c ioc.Dic, s SceneBuilder) SceneBuilder {
-		s.OnLoad(func(ctx scenes.SceneCtx) {
-			events.Emit(ctx.Events(), projectionssys.NewUpdateProjectionsEvent())
-			events.Emit(ctx.Events(), mousesystem.NewShootRayEvent())
-		})
-		return s
-	})
 }
 
 func (Pkg) Register(b ioc.Builder) {
@@ -89,98 +71,28 @@ func (Pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) CoreSystems {
 		return func(ctx scenes.SceneCtx) {
 			logger := ioc.Get[logger.Logger](c)
+			if glErr := ioc.Get[render.RenderTool](c).Error(); glErr != nil {
+				panic(glErr)
+			}
 
 			ecs.RegisterSystems(ctx,
-				anchorsys.NewAnchorSystem(logger),
-				transformsys.NewPivotPointSystem(logger),
+				// inputs
+				ioc.Get[inputs.System](c),
 
-				collidersys.NewColliderSystem(ioc.Get[ecs.ToolFactory[broadcollision.CollisionService]](c)),
-
-				// mouse systems
-				mousesystem.NewCameraRaySystem(
-					ioc.Get[ecs.ToolFactory[broadcollision.CollisionService]](c),
-					ioc.Get[window.Api](c),
-					ioc.Get[ecs.ToolFactory[cameras.CameraResolver]](c),
-				),
-				mousesystem.NewHoverSystem(),
-				mousesystem.NewHoverEventsSystem(),
-				mousesystem.NewClickSystem(logger),
-				ecs.NewSystemRegister(func(w ecs.World) error {
-					events.Listen(w.EventsBuilder(), func(frames.FrameEvent) {
-						events.Emit(w.Events(), mousesystem.NewShootRayEvent())
-					})
-					return nil
-				}),
-
-				// inputs systems
-				inputssys.NewResizeSystem(),
-				inputssys.NewInputsSystem(ioc.Get[inputsmedia.Api](c)),
-				quitsys.NewQuitSystem(ioc.Get[runtime.Runtime](c)),
-
-				// render
-				rendersys.NewClearSystem(),
-				rendersys.NewRenderSystem(
-					ioc.Get[window.Api](c),
-					2,
-				),
-				genericrenderersys.NewSystem(
-					ioc.Get[window.Api](c),
-					ioc.Get[assets.AssetsStorage](c),
-					logger,
-					ioc.Get[vbo.VBOFactory[genericrenderersys.Vertex]](c),
-					ioc.Get[ecs.ToolFactory[cameras.CameraResolver]](c),
-					[]ecs.ComponentType{},
-				),
-				ioc.Get[textsys.TextRendererRegister](c),
-				ioc.Get[tile.TileRenderSystemRegister](c),
-
-				// projection and camera systems
-				projectionssys.NewUpdateProjectionsSystem(ioc.Get[window.Api](c), logger),
-				mobilecamerasystem.NewScrollSystem(
-					logger,
-					ioc.Get[ecs.ToolFactory[cameras.CameraResolver]](c),
-					ioc.Get[window.Api](c),
-					0.1, 5, // min and max zoom
-				),
-				mobilecamerasystem.NewDragSystem(
-					sdl.BUTTON_LEFT,
-					ioc.Get[ecs.ToolFactory[cameras.CameraResolver]](c),
-					ioc.Get[window.Api](c),
-					logger,
-				),
-				mobilecamerasystem.NewWasdSystem(
-					ioc.Get[ecs.ToolFactory[cameras.CameraResolver]](c),
-					1.0, // speed
-				),
-				ecs.NewSystemRegister(func(w ecs.World) error {
-					events.Listen(w.EventsBuilder(), func(sdl.QuitEvent) {
-						events.Emit(ctx.Events(), quitsys.NewQuitEvent())
-					})
-					events.Listen(w.EventsBuilder(), func(e sdl.WindowEvent) {
-						if e.Event == sdl.WINDOWEVENT_RESIZED {
-							events.Emit(ctx.Events(), projectionssys.NewUpdateProjectionsEvent())
-						}
-					})
-					return nil
-				}),
-
-				//
-				scenessys.NewChangeSceneSystem(ioc.Get[scenes.SceneManager](c)),
-
-				// domain systems
-				fpslogger.NewFpsLoggerSystem(
-					ioc.Get[scenes.SceneManager](c),
-					ioc.Get[console.Console](c),
-				),
+				// update
+				ioc.Get[anchor.System](c),
+				ioc.Get[transform.System](c),
+				ioc.Get[collider.System](c),
+				ioc.Get[camera.System](c),
 				ecs.NewSystemRegister(func(w ecs.World) error {
 					events.Listen(w.EventsBuilder(), func(e sdl.KeyboardEvent) {
 						if e.Keysym.Sym == sdl.K_q {
 							logger.Info("quiting program due to pressing 'Q'")
-							events.Emit(ctx.Events(), quitsys.NewQuitEvent())
+							events.Emit(ctx.Events(), inputs.NewQuitEvent())
 						}
 						if e.Keysym.Sym == sdl.K_ESCAPE {
 							logger.Info("quiting program due to pressing 'ESC'")
-							events.Emit(ctx.Events(), quitsys.NewQuitEvent())
+							events.Emit(ctx.Events(), inputs.NewQuitEvent())
 						}
 						if e.State == sdl.PRESSED && e.Keysym.Sym == sdl.K_f {
 							logger.Info("toggling screen size due to pressing 'F'")
@@ -195,7 +107,20 @@ func (Pkg) Register(b ioc.Builder) {
 					})
 					return nil
 				}),
+
+				// render
+				ioc.Get[render.System](c),
+				ioc.Get[genericrenderer.System](c),
+				ioc.Get[text.System](c),
+				ioc.Get[tile.System](c),
+				ioc.Get[fpslogger.System](c),
+
+				// after everything change scene
+				ioc.Get[scenesys.System](c),
 			)
+			if glErr := ioc.Get[render.RenderTool](c).Error(); glErr != nil {
+				panic(glErr)
+			}
 		}
 	})
 }

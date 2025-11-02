@@ -3,17 +3,16 @@ package creditsscene
 import (
 	gameassets "core/assets"
 	gamescenes "core/scenes"
-	"frontend/engine/components/anchor"
-	"frontend/engine/components/camera"
-	"frontend/engine/components/collider"
-	"frontend/engine/components/mesh"
-	"frontend/engine/components/mouse"
-	"frontend/engine/components/projection"
-	"frontend/engine/components/text"
-	"frontend/engine/components/texture"
-	"frontend/engine/components/transform"
-	"frontend/engine/systems/genericrenderer"
-	"frontend/engine/systems/scenes"
+	"frontend/engine/anchor"
+	"frontend/engine/camera"
+	"frontend/engine/collider"
+	"frontend/engine/genericrenderer"
+	"frontend/engine/inputs"
+	"frontend/engine/mesh"
+	scenessys "frontend/engine/scenes"
+	"frontend/engine/text"
+	"frontend/engine/texture"
+	"frontend/engine/transform"
 	"frontend/services/scenes"
 	"shared/services/ecs"
 	"shared/services/logger"
@@ -35,9 +34,7 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 		b.OnLoad(func(world scenes.SceneCtx) {
 			cameraEntity := world.NewEntity()
 			ecs.SaveComponent(world.Components(), cameraEntity, transform.NewTransform())
-			ecs.SaveComponent(world.Components(), cameraEntity, projection.NewDynamicOrtho(-1000, +1000, 1))
-			ecs.SaveComponent(world.Components(), cameraEntity,
-				camera.NewCamera(ecs.GetComponentType(projection.Ortho{})))
+			ecs.SaveComponent(world.Components(), cameraEntity, camera.NewDynamicOrtho(-1000, +1000, 1))
 
 			signature := world.NewEntity()
 			ecs.SaveComponent(world.Components(), signature, transform.NewTransform().Ptr().
@@ -59,7 +56,7 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 			)
 			ecs.SaveComponent(world.Components(), background, mesh.NewMesh(gameassets.SquareMesh))
 			ecs.SaveComponent(world.Components(), background, texture.NewTexture(gameassets.MountainTileTextureID))
-			ecs.SaveComponent(world.Components(), background, genericrenderersys.PipelineComponent{})
+			ecs.SaveComponent(world.Components(), background, genericrenderer.PipelineComponent{})
 
 			buttonArea := world.NewEntity()
 			ecs.SaveComponent(world.Components(), buttonArea, transform.NewTransform().Ptr().
@@ -74,7 +71,7 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 
 			ecs.SaveComponent(world.Components(), draggable, mesh.NewMesh(gameassets.SquareMesh))
 			ecs.SaveComponent(world.Components(), draggable, texture.NewTexture(gameassets.WaterTileTextureID))
-			ecs.SaveComponent(world.Components(), draggable, genericrenderersys.PipelineComponent{})
+			ecs.SaveComponent(world.Components(), draggable, genericrenderer.PipelineComponent{})
 
 			// ecs.SaveComponent(world.Components(), draggable, mouse.NewMouseEvents().
 			// 	AddLeftClickEvents(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
@@ -84,7 +81,7 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 				ioc.Get[logger.Logger](c).Info("here we goo")
 			})
 			// events.Emit(world.Events(), Hehe{})
-			ecs.SaveComponent(world.Components(), draggable, mouse.NewMouseEvents().
+			ecs.SaveComponent(world.Components(), draggable, inputs.NewMouseEvents().
 				AddDragEvents(Hehe{}))
 
 			ecs.SaveComponent(world.Components(), draggable, text.Text{Text: strings.ToUpper("drag me")})
@@ -100,11 +97,11 @@ func (Pkg) LoadObjects(b ioc.Builder) {
 
 			ecs.SaveComponent(world.Components(), btn, mesh.NewMesh(gameassets.SquareMesh))
 			ecs.SaveComponent(world.Components(), btn, texture.NewTexture(gameassets.WaterTileTextureID))
-			ecs.SaveComponent(world.Components(), btn, genericrenderersys.PipelineComponent{})
+			ecs.SaveComponent(world.Components(), btn, genericrenderer.PipelineComponent{})
 
-			ecs.SaveComponent(world.Components(), btn, mouse.NewMouseEvents().
+			ecs.SaveComponent(world.Components(), btn, inputs.NewMouseEvents().
 				AddLeftClickEvents(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
-			ecs.SaveComponent(world.Components(), btn, mouse.KeepSelected{})
+			ecs.SaveComponent(world.Components(), btn, inputs.KeepSelected{})
 			ecs.SaveComponent(world.Components(), btn, collider.NewCollider(gameassets.SquareColliderID))
 
 			ecs.SaveComponent(world.Components(), btn, text.Text{Text: strings.ToUpper("return to menu")})

@@ -71,9 +71,6 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) CoreSystems {
 		return func(ctx scenes.SceneCtx) {
 			logger := ioc.Get[logger.Logger](c)
-			if glErr := ioc.Get[render.RenderTool](c).Error(); glErr != nil {
-				panic(glErr)
-			}
 
 			ecs.RegisterSystems(ctx,
 				// inputs
@@ -118,9 +115,6 @@ func (pkg) Register(b ioc.Builder) {
 				// after everything change scene
 				ioc.Get[scenesys.System](c),
 			)
-			if glErr := ioc.Get[render.RenderTool](c).Error(); glErr != nil {
-				panic(glErr)
-			}
 		}
 	})
 }

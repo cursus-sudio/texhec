@@ -6,6 +6,7 @@ import (
 	"frontend/modules/anchor"
 	"frontend/modules/camera"
 	"frontend/modules/collider"
+	"frontend/modules/drag"
 	"frontend/modules/genericrenderer"
 	"frontend/modules/inputs"
 	"frontend/modules/render"
@@ -80,6 +81,7 @@ func (pkg) Register(b ioc.Builder) {
 				ioc.Get[anchor.System](c),
 				ioc.Get[transform.System](c),
 				ioc.Get[collider.System](c),
+				ioc.Get[drag.System](c),
 				ioc.Get[camera.System](c),
 				ecs.NewSystemRegister(func(w ecs.World) error {
 					events.Listen(w.EventsBuilder(), func(e sdl.KeyboardEvent) {

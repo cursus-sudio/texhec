@@ -57,7 +57,7 @@ func (s *hoverSystem) Listen(event RayChangedTargetEvent) {
 	if err != nil {
 		return
 	}
-	s.hoveredArray.SaveComponent(entity, inputs.HoveredComponent{})
+	s.hoveredArray.SaveComponent(entity, inputs.HoveredComponent{Camera: event.Camera})
 	for _, event := range mouseEvents.MouseEnterEvents {
 		events.EmitAny(s.events, event)
 	}

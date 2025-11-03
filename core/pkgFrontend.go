@@ -16,6 +16,7 @@ import (
 	"frontend/modules/anchor/pkg"
 	"frontend/modules/camera/pkg"
 	"frontend/modules/collider/pkg"
+	"frontend/modules/drag/pkg"
 	"frontend/modules/genericrenderer/pkg"
 	"frontend/modules/groups"
 	"frontend/modules/groups/pkg"
@@ -153,6 +154,7 @@ func frontendDic(
 		anchorpkg.Package(),
 		camerapkg.Package(),
 		colliderpkg.Package(),
+		dragpkg.Package(),
 		genericrendererpkg.Package(),
 		groupspkg.Package(),
 		inputspkg.Package(),

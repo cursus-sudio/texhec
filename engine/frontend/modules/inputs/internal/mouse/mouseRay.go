@@ -19,6 +19,7 @@ func NewShootRayEvent() ShootRayEvent {
 }
 
 type RayChangedTargetEvent struct {
+	Camera   ecs.EntityID
 	EntityID *ecs.EntityID
 }
 
@@ -65,6 +66,7 @@ func (s *cameraRaySystem) Listen(args ShootRayEvent) error {
 	mousePos := s.window.NormalizeMousePos(s.window.GetMousePos())
 
 	var nearestCollision collider.ObjectRayCollision
+	var nearestCamera ecs.EntityID
 	for _, cameraEntity := range s.cameraArray.GetEntities() {
 		camera, err := s.cameraResolver.Get(cameraEntity)
 		if err != nil {
@@ -82,18 +84,20 @@ func (s *cameraRaySystem) Listen(args ShootRayEvent) error {
 		}
 		if nearestCollision == nil {
 			nearestCollision = collision
+			nearestCamera = cameraEntity
 			continue
 		}
 
 		if nearestCollision.Hit().Distance > collision.Hit().Distance {
 			nearestCollision = collision
+			nearestCamera = cameraEntity
 		}
 	}
 
 	if nearestCollision == nil {
 		if s.hoversOverEntity != nil {
 			s.hoversOverEntity = nil
-			event := RayChangedTargetEvent{EntityID: nil}
+			event := RayChangedTargetEvent{Camera: nearestCamera, EntityID: nil}
 			events.Emit(s.events, event)
 		}
 		return nil
@@ -105,7 +109,7 @@ func (s *cameraRaySystem) Listen(args ShootRayEvent) error {
 	}
 
 	s.hoversOverEntity = &entity
-	event := RayChangedTargetEvent{EntityID: &entity}
+	event := RayChangedTargetEvent{Camera: nearestCamera, EntityID: &entity}
 	events.Emit(s.events, event)
 
 	return nil

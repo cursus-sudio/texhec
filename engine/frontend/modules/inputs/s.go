@@ -14,8 +14,20 @@ func NewQuitEvent() QuitEvent { return QuitEvent{} }
 
 // this event is called when nothing is dragged
 type DragEvent struct {
-	From, To mgl32.Vec2
+	Camera   ecs.EntityID
+	From, To mgl32.Vec2 // from and to is normalized
 }
 
-// TODO
-// disscuss merging inputs and render named as media
+//
+
+type ApplyDragEvent interface {
+	Apply(DragEvent) (event any)
+}
+
+//
+
+type SynchronizePositionEvent DragEvent
+
+func (SynchronizePositionEvent) Apply(dragEvent DragEvent) any {
+	return SynchronizePositionEvent(dragEvent)
+}

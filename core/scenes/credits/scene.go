@@ -6,6 +6,7 @@ import (
 	"frontend/modules/anchor"
 	"frontend/modules/camera"
 	"frontend/modules/collider"
+	"frontend/modules/drag"
 	"frontend/modules/genericrenderer"
 	"frontend/modules/inputs"
 	"frontend/modules/render"
@@ -14,11 +15,9 @@ import (
 	"frontend/modules/transform"
 	"frontend/services/scenes"
 	"shared/services/ecs"
-	"shared/services/logger"
 	"strings"
 
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -75,13 +74,10 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			// ecs.SaveComponent(world.Components(), draggable, mouse.NewMouseEvents().
 			// 	AddLeftClickEvents(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
 			ecs.SaveComponent(world.Components(), draggable, collider.NewCollider(gameassets.SquareColliderID))
-			type Hehe struct{}
-			events.Listen(world.EventsBuilder(), func(Hehe) {
-				ioc.Get[logger.Logger](c).Info("here we goo")
-			})
 			// events.Emit(world.Events(), Hehe{})
 			ecs.SaveComponent(world.Components(), draggable, inputs.NewMouseEvents().
-				AddDragEvents(Hehe{}))
+				AddDragEvents(drag.NewDraggable(draggable)),
+			)
 
 			ecs.SaveComponent(world.Components(), draggable, text.TextComponent{Text: strings.ToUpper("drag me")})
 			ecs.SaveComponent(world.Components(), draggable, text.TextAlignComponent{Vertical: .5, Horizontal: .5})

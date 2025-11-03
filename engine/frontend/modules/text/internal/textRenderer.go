@@ -131,8 +131,6 @@ func (s *textRenderer) ensureFontExists(asset assets.AssetID) error {
 func (s *textRenderer) Listen(rendersys.RenderEvent) {
 	s.program.Use()
 
-	// render
-
 	for _, entity := range s.layoutsBatches.GetIndices() {
 		layout, _ := s.layoutsBatches.Get(entity)
 		font, ok := s.fontsBatches.Get(layout.Layout.Font)

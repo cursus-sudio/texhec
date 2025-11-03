@@ -3,6 +3,7 @@ package mouse
 import (
 	"errors"
 	"frontend/modules/inputs"
+	"frontend/services/media/window"
 	"shared/services/ecs"
 	"shared/services/logger"
 
@@ -26,13 +27,16 @@ type clickSystem struct {
 
 	keepSelectedArray ecs.ComponentsArray[inputs.KeepSelectedComponent]
 
-	moved       bool
-	emitDrag    bool
-	movedEntity *ecs.EntityID
-	movedFrom   *mgl32.Vec2
+	window window.Api
+
+	moved        bool
+	emitDrag     bool
+	movingCamera ecs.EntityID
+	movedEntity  *ecs.EntityID
+	movedFrom    *mgl32.Vec2
 }
 
-func NewClickSystem(logger logger.Logger) ecs.SystemRegister {
+func NewClickSystem(logger logger.Logger, window window.Api) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := &clickSystem{
 			logger:           logger,
@@ -41,6 +45,8 @@ func NewClickSystem(logger logger.Logger) ecs.SystemRegister {
 			mouseEventsArray: ecs.GetComponentsArray[inputs.MouseEventsComponent](w.Components()),
 
 			keepSelectedArray: ecs.GetComponentsArray[inputs.KeepSelectedComponent](w.Components()),
+
+			window: window,
 
 			movedEntity: nil,
 			movedFrom:   nil,
@@ -59,14 +65,15 @@ func (s *clickSystem) ListenMove(event sdl.MouseMotionEvent) {
 	}
 
 	from := *s.movedFrom
-	to := mgl32.Vec2{float32(event.X), float32(event.Y)}
-
-	// TODO
-	// persist in tool variables from and to.
-	// it can be needed for dependent systems
+	to := s.window.NormalizeMousePos(int(event.X), int(event.Y))
+	dragEvent := inputs.DragEvent{
+		Camera: s.movingCamera,
+		From:   from,
+		To:     to,
+	}
 
 	if s.emitDrag {
-		events.Emit(s.world.Events(), inputs.DragEvent{From: from, To: to})
+		events.Emit(s.world.Events(), dragEvent)
 	}
 
 	if s.movedEntity != nil {
@@ -77,6 +84,9 @@ func (s *clickSystem) ListenMove(event sdl.MouseMotionEvent) {
 		}
 
 		for _, e := range mouseEvents.DragEvents {
+			if i, ok := e.(inputs.ApplyDragEvent); ok {
+				e = i.Apply(dragEvent)
+			}
 			events.EmitAny(s.world.Events(), e)
 		}
 	}
@@ -97,7 +107,7 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
 		e := entities[0]
 		entity = &e
 	}
-	pos := mgl32.Vec2{float32(event.X), float32(event.Y)}
+	pos := s.window.NormalizeMousePos(int(event.X), int(event.Y))
 
 	switch event.State {
 	case sdl.PRESSED:
@@ -115,14 +125,8 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
 			break
 		}
 		s.movedFrom = &pos
-
-		// dragEvents, err := s.dragEventsArray.GetComponent(*entity)
-		// if err != nil {
-		// 	break
-		// }
-		// for _, e := range dragEvents.Events {
-		// 	events.EmitAny(s.world.Events(), e)
-		// }
+		hover, _ := s.hoveredArray.GetComponent(*entity)
+		s.movingCamera = hover.Camera
 
 	case sdl.RELEASED:
 		dragged := s.movedEntity

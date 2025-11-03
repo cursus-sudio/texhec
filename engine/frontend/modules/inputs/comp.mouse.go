@@ -1,14 +1,24 @@
 package inputs
 
-type HoveredComponent struct{}
+import "shared/services/ecs"
 
-func NewHovered() HoveredComponent { return HoveredComponent{} }
+type HoveredComponent struct {
+	Camera ecs.EntityID
+}
+
+func NewHovered(camera ecs.EntityID) HoveredComponent {
+	return HoveredComponent{camera}
+}
 
 //
 
-type DraggedComponent struct{}
+type DraggedComponent struct {
+	Camera ecs.EntityID
+}
 
-func NewDragged() DraggedComponent { return DraggedComponent{} }
+func NewDragged(camera ecs.EntityID) DraggedComponent {
+	return DraggedComponent{camera}
+}
 
 //
 

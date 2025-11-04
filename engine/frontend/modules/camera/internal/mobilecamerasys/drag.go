@@ -52,8 +52,6 @@ func NewDragSystem(
 }
 
 func (s *dragSystem) Listen(e inputs.DragEvent) {
-	prevPos := s.window.NormalizeMousePos(int(e.From.X()), int(e.From.Y()))
-	newPos := s.window.NormalizeMousePos(int(e.To.X()), int(e.To.Y()))
 
 	for _, cameraEntity := range s.query.Entities() {
 		transformComponent, err := s.transformArray.GetComponent(cameraEntity)
@@ -65,8 +63,8 @@ func (s *dragSystem) Listen(e inputs.DragEvent) {
 		if err != nil {
 			continue
 		}
-		rayBefore := camera.ShootRay(prevPos)
-		rayAfter := camera.ShootRay(newPos)
+		rayBefore := camera.ShootRay(e.From)
+		rayAfter := camera.ShootRay(e.To)
 
 		// apply difference
 		transformComponent.Pos = transformComponent.Pos.Add(rayBefore.Pos.Sub(rayAfter.Pos))

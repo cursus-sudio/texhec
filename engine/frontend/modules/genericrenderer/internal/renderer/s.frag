@@ -5,9 +5,11 @@ in FS {
 } fs;
 
 layout(binding = 0) uniform sampler2D tex;
+uniform vec4 u_color;
 
 out vec4 fragColor;
 
 void main() {
-    fragColor = texture(tex, fs.uv);
+    vec4 texColor = texture(tex, fs.uv);
+    fragColor = texColor * u_color;
 }

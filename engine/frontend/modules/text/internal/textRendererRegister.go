@@ -34,8 +34,10 @@ type textRendererRegister struct {
 	vboFactory           vbo.VBOFactory[Glyph]
 	layoutServiceFactory LayoutServiceFactory
 	logger               logger.Logger
-	defaultTextAsset     assets.AssetID
 	textureArrayFactory  texturearray.Factory
+
+	defaultTextAsset assets.AssetID
+	defaultColor     text.TextColorComponent
 
 	fontsKeys FontKeys
 
@@ -49,6 +51,7 @@ func NewTextRendererRegister(
 	layoutServiceFactory LayoutServiceFactory,
 	logger logger.Logger,
 	defaultTextAsset assets.AssetID,
+	defaultColor text.TextColorComponent,
 	textureArrayFactory texturearray.Factory,
 	fontsKeys FontKeys,
 	removeOncePerNCalls uint16,
@@ -59,10 +62,13 @@ func NewTextRendererRegister(
 		vboFactory:           vboFactory,
 		layoutServiceFactory: layoutServiceFactory,
 		logger:               logger,
-		defaultTextAsset:     defaultTextAsset,
 		textureArrayFactory:  textureArrayFactory,
-		fontsKeys:            fontsKeys,
-		removeOncePerNCalls:  removeOncePerNCalls,
+
+		defaultTextAsset: defaultTextAsset,
+		defaultColor:     defaultColor,
+
+		fontsKeys:           fontsKeys,
+		removeOncePerNCalls: removeOncePerNCalls,
 	}
 }
 
@@ -104,6 +110,7 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 	renderer := textRenderer{
 		world:          w,
 		transformArray: ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
+		colorArray:     ecs.GetComponentsArray[text.TextColorComponent](w.Components()),
 		groupsArray:    ecs.GetComponentsArray[groups.GroupsComponent](w.Components()),
 		cameraQuery:    w.Query().Require(ecs.GetComponentType(camera.OrthoComponent{})).Build(),
 
@@ -113,6 +120,8 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 
 		program:   p,
 		locations: locations,
+
+		defaultColor: f.defaultColor,
 
 		textureFactory: f.textureArrayFactory,
 

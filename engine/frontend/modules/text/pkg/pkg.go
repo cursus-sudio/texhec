@@ -23,6 +23,7 @@ type pkg struct {
 	// defaultOverflow   text.Overflow
 	defaultBreak     text.BreakComponent
 	defaultTextAlign text.TextAlignComponent
+	defaultColor     text.TextColorComponent
 
 	usedGlyphs  datastructures.SparseSet[rune]
 	faceOptions opentype.FaceOptions
@@ -35,6 +36,7 @@ func Package(
 	// defaultOverflow text.Overflow,
 	defaultBreak text.BreakComponent,
 	defaultTextAlign text.TextAlignComponent,
+	defaultColor text.TextColorComponent,
 
 	usedGlyphs datastructures.SparseSet[rune],
 	faceOptions opentype.FaceOptions,
@@ -46,6 +48,7 @@ func Package(
 		// defaultOverflow:   defaultOverflow,
 		defaultBreak:     defaultBreak,
 		defaultTextAlign: defaultTextAlign,
+		defaultColor:     defaultColor,
 		usedGlyphs:       usedGlyphs,
 		faceOptions:      faceOptions,
 		yBaseline:        yBaseline,
@@ -89,6 +92,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			ioc.Get[internal.LayoutServiceFactory](c),
 			ioc.Get[logger.Logger](c),
 			pkg.defaultFontFamily.FontFamily,
+			pkg.defaultColor,
 			ioc.Get[texturearray.Factory](c),
 			ioc.Get[internal.FontKeys](c),
 			1,

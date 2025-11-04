@@ -31,7 +31,8 @@ var fragSource string
 //
 
 type locations struct {
-	Mvp int32 `uniform:"mvp"`
+	Mvp   int32 `uniform:"mvp"`
+	Color int32 `uniform:"u_color"`
 }
 
 //
@@ -60,6 +61,7 @@ type system struct {
 	transformArray ecs.ComponentsArray[transform.TransformComponent]
 	groupsArray    ecs.ComponentsArray[groups.GroupsComponent]
 	textureArray   ecs.ComponentsArray[render.TextureComponent]
+	colorArray     ecs.ComponentsArray[render.ColorComponent]
 	meshArray      ecs.ComponentsArray[render.MeshComponent]
 
 	cameraArray ecs.ComponentsArray[camera.CameraComponent]
@@ -81,7 +83,6 @@ func NewSystem(
 	logger logger.Logger,
 	vboFactory vbo.VBOFactory[genericrenderer.Vertex],
 	camerasCtors ecs.ToolFactory[camera.CameraTool],
-	entitiesQueryAdditionalArguments []ecs.ComponentType,
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		vert, err := shader.NewShader(vertSource, shader.VertexShader)
@@ -124,6 +125,7 @@ func NewSystem(
 			transformArray: ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
 			groupsArray:    ecs.GetComponentsArray[groups.GroupsComponent](w.Components()),
 			textureArray:   ecs.GetComponentsArray[render.TextureComponent](w.Components()),
+			colorArray:     ecs.GetComponentsArray[render.ColorComponent](w.Components()),
 			meshArray:      ecs.GetComponentsArray[render.MeshComponent](w.Components()),
 
 			cameraArray: ecs.GetComponentsArray[camera.CameraComponent](w.Components()),
@@ -135,13 +137,16 @@ func NewSystem(
 			camerasCtors:  camerasCtors.Build(w),
 
 			query: w.Query().
-				Require(entitiesQueryAdditionalArguments...).
 				Require(
 					ecs.GetComponentType(genericrenderer.PipelineComponent{}),
-					ecs.GetComponentType(transform.TransformComponent{}),
 					ecs.GetComponentType(render.MeshComponent{}),
 					ecs.GetComponentType(render.TextureComponent{}),
-				).Build(),
+				).
+				Track(
+					ecs.GetComponentType(transform.TransformComponent{}),
+					ecs.GetComponentType(render.ColorComponent{}),
+				).
+				Build(),
 
 			releasable: releasable,
 		}
@@ -226,6 +231,11 @@ func (m *system) Listen(render.RenderEvent) error {
 				continue
 			}
 
+			colorComponent, err := m.colorArray.GetComponent(entity)
+			if err != nil {
+				colorComponent = render.DefaultColor()
+			}
+
 			meshComponent, err := m.meshArray.GetComponent(entity)
 			if err != nil {
 				continue
@@ -241,6 +251,7 @@ func (m *system) Listen(render.RenderEvent) error {
 
 			mvp := camera.Mat4().Mul4(model)
 			gl.UniformMatrix4fv(m.locations.Mvp, 1, false, &mvp[0])
+			gl.Uniform4fv(m.locations.Color, 1, &colorComponent.Color[0])
 
 			gl.DrawElementsWithOffset(gl.TRIANGLES, int32(meshAsset.EBO().Len()), gl.UNSIGNED_INT, 0)
 		}

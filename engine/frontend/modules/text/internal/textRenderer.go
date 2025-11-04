@@ -4,6 +4,7 @@ import (
 	"frontend/modules/camera"
 	"frontend/modules/groups"
 	rendersys "frontend/modules/render"
+	"frontend/modules/text"
 	"frontend/modules/transform"
 	"frontend/services/assets"
 	"frontend/services/graphics/program"
@@ -19,12 +20,14 @@ import (
 
 type locations struct {
 	Mvp    int32 `uniform:"mvp"`
+	Color  int32 `uniform:"u_color"`
 	Offset int32 `uniform:"offset"`
 }
 
 type textRenderer struct {
 	world          ecs.World
 	groupsArray    ecs.ComponentsArray[groups.GroupsComponent]
+	colorArray     ecs.ComponentsArray[text.TextColorComponent]
 	transformArray ecs.ComponentsArray[transform.TransformComponent]
 	cameraQuery    ecs.LiveQuery
 
@@ -34,6 +37,8 @@ type textRenderer struct {
 
 	program   program.Program
 	locations locations
+
+	defaultColor text.TextColorComponent
 
 	textureFactory texturearray.Factory
 
@@ -144,6 +149,11 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 			entityTransform = transform.NewTransform()
 		}
 
+		entityColor, err := s.colorArray.GetComponent(entity)
+		if err != nil {
+			entityColor = s.defaultColor
+		}
+
 		entityGroups, err := s.groupsArray.GetComponent(entity)
 		if err != nil {
 			entityGroups = groups.DefaultGroups()
@@ -185,6 +195,7 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 
 			mvp := camera.Mat4().Mul4(entityTransform.Mat4())
 			gl.UniformMatrix4fv(s.locations.Mvp, 1, false, &mvp[0])
+			gl.Uniform4fv(s.locations.Color, 1, &entityColor.Color[0])
 
 			gl.DrawArrays(gl.POINTS, 0, layout.verticesCount)
 		}

@@ -47,6 +47,7 @@ import (
 	"shared/utils/connection"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 	"golang.org/x/image/font/opentype"
 
 	// "github.com/go-gl/glfw/v3.3/glfw"
@@ -166,6 +167,7 @@ func frontendDic(
 			// text.Overflow{Visible: false},
 			text.BreakComponent{Break: text.BreakWord},
 			text.TextAlignComponent{Vertical: 0, Horizontal: 0},
+			text.TextColorComponent{Color: mgl32.Vec4{0, 0, 0, 1}},
 			func() datastructures.SparseSet[rune] {
 				set := datastructures.NewSparseSet[rune]()
 				for i := int32('a'); i <= int32('z'); i++ {

@@ -63,18 +63,15 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				SetPivotPoint(mgl32.Vec3{.5, .5, .5}).Val())
 
 			draggable := world.NewEntity()
-
 			ecs.SaveComponent(world.Components(), draggable, transform.NewTransform().Ptr().
 				SetSize(mgl32.Vec3{50, 50, 1}).Val())
 
+			ecs.SaveComponent(world.Components(), draggable, render.NewColor(mgl32.Vec4{0, 1, 0, .2}))
 			ecs.SaveComponent(world.Components(), draggable, render.NewMesh(gameassets.SquareMesh))
 			ecs.SaveComponent(world.Components(), draggable, render.NewTexture(gameassets.WaterTileTextureID))
 			ecs.SaveComponent(world.Components(), draggable, genericrenderer.PipelineComponent{})
 
-			// ecs.SaveComponent(world.Components(), draggable, mouse.NewMouseEvents().
-			// 	AddLeftClickEvents(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
 			ecs.SaveComponent(world.Components(), draggable, collider.NewCollider(gameassets.SquareColliderID))
-			// events.Emit(world.Events(), Hehe{})
 			ecs.SaveComponent(world.Components(), draggable, inputs.NewMouseEvents().
 				AddDragEvents(drag.NewDraggable(draggable)),
 			)
@@ -82,6 +79,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world.Components(), draggable, text.TextComponent{Text: strings.ToUpper("drag me")})
 			ecs.SaveComponent(world.Components(), draggable, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
 			ecs.SaveComponent(world.Components(), draggable, text.FontSizeComponent{FontSize: 15})
+			ecs.SaveComponent(world.Components(), draggable, text.TextColorComponent{Color: mgl32.Vec4{.5, 0, 1, 1}})
 
 			btn := world.NewEntity()
 			ecs.SaveComponent(world.Components(), btn, transform.NewTransform().Ptr().

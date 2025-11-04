@@ -167,7 +167,7 @@ func frontendDic(
 			// text.Overflow{Visible: false},
 			text.BreakComponent{Break: text.BreakWord},
 			text.TextAlignComponent{Vertical: 0, Horizontal: 0},
-			text.TextColorComponent{Color: mgl32.Vec4{0, 0, 0, 1}},
+			text.TextColorComponent{Color: mgl32.Vec4{1, 1, 1, 1}},
 			func() datastructures.SparseSet[rune] {
 				set := datastructures.NewSparseSet[rune]()
 				for i := int32('a'); i <= int32('z'); i++ {

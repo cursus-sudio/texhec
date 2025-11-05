@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"frontend/modules/anchor/pkg"
+	"frontend/modules/audio/pkg"
 	"frontend/modules/camera/pkg"
 	"frontend/modules/collider/pkg"
 	"frontend/modules/drag/pkg"
@@ -52,6 +53,7 @@ import (
 
 	// "github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/ogiusek/ioc/v2"
+	"github.com/veandco/go-sdl2/mix"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -69,8 +71,12 @@ func frontendDic(
 	sdl.GLSetAttribute(sdl.GL_DOUBLEBUFFER, 1) // Essential for GLSwap
 	sdl.GLSetAttribute(sdl.GL_DEPTH_SIZE, 24)  // Good practice for depth testing
 
-	// sdl.GLSetAttribute(sdl.GL_MULTISAMPLEBUFFERS, 1)
-	// sdl.GLSetAttribute(sdl.GL_MULTISAMPLESAMPLES, 4)
+	// audio
+	if err := mix.OpenAudio(48000, sdl.AUDIO_F32SYS, 2, 1024); err != nil {
+		panic(err)
+	}
+
+	// window and opengl
 	window, err := sdl.CreateWindow(
 		"texhec",
 		sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
@@ -88,7 +94,12 @@ func frontendDic(
 	if err := gl.Init(); err != nil {
 		panic(fmt.Errorf("could not initialize OpenGL: %v", err))
 	}
+	if err := window.GLMakeCurrent(ctx); err != nil {
+		panic(fmt.Errorf("could not make OpenGL context current: %v", err))
+	}
+	sdl.GLSetSwapInterval(0)
 
+	// render settings
 	gl.Enable(gl.CULL_FACE)
 	gl.CullFace(gl.FRONT)
 	gl.FrontFace(gl.CCW)
@@ -98,11 +109,6 @@ func frontendDic(
 
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-
-	if err := window.GLMakeCurrent(ctx); err != nil {
-		panic(fmt.Errorf("could not make OpenGL context current: %v", err))
-	}
-	sdl.GLSetSwapInterval(0)
 
 	// path
 
@@ -153,6 +159,7 @@ func frontendDic(
 
 		// engine packages
 		anchorpkg.Package(),
+		audiopkg.Package(),
 		camerapkg.Package(),
 		colliderpkg.Package(),
 		dragpkg.Package(),

@@ -4,6 +4,7 @@ import (
 	gameassets "core/assets"
 	gamescenes "core/scenes"
 	"frontend/modules/anchor"
+	"frontend/modules/audio"
 	"frontend/modules/camera"
 	"frontend/modules/collider"
 	"frontend/modules/genericrenderer"
@@ -67,7 +68,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				OnClick any
 			}
 			buttons := []Button{
-				{Text: "mute", OnClick: nil},
+				{Text: "mute", OnClick: audio.NewPlayEvent(gamescenes.EffectChannel, gameassets.AudioID)},
 				{Text: "keybinds", OnClick: nil},
 				{Text: "return to menu", OnClick: scenessys.NewChangeSceneEvent(gamescenes.MenuID)},
 			}

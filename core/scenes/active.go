@@ -4,6 +4,7 @@ import (
 	"core/modules/fpslogger"
 	"core/modules/tile"
 	"frontend/modules/anchor"
+	"frontend/modules/audio"
 	"frontend/modules/camera"
 	"frontend/modules/collider"
 	"frontend/modules/drag"
@@ -28,6 +29,11 @@ var (
 	GameID     = scenes.NewSceneId("game")
 	SettingsID = scenes.NewSceneId("settings")
 	CreditsID  = scenes.NewSceneId("credits")
+)
+
+const (
+	EffectChannel audio.Channel = iota
+	MusicChannel
 )
 
 type CoreSystems func(scenes.SceneCtx)
@@ -106,6 +112,9 @@ func (pkg) Register(b ioc.Builder) {
 					})
 					return nil
 				}),
+
+				// audio
+				ioc.Get[audio.System](c),
 
 				// render
 				ioc.Get[render.System](c),

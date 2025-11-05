@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"core/modules/tile"
 	_ "embed"
+	"frontend/modules/audio"
 	"frontend/modules/collider"
 	"frontend/modules/genericrenderer"
 	"frontend/modules/render"
@@ -19,6 +20,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
+	"github.com/veandco/go-sdl2/mix"
 	"golang.org/x/image/font/gofont/goregular"
 	"golang.org/x/image/font/opentype"
 )
@@ -35,6 +37,9 @@ var forestSource []byte
 //go:embed files/4.png
 var waterSource []byte
 
+//go:embed files/audio.wav
+var audioSource []byte
+
 var fontSource []byte = goregular.TTF
 
 const (
@@ -47,6 +52,8 @@ const (
 
 	SquareColliderID assets.AssetID = "square collider"
 	FontAssetID      assets.AssetID = "font_asset"
+
+	AudioID assets.AssetID = "audio.wav"
 )
 
 type pkg struct{}
@@ -156,6 +163,15 @@ func (pkg) Register(b ioc.Builder) {
 			}
 			asset := text.NewFontFaceAsset(*font)
 			return asset, nil
+		})
+
+		b.RegisterAsset(AudioID, func() (any, error) {
+			chunk, err := mix.QuickLoadWAV(audioSource)
+			if err != nil {
+				return nil, err
+			}
+			audio := audio.NewAudioAsset(chunk)
+			return audio, nil
 		})
 		return b
 	})

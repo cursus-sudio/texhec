@@ -22,6 +22,9 @@ type pkg struct {
 	gridGroups groups.GroupsComponent
 }
 
+// TODO
+// currently doesn't support animated tiles
+// always renderes first frame if something is animated
 func Package(
 	tileSize int32,
 	gridDepth float32,

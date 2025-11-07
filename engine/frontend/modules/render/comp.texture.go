@@ -6,27 +6,35 @@ import (
 )
 
 type TextureComponent struct {
-	ID assets.AssetID
+	Asset assets.AssetID
+	Frame int
 }
 
-func NewTexture(id assets.AssetID) TextureComponent {
-	return TextureComponent{ID: id}
+func NewTexture(asset assets.AssetID) TextureComponent {
+	return TextureComponent{Asset: asset}
 }
+
+func (c TextureComponent) SetFrame(frame int) TextureComponent {
+	c.Frame = frame
+	return c
+}
+
+//
 
 type TextureAsset interface {
-	Image() image.Image
+	Images() []image.Image
 }
 
 type textureAsset struct {
-	image image.Image
+	images []image.Image
 }
 
 func NewTextureStorageAsset(
-	image image.Image,
+	images ...image.Image,
 ) TextureAsset {
 	return &textureAsset{
-		image: image,
+		images: images,
 	}
 }
 
-func (a *textureAsset) Image() image.Image { return a.image }
+func (a *textureAsset) Images() []image.Image { return a.images }

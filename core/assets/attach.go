@@ -61,6 +61,27 @@ type pkg struct{}
 func Package() ioc.Pkg {
 	return pkg{}
 }
+func Rotate90Clockwise(img image.Image) *image.RGBA {
+	bounds := img.Bounds()
+	W := bounds.Dx()
+	H := bounds.Dy()
+
+	rotatedRect := image.Rect(0, 0, H, W)
+	rotatedImg := image.NewRGBA(rotatedRect)
+
+	for x := 0; x < W; x++ {
+		for y := 0; y < H; y++ {
+			c := img.At(x, y)
+
+			newX := H - 1 - y
+			newY := x
+
+			rotatedImg.Set(newX, newY, c)
+		}
+	}
+
+	return rotatedImg
+}
 
 func (pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, appruntime.OrderCleanUp, func(c ioc.Dic, b appruntime.Builder) appruntime.Builder {
@@ -107,8 +128,8 @@ func (pkg) Register(b ioc.Builder) {
 				return nil, err
 			}
 
-			imgInverse := gtexture.FlipImage(img)
-			asset := render.NewTextureStorageAsset(imgInverse)
+			img = gtexture.FlipImage(img)
+			asset := render.NewTextureStorageAsset(img)
 			return asset, nil
 		})
 
@@ -118,8 +139,8 @@ func (pkg) Register(b ioc.Builder) {
 			if err != nil {
 				return nil, err
 			}
-			imgInverse := gtexture.FlipImage(img)
-			asset := render.NewTextureStorageAsset(imgInverse)
+			img = gtexture.FlipImage(img)
+			asset := render.NewTextureStorageAsset(img)
 			return asset, nil
 		})
 
@@ -129,19 +150,28 @@ func (pkg) Register(b ioc.Builder) {
 			if err != nil {
 				return nil, err
 			}
-			imgInverse := gtexture.FlipImage(img)
-			asset := render.NewTextureStorageAsset(imgInverse)
+			img = gtexture.FlipImage(img)
+			asset := render.NewTextureStorageAsset(img)
 			return asset, nil
 		})
 
 		b.RegisterAsset(WaterTileTextureID, func() (any, error) {
-			imgFile := bytes.NewBuffer(waterSource)
-			img, _, err := image.Decode(imgFile)
+			img1File := bytes.NewBuffer(waterSource)
+			img1, _, err := image.Decode(img1File)
 			if err != nil {
 				return nil, err
 			}
-			imgInverse := gtexture.FlipImage(img)
-			asset := render.NewTextureStorageAsset(imgInverse)
+			img1 = gtexture.FlipImage(img1)
+
+			img2File := bytes.NewBuffer(waterSource)
+			img2, _, err := image.Decode(img2File)
+			if err != nil {
+				return nil, err
+			}
+			img2 = Rotate90Clockwise(img2)
+			// img2 = gtexture.FlipImage(img2)
+			asset := render.NewTextureStorageAsset(img1, img2)
+			// asset := render.NewTextureStorageAsset(img2, img1)
 			return asset, nil
 		})
 

@@ -38,7 +38,7 @@ type locations struct {
 //
 
 type releasable struct {
-	textures  map[assets.AssetID]texture.Texture
+	textures  map[render.TextureComponent]texture.Texture
 	meshes    map[assets.AssetID]vao.VAO
 	program   program.Program
 	locations locations
@@ -112,7 +112,7 @@ func NewSystem(
 		}
 
 		releasable := releasable{
-			textures:  make(map[assets.AssetID]texture.Texture),
+			textures:  make(map[render.TextureComponent]texture.Texture),
 			meshes:    make(map[assets.AssetID]vao.VAO),
 			program:   p,
 			locations: locations,
@@ -159,19 +159,20 @@ func NewSystem(
 
 //
 
-func (m *system) getTexture(asset assets.AssetID) (texture.Texture, error) {
-	if texture, ok := m.textures[asset]; ok {
+func (m *system) getTexture(component render.TextureComponent) (texture.Texture, error) {
+	if texture, ok := m.textures[component]; ok {
 		return texture, nil
 	}
-	textureAsset, err := assets.StorageGet[render.TextureAsset](m.assetsStorage, asset)
+	textureAsset, err := assets.StorageGet[render.TextureAsset](m.assetsStorage, component.Asset)
 	if err != nil {
 		return nil, err
 	}
-	texture, err := texture.NewTexture(textureAsset.Image())
+	image := textureAsset.Images()[component.Frame]
+	texture, err := texture.NewTexture(image)
 	if err != nil {
 		return nil, err
 	}
-	m.textures[asset] = texture
+	m.textures[component] = texture
 	return texture, nil
 }
 
@@ -226,7 +227,7 @@ func (m *system) Listen(render.RenderEvent) error {
 			if err != nil {
 				continue
 			}
-			textureAsset, err := m.getTexture(textureComponent.ID)
+			textureAsset, err := m.getTexture(textureComponent)
 			if err != nil {
 				continue
 			}

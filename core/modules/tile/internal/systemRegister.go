@@ -85,7 +85,7 @@ func (service TileRenderSystemRegister) AddType(addedAssets datastructures.Spars
 			continue
 		}
 
-		service.textures.Set(assetIndex, texture.Image())
+		service.textures.Set(assetIndex, texture.Images()[0])
 	}
 }
 
@@ -190,7 +190,6 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 					factory.gridDepth,
 				}).Val())
 			groupsTransaction.SaveComponent(entity, factory.groups)
-
 		}
 
 		err := ecs.FlushMany(transformTransaction, groupsTransaction)

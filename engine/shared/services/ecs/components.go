@@ -51,7 +51,7 @@ type componentsInterface interface {
 
 	// returns for with all listed component types
 	// the same live query should be returned for the same input
-	Query() LiveQueryFactory
+	Query() LiveQueryBuilder
 
 	GetAnyComponent(EntityID, ComponentType) (any, error)
 
@@ -199,7 +199,7 @@ arrayEntities:
 	return finalEntities
 }
 
-func (i *componentsImpl) Query() LiveQueryFactory {
+func (i *componentsImpl) Query() LiveQueryBuilder {
 	return newLiveQueryFactory(i)
 }
 func (i *componentsImpl) GetAnyComponent(entity EntityID, componentType ComponentType) (any, error) {

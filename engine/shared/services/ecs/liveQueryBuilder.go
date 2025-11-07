@@ -4,12 +4,12 @@ import (
 	"strings"
 )
 
-type LiveQueryFactory interface {
-	Require(...ComponentType) LiveQueryFactory
+type LiveQueryBuilder interface {
+	Require(...ComponentType) LiveQueryBuilder
 
 	// is used to call onChange on liveQuery on componentType add, change or remove
-	Track(...ComponentType) LiveQueryFactory
-	Forbid(...ComponentType) LiveQueryFactory
+	Track(...ComponentType) LiveQueryBuilder
+	Forbid(...ComponentType) LiveQueryBuilder
 	Build() LiveQuery
 }
 
@@ -21,23 +21,23 @@ type liveQueryFactory struct {
 	forbidden []ComponentType
 }
 
-func newLiveQueryFactory(components *componentsImpl) LiveQueryFactory {
+func newLiveQueryFactory(components *componentsImpl) LiveQueryBuilder {
 	return &liveQueryFactory{
 		components: components,
 	}
 }
 
-func (f *liveQueryFactory) Require(components ...ComponentType) LiveQueryFactory {
+func (f *liveQueryFactory) Require(components ...ComponentType) LiveQueryBuilder {
 	f.required = append(f.required, components...)
 	return f
 }
 
-func (f *liveQueryFactory) Track(components ...ComponentType) LiveQueryFactory {
+func (f *liveQueryFactory) Track(components ...ComponentType) LiveQueryBuilder {
 	f.tracked = append(f.tracked, components...)
 	return f
 }
 
-func (f *liveQueryFactory) Forbid(components ...ComponentType) LiveQueryFactory {
+func (f *liveQueryFactory) Forbid(components ...ComponentType) LiveQueryBuilder {
 	f.forbidden = append(f.forbidden, components...)
 	return f
 }

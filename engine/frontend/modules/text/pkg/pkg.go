@@ -39,8 +39,9 @@ func Package(
 	defaultColor text.TextColorComponent,
 
 	usedGlyphs datastructures.SparseSet[rune],
-	faceOptions opentype.FaceOptions,
-	yBaseline int,
+	// faceOptions opentype.FaceOptions,
+	size float64,
+	normalizedYBaseline float64,
 ) ioc.Pkg {
 	return pkg{
 		defaultFontFamily: defaultFontFamily,
@@ -50,8 +51,12 @@ func Package(
 		defaultTextAlign: defaultTextAlign,
 		defaultColor:     defaultColor,
 		usedGlyphs:       usedGlyphs,
-		faceOptions:      faceOptions,
-		yBaseline:        yBaseline,
+		faceOptions: opentype.FaceOptions{
+			Size: size,
+			// DPI:  72,
+			DPI: 78, // arbitrary number because it works for some reason (its a little bit rounded down)
+		},
+		yBaseline: int(size * normalizedYBaseline),
 	}
 }
 

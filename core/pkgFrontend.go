@@ -50,7 +50,6 @@ import (
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
-	"golang.org/x/image/font/opentype"
 
 	// "github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/ogiusek/ioc/v2"
@@ -204,11 +203,9 @@ func frontendDic(
 
 				return set
 			}(),
-			opentype.FaceOptions{
-				Size: 64,
-				DPI:  72,
-			},
-			52,
+			64,
+			// 0.8125, // suggested (52/64)
+			0.8, // arbitrary number works for some reason
 		),
 		transformpkg.Package(),
 

@@ -71,7 +71,7 @@ func (s *fontService) AssetFont(assetID assets.AssetID) (Font, error) {
 	for _, glyph := range glyphs {
 		glyphID := uint32(glyph)
 		_, advance, _ := fontFace.GlyphBounds(glyph)
-		width := float32(advance.Ceil()) / 64.
+		width := float32(advance.Ceil()) / float32(s.faceOptions.Size)
 		fontMeta.GlyphsWidth.Set(glyphID, width)
 
 		drawer := font.Drawer{

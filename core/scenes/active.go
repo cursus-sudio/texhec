@@ -4,6 +4,7 @@ import (
 	"core/modules/fpslogger"
 	"core/modules/tile"
 	"frontend/modules/anchor"
+	"frontend/modules/animation"
 	"frontend/modules/audio"
 	"frontend/modules/camera"
 	"frontend/modules/collider"
@@ -82,6 +83,62 @@ func (pkg) Register(b ioc.Builder) {
 		return func(ctx scenes.SceneCtx) {
 			logger := ioc.Get[logger.Logger](c)
 
+			temporaryInlineSystems := ecs.NewSystemRegister(func(w ecs.World) error {
+				events.Listen(w.EventsBuilder(), func(e sdl.KeyboardEvent) {
+					if e.Keysym.Sym == sdl.K_q {
+						logger.Info("quiting program due to pressing 'Q'")
+						events.Emit(ctx.Events(), inputs.NewQuitEvent())
+					}
+					if e.Keysym.Sym == sdl.K_ESCAPE {
+						logger.Info("quiting program due to pressing 'ESC'")
+						events.Emit(ctx.Events(), inputs.NewQuitEvent())
+					}
+					if e.State == sdl.PRESSED && e.Keysym.Sym == sdl.K_f {
+						logger.Info("toggling screen size due to pressing 'F'")
+						window := ioc.Get[window.Api](c)
+						flags := window.Window().GetFlags()
+						if flags&sdl.WINDOW_FULLSCREEN_DESKTOP == sdl.WINDOW_FULLSCREEN_DESKTOP {
+							window.Window().SetFullscreen(0)
+						} else {
+							window.Window().SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
+						}
+					}
+				})
+
+				// temporary inline system for animating everything
+				{
+					textureComponentsArray := ecs.GetComponentsArray[render.TextureComponent](w.Components())
+					textureTransaction := textureComponentsArray.Transaction()
+					assetsService := ioc.Get[assets.AssetsStorage](c)
+					var timeElapsed time.Duration
+					frameDuration := time.Millisecond * 200
+					events.Listen(w.EventsBuilder(), func(e frames.FrameEvent) {
+						timeElapsed += e.Delta
+						if timeElapsed < frameDuration {
+							return
+						}
+						timeElapsed -= frameDuration
+						entities := textureComponentsArray.GetEntities()
+						for _, entity := range entities {
+							comp, err := textureComponentsArray.GetComponent(entity)
+							if err != nil {
+								continue
+							}
+							asset, err := assets.StorageGet[render.TextureAsset](assetsService, comp.Asset)
+							if err != nil {
+								continue
+							}
+							comp.Frame += 1
+							comp.Frame = comp.Frame % len(asset.Images())
+							textureTransaction.SaveComponent(entity, comp)
+						}
+						textureTransaction.Flush()
+					})
+				}
+
+				return nil
+			})
+
 			ecs.RegisterSystems(ctx,
 				// inputs
 				ioc.Get[inputs.System](c),
@@ -89,64 +146,12 @@ func (pkg) Register(b ioc.Builder) {
 				// update
 				ioc.Get[anchor.System](c),
 				ioc.Get[transform.System](c),
+
+				ioc.Get[animation.System](c),
 				ioc.Get[collider.System](c),
 				ioc.Get[drag.System](c),
 				ioc.Get[camera.System](c),
-				ecs.NewSystemRegister(func(w ecs.World) error {
-					events.Listen(w.EventsBuilder(), func(e sdl.KeyboardEvent) {
-						if e.Keysym.Sym == sdl.K_q {
-							logger.Info("quiting program due to pressing 'Q'")
-							events.Emit(ctx.Events(), inputs.NewQuitEvent())
-						}
-						if e.Keysym.Sym == sdl.K_ESCAPE {
-							logger.Info("quiting program due to pressing 'ESC'")
-							events.Emit(ctx.Events(), inputs.NewQuitEvent())
-						}
-						if e.State == sdl.PRESSED && e.Keysym.Sym == sdl.K_f {
-							logger.Info("toggling screen size due to pressing 'F'")
-							window := ioc.Get[window.Api](c)
-							flags := window.Window().GetFlags()
-							if flags&sdl.WINDOW_FULLSCREEN_DESKTOP == sdl.WINDOW_FULLSCREEN_DESKTOP {
-								window.Window().SetFullscreen(0)
-							} else {
-								window.Window().SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
-							}
-						}
-					})
-
-					// temporary inline system for animating everything
-					{
-						textureComponentsArray := ecs.GetComponentsArray[render.TextureComponent](w.Components())
-						textureTransaction := textureComponentsArray.Transaction()
-						assetsService := ioc.Get[assets.AssetsStorage](c)
-						var timeElapsed time.Duration
-						frameDuration := time.Millisecond * 200
-						events.Listen(w.EventsBuilder(), func(e frames.FrameEvent) {
-							timeElapsed += e.Delta
-							if timeElapsed < frameDuration {
-								return
-							}
-							timeElapsed -= frameDuration
-							entities := textureComponentsArray.GetEntities()
-							for _, entity := range entities {
-								comp, err := textureComponentsArray.GetComponent(entity)
-								if err != nil {
-									continue
-								}
-								asset, err := assets.StorageGet[render.TextureAsset](assetsService, comp.Asset)
-								if err != nil {
-									continue
-								}
-								comp.Frame += 1
-								comp.Frame = comp.Frame % len(asset.Images())
-								textureTransaction.SaveComponent(entity, comp)
-							}
-							textureTransaction.Flush()
-						})
-					}
-
-					return nil
-				}),
+				temporaryInlineSystems,
 
 				// audio
 				ioc.Get[audio.System](c),

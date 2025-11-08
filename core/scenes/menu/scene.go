@@ -4,6 +4,7 @@ import (
 	gameassets "core/assets"
 	gamescenes "core/scenes"
 	"frontend/modules/anchor"
+	"frontend/modules/animation"
 	"frontend/modules/camera"
 	"frontend/modules/collider"
 	"frontend/modules/genericrenderer"
@@ -16,6 +17,7 @@ import (
 	"shared/services/ecs"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
@@ -55,6 +57,10 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world.Components(), background, render.NewMesh(gameassets.SquareMesh))
 			ecs.SaveComponent(world.Components(), background, render.NewTexture(gameassets.ForestTileTextureID))
 			ecs.SaveComponent(world.Components(), background, genericrenderer.PipelineComponent{})
+			ecs.SaveComponent(world.Components(), background, animation.NewAnimationComponent(
+				gameassets.ChangeColorsAnimation,
+				time.Second,
+			))
 
 			buttonArea := world.NewEntity()
 			ecs.SaveComponent(world.Components(), buttonArea, transform.NewTransform().Ptr().

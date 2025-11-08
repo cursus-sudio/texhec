@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"core/modules/tile"
 	_ "embed"
+	"frontend/modules/animation"
 	"frontend/modules/audio"
 	"frontend/modules/collider"
 	"frontend/modules/genericrenderer"
@@ -16,6 +17,7 @@ import (
 	"image"
 	_ "image/png"
 	"shared/services/datastructures"
+	"shared/services/ecs"
 	appruntime "shared/services/runtime"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -56,34 +58,60 @@ const (
 	AudioID assets.AssetID = "audio.wav"
 )
 
+const (
+	ChangeColorsAnimation animation.AnimationID = iota
+)
+const (
+	MyEasingFunction animation.EasingFunctionID = iota
+)
+
 type pkg struct{}
 
 func Package() ioc.Pkg {
 	return pkg{}
 }
-func Rotate90Clockwise(img image.Image) *image.RGBA {
-	bounds := img.Bounds()
-	W := bounds.Dx()
-	H := bounds.Dy()
-
-	rotatedRect := image.Rect(0, 0, H, W)
-	rotatedImg := image.NewRGBA(rotatedRect)
-
-	for x := 0; x < W; x++ {
-		for y := 0; y < H; y++ {
-			c := img.At(x, y)
-
-			newX := H - 1 - y
-			newY := x
-
-			rotatedImg.Set(newX, newY, c)
-		}
-	}
-
-	return rotatedImg
-}
 
 func (pkg) Register(b ioc.Builder) {
+
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b animation.AnimationSystemBuilder) animation.AnimationSystemBuilder {
+		b.AddEasingFunction(MyEasingFunction, func(t animation.AnimationState) animation.AnimationState {
+			const n1 = 7.5625
+			const d1 = 2.75
+
+			if t < 1/d1 { // First segment of the bounce (rising curve)
+				return n1 * t * t
+			} else if t < 2/d1 { // Second segment (peak of the first bounce)
+				t -= 1.5 / d1
+				return n1*t*t + 0.75
+			} else if t < 2.5/d1 { // Third segment (peak of the second, smaller bounce)
+				t -= 2.25 / d1
+				return n1*t*t + 0.9375
+			} else { // Final segment (settling)
+				t -= 2.625 / d1
+				return n1*t*t + 0.984375
+			}
+		})
+		animation.AddTransitionFunction(b, func(w ecs.World) animation.TransitionFunction[render.ColorComponent] {
+			componentArray := ecs.GetComponentsArray[render.ColorComponent](w.Components())
+			return func(arg animation.TransitionFunctionArgument[render.ColorComponent]) {
+				comp := arg.From.Blend(arg.To, float32(arg.State))
+				componentArray.SaveComponent(arg.Entity, comp)
+			}
+		})
+		b.AddAnimation(ChangeColorsAnimation, animation.NewAnimation(
+			[]animation.Event{},
+			[]animation.Transition{
+				animation.NewTransition(
+					render.NewColor(mgl32.Vec4{1, 0, 1, 1}),
+					render.NewColor(mgl32.Vec4{1, 1, 1, 1}),
+					0,
+					1,
+					MyEasingFunction,
+				),
+			},
+		))
+		return b
+	})
 	ioc.WrapService(b, appruntime.OrderCleanUp, func(c ioc.Dic, b appruntime.Builder) appruntime.Builder {
 		assets := ioc.Get[assets.Assets](c)
 		b.OnStop(func(r appruntime.Runtime) {

@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"frontend/modules/anchor/pkg"
+	"frontend/modules/animation/pkg"
 	"frontend/modules/audio/pkg"
 	"frontend/modules/camera/pkg"
 	"frontend/modules/collider/pkg"
@@ -160,6 +161,7 @@ func frontendDic(
 		// engine packages
 		anchorpkg.Package(),
 		audiopkg.Package(),
+		animationpkg.Package(),
 		camerapkg.Package(),
 		colliderpkg.Package(),
 		dragpkg.Package(),

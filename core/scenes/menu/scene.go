@@ -96,7 +96,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				ecs.SaveComponent(world.Components(), btn, genericrenderer.PipelineComponent{})
 				ecs.SaveComponent(world.Components(), btn, animation.NewAnimationComponent(
 					gameassets.ButtonAnimation,
-					time.Second,
+					time.Second*2,
 				))
 				ecs.SaveComponent(world.Components(), btn, animation.NewLoopComponent())
 

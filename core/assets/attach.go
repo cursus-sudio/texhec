@@ -101,6 +101,16 @@ func (pkg) Register(b ioc.Builder) {
 					render.NewTextureFrameComponent(.6),
 					LinearEasingFunction,
 				),
+				animation.NewTransition(
+					render.NewColor(mgl32.Vec4{1, 1, 0, 1}),
+					render.NewColor(mgl32.Vec4{1, 1, 1, 1}),
+					MyEasingFunction,
+				).SetStart(0).SetEnd(.5),
+				animation.NewTransition(
+					render.NewColor(mgl32.Vec4{1, 1, 1, 1}),
+					render.NewColor(mgl32.Vec4{1, 1, 0, 1}),
+					MyEasingFunction,
+				).SetStart(.5).SetEnd(1),
 			},
 		))
 		b.AddAnimation(ChangeColorsAnimation, animation.NewAnimation(

@@ -61,6 +61,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				gameassets.ChangeColorsAnimation,
 				time.Second,
 			))
+			// ecs.SaveComponent(world.Components(), background, animation.NewLoopComponent())
 
 			buttonArea := world.NewEntity()
 			ecs.SaveComponent(world.Components(), buttonArea, transform.NewTransform().Ptr().
@@ -92,6 +93,11 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				ecs.SaveComponent(world.Components(), btn, render.NewMesh(gameassets.SquareMesh))
 				ecs.SaveComponent(world.Components(), btn, render.NewTexture(gameassets.WaterTileTextureID))
 				ecs.SaveComponent(world.Components(), btn, genericrenderer.PipelineComponent{})
+				ecs.SaveComponent(world.Components(), btn, animation.NewAnimationComponent(
+					gameassets.ButtonAnimation,
+					time.Second,
+				))
+				ecs.SaveComponent(world.Components(), btn, animation.NewLoopComponent())
 
 				ecs.SaveComponent(world.Components(), btn, inputs.NewMouseEvents().AddLeftClickEvents(button.OnClick))
 				ecs.SaveComponent(world.Components(), btn, collider.NewCollider(gameassets.SquareColliderID))

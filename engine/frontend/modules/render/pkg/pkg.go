@@ -1,6 +1,7 @@
 package renderpkg
 
 import (
+	"frontend/modules/animation"
 	"frontend/modules/render"
 	"frontend/modules/render/internal"
 	"frontend/services/media/window"
@@ -31,7 +32,6 @@ func (pkg) Register(b ioc.Builder) {
 		return ecs.NewSystemRegister(func(w ecs.World) error {
 			ecs.RegisterSystems(w,
 				internal.NewClearSystem(),
-				// TODO expose error cause
 				internal.NewErrorLogger(
 					ioc.Get[logger.Logger](c),
 					ioc.Get[ecs.ToolFactory[render.RenderTool]](c).Build(w),
@@ -40,5 +40,26 @@ func (pkg) Register(b ioc.Builder) {
 			)
 			return nil
 		})
+	})
+
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b animation.AnimationSystemBuilder) animation.AnimationSystemBuilder {
+		animation.AddTransitionFunction(b, func(w ecs.World) animation.TransitionFunction[render.ColorComponent] {
+			componentArray := ecs.GetComponentsArray[render.ColorComponent](w.Components())
+			return func(arg animation.TransitionFunctionArgument[render.ColorComponent]) error {
+				comp := arg.From.Blend(arg.To, float32(arg.State))
+				return componentArray.SaveComponent(arg.Entity, comp)
+			}
+		})
+		animation.AddTransitionFunction(b, func(w ecs.World) animation.TransitionFunction[render.TextureComponent] {
+			componentArray := ecs.GetComponentsArray[render.TextureComponent](w.Components())
+			return func(arg animation.TransitionFunctionArgument[render.TextureComponent]) error {
+				comp, err := arg.From.Blend(arg.To, float32(arg.State))
+				if err != nil {
+					return err
+				}
+				return componentArray.SaveComponent(arg.Entity, comp)
+			}
+		})
+		return b
 	})
 }

@@ -26,6 +26,13 @@ func NewAnimationComponent(
 	}
 }
 
+func (c *AnimationComponent) LoopAndAddElapsedTime(time time.Duration) {
+	ratio := time.Seconds() / c.Duration.Seconds()
+	c.PreviousState = 0
+	c.State += AnimationState(ratio) - 1
+	c.State = min(c.State, 1)
+}
+
 func (c *AnimationComponent) AddElapsedTime(time time.Duration) {
 	ratio := time.Seconds() / c.Duration.Seconds()
 	c.PreviousState = c.State
@@ -33,7 +40,10 @@ func (c *AnimationComponent) AddElapsedTime(time time.Duration) {
 	c.State = min(c.State, 1)
 }
 
-// //
 //
-// type LoopComponent struct {
-// }
+
+type LoopComponent struct{}
+
+func NewLoopComponent() LoopComponent {
+	return LoopComponent{}
+}

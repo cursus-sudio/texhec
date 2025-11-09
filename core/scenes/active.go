@@ -15,13 +15,10 @@ import (
 	scenesys "frontend/modules/scenes"
 	"frontend/modules/text"
 	"frontend/modules/transform"
-	"frontend/services/assets"
-	"frontend/services/frames"
 	"frontend/services/media/window"
 	"frontend/services/scenes"
 	"shared/services/ecs"
 	"shared/services/logger"
-	"time"
 
 	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
@@ -106,35 +103,35 @@ func (pkg) Register(b ioc.Builder) {
 				})
 
 				// temporary inline system for animating everything
-				{
-					textureComponentsArray := ecs.GetComponentsArray[render.TextureComponent](w.Components())
-					textureTransaction := textureComponentsArray.Transaction()
-					assetsService := ioc.Get[assets.AssetsStorage](c)
-					var timeElapsed time.Duration
-					frameDuration := time.Millisecond * 200
-					events.Listen(w.EventsBuilder(), func(e frames.FrameEvent) {
-						timeElapsed += e.Delta
-						if timeElapsed < frameDuration {
-							return
-						}
-						timeElapsed -= frameDuration
-						entities := textureComponentsArray.GetEntities()
-						for _, entity := range entities {
-							comp, err := textureComponentsArray.GetComponent(entity)
-							if err != nil {
-								continue
-							}
-							asset, err := assets.StorageGet[render.TextureAsset](assetsService, comp.Asset)
-							if err != nil {
-								continue
-							}
-							comp.Frame += 1
-							comp.Frame = comp.Frame % len(asset.Images())
-							textureTransaction.SaveComponent(entity, comp)
-						}
-						textureTransaction.Flush()
-					})
-				}
+				// {
+				// 	textureComponentsArray := ecs.GetComponentsArray[render.TextureComponent](w.Components())
+				// 	textureTransaction := textureComponentsArray.Transaction()
+				// 	assetsService := ioc.Get[assets.AssetsStorage](c)
+				// 	var timeElapsed time.Duration
+				// 	frameDuration := time.Millisecond * 200
+				// 	events.Listen(w.EventsBuilder(), func(e frames.FrameEvent) {
+				// 		timeElapsed += e.Delta
+				// 		if timeElapsed < frameDuration {
+				// 			return
+				// 		}
+				// 		timeElapsed -= frameDuration
+				// 		entities := textureComponentsArray.GetEntities()
+				// 		for _, entity := range entities {
+				// 			comp, err := textureComponentsArray.GetComponent(entity)
+				// 			if err != nil {
+				// 				continue
+				// 			}
+				// 			asset, err := assets.StorageGet[render.TextureAsset](assetsService, comp.Asset)
+				// 			if err != nil {
+				// 				continue
+				// 			}
+				// 			comp.Frame += 1
+				// 			comp.Frame = comp.Frame % len(asset.Images())
+				// 			textureTransaction.SaveComponent(entity, comp)
+				// 		}
+				// 		textureTransaction.Flush()
+				// 	})
+				// }
 
 				return nil
 			})

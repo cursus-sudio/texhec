@@ -21,8 +21,8 @@ type TransitionFunctionAnyArgument struct {
 	State    AnimationState
 }
 
-type TransitionFunction[Component any] func(arg TransitionFunctionArgument[Component])
-type AnyTransitionFunction func(arg TransitionFunctionAnyArgument)
+type TransitionFunction[Component any] func(arg TransitionFunctionArgument[Component]) error
+type AnyTransitionFunction func(arg TransitionFunctionAnyArgument) error
 
 func AddTransitionFunction[Component any](
 	b AnimationSystemBuilder,
@@ -30,14 +30,14 @@ func AddTransitionFunction[Component any](
 ) {
 	b.AddTransitionFunction(reflect.TypeFor[Component](), func(w ecs.World) AnyTransitionFunction {
 		inner := transitionFunction(w)
-		return func(anyArg TransitionFunctionAnyArgument) {
+		return func(anyArg TransitionFunctionAnyArgument) error {
 			arg := TransitionFunctionArgument[Component]{
 				Entity: anyArg.Entity,
 				From:   anyArg.From.(Component),
 				To:     anyArg.To.(Component),
 				State:  anyArg.State,
 			}
-			inner(arg)
+			return inner(arg)
 		}
 	})
 }

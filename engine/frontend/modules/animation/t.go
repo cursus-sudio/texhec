@@ -19,16 +19,26 @@ type Transition struct {
 
 func NewTransition[Component any](
 	from, to Component,
-	start, end AnimationState,
+	// start, end AnimationState,
 	easingFunction EasingFunctionID,
 ) Transition {
 	return Transition{
 		From:           from,
 		To:             to,
-		Start:          start,
-		End:            end,
+		Start:          0,
+		End:            1,
 		EasingFunction: easingFunction,
 	}
+}
+
+func (t Transition) SetStart(start AnimationState) Transition {
+	t.Start = start
+	return t
+}
+
+func (t Transition) SetEnd(end AnimationState) Transition {
+	t.End = end
+	return t
 }
 
 //

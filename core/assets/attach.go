@@ -17,7 +17,6 @@ import (
 	"image"
 	_ "image/png"
 	"shared/services/datastructures"
-	"shared/services/ecs"
 	appruntime "shared/services/runtime"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -60,9 +59,11 @@ const (
 
 const (
 	ChangeColorsAnimation animation.AnimationID = iota
+	ButtonAnimation
 )
 const (
 	MyEasingFunction animation.EasingFunctionID = iota
+	LinearEasingFunction
 )
 
 type pkg struct{}
@@ -74,6 +75,7 @@ func Package() ioc.Pkg {
 func (pkg) Register(b ioc.Builder) {
 
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b animation.AnimationSystemBuilder) animation.AnimationSystemBuilder {
+		b.AddEasingFunction(LinearEasingFunction, func(t animation.AnimationState) animation.AnimationState { return t })
 		b.AddEasingFunction(MyEasingFunction, func(t animation.AnimationState) animation.AnimationState {
 			const n1 = 7.5625
 			const d1 = 2.75
@@ -91,21 +93,22 @@ func (pkg) Register(b ioc.Builder) {
 				return n1*t*t + 0.984375
 			}
 		})
-		animation.AddTransitionFunction(b, func(w ecs.World) animation.TransitionFunction[render.ColorComponent] {
-			componentArray := ecs.GetComponentsArray[render.ColorComponent](w.Components())
-			return func(arg animation.TransitionFunctionArgument[render.ColorComponent]) {
-				comp := arg.From.Blend(arg.To, float32(arg.State))
-				componentArray.SaveComponent(arg.Entity, comp)
-			}
-		})
+		b.AddAnimation(ButtonAnimation, animation.NewAnimation(
+			[]animation.Event{},
+			[]animation.Transition{
+				animation.NewTransition(
+					render.NewTexture(WaterTileTextureID).SetFrame(0),
+					render.NewTexture(WaterTileTextureID).SetFrame(1),
+					LinearEasingFunction,
+				),
+			},
+		))
 		b.AddAnimation(ChangeColorsAnimation, animation.NewAnimation(
 			[]animation.Event{},
 			[]animation.Transition{
 				animation.NewTransition(
 					render.NewColor(mgl32.Vec4{1, 0, 1, 1}),
 					render.NewColor(mgl32.Vec4{1, 1, 1, 1}),
-					0,
-					1,
 					MyEasingFunction,
 				),
 			},

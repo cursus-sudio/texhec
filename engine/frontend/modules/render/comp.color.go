@@ -14,6 +14,10 @@ func NewColor(color mgl32.Vec4) ColorComponent {
 	}
 }
 
+func DefaultColor() ColorComponent {
+	return NewColor(mgl32.Vec4{1, 1, 1, 1})
+}
+
 func (c1 ColorComponent) Blend(c2 ColorComponent, mix32 float32) ColorComponent {
 	invMix32 := 1.0 - mix32
 	blendedColor := mgl32.Vec4{
@@ -26,8 +30,4 @@ func (c1 ColorComponent) Blend(c2 ColorComponent, mix32 float32) ColorComponent 
 	return ColorComponent{
 		Color: blendedColor,
 	}
-}
-
-func DefaultColor() ColorComponent {
-	return NewColor(mgl32.Vec4{1, 1, 1, 1})
 }

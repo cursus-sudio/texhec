@@ -15,8 +15,9 @@ type AnimationSystemBuilder struct {
 	animations          datastructures.SparseArray[animation.AnimationID, animation.Animation]
 }
 
-func NewBuilder() AnimationSystemBuilder {
+func NewBuilder(logger logger.Logger) AnimationSystemBuilder {
 	return AnimationSystemBuilder{
+		logger:              logger,
 		easingFunctions:     datastructures.NewSparseArray[animation.EasingFunctionID, animation.EasingFunction](),
 		transitionFunctions: make(map[reflect.Type]func(ecs.World) animation.AnyTransitionFunction),
 		animations:          datastructures.NewSparseArray[animation.AnimationID, animation.Animation](),

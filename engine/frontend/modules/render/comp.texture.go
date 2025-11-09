@@ -1,41 +1,46 @@
 package render
 
 import (
-	"errors"
 	"frontend/services/assets"
 	"image"
-	"math"
 )
 
 type TextureComponent struct {
 	Asset assets.AssetID
-	Frame int
 }
 
 func NewTexture(asset assets.AssetID) TextureComponent {
 	return TextureComponent{Asset: asset}
 }
 
-func (c TextureComponent) SetFrame(frame int) TextureComponent {
-	c.Frame = frame
-	return c
+//
+
+// frame is normalized
+type TextureFrameComponent struct {
+	FrameNormalized float64
 }
 
-var (
-	ErrCannotBlendTextureBetweenDifferentAssets = errors.New("cannot blend texture components between different assets")
-)
-
-func (c1 TextureComponent) Blend(c2 TextureComponent, mix32 float32) (TextureComponent, error) {
-	if c1.Asset != c2.Asset {
-		return TextureComponent{}, ErrCannotBlendTextureBetweenDifferentAssets
+func NewTextureFrameComponent(frameNormalized float64) TextureFrameComponent {
+	return TextureFrameComponent{
+		FrameNormalized: max(min(frameNormalized, 1), 0),
 	}
-	invMix32 := 1.0 - mix32
-	frame := float32(c1.Frame)*invMix32 + float32(c2.Frame)*mix32
+}
 
-	return TextureComponent{
-		Asset: c1.Asset,
-		Frame: int(math.Round(float64(frame))),
-	}, nil
+func DefaultTextureFrameComponent() TextureFrameComponent {
+	return TextureFrameComponent{0}
+}
+
+func (c TextureFrameComponent) GetFrame(frameLen int) int {
+	return min(
+		int(c.FrameNormalized*float64(frameLen)),
+		frameLen-1,
+	)
+}
+
+func (c1 TextureFrameComponent) Blend(c2 TextureFrameComponent, mix64 float64) TextureFrameComponent {
+	invMix64 := 1.0 - mix64
+	frame := c1.FrameNormalized*invMix64 + c2.FrameNormalized*mix64
+	return TextureFrameComponent{FrameNormalized: frame}
 }
 
 //

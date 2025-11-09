@@ -97,8 +97,8 @@ func (pkg) Register(b ioc.Builder) {
 			[]animation.Event{},
 			[]animation.Transition{
 				animation.NewTransition(
-					render.NewTexture(WaterTileTextureID).SetFrame(0),
-					render.NewTexture(WaterTileTextureID).SetFrame(1),
+					render.NewTextureFrameComponent(0),
+					render.NewTextureFrameComponent(.6),
 					LinearEasingFunction,
 				),
 			},

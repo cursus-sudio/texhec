@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"os"
 	"runtime"
+	"shared/services/ecs"
 	appruntime "shared/services/runtime"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -38,6 +39,8 @@ func main() {
 	)
 
 	gl.ClearColor(0.2, 0.3, 0.3, 1.0)
+	// load world before starting timer
+	ioc.Get[ecs.World](c)
 	frontendRuntime := ioc.Get[appruntime.Runtime](c)
 	frontendRuntime.Run()
 }

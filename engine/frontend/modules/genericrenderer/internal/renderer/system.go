@@ -37,11 +37,17 @@ type locations struct {
 
 //
 
+type textureKey struct {
+	Texture render.TextureComponent
+	Frame   int
+}
+
 type releasable struct {
-	textures  map[render.TextureComponent]texture.Texture
-	meshes    map[assets.AssetID]vao.VAO
-	program   program.Program
-	locations locations
+	texturesImagesCount map[render.TextureComponent]int
+	textures            map[textureKey]texture.Texture
+	meshes              map[assets.AssetID]vao.VAO
+	program             program.Program
+	locations           locations
 }
 
 func (r releasable) Release() {
@@ -57,12 +63,13 @@ func (r releasable) Release() {
 //
 
 type system struct {
-	world          ecs.World
-	transformArray ecs.ComponentsArray[transform.TransformComponent]
-	groupsArray    ecs.ComponentsArray[groups.GroupsComponent]
-	textureArray   ecs.ComponentsArray[render.TextureComponent]
-	colorArray     ecs.ComponentsArray[render.ColorComponent]
-	meshArray      ecs.ComponentsArray[render.MeshComponent]
+	world             ecs.World
+	transformArray    ecs.ComponentsArray[transform.TransformComponent]
+	groupsArray       ecs.ComponentsArray[groups.GroupsComponent]
+	textureArray      ecs.ComponentsArray[render.TextureComponent]
+	textureFrameArray ecs.ComponentsArray[render.TextureFrameComponent]
+	colorArray        ecs.ComponentsArray[render.ColorComponent]
+	meshArray         ecs.ComponentsArray[render.MeshComponent]
 
 	cameraArray ecs.ComponentsArray[camera.CameraComponent]
 
@@ -112,21 +119,23 @@ func NewSystem(
 		}
 
 		releasable := releasable{
-			textures:  make(map[render.TextureComponent]texture.Texture),
-			meshes:    make(map[assets.AssetID]vao.VAO),
-			program:   p,
-			locations: locations,
+			texturesImagesCount: make(map[render.TextureComponent]int),
+			textures:            make(map[textureKey]texture.Texture),
+			meshes:              make(map[assets.AssetID]vao.VAO),
+			program:             p,
+			locations:           locations,
 		}
 
 		w.SaveGlobal(releasable)
 
 		system := &system{
-			world:          w,
-			transformArray: ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
-			groupsArray:    ecs.GetComponentsArray[groups.GroupsComponent](w.Components()),
-			textureArray:   ecs.GetComponentsArray[render.TextureComponent](w.Components()),
-			colorArray:     ecs.GetComponentsArray[render.ColorComponent](w.Components()),
-			meshArray:      ecs.GetComponentsArray[render.MeshComponent](w.Components()),
+			world:             w,
+			transformArray:    ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
+			groupsArray:       ecs.GetComponentsArray[groups.GroupsComponent](w.Components()),
+			textureArray:      ecs.GetComponentsArray[render.TextureComponent](w.Components()),
+			textureFrameArray: ecs.GetComponentsArray[render.TextureFrameComponent](w.Components()),
+			colorArray:        ecs.GetComponentsArray[render.ColorComponent](w.Components()),
+			meshArray:         ecs.GetComponentsArray[render.MeshComponent](w.Components()),
 
 			cameraArray: ecs.GetComponentsArray[camera.CameraComponent](w.Components()),
 
@@ -145,6 +154,7 @@ func NewSystem(
 				Track(
 					ecs.GetComponentType(transform.TransformComponent{}),
 					ecs.GetComponentType(render.ColorComponent{}),
+					ecs.GetComponentType(render.TextureFrameComponent{}),
 				).
 				Build(),
 
@@ -159,20 +169,42 @@ func NewSystem(
 
 //
 
-func (m *system) getTexture(component render.TextureComponent) (texture.Texture, error) {
-	if texture, ok := m.textures[component]; ok {
-		return texture, nil
-	}
-	textureAsset, err := assets.StorageGet[render.TextureAsset](m.assetsStorage, component.Asset)
+func (m *system) getTexture(entity ecs.EntityID) (texture.Texture, error) {
+	textureComponent, err := m.textureArray.GetComponent(entity)
 	if err != nil {
 		return nil, err
 	}
-	image := textureAsset.Images()[component.Frame]
+	imagesCount, okImagesCount := m.texturesImagesCount[textureComponent]
+	textureFrameComponent, err := m.textureFrameArray.GetComponent(entity)
+	if err != nil {
+		textureFrameComponent = render.DefaultTextureFrameComponent()
+	}
+	var frame int
+	if okImagesCount {
+		frame = textureFrameComponent.GetFrame(imagesCount)
+	}
+	textureKey := textureKey{textureComponent, frame}
+	if texture, ok := m.textures[textureKey]; ok {
+		return texture, nil
+	}
+
+	textureAsset, err := assets.StorageGet[render.TextureAsset](m.assetsStorage, textureComponent.Asset)
+	if err != nil {
+		return nil, err
+	}
+
+	imagesCount = len(textureAsset.Images())
+	if !okImagesCount {
+		frame = textureFrameComponent.GetFrame(imagesCount)
+	}
+
+	image := textureAsset.Images()[frame]
 	texture, err := texture.NewTexture(image)
 	if err != nil {
 		return nil, err
 	}
-	m.textures[component] = texture
+	m.textures[textureKey] = texture
+	m.texturesImagesCount[textureComponent] = imagesCount
 	return texture, nil
 }
 
@@ -223,11 +255,7 @@ func (m *system) Listen(render.RenderEvent) error {
 			}
 			model := transformComponent.Mat4()
 
-			textureComponent, err := m.textureArray.GetComponent(entity)
-			if err != nil {
-				continue
-			}
-			textureAsset, err := m.getTexture(textureComponent)
+			textureAsset, err := m.getTexture(entity)
 			if err != nil {
 				continue
 			}

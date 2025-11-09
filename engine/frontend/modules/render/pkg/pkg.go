@@ -50,13 +50,10 @@ func (pkg) Register(b ioc.Builder) {
 				return componentArray.SaveComponent(arg.Entity, comp)
 			}
 		})
-		animation.AddTransitionFunction(b, func(w ecs.World) animation.TransitionFunction[render.TextureComponent] {
-			componentArray := ecs.GetComponentsArray[render.TextureComponent](w.Components())
-			return func(arg animation.TransitionFunctionArgument[render.TextureComponent]) error {
-				comp, err := arg.From.Blend(arg.To, float32(arg.State))
-				if err != nil {
-					return err
-				}
+		animation.AddTransitionFunction(b, func(w ecs.World) animation.TransitionFunction[render.TextureFrameComponent] {
+			componentArray := ecs.GetComponentsArray[render.TextureFrameComponent](w.Components())
+			return func(arg animation.TransitionFunctionArgument[render.TextureFrameComponent]) error {
+				comp := arg.From.Blend(arg.To, float64(arg.State))
 				return componentArray.SaveComponent(arg.Entity, comp)
 			}
 		})

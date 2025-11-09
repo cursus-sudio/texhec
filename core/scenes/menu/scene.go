@@ -92,6 +92,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 
 				ecs.SaveComponent(world.Components(), btn, render.NewMesh(gameassets.SquareMesh))
 				ecs.SaveComponent(world.Components(), btn, render.NewTexture(gameassets.WaterTileTextureID))
+				ecs.SaveComponent(world.Components(), btn, render.NewTextureFrameComponent(1))
 				ecs.SaveComponent(world.Components(), btn, genericrenderer.PipelineComponent{})
 				ecs.SaveComponent(world.Components(), btn, animation.NewAnimationComponent(
 					gameassets.ButtonAnimation,

@@ -102,37 +102,6 @@ func (pkg) Register(b ioc.Builder) {
 					}
 				})
 
-				// temporary inline system for animating everything
-				// {
-				// 	textureComponentsArray := ecs.GetComponentsArray[render.TextureComponent](w.Components())
-				// 	textureTransaction := textureComponentsArray.Transaction()
-				// 	assetsService := ioc.Get[assets.AssetsStorage](c)
-				// 	var timeElapsed time.Duration
-				// 	frameDuration := time.Millisecond * 200
-				// 	events.Listen(w.EventsBuilder(), func(e frames.FrameEvent) {
-				// 		timeElapsed += e.Delta
-				// 		if timeElapsed < frameDuration {
-				// 			return
-				// 		}
-				// 		timeElapsed -= frameDuration
-				// 		entities := textureComponentsArray.GetEntities()
-				// 		for _, entity := range entities {
-				// 			comp, err := textureComponentsArray.GetComponent(entity)
-				// 			if err != nil {
-				// 				continue
-				// 			}
-				// 			asset, err := assets.StorageGet[render.TextureAsset](assetsService, comp.Asset)
-				// 			if err != nil {
-				// 				continue
-				// 			}
-				// 			comp.Frame += 1
-				// 			comp.Frame = comp.Frame % len(asset.Images())
-				// 			textureTransaction.SaveComponent(entity, comp)
-				// 		}
-				// 		textureTransaction.Flush()
-				// 	})
-				// }
-
 				return nil
 			})
 

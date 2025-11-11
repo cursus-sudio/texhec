@@ -93,7 +93,7 @@ func (s *updateProjetionsSystem) UpsertOrtho(ei []ecs.EntityID) {
 	}
 
 	if err := ecs.FlushMany(transformTransaction, orthoTransaction); err != nil {
-		s.logger.Error(err)
+		s.logger.Warn(err)
 	}
 }
 
@@ -112,7 +112,7 @@ func (s *updateProjetionsSystem) UpsertPerspective(ei []ecs.EntityID) {
 		perspectiveTransaction.SaveComponent(entity, perspective)
 	}
 	if err := perspectiveTransaction.Flush(); err != nil {
-		s.logger.Error(err)
+		s.logger.Warn(err)
 	}
 }
 

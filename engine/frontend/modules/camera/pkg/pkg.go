@@ -183,7 +183,7 @@ func (pkg) Register(b ioc.Builder) {
 							t.SaveComponent(e, camera.NewCamera(ecs.GetComponentType(camera.OrthoComponent{})))
 						}
 						if err := t.Flush(); err != nil {
-							logger.Error(err)
+							logger.Warn(err)
 						}
 					})
 
@@ -194,7 +194,7 @@ func (pkg) Register(b ioc.Builder) {
 							t.SaveComponent(e, camera.NewCamera(ecs.GetComponentType(camera.Perspective{})))
 						}
 						if err := t.Flush(); err != nil {
-							logger.Error(err)
+							logger.Warn(err)
 						}
 					})
 

@@ -93,7 +93,7 @@ func (c *netConnection) HandleMsg(conn net.Conn, msg Msg) error {
 		var resMsg Msg
 		encodedMsg, encodeErr := c.Codec.Encode(res)
 		if encodeErr != nil {
-			c.Logger.Error(encodeErr)
+			c.Logger.Warn(encodeErr)
 			resMsg = NewResponse(msg.ID, string(encodedMsg), httperrors.Err501)
 		} else {
 			resMsg = NewResponse(msg.ID, string(encodedMsg), err)
@@ -227,7 +227,7 @@ func (c *netConnection) Connect(conn net.Conn, onClose func()) connection.Connec
 	mlb.Relay().DefaultMessageHandler(func(ctx relay.AnyMessageCtx) {
 		encodedMsg, err := c.Codec.Encode(ctx.Message())
 		if err != nil {
-			c.Logger.Error(err)
+			c.Logger.Warn(err)
 			return
 		}
 		msg := NewMessage(

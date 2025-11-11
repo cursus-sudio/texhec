@@ -55,7 +55,7 @@ func AddDefaults[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 		logger := ioc.Get[logger.Logger](c)
 		b.OnLoad(func(ctx scenes.SceneCtx) {
 			events.GlobalErrHandler(ctx.EventsBuilder(), func(err error) {
-				logger.Error(err)
+				logger.Warn(err)
 			})
 		})
 		return b

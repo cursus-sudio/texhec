@@ -43,7 +43,7 @@ func NewSystem(
 			for _, transition := range animationData.Transitions {
 				easingFunction, ok := b.easingFunctions.Get(transition.EasingFunction)
 				if !ok {
-					b.logger.Error(fmt.Errorf(
+					b.logger.Warn(fmt.Errorf(
 						"expected easing function with id \"%v\" to exist. skipping transition",
 						transition.EasingFunction,
 					))
@@ -52,7 +52,7 @@ func NewSystem(
 				transitionType := reflect.TypeOf(transition.From)
 				transitionFunction, ok := transitionFunctions[transitionType]
 				if !ok {
-					b.logger.Error(fmt.Errorf(
+					b.logger.Warn(fmt.Errorf(
 						"expected transition function for type \"%v\" to exist. skipping transition",
 						transitionType.String(),
 					))
@@ -113,7 +113,7 @@ func (s *system) ApplyAnimation(
 		}
 		currentState = transition.EasingFunction(currentState)
 		if err := transition.CallTransitionFunction(entity, currentState); err != nil {
-			s.logger.Error(errors.Join(
+			s.logger.Warn(errors.Join(
 				fmt.Errorf("unexpected error when calling transition function"),
 				err,
 			))
@@ -138,7 +138,7 @@ func (s *system) ListenE(event frames.FrameEvent) error {
 
 		animationData, ok := s.animations.Get(animationComp.AnimationID)
 		if !ok {
-			s.logger.Error(fmt.Errorf(
+			s.logger.Warn(fmt.Errorf(
 				"expected animation data with id \"%v\" to exist",
 				animationComp.AnimationID,
 			))

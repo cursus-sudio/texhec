@@ -37,7 +37,7 @@ func NewPivotPointSystem(logger logger.Logger) ecs.SystemRegister {
 				transformTransaction.DirtySaveComponent(entity, transformComponent)
 			}
 			if err := transformTransaction.Flush(); err != nil {
-				logger.Error(err)
+				logger.Warn(err)
 			}
 		}
 		query.OnAdd(listener)

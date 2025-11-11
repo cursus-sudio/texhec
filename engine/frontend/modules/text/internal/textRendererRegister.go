@@ -188,7 +188,7 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 			}
 
 			if err := renderer.ensureFontExists(family.FontFamily); err != nil {
-				f.logger.Error(err)
+				f.logger.Warn(err)
 			}
 		}
 	}
@@ -218,7 +218,7 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 				assets = append(assets, comp.FontFamily)
 			}
 			if err := renderer.ensureOnlyFontsExist(assets); err != nil {
-				f.logger.Error(err)
+				f.logger.Warn(err)
 			}
 		}
 		fontArray.OnChange(removeUnused)

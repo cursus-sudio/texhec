@@ -133,14 +133,14 @@ func (pkg pkg) Register(b ioc.Builder) {
 		}
 		tx, txErr := db.DB().Begin()
 		if txErr != nil {
-			logger.Error(errors.Join(httperrors.Err503, txErr))
+			logger.Warn(errors.Join(httperrors.Err503, txErr))
 		}
 		pkg.addOnScopeCleanUp(c, func(err error) {
 			if err != nil || txErr != nil {
 				return
 			}
 			if err := tx.Commit(); err != nil {
-				logger.Error(errors.Join(ErrCommitFailed, err))
+				logger.Warn(errors.Join(ErrCommitFailed, err))
 			}
 		})
 		return NewTx(tx, true)

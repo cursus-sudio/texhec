@@ -9,7 +9,7 @@ import (
 
 type Logger interface {
 	Info(message string)
-	Error(err ...error)
+	Warn(err ...error)
 	Fatal(err ...error)
 }
 
@@ -25,7 +25,7 @@ func (logger *logger) Info(message string) {
 	logger.Print(msg)
 }
 
-func (logger *logger) Error(err ...error) {
+func (logger *logger) Warn(err ...error) {
 	message := fmt.Sprintf("\033[31m[ Error ]\033[0m %s \033[31m\n%s\033[0m\n", logger.Clock.Now(), err)
 	if logger.PanicOnError {
 		logger.Panic(message)
@@ -40,24 +40,24 @@ func (logger *logger) Fatal(err ...error) {
 }
 
 type pkg struct {
-	panicOnError bool
-	print        func(c ioc.Dic, message string)
+	panicOnWarn bool
+	print       func(c ioc.Dic, message string)
 }
 
 func Package(
-	panicOnError bool,
+	panicOnWarn bool,
 	print func(c ioc.Dic, message string),
 ) ioc.Pkg {
 	return pkg{
-		panicOnError: panicOnError,
-		print:        print,
+		panicOnWarn: panicOnWarn,
+		print:       print,
 	}
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) Logger {
 		return &logger{
-			PanicOnError: pkg.panicOnError,
+			PanicOnError: pkg.panicOnWarn,
 			Clock:        ioc.Get[clock.Clock](c),
 			Print:        func(s string) { pkg.print(c, s) },
 			Panic:        func(s string) { panic(s) },

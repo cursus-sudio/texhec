@@ -121,7 +121,7 @@ func (i *api) Poll() {
 			e = *event.(*sdl.TouchFingerEvent)
 			break
 		default:
-			i.logger.Error(errors.Join(
+			i.logger.Warn(errors.Join(
 				ErrNotHandledInput,
 				fmt.Errorf("event not handled: type \"%d\": \"%v\"", event.GetType(), event),
 			))

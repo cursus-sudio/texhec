@@ -67,7 +67,7 @@ func NewAnchorSystem(logger logger.Logger) ecs.SystemRegister {
 					}
 				}
 				if err := transformTransaction.Flush(); err != nil {
-					logger.Error(err)
+					logger.Warn(err)
 				}
 			}
 

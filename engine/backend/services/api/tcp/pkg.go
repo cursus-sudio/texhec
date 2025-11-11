@@ -18,7 +18,7 @@ func (pkg pkg) hostServer(c ioc.Dic) {
 	l, err := net.Listen(pkg.connType, pkg.host+":"+pkg.port)
 	if err != nil {
 		err := fmt.Errorf("Error listening: %s", err.Error())
-		logger.Error(err)
+		logger.Warn(err)
 		runtime.Stop()
 		return
 	}

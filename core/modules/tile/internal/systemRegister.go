@@ -194,7 +194,7 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 
 		err := ecs.FlushMany(transformTransaction, groupsTransaction)
 		if err != nil {
-			factory.logger.Error(err)
+			factory.logger.Warn(err)
 		}
 	}
 	tileArray.OnAdd(onChangeOrAdd)

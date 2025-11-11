@@ -5,6 +5,7 @@ import (
 	backendscopes "backend/services/scopes"
 	gameassets "core/assets"
 	"core/modules/fpslogger/pkg"
+	"core/modules/tile"
 	tilepkg "core/modules/tile/pkg"
 	gamescenes "core/scenes"
 	creditsscene "core/scenes/credits"
@@ -22,6 +23,7 @@ import (
 	"frontend/modules/genericrenderer/pkg"
 	"frontend/modules/groups"
 	"frontend/modules/groups/pkg"
+	"frontend/modules/indexing/pkg"
 	"frontend/modules/inputs/pkg"
 	"frontend/modules/render/pkg"
 	"frontend/modules/scenes/pkg"
@@ -167,6 +169,14 @@ func frontendDic(
 		genericrendererpkg.Package(),
 		groupspkg.Package(),
 		inputspkg.Package(),
+		indexingpkg.SpatialIndexingPackage(
+			func(component tile.TileComponent) tile.TilePos { return component.Pos },
+			func(index tile.TilePos) uint32 {
+				var minX, minY, maxX int32 = 0, 0, 1000
+				result := (index.Y+minY)*(maxX-minX) + (index.X + minX)
+				return uint32(result)
+			},
+		),
 		renderpkg.Package(),
 		scenespkg.Package(),
 		textpkg.Package(

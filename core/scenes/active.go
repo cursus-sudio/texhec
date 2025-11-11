@@ -77,6 +77,7 @@ func (pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) CoreSystems {
+
 		return func(ctx scenes.SceneCtx) {
 			logger := ioc.Get[logger.Logger](c)
 

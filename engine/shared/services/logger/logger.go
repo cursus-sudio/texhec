@@ -7,6 +7,7 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
+// doesn't warn or is fatal when there are no not-nil errors
 type Logger interface {
 	Info(message string)
 	Warn(err ...error)
@@ -25,8 +26,22 @@ func (logger *logger) Info(message string) {
 	logger.Print(msg)
 }
 
-func (logger *logger) Warn(err ...error) {
-	message := fmt.Sprintf("\033[31m[ Error ]\033[0m %s \033[31m\n%s\033[0m\n", logger.Clock.Now(), err)
+func (logger *logger) FilterNils(allErrors ...error) []error {
+	notNilErrors := []error{}
+	for _, err := range allErrors {
+		if err == nil {
+			continue
+		}
+		notNilErrors = append(notNilErrors, err)
+	}
+	return notNilErrors
+}
+
+func (logger *logger) Warn(errors ...error) {
+	if errors = logger.FilterNils(errors...); len(errors) == 0 {
+		return
+	}
+	message := fmt.Sprintf("\033[31m[ Error ]\033[0m %s \033[31m\n%s\033[0m\n", logger.Clock.Now(), errors)
 	if logger.PanicOnError {
 		logger.Panic(message)
 	} else {
@@ -34,8 +49,11 @@ func (logger *logger) Warn(err ...error) {
 	}
 }
 
-func (logger *logger) Fatal(err ...error) {
-	message := fmt.Sprintf("\033[31m[ Error ]\033[0m %s \033[31m\n%s\033[0m\n", logger.Clock.Now(), err)
+func (logger *logger) Fatal(errors ...error) {
+	if errors = logger.FilterNils(errors...); len(errors) == 0 {
+		return
+	}
+	message := fmt.Sprintf("\033[31m[ Error ]\033[0m %s \033[31m\n%s\033[0m\n", logger.Clock.Now(), errors)
 	logger.Panic(message)
 }
 

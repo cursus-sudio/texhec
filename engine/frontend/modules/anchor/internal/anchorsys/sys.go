@@ -66,9 +66,7 @@ func NewAnchorSystem(logger logger.Logger) ecs.SystemRegister {
 						transformTransaction.SaveComponent(child, childTransform)
 					}
 				}
-				if err := transformTransaction.Flush(); err != nil {
-					logger.Warn(err)
-				}
+				logger.Warn(transformTransaction.Flush())
 			}
 
 			onRemove := func(ei []ecs.EntityID) {

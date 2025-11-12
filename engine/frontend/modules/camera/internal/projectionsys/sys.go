@@ -92,9 +92,7 @@ func (s *updateProjetionsSystem) UpsertOrtho(ei []ecs.EntityID) {
 		orthoTransaction.SaveComponent(entity, ortho)
 	}
 
-	if err := ecs.FlushMany(transformTransaction, orthoTransaction); err != nil {
-		s.logger.Warn(err)
-	}
+	s.logger.Warn(ecs.FlushMany(transformTransaction, orthoTransaction))
 }
 
 func (s *updateProjetionsSystem) UpsertPerspective(ei []ecs.EntityID) {
@@ -111,9 +109,7 @@ func (s *updateProjetionsSystem) UpsertPerspective(ei []ecs.EntityID) {
 		)
 		perspectiveTransaction.SaveComponent(entity, perspective)
 	}
-	if err := perspectiveTransaction.Flush(); err != nil {
-		s.logger.Warn(err)
-	}
+	s.logger.Warn(perspectiveTransaction.Flush())
 }
 
 func (s *updateProjetionsSystem) Listen(e camera.ChangedResolutionEvent) {

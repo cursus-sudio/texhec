@@ -182,9 +182,7 @@ func (pkg) Register(b ioc.Builder) {
 						for _, e := range ei {
 							t.SaveComponent(e, camera.NewCamera(ecs.GetComponentType(camera.OrthoComponent{})))
 						}
-						if err := t.Flush(); err != nil {
-							logger.Warn(err)
-						}
+						logger.Warn(t.Flush())
 					})
 
 					perspectiveArray := ecs.GetComponentsArray[camera.Perspective](w.Components())
@@ -193,9 +191,7 @@ func (pkg) Register(b ioc.Builder) {
 						for _, e := range ei {
 							t.SaveComponent(e, camera.NewCamera(ecs.GetComponentType(camera.Perspective{})))
 						}
-						if err := t.Flush(); err != nil {
-							logger.Warn(err)
-						}
+						logger.Warn(t.Flush())
 					})
 
 					events.Listen(w.EventsBuilder(), func(e sdl.WindowEvent) {

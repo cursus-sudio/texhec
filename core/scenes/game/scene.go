@@ -127,9 +127,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 
 				tilesTransaction.SaveComponent(entity, tile)
 			}
-			if err := tilesTransaction.Flush(); err != nil {
-				ioc.Get[logger.Logger](c).Warn(err)
-			}
+			ioc.Get[logger.Logger](c).Warn(tilesTransaction.Flush())
 		})
 
 		return b

@@ -192,10 +192,7 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 			groupsTransaction.SaveComponent(entity, factory.groups)
 		}
 
-		err := ecs.FlushMany(transformTransaction, groupsTransaction)
-		if err != nil {
-			factory.logger.Warn(err)
-		}
+		factory.logger.Warn(ecs.FlushMany(transformTransaction, groupsTransaction))
 	}
 	tileArray.OnAdd(onChangeOrAdd)
 	tileArray.OnChange(onChangeOrAdd)

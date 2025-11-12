@@ -187,9 +187,7 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 				continue
 			}
 
-			if err := renderer.ensureFontExists(family.FontFamily); err != nil {
-				f.logger.Warn(err)
-			}
+			f.logger.Warn(renderer.ensureFontExists(family.FontFamily))
 		}
 	}
 	if err := renderer.ensureFontExists(f.defaultTextAsset); err != nil {
@@ -217,9 +215,7 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 				}
 				assets = append(assets, comp.FontFamily)
 			}
-			if err := renderer.ensureOnlyFontsExist(assets); err != nil {
-				f.logger.Warn(err)
-			}
+			f.logger.Warn(renderer.ensureOnlyFontsExist(assets))
 		}
 		fontArray.OnChange(removeUnused)
 		fontArray.OnRemove(removeUnused)

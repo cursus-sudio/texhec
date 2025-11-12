@@ -82,16 +82,12 @@ func NewAnchorSystem(logger logger.Logger) ecs.SystemRegister {
 				}
 			}
 
-			query := w.Query().
-				Require(ecs.GetComponentType(transform.TransformComponent{})).
-				Build()
-			query.OnAdd(onChange)
-			query.OnChange(onChange)
-			query.OnRemove(onRemove)
+			transformArray.OnAdd(onChange)
+			transformArray.OnChange(onChange)
+			transformArray.OnRemove(onRemove)
 		}
 
 		{
-
 			onAdd := func(ei []ecs.EntityID) {
 				for _, child := range ei {
 					anchor, err := parentAnchorArray.GetComponent(child)

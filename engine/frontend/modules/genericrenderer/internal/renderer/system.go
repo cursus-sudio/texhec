@@ -73,11 +73,12 @@ type system struct {
 
 	cameraArray ecs.ComponentsArray[camera.CameraComponent]
 
-	window        window.Api
-	assetsStorage assets.AssetsStorage
-	logger        logger.Logger
-	vboFactory    vbo.VBOFactory[genericrenderer.Vertex]
-	camerasCtors  camera.CameraTool
+	window         window.Api
+	assetsStorage  assets.AssetsStorage
+	logger         logger.Logger
+	vboFactory     vbo.VBOFactory[genericrenderer.Vertex]
+	textureFactory texture.Factory
+	camerasCtors   camera.CameraTool
 
 	query ecs.LiveQuery
 
@@ -89,6 +90,7 @@ func NewSystem(
 	assetsStorage assets.AssetsStorage,
 	logger logger.Logger,
 	vboFactory vbo.VBOFactory[genericrenderer.Vertex],
+	textureFactory texture.Factory,
 	camerasCtors ecs.ToolFactory[camera.CameraTool],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
@@ -139,11 +141,12 @@ func NewSystem(
 
 			cameraArray: ecs.GetComponentsArray[camera.CameraComponent](w.Components()),
 
-			window:        window,
-			assetsStorage: assetsStorage,
-			logger:        logger,
-			vboFactory:    vboFactory,
-			camerasCtors:  camerasCtors.Build(w),
+			window:         window,
+			assetsStorage:  assetsStorage,
+			logger:         logger,
+			vboFactory:     vboFactory,
+			textureFactory: textureFactory,
+			camerasCtors:   camerasCtors.Build(w),
 
 			query: w.Query().
 				Require(
@@ -199,7 +202,7 @@ func (m *system) getTexture(entity ecs.EntityID) (texture.Texture, error) {
 	}
 
 	image := textureAsset.Images()[frame]
-	texture, err := texture.NewTexture(image)
+	texture, err := m.textureFactory.New(image)
 	if err != nil {
 		return nil, err
 	}

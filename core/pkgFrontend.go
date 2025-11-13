@@ -38,6 +38,7 @@ import (
 	"frontend/services/console"
 	"frontend/services/dbpkg"
 	"frontend/services/frames"
+	"frontend/services/graphics/texture"
 	"frontend/services/graphics/texturearray"
 	"frontend/services/media"
 	"frontend/services/scenes"
@@ -154,6 +155,7 @@ func frontendDic(
 		scenes.Package(),
 		frontendscopes.Package(),
 
+		texture.Package(),
 		texturearray.Package(),
 		tilepkg.Package(100, -1., groups.EmptyGroups().Ptr().Enable(gamescene.GameGroup).Val()),
 
@@ -245,6 +247,30 @@ func frontendDic(
 	for _, pkg := range pkgs {
 		pkg.Register(b)
 	}
+
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, f texture.Factory) texture.Factory {
+		f.Wrap(func(t texture.Texture) {
+			t.Use()
+			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+			gl.BindTexture(gl.TEXTURE_2D, 0)
+		})
+		return f
+	})
+
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, f texturearray.Factory) texturearray.Factory {
+		f.Wrap(func(ta texturearray.TextureArray) {
+			ta.Use()
+			gl.TexParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+			gl.TexParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+			gl.TexParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+			gl.TexParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+			gl.BindTexture(gl.TEXTURE_2D_ARRAY, 0)
+		})
+		return f
+	})
 
 	return b.Build()
 }

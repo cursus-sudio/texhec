@@ -23,18 +23,20 @@ func (r TextureArray) Use() {
 
 type Factory interface {
 	New(images datastructures.SparseArray[uint32, image.Image]) (TextureArray, error)
+	Wrap(wrapper func(TextureArray))
 }
 
 type factory struct {
 	assetsStorage assets.AssetsStorage
+	wrappers      []func(TextureArray)
 }
 
 var (
 	ErrTexturesHaveToShareSize error = errors.New("all textures have to match size")
 )
 
-func (r *factory) New(asset datastructures.SparseArray[uint32, image.Image]) (TextureArray, error) {
-	register := TextureArray{}
+func (f *factory) New(asset datastructures.SparseArray[uint32, image.Image]) (TextureArray, error) {
+	textureArray := TextureArray{}
 	images := datastructures.NewSparseArray[uint32, image.Image]()
 
 	bounds := []image.Rectangle{}
@@ -59,7 +61,15 @@ func (r *factory) New(asset datastructures.SparseArray[uint32, image.Image]) (Te
 		images.Set(i, image)
 	}
 
-	register.Texture = createTexs(w, h, images)
+	textureArray.Texture = createTexs(w, h, images)
 
-	return register, nil
+	for _, wrapper := range f.wrappers {
+		wrapper(textureArray)
+	}
+
+	return textureArray, nil
+}
+
+func (f *factory) Wrap(wrapper func(TextureArray)) {
+	f.wrappers = append(f.wrappers, wrapper)
 }

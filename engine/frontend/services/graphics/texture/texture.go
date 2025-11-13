@@ -16,13 +16,6 @@ type texture struct {
 	id uint32
 }
 
-func NewTexture(img image.Image) (Texture, error) {
-	t, err := newTexture(img)
-	return &texture{
-		id: t,
-	}, err
-}
-
 func (t *texture) ID() uint32 { return t.id }
 
 func (t *texture) Use() {
@@ -31,4 +24,33 @@ func (t *texture) Use() {
 
 func (t *texture) Release() {
 	gl.DeleteTextures(1, &t.id)
+}
+
+//
+
+type Factory interface {
+	New(img image.Image) (Texture, error)
+	Wrap(func(Texture))
+}
+
+type factory struct {
+	wrappers []func(Texture)
+}
+
+func (f *factory) New(img image.Image) (Texture, error) {
+	id, err := newTexture(img)
+	if err != nil {
+		return nil, err
+	}
+	texture := &texture{
+		id: id,
+	}
+	for _, wrapper := range f.wrappers {
+		wrapper(texture)
+	}
+	return texture, err
+}
+
+func (f *factory) Wrap(wrapper func(Texture)) {
+	f.wrappers = append(f.wrappers, wrapper)
 }

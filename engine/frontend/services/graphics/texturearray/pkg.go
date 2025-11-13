@@ -16,6 +16,7 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterTransient(b, func(c ioc.Dic) Factory {
 		return &factory{
 			ioc.Get[assets.AssetsStorage](c),
+			make([]func(TextureArray), 0),
 		}
 	})
 }

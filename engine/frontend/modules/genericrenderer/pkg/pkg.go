@@ -5,6 +5,7 @@ import (
 	"frontend/modules/genericrenderer"
 	"frontend/modules/genericrenderer/internal/renderer"
 	"frontend/services/assets"
+	"frontend/services/graphics/texture"
 	"frontend/services/graphics/vao/vbo"
 	"frontend/services/media/window"
 	"shared/services/ecs"
@@ -43,6 +44,7 @@ func (pkg) Register(b ioc.Builder) {
 			ioc.Get[assets.AssetsStorage](c),
 			ioc.Get[logger.Logger](c),
 			ioc.Get[vbo.VBOFactory[genericrenderer.Vertex]](c),
+			ioc.Get[texture.Factory](c),
 			ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
 		)
 	})

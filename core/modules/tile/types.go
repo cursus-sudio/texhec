@@ -5,4 +5,5 @@ const (
 	TileGround
 	TileForest
 	TileWater
+	TileU1
 )

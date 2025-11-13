@@ -114,18 +114,27 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				case 0:
 					tileType = tile.TileMountain
 				case 1:
-					tileType = tile.TileForest
-				case 2:
 					tileType = tile.TileGround
+				case 2:
+					tileType = tile.TileForest
 				case 3:
 					tileType = tile.TileWater
 				}
 				tile := tile.TileComponent{
-					Pos:  tile.TilePos{X: int32(row), Y: int32(col)},
+					Pos:  tile.NewTilePos(int32(row), int32(col), 0),
 					Type: tileType,
 				}
 
 				tilesTransaction.SaveComponent(entity, tile)
+			}
+
+			{
+				entity := world.NewEntity()
+				unit := tile.TileComponent{
+					Pos:  tile.NewTilePos(0, 0, 1),
+					Type: tile.TileU1,
+				}
+				tilesTransaction.SaveComponent(entity, unit)
 			}
 			ioc.Get[logger.Logger](c).Warn(tilesTransaction.Flush())
 		})

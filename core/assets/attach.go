@@ -38,6 +38,9 @@ var forestSource []byte
 //go:embed files/4.png
 var waterSource []byte
 
+//go:embed files/u1.png
+var u1Source []byte
+
 //go:embed files/audio.wav
 var audioSource []byte
 
@@ -50,6 +53,8 @@ const (
 	GroundTileTextureID   assets.AssetID = "ground tile texture"
 	ForestTileTextureID   assets.AssetID = "forest tile texture"
 	WaterTileTextureID    assets.AssetID = "water tile texture"
+
+	U1TextureID assets.AssetID = "u1 texture"
 
 	SquareColliderID assets.AssetID = "square collider"
 	FontAssetID      assets.AssetID = "font_asset"
@@ -141,6 +146,7 @@ func (pkg) Register(b ioc.Builder) {
 		assets.Set(tile.TileGround, GroundTileTextureID)
 		assets.Set(tile.TileForest, ForestTileTextureID)
 		assets.Set(tile.TileWater, WaterTileTextureID)
+		assets.Set(tile.TileU1, U1TextureID)
 		s.AddType(assets)
 		return s
 	})
@@ -213,6 +219,17 @@ func (pkg) Register(b ioc.Builder) {
 			// img2 = gtexture.FlipImage(img2)
 			asset := render.NewTextureStorageAsset(img1, img2)
 			// asset := render.NewTextureStorageAsset(img2, img1)
+			return asset, nil
+		})
+
+		b.RegisterAsset(U1TextureID, func() (any, error) {
+			imgFile := bytes.NewBuffer(u1Source)
+			img, _, err := image.Decode(imgFile)
+			if err != nil {
+				return nil, err
+			}
+			img = gtexture.FlipImage(img)
+			asset := render.NewTextureStorageAsset(img)
 			return asset, nil
 		})
 

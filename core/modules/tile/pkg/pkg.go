@@ -68,6 +68,11 @@ func (pkg pkg) Register(b ioc.Builder) {
 				gl.EnableVertexAttribArray(i)
 				i++
 
+				gl.VertexAttribIPointerWithOffset(i, 1, gl.INT,
+					int32(unsafe.Sizeof(tile.TileComponent{})), uintptr(unsafe.Offsetof(tile.TileComponent{}.Pos.Z)))
+				gl.EnableVertexAttribArray(i)
+				i++
+
 				gl.VertexAttribIPointerWithOffset(i, 1, gl.UNSIGNED_INT,
 					int32(unsafe.Sizeof(tile.TileComponent{})), uintptr(unsafe.Offsetof(tile.TileComponent{}.Type)))
 				gl.EnableVertexAttribArray(i)

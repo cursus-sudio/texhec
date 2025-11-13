@@ -9,6 +9,7 @@ layout(triangle_strip, max_vertices = 4) out;
 in GS {
     flat int x;
     flat int y;
+    flat int z;
     flat int tileType;
 } gs_in[];
 
@@ -26,6 +27,7 @@ uniform float gridDepth;
 void main() {
     int xIn = gs_in[0].x;
     int yIn = gs_in[0].y;
+    int zIn = gs_in[0].z;
     int tileType = gs_in[0].tileType;
 
     // shared outputs
@@ -36,7 +38,7 @@ void main() {
             int x = xIn + cornerX;
             int y = yIn + cornerY;
 
-            vec4 pos = vec4(x * tileSize, y * tileSize, gridDepth, 1.);
+            vec4 pos = vec4(x * tileSize, y * tileSize, zIn + gridDepth, 1.);
 
             // unique outputs
             gl_Position = camera * pos;

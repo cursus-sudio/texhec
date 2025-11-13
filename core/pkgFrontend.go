@@ -165,7 +165,7 @@ func frontendDic(
 		anchorpkg.Package(),
 		audiopkg.Package(),
 		animationpkg.Package(),
-		camerapkg.Package(),
+		camerapkg.Package(.1, 10),
 		colliderpkg.Package(),
 		dragpkg.Package(),
 		genericrendererpkg.Package(),

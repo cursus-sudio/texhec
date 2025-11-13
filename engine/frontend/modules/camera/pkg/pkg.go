@@ -18,13 +18,18 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-type pkg struct{}
-
-func Package() ioc.Pkg {
-	return pkg{}
+type pkg struct {
+	minZoom, maxZoom float32
 }
 
-func (pkg) Register(b ioc.Builder) {
+func Package(minZoom, maxZoom float32) ioc.Pkg {
+	return pkg{
+		minZoom: minZoom,
+		maxZoom: maxZoom,
+	}
+}
+
+func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) cameratool.CameraResolverFactory {
 		return cameratool.NewCameraResolverFactory()
 	})
@@ -161,7 +166,7 @@ func (pkg) Register(b ioc.Builder) {
 					logger,
 					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
 					ioc.Get[window.Api](c),
-					0.1, 5, // min and max zoom
+					pkg.minZoom, pkg.maxZoom, // min and max zoom
 				),
 				mobilecamerasys.NewDragSystem(
 					sdl.BUTTON_LEFT,

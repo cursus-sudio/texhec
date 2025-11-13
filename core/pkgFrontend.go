@@ -171,14 +171,6 @@ func frontendDic(
 		genericrendererpkg.Package(),
 		groupspkg.Package(),
 		inputspkg.Package(),
-		// indexingpkg.SpatialIndexingPackage(
-		// 			func(component tile.TileComponent) tile.TilePos { return component.Pos },
-		// 			func(index tile.TilePos) uint32 {
-		// 				var minX, minY, maxX int32 = 0, 0, 1000
-		// 				result := (index.Y+minY)*(maxX-minX) + (index.X + minX)
-		// 				return uint32(result)
-		// 			},
-		// 		),
 		indexingpkg.SpatialIndexingPackage(
 			func(component tilerenderer.TileComponent) tilerenderer.TilePos { return component.Pos },
 			func(index tilerenderer.TilePos) uint32 {

@@ -1,4 +1,4 @@
-package tile
+package tilerenderer
 
 import "shared/services/ecs"
 

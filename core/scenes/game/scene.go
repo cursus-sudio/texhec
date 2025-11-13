@@ -2,7 +2,7 @@ package gamescene
 
 import (
 	gameassets "core/assets"
-	"core/modules/tile"
+	"core/modules/tilerenderer"
 	gamescenes "core/scenes"
 	"frontend/modules/anchor"
 	"frontend/modules/camera"
@@ -98,7 +98,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 
 			rand := rand.New(rand.NewPCG(2077, 7137))
 
-			tilesArray := ecs.GetComponentsArray[tile.TileComponent](world.Components())
+			tilesArray := ecs.GetComponentsArray[tilerenderer.TileComponent](world.Components())
 			tilesTransaction := tilesArray.Transaction()
 			rows := 100
 			cols := 100
@@ -106,22 +106,22 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				row := i % cols
 				col := i / cols
 				entity := world.NewEntity()
-				tileType := tile.TileMountain
+				tileType := tilerenderer.TileMountain
 
 				num := rand.IntN(4)
 
 				switch num {
 				case 0:
-					tileType = tile.TileMountain
+					tileType = tilerenderer.TileMountain
 				case 1:
-					tileType = tile.TileGround
+					tileType = tilerenderer.TileGround
 				case 2:
-					tileType = tile.TileForest
+					tileType = tilerenderer.TileForest
 				case 3:
-					tileType = tile.TileWater
+					tileType = tilerenderer.TileWater
 				}
-				tile := tile.TileComponent{
-					Pos:  tile.NewTilePos(int32(row), int32(col), 0),
+				tile := tilerenderer.TileComponent{
+					Pos:  tilerenderer.NewTilePos(int32(row), int32(col), 0),
 					Type: tileType,
 				}
 
@@ -130,9 +130,9 @@ func (pkg) LoadObjects(b ioc.Builder) {
 
 			{
 				entity := world.NewEntity()
-				unit := tile.TileComponent{
-					Pos:  tile.NewTilePos(0, 0, 1),
-					Type: tile.TileU1,
+				unit := tilerenderer.TileComponent{
+					Pos:  tilerenderer.NewTilePos(0, 0, 1),
+					Type: tilerenderer.TileU1,
 				}
 				tilesTransaction.SaveComponent(entity, unit)
 			}

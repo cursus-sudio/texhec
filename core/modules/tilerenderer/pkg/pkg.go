@@ -1,8 +1,8 @@
 package tilepkg
 
 import (
-	"core/modules/tile"
-	"core/modules/tile/internal"
+	"core/modules/tilerenderer"
+	"core/modules/tilerenderer/internal"
 	"frontend/modules/camera"
 	"frontend/modules/groups"
 	"frontend/services/assets"
@@ -38,7 +38,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 		return internal.NewTileRenderSystemRegister(
 			ioc.Get[texturearray.Factory](c),
 			ioc.Get[logger.Logger](c),
-			ioc.Get[vbo.VBOFactory[tile.TileComponent]](c),
+			ioc.Get[vbo.VBOFactory[tilerenderer.TileComponent]](c),
 			ioc.Get[assets.AssetsStorage](c),
 			pkg.tileSize,
 			pkg.gridDepth,
@@ -46,35 +46,35 @@ func (pkg pkg) Register(b ioc.Builder) {
 			ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
 		)
 	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.TileTool {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) tilerenderer.TileTool {
 		return ioc.Get[internal.TileRenderSystemRegister](c)
 	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.System {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) tilerenderer.System {
 		return ioc.Get[internal.TileRenderSystemRegister](c)
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) vbo.VBOFactory[tile.TileComponent] {
-		return func() vbo.VBOSetter[tile.TileComponent] {
-			vbo := vbo.NewVBO[tile.TileComponent](func() {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) vbo.VBOFactory[tilerenderer.TileComponent] {
+		return func() vbo.VBOSetter[tilerenderer.TileComponent] {
+			vbo := vbo.NewVBO[tilerenderer.TileComponent](func() {
 				var i uint32 = 0
 
 				gl.VertexAttribIPointerWithOffset(i, 1, gl.INT,
-					int32(unsafe.Sizeof(tile.TileComponent{})), uintptr(unsafe.Offsetof(tile.TileComponent{}.Pos.X)))
+					int32(unsafe.Sizeof(tilerenderer.TileComponent{})), uintptr(unsafe.Offsetof(tilerenderer.TileComponent{}.Pos.X)))
 				gl.EnableVertexAttribArray(i)
 				i++
 
 				gl.VertexAttribIPointerWithOffset(i, 1, gl.INT,
-					int32(unsafe.Sizeof(tile.TileComponent{})), uintptr(unsafe.Offsetof(tile.TileComponent{}.Pos.Y)))
+					int32(unsafe.Sizeof(tilerenderer.TileComponent{})), uintptr(unsafe.Offsetof(tilerenderer.TileComponent{}.Pos.Y)))
 				gl.EnableVertexAttribArray(i)
 				i++
 
 				gl.VertexAttribIPointerWithOffset(i, 1, gl.INT,
-					int32(unsafe.Sizeof(tile.TileComponent{})), uintptr(unsafe.Offsetof(tile.TileComponent{}.Pos.Z)))
+					int32(unsafe.Sizeof(tilerenderer.TileComponent{})), uintptr(unsafe.Offsetof(tilerenderer.TileComponent{}.Pos.Z)))
 				gl.EnableVertexAttribArray(i)
 				i++
 
 				gl.VertexAttribIPointerWithOffset(i, 1, gl.UNSIGNED_INT,
-					int32(unsafe.Sizeof(tile.TileComponent{})), uintptr(unsafe.Offsetof(tile.TileComponent{}.Type)))
+					int32(unsafe.Sizeof(tilerenderer.TileComponent{})), uintptr(unsafe.Offsetof(tilerenderer.TileComponent{}.Type)))
 				gl.EnableVertexAttribArray(i)
 				i++
 			})

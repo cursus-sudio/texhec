@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"core/modules/tile"
+	"core/modules/tilerenderer"
 	"frontend/modules/camera"
 	"frontend/modules/groups"
 	"frontend/modules/render"
@@ -42,7 +42,7 @@ type TileRenderSystemRegister struct {
 	logger              logger.Logger
 	textures            datastructures.SparseArray[uint32, image.Image]
 	textureArrayFactory texturearray.Factory
-	vboFactory          vbo.VBOFactory[tile.TileComponent]
+	vboFactory          vbo.VBOFactory[tilerenderer.TileComponent]
 	assetsStorage       assets.AssetsStorage
 
 	tileSize  int32
@@ -55,7 +55,7 @@ type TileRenderSystemRegister struct {
 func NewTileRenderSystemRegister(
 	textureArrayFactory texturearray.Factory,
 	logger logger.Logger,
-	vboFactory vbo.VBOFactory[tile.TileComponent],
+	vboFactory vbo.VBOFactory[tilerenderer.TileComponent],
 	assetsStorage assets.AssetsStorage,
 	tileSize int32,
 	gridDepth float32,
@@ -133,7 +133,7 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 	VAO := vao.NewVAO(VBO, EBO)
 
 	changeMutex := &sync.Mutex{}
-	tiles := datastructures.NewSparseArray[ecs.EntityID, tile.TileComponent]()
+	tiles := datastructures.NewSparseArray[ecs.EntityID, tilerenderer.TileComponent]()
 
 	g := global{p, textureArray, VAO}
 	w.SaveGlobal(g)
@@ -163,7 +163,7 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 		tiles:       tiles,
 	}
 
-	tileArray := ecs.GetComponentsArray[tile.TileComponent](w.Components())
+	tileArray := ecs.GetComponentsArray[tilerenderer.TileComponent](w.Components())
 	transformArray := ecs.GetComponentsArray[transform.TransformComponent](w.Components())
 	groupsArray := ecs.GetComponentsArray[groups.GroupsComponent](w.Components())
 

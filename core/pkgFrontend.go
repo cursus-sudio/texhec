@@ -5,8 +5,8 @@ import (
 	backendscopes "backend/services/scopes"
 	gameassets "core/assets"
 	"core/modules/fpslogger/pkg"
-	"core/modules/tile"
-	tilepkg "core/modules/tile/pkg"
+	"core/modules/tilerenderer"
+	tilepkg "core/modules/tilerenderer/pkg"
 	gamescenes "core/scenes"
 	creditsscene "core/scenes/credits"
 	gamescene "core/scenes/game"
@@ -180,8 +180,8 @@ func frontendDic(
 		// 			},
 		// 		),
 		indexingpkg.SpatialIndexingPackage(
-			func(component tile.TileComponent) tile.TilePos { return component.Pos },
-			func(index tile.TilePos) uint32 {
+			func(component tilerenderer.TileComponent) tilerenderer.TilePos { return component.Pos },
+			func(index tilerenderer.TilePos) uint32 {
 				var minX, maxX, minY, maxY, minZ int32 = 0, 1000, 0, 1000, 0
 				xMul := maxX - minX
 				yMul := xMul * (maxY - minY)

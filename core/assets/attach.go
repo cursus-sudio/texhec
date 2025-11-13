@@ -2,7 +2,7 @@ package gameassets
 
 import (
 	"bytes"
-	"core/modules/tile"
+	"core/modules/tilerenderer"
 	_ "embed"
 	"frontend/modules/animation"
 	"frontend/modules/audio"
@@ -140,13 +140,13 @@ func (pkg) Register(b ioc.Builder) {
 		})
 		return b
 	})
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.TileTool) tile.TileTool {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tilerenderer.TileTool) tilerenderer.TileTool {
 		assets := datastructures.NewSparseArray[uint32, assets.AssetID]()
-		assets.Set(tile.TileMountain, MountainTileTextureID)
-		assets.Set(tile.TileGround, GroundTileTextureID)
-		assets.Set(tile.TileForest, ForestTileTextureID)
-		assets.Set(tile.TileWater, WaterTileTextureID)
-		assets.Set(tile.TileU1, U1TextureID)
+		assets.Set(tilerenderer.TileMountain, MountainTileTextureID)
+		assets.Set(tilerenderer.TileGround, GroundTileTextureID)
+		assets.Set(tilerenderer.TileForest, ForestTileTextureID)
+		assets.Set(tilerenderer.TileWater, WaterTileTextureID)
+		assets.Set(tilerenderer.TileU1, U1TextureID)
 		s.AddType(assets)
 		return s
 	})

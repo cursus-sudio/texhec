@@ -1,4 +1,4 @@
-package tile
+package tilerenderer
 
 type TilePos struct{ X, Y, Z int32 }
 

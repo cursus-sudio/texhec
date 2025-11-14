@@ -1,10 +1,9 @@
 package tilerenderer
 
-type TilePos struct{ X, Y, Z int32 }
+type TilePosComponent struct{ X, Y, Z int32 }
 
-func NewTilePos(x, y, z int32) TilePos { return TilePos{x, y, z} }
+func NewTilePos(x, y, z int32) TilePosComponent { return TilePosComponent{x, y, z} }
 
-type TileComponent struct {
-	Pos  TilePos
+type TileTypeComponent struct {
 	Type uint32
 }

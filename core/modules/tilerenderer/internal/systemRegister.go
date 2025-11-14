@@ -24,6 +24,11 @@ import (
 	"github.com/ogiusek/events"
 )
 
+type TileData struct {
+	Pos  tilerenderer.TilePosComponent
+	Type tilerenderer.TileTypeComponent
+}
+
 type global struct {
 	program      program.Program
 	textureArray texturearray.TextureArray
@@ -42,7 +47,7 @@ type TileRenderSystemRegister struct {
 	logger              logger.Logger
 	textures            datastructures.SparseArray[uint32, image.Image]
 	textureArrayFactory texturearray.Factory
-	vboFactory          vbo.VBOFactory[tilerenderer.TileComponent]
+	vboFactory          vbo.VBOFactory[TileData]
 	assetsStorage       assets.AssetsStorage
 
 	tileSize  int32
@@ -55,7 +60,7 @@ type TileRenderSystemRegister struct {
 func NewTileRenderSystemRegister(
 	textureArrayFactory texturearray.Factory,
 	logger logger.Logger,
-	vboFactory vbo.VBOFactory[tilerenderer.TileComponent],
+	vboFactory vbo.VBOFactory[TileData],
 	assetsStorage assets.AssetsStorage,
 	tileSize int32,
 	gridDepth float32,
@@ -133,7 +138,7 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 	VAO := vao.NewVAO(VBO, EBO)
 
 	changeMutex := &sync.Mutex{}
-	tiles := datastructures.NewSparseArray[ecs.EntityID, tilerenderer.TileComponent]()
+	tiles := datastructures.NewSparseArray[ecs.EntityID, TileData]()
 
 	g := global{p, textureArray, VAO}
 	w.SaveGlobal(g)
@@ -163,7 +168,8 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 		tiles:       tiles,
 	}
 
-	tileArray := ecs.GetComponentsArray[tilerenderer.TileComponent](w.Components())
+	tileTypeArray := ecs.GetComponentsArray[tilerenderer.TileTypeComponent](w.Components())
+	tilePosArray := ecs.GetComponentsArray[tilerenderer.TilePosComponent](w.Components())
 	transformArray := ecs.GetComponentsArray[transform.TransformComponent](w.Components())
 	groupsArray := ecs.GetComponentsArray[groups.GroupsComponent](w.Components())
 
@@ -176,10 +182,15 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 		groupsTransaction := groupsArray.Transaction()
 
 		for _, entity := range ei {
-			tile, err := tileArray.GetComponent(entity)
+			tileType, err := tileTypeArray.GetComponent(entity)
 			if err != nil {
 				continue
 			}
+			tilePos, err := tilePosArray.GetComponent(entity)
+			if err != nil {
+				continue
+			}
+			tile := TileData{tilePos, tileType}
 			tiles.Set(entity, tile)
 
 			transformTransaction.SaveComponent(entity, transform.NewTransform().Ptr().
@@ -194,9 +205,9 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 
 		factory.logger.Warn(ecs.FlushMany(transformTransaction, groupsTransaction))
 	}
-	tileArray.OnAdd(onChangeOrAdd)
-	tileArray.OnChange(onChangeOrAdd)
-	tileArray.OnRemove(func(ei []ecs.EntityID) {
+	tileTypeArray.OnAdd(onChangeOrAdd)
+	tileTypeArray.OnChange(onChangeOrAdd)
+	tileTypeArray.OnRemove(func(ei []ecs.EntityID) {
 		changeMutex.Lock()
 		defer changeMutex.Unlock()
 		s.changed = true

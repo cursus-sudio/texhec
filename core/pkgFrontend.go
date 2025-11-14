@@ -172,8 +172,8 @@ func frontendDic(
 		groupspkg.Package(),
 		inputspkg.Package(),
 		indexingpkg.SpatialIndexingPackage(
-			func(component tilerenderer.TileComponent) tilerenderer.TilePos { return component.Pos },
-			func(index tilerenderer.TilePos) uint32 {
+			func(component tilerenderer.TilePosComponent) tilerenderer.TilePosComponent { return component },
+			func(index tilerenderer.TilePosComponent) uint32 {
 				var minX, maxX, minY, maxY, minZ int32 = 0, 1000, 0, 1000, 0
 				xMul := maxX - minX
 				yMul := xMul * (maxY - minY)

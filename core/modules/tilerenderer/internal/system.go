@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"core/modules/tilerenderer"
 	_ "embed"
 	"frontend/modules/camera"
 	"frontend/modules/groups"
@@ -40,7 +39,7 @@ type system struct {
 
 	textureArray  texturearray.TextureArray
 	vao           vao.VAO
-	vertices      vbo.VBOSetter[tilerenderer.TileComponent]
+	vertices      vbo.VBOSetter[TileData]
 	verticesCount int32
 
 	tileSize  int32
@@ -54,7 +53,7 @@ type system struct {
 
 	changed     bool
 	changeMutex sync.Locker
-	tiles       datastructures.SparseArray[ecs.EntityID, tilerenderer.TileComponent]
+	tiles       datastructures.SparseArray[ecs.EntityID, TileData]
 }
 
 type locations struct {

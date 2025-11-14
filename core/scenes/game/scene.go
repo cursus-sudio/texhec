@@ -98,8 +98,10 @@ func (pkg) LoadObjects(b ioc.Builder) {
 
 			rand := rand.New(rand.NewPCG(2077, 7137))
 
-			tilesArray := ecs.GetComponentsArray[tilerenderer.TileComponent](world.Components())
-			tilesTransaction := tilesArray.Transaction()
+			tilesTypeArray := ecs.GetComponentsArray[tilerenderer.TileTypeComponent](world.Components())
+			tilesPosArray := ecs.GetComponentsArray[tilerenderer.TilePosComponent](world.Components())
+			tilesTypeTransaction := tilesTypeArray.Transaction()
+			tilesPosTransaction := tilesPosArray.Transaction()
 			rows := 100
 			cols := 100
 			for i := 0; i < rows*cols; i++ {
@@ -120,23 +122,17 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				case 3:
 					tileType = tilerenderer.TileWater
 				}
-				tile := tilerenderer.TileComponent{
-					Pos:  tilerenderer.NewTilePos(int32(row), int32(col), 0),
-					Type: tileType,
-				}
-
-				tilesTransaction.SaveComponent(entity, tile)
+				tilesPosTransaction.SaveAnyComponent(entity, tilerenderer.NewTilePos(int32(row), int32(col), 0))
+				tilesTypeTransaction.SaveComponent(entity, tilerenderer.TileTypeComponent{Type: tileType})
 			}
 
 			{
-				entity := world.NewEntity()
-				unit := tilerenderer.TileComponent{
-					Pos:  tilerenderer.NewTilePos(0, 0, 1),
-					Type: tilerenderer.TileU1,
-				}
-				tilesTransaction.SaveComponent(entity, unit)
+				unit := world.NewEntity()
+				tilesPosTransaction.SaveAnyComponent(unit, tilerenderer.NewTilePos(0, 0, 0))
+				tilesTypeTransaction.SaveComponent(unit, tilerenderer.TileTypeComponent{Type: tilerenderer.TileU1})
 			}
-			ioc.Get[logger.Logger](c).Warn(tilesTransaction.Flush())
+			err := ecs.FlushMany(tilesTypeTransaction, tilesPosTransaction)
+			ioc.Get[logger.Logger](c).Warn(err)
 		})
 
 		return b

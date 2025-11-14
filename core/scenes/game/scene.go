@@ -45,8 +45,12 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			gameCamera := world.NewEntity()
 			ecs.SaveComponent(world.Components(), gameCamera, transform.NewTransform())
 			ecs.SaveComponent(world.Components(), gameCamera, camera.NewDynamicOrtho(-1000, +1000, 1))
-			ecs.SaveComponent(world.Components(), gameCamera, camera.MobileCameraComponent{})
 			ecs.SaveComponent(world.Components(), gameCamera, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
+			ecs.SaveComponent(world.Components(), gameCamera, camera.NewMobileCamera())
+			ecs.SaveComponent(world.Components(), gameCamera, camera.NewCameraLimits(
+				mgl32.Vec3{0, 0, -1000},                // min
+				mgl32.Vec3{100 * 100, 100 * 100, 1000}, // max
+			))
 
 			signature := world.NewEntity()
 			ecs.SaveComponent(world.Components(), signature, transform.NewTransform().Ptr().

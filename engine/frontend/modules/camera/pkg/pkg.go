@@ -2,6 +2,7 @@ package camerapkg
 
 import (
 	"frontend/modules/camera"
+	"frontend/modules/camera/internal/cameralimitsys"
 	"frontend/modules/camera/internal/cameratool"
 	"frontend/modules/camera/internal/mobilecamerasys"
 	"frontend/modules/camera/internal/projectionsys"
@@ -204,6 +205,10 @@ func (pkg pkg) Register(b ioc.Builder) {
 							events.Emit(w.Events(), camera.NewUpdateProjectionsEvent())
 						}
 					})
+					return nil
+				}),
+				ecs.NewSystemRegister(func(w ecs.World) error {
+					cameralimitsys.NewOrthoSys(w, logger)
 					return nil
 				}),
 			)

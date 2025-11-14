@@ -5,19 +5,22 @@ import (
 	"shared/services/ecs"
 )
 
-func NewSpatialIndexingFactory[Component, IndexType any](
-	componentIndex func(Component) IndexType,
+func NewSpatialIndexingFactory[IndexType any](
+	queryFactory func(ecs.World) ecs.LiveQuery,
+	componentIndexFactory func(ecs.World) func(ecs.EntityID) IndexType,
 	indexNumber func(IndexType) uint32,
-) ecs.ToolFactory[indexing.SpatialIndexTool[Component, IndexType]] {
-	return ecs.NewToolFactory(func(w ecs.World) indexing.SpatialIndexTool[Component, IndexType] {
-		if index, err := ecs.GetGlobal[spatialIndex[Component, IndexType]](w); err == nil {
+) ecs.ToolFactory[indexing.SpatialIndexTool[IndexType]] {
+	return ecs.NewToolFactory(func(w ecs.World) indexing.SpatialIndexTool[IndexType] {
+		if index, err := ecs.GetGlobal[spatialIndex[IndexType]](w); err == nil {
 			return index
 		}
 		w.LockGlobals()
 		defer w.UnlockGlobals()
-		if index, err := ecs.GetGlobal[spatialIndex[Component, IndexType]](w); err == nil {
+		if index, err := ecs.GetGlobal[spatialIndex[IndexType]](w); err == nil {
 			return index
 		}
-		return newIndex(w, componentIndex, indexNumber)
+		query := queryFactory(w)
+		componentIndex := componentIndexFactory(w)
+		return newIndex(w, query, componentIndex, indexNumber)
 	})
 }

@@ -8,24 +8,28 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
-type spatialIndexingPkg[Component, IndexType any] struct {
-	componentIndex func(Component) IndexType
+type spatialIndexingPkg[IndexType any] struct {
+	queryFactory   func(ecs.World) ecs.LiveQuery
+	componentIndex func(ecs.World) func(ecs.EntityID) IndexType
 	indexNumber    func(IndexType) uint32
 }
 
-func SpatialIndexingPackage[Component, IndexType any](
-	componentIndex func(component Component) IndexType,
+func SpatialIndexingPackage[IndexType any](
+	queryFactory func(ecs.World) ecs.LiveQuery,
+	componentIndex func(ecs.World) func(entity ecs.EntityID) IndexType,
 	indexNumber func(index IndexType) uint32,
 ) ioc.Pkg {
-	return spatialIndexingPkg[Component, IndexType]{
+	return spatialIndexingPkg[IndexType]{
+		queryFactory:   queryFactory,
 		componentIndex: componentIndex,
 		indexNumber:    indexNumber,
 	}
 }
 
-func (pkg spatialIndexingPkg[Component, IndexType]) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[indexing.SpatialIndexTool[Component, IndexType]] {
+func (pkg spatialIndexingPkg[IndexType]) Register(b ioc.Builder) {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[indexing.SpatialIndexTool[IndexType]] {
 		return internal.NewSpatialIndexingFactory(
+			pkg.queryFactory,
 			pkg.componentIndex,
 			pkg.indexNumber,
 		)

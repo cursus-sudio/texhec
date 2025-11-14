@@ -47,6 +47,7 @@ import (
 	"path/filepath"
 	"shared/services/api"
 	"shared/services/datastructures"
+	"shared/services/ecs"
 	"shared/services/logger"
 	"shared/services/uuid"
 	"shared/utils/connection"
@@ -172,7 +173,18 @@ func frontendDic(
 		groupspkg.Package(),
 		inputspkg.Package(),
 		indexingpkg.SpatialIndexingPackage(
-			func(component tilerenderer.TilePosComponent) tilerenderer.TilePosComponent { return component },
+			func(w ecs.World) ecs.LiveQuery {
+				return w.Query().
+					Require(ecs.GetComponentType(tilerenderer.TilePosComponent{})).
+					Build()
+			},
+			func(w ecs.World) func(entity ecs.EntityID) tilerenderer.TilePosComponent {
+				tilePosArray := ecs.GetComponentsArray[tilerenderer.TilePosComponent](w.Components())
+				return func(entity ecs.EntityID) tilerenderer.TilePosComponent {
+					comp, _ := tilePosArray.GetComponent(entity)
+					return comp
+				}
+			},
 			func(index tilerenderer.TilePosComponent) uint32 {
 				var minX, maxX, minY, maxY, minZ int32 = 0, 1000, 0, 1000, 0
 				xMul := maxX - minX

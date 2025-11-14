@@ -26,7 +26,7 @@ import (
 
 type TileData struct {
 	Pos  tilerenderer.TilePosComponent
-	Type tilerenderer.TileTypeComponent
+	Type tilerenderer.TileTextureComponent
 }
 
 type global struct {
@@ -168,7 +168,7 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 		tiles:       tiles,
 	}
 
-	tileTypeArray := ecs.GetComponentsArray[tilerenderer.TileTypeComponent](w.Components())
+	tileTypeArray := ecs.GetComponentsArray[tilerenderer.TileTextureComponent](w.Components())
 	tilePosArray := ecs.GetComponentsArray[tilerenderer.TilePosComponent](w.Components())
 	transformArray := ecs.GetComponentsArray[transform.TransformComponent](w.Components())
 	groupsArray := ecs.GetComponentsArray[groups.GroupsComponent](w.Components())

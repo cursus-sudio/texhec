@@ -98,7 +98,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 
 			rand := rand.New(rand.NewPCG(2077, 7137))
 
-			tilesTypeArray := ecs.GetComponentsArray[tilerenderer.TileTypeComponent](world.Components())
+			tilesTypeArray := ecs.GetComponentsArray[tilerenderer.TileTextureComponent](world.Components())
 			tilesPosArray := ecs.GetComponentsArray[tilerenderer.TilePosComponent](world.Components())
 			tilesTypeTransaction := tilesTypeArray.Transaction()
 			tilesPosTransaction := tilesPosArray.Transaction()
@@ -123,13 +123,13 @@ func (pkg) LoadObjects(b ioc.Builder) {
 					tileType = tilerenderer.TileWater
 				}
 				tilesPosTransaction.SaveAnyComponent(entity, tilerenderer.NewTilePos(int32(row), int32(col), 0))
-				tilesTypeTransaction.SaveComponent(entity, tilerenderer.TileTypeComponent{Type: tileType})
+				tilesTypeTransaction.SaveComponent(entity, tilerenderer.TileTextureComponent{Texture: tileType})
 			}
 
 			{
 				unit := world.NewEntity()
 				tilesPosTransaction.SaveAnyComponent(unit, tilerenderer.NewTilePos(0, 0, 0))
-				tilesTypeTransaction.SaveComponent(unit, tilerenderer.TileTypeComponent{Type: tilerenderer.TileU1})
+				tilesTypeTransaction.SaveComponent(unit, tilerenderer.TileTextureComponent{Texture: tilerenderer.TileU1})
 			}
 			err := ecs.FlushMany(tilesTypeTransaction, tilesPosTransaction)
 			ioc.Get[logger.Logger](c).Warn(err)

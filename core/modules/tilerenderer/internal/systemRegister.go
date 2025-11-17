@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"core/modules/tile"
 	"core/modules/tilerenderer"
 	"frontend/modules/camera"
 	"frontend/modules/groups"
@@ -25,7 +26,7 @@ import (
 )
 
 type TileData struct {
-	Pos  tilerenderer.TilePosComponent
+	Pos  PosComponent
 	Type tilerenderer.TileTextureComponent
 }
 
@@ -169,7 +170,7 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 	}
 
 	tileTypeArray := ecs.GetComponentsArray[tilerenderer.TileTextureComponent](w.Components())
-	tilePosArray := ecs.GetComponentsArray[tilerenderer.TilePosComponent](w.Components())
+	posArray := ecs.GetComponentsArray[tile.PosComponent](w.Components())
 	transformArray := ecs.GetComponentsArray[transform.TransformComponent](w.Components())
 	groupsArray := ecs.GetComponentsArray[groups.GroupsComponent](w.Components())
 
@@ -186,11 +187,11 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 			if err != nil {
 				continue
 			}
-			tilePos, err := tilePosArray.GetComponent(entity)
+			tilePos, err := posArray.GetComponent(entity)
 			if err != nil {
 				continue
 			}
-			tile := TileData{tilePos, tileType}
+			tile := TileData{NewPos(tilePos), tileType}
 			tiles.Set(entity, tile)
 
 			transformTransaction.SaveComponent(entity, transform.NewTransform().Ptr().

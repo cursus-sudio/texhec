@@ -2,6 +2,7 @@ package gamescene
 
 import (
 	gameassets "core/assets"
+	"core/modules/tile"
 	"core/modules/tilerenderer"
 	gamescenes "core/scenes"
 	"frontend/modules/anchor"
@@ -103,7 +104,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			rand := rand.New(rand.NewPCG(2077, 7137))
 
 			tilesTypeArray := ecs.GetComponentsArray[tilerenderer.TileTextureComponent](world.Components())
-			tilesPosArray := ecs.GetComponentsArray[tilerenderer.TilePosComponent](world.Components())
+			tilesPosArray := ecs.GetComponentsArray[tile.PosComponent](world.Components())
 			tilesTypeTransaction := tilesTypeArray.Transaction()
 			tilesPosTransaction := tilesPosArray.Transaction()
 			rows := 100
@@ -126,13 +127,13 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				case 3:
 					tileType = tilerenderer.TileWater
 				}
-				tilesPosTransaction.SaveAnyComponent(entity, tilerenderer.NewTilePos(int32(row), int32(col), 0))
+				tilesPosTransaction.SaveAnyComponent(entity, tile.NewPos(int32(row), int32(col), tile.GroundLayer))
 				tilesTypeTransaction.SaveComponent(entity, tilerenderer.TileTextureComponent{Texture: tileType})
 			}
 
 			{
 				unit := world.NewEntity()
-				tilesPosTransaction.SaveAnyComponent(unit, tilerenderer.NewTilePos(0, 0, 0))
+				tilesPosTransaction.SaveAnyComponent(unit, tile.NewPos(0, 0, tile.UnitLayer))
 				tilesTypeTransaction.SaveComponent(unit, tilerenderer.TileTextureComponent{Texture: tilerenderer.TileU1})
 			}
 			err := ecs.FlushMany(tilesTypeTransaction, tilesPosTransaction)

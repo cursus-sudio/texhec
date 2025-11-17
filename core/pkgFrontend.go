@@ -5,7 +5,7 @@ import (
 	backendscopes "backend/services/scopes"
 	gameassets "core/assets"
 	"core/modules/fpslogger/pkg"
-	"core/modules/tilerenderer"
+	"core/modules/tile"
 	tilepkg "core/modules/tilerenderer/pkg"
 	gamescenes "core/scenes"
 	creditsscene "core/scenes/credits"
@@ -175,21 +175,21 @@ func frontendDic(
 		indexingpkg.SpatialIndexingPackage(
 			func(w ecs.World) ecs.LiveQuery {
 				return w.Query().
-					Require(ecs.GetComponentType(tilerenderer.TilePosComponent{})).
+					Require(ecs.GetComponentType(tile.PosComponent{})).
 					Build()
 			},
-			func(w ecs.World) func(entity ecs.EntityID) tilerenderer.TilePosComponent {
-				tilePosArray := ecs.GetComponentsArray[tilerenderer.TilePosComponent](w.Components())
-				return func(entity ecs.EntityID) tilerenderer.TilePosComponent {
+			func(w ecs.World) func(entity ecs.EntityID) tile.PosComponent {
+				tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w.Components())
+				return func(entity ecs.EntityID) tile.PosComponent {
 					comp, _ := tilePosArray.GetComponent(entity)
 					return comp
 				}
 			},
-			func(index tilerenderer.TilePosComponent) uint32 {
+			func(index tile.PosComponent) uint32 {
 				var minX, maxX, minY, maxY, minZ int32 = 0, 1000, 0, 1000, 0
 				xMul := maxX - minX
 				yMul := xMul * (maxY - minY)
-				result := (index.X+minX)*xMul + (index.Y+minY)*yMul + (index.Z + minZ)
+				result := (index.X+minX)*xMul + (index.Y+minY)*yMul + (int32(index.Layer) + minZ)
 				return uint32(result)
 			},
 		),

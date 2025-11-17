@@ -2,8 +2,8 @@ package gamescene
 
 import (
 	gameassets "core/assets"
+	"core/modules/definition"
 	"core/modules/tile"
-	"core/modules/tilerenderer"
 	gamescenes "core/scenes"
 	"frontend/modules/anchor"
 	"frontend/modules/camera"
@@ -103,7 +103,8 @@ func (pkg) LoadObjects(b ioc.Builder) {
 
 			rand := rand.New(rand.NewPCG(2077, 7137))
 
-			tilesTypeArray := ecs.GetComponentsArray[tilerenderer.TileTextureComponent](world.Components())
+			// tilesTypeArray := ecs.GetComponentsArray[TileTextureComponent](world.Components())
+			tilesTypeArray := ecs.GetComponentsArray[definition.DefinitionLinkComponent](world.Components())
 			tilesPosArray := ecs.GetComponentsArray[tile.PosComponent](world.Components())
 			tilesTypeTransaction := tilesTypeArray.Transaction()
 			tilesPosTransaction := tilesPosArray.Transaction()
@@ -113,28 +114,28 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				row := i % cols
 				col := i / cols
 				entity := world.NewEntity()
-				tileType := tilerenderer.TileMountain
+				tileType := definition.TileMountain
 
 				num := rand.IntN(4)
 
 				switch num {
 				case 0:
-					tileType = tilerenderer.TileMountain
+					tileType = definition.TileMountain
 				case 1:
-					tileType = tilerenderer.TileGround
+					tileType = definition.TileGround
 				case 2:
-					tileType = tilerenderer.TileForest
+					tileType = definition.TileForest
 				case 3:
-					tileType = tilerenderer.TileWater
+					tileType = definition.TileWater
 				}
 				tilesPosTransaction.SaveAnyComponent(entity, tile.NewPos(int32(row), int32(col), tile.GroundLayer))
-				tilesTypeTransaction.SaveComponent(entity, tilerenderer.TileTextureComponent{Texture: tileType})
+				tilesTypeTransaction.SaveComponent(entity, definition.NewLink(tileType))
 			}
 
 			{
 				unit := world.NewEntity()
 				tilesPosTransaction.SaveAnyComponent(unit, tile.NewPos(0, 0, tile.UnitLayer))
-				tilesTypeTransaction.SaveComponent(unit, tilerenderer.TileTextureComponent{Texture: tilerenderer.TileU1})
+				tilesTypeTransaction.SaveComponent(unit, definition.NewLink(definition.TileU1))
 			}
 			err := ecs.FlushMany(tilesTypeTransaction, tilesPosTransaction)
 			ioc.Get[logger.Logger](c).Warn(err)

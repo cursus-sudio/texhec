@@ -40,6 +40,7 @@ func (pkg) Register(b ioc.Builder) {
 				}),
 
 				mouse.NewCameraRaySystem(
+					ioc.Get[logger.Logger](c),
 					ioc.Get[ecs.ToolFactory[collider.CollisionTool]](c),
 					ioc.Get[window.Api](c),
 					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),

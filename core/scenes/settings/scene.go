@@ -87,7 +87,8 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				ecs.SaveComponent(world.Components(), btn, render.NewTexture(gameassets.WaterTileTextureID))
 				ecs.SaveComponent(world.Components(), btn, genericrenderer.PipelineComponent{})
 
-				ecs.SaveComponent(world.Components(), btn, inputs.NewMouseEvents().AddLeftClickEvents(button.OnClick))
+				ecs.SaveComponent(world.Components(), btn, inputs.NewMouseEvents().Ptr().
+					AddLeftClickEvents(button.OnClick).Val())
 				ecs.SaveComponent(world.Components(), btn, collider.NewCollider(gameassets.SquareColliderID))
 				ecs.SaveComponent(world.Components(), btn, inputs.KeepSelectedComponent{})
 

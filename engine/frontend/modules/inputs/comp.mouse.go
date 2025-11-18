@@ -47,65 +47,45 @@ func NewMouseEvents() MouseEventsComponent {
 	return MouseEventsComponent{}
 }
 
-func (component MouseEventsComponent) Clone() MouseEventsComponent {
-	return MouseEventsComponent{
-		LeftClickEvents:        component.LeftClickEvents,
-		DoubleLeftClickEvents:  component.DoubleLeftClickEvents,
-		RightClickEvents:       component.RightClickEvents,
-		DoubleRightClickEvents: component.DoubleRightClickEvents,
+func (comp MouseEventsComponent) Ptr() *MouseEventsComponent { return &comp }
+func (comp *MouseEventsComponent) Val() MouseEventsComponent { return *comp }
 
-		MouseEnterEvents: component.MouseEnterEvents,
-		MouseLeaveEvents: component.MouseLeaveEvents,
-
-		HoverEvents: component.HoverEvents,
-		DragEvents:  component.DragEvents,
-	}
+func (component *MouseEventsComponent) AddLeftClickEvents(events ...any) *MouseEventsComponent {
+	component.LeftClickEvents = append(component.LeftClickEvents, events...)
+	return component
 }
 
-func (component MouseEventsComponent) AddLeftClickEvents(events ...any) MouseEventsComponent {
-	r := component.Clone()
-	r.LeftClickEvents = append(r.LeftClickEvents, events...)
-	return r
+func (component *MouseEventsComponent) AddDoubleLeftClickEvents(events ...any) *MouseEventsComponent {
+	component.DoubleLeftClickEvents = append(component.DoubleLeftClickEvents, events...)
+	return component
 }
 
-func (component MouseEventsComponent) AddDoubleLeftClickEvents(events ...any) MouseEventsComponent {
-	r := component.Clone()
-	r.DoubleLeftClickEvents = append(r.DoubleLeftClickEvents, events...)
-	return r
+func (component *MouseEventsComponent) AddRightClickEvents(events ...any) *MouseEventsComponent {
+	component.RightClickEvents = append(component.RightClickEvents, events...)
+	return component
 }
 
-func (component MouseEventsComponent) AddRightClickEvents(events ...any) MouseEventsComponent {
-	r := component.Clone()
-	r.RightClickEvents = append(r.RightClickEvents, events...)
-	return r
+func (component *MouseEventsComponent) AddDoubleRightClickEvents(events ...any) *MouseEventsComponent {
+	component.DoubleRightClickEvents = append(component.DoubleRightClickEvents, events...)
+	return component
 }
 
-func (component MouseEventsComponent) AddDoubleRightClickEvents(events ...any) MouseEventsComponent {
-	r := component.Clone()
-	r.DoubleRightClickEvents = append(r.DoubleRightClickEvents, events...)
-	return r
+func (component *MouseEventsComponent) AddMouseEnterEvents(events ...any) *MouseEventsComponent {
+	component.MouseEnterEvents = append(component.MouseEnterEvents, events...)
+	return component
 }
 
-func (component MouseEventsComponent) AddMouseEnterEvents(events ...any) MouseEventsComponent {
-	r := component.Clone()
-	r.MouseEnterEvents = append(r.MouseEnterEvents, events...)
-	return r
+func (component *MouseEventsComponent) AddMouseLeaveEvents(events ...any) *MouseEventsComponent {
+	component.MouseLeaveEvents = append(component.MouseLeaveEvents, events...)
+	return component
 }
 
-func (component MouseEventsComponent) AddMouseLeaveEvents(events ...any) MouseEventsComponent {
-	r := component.Clone()
-	r.MouseLeaveEvents = append(r.MouseLeaveEvents, events...)
-	return r
+func (component *MouseEventsComponent) AddHoverEvents(events ...any) *MouseEventsComponent {
+	component.HoverEvents = append(component.HoverEvents, events...)
+	return component
 }
 
-func (component MouseEventsComponent) AddHoverEvents(events ...any) MouseEventsComponent {
-	r := component.Clone()
-	r.HoverEvents = append(r.HoverEvents, events...)
-	return r
-}
-
-func (component MouseEventsComponent) AddDragEvents(events ...any) MouseEventsComponent {
-	r := component.Clone()
-	r.DragEvents = append(r.DragEvents, events...)
-	return r
+func (component *MouseEventsComponent) AddDragEvents(events ...any) *MouseEventsComponent {
+	component.DragEvents = append(component.DragEvents, events...)
+	return component
 }

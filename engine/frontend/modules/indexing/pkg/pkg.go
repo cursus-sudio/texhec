@@ -10,13 +10,13 @@ import (
 
 type spatialIndexingPkg[IndexType any] struct {
 	queryFactory   func(ecs.World) ecs.LiveQuery
-	componentIndex func(ecs.World) func(ecs.EntityID) IndexType
+	componentIndex func(ecs.World) func(ecs.EntityID) (IndexType, bool)
 	indexNumber    func(IndexType) uint32
 }
 
 func SpatialIndexingPackage[IndexType any](
 	queryFactory func(ecs.World) ecs.LiveQuery,
-	componentIndex func(ecs.World) func(entity ecs.EntityID) IndexType,
+	componentIndex func(ecs.World) func(entity ecs.EntityID) (indexType IndexType, ok bool),
 	indexNumber func(index IndexType) uint32,
 ) ioc.Pkg {
 	return spatialIndexingPkg[IndexType]{

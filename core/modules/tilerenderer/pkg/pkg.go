@@ -1,4 +1,4 @@
-package tilepkg
+package tilerendererpkg
 
 import (
 	"core/modules/tilerenderer"

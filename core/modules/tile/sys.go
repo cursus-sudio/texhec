@@ -1,0 +1,5 @@
+package tile
+
+import "shared/services/ecs"
+
+type System ecs.SystemRegister

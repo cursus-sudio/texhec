@@ -6,6 +6,9 @@ import (
 
 type Indices[IndexType any] interface {
 	Get(IndexType) (ecs.EntityID, bool)
+	OnUpsert(func([]ecs.EntityID))
+	OnRemove(func([]ecs.EntityID))
+	// OnDelete(func([]ecs.EntityID))
 }
 
 type SpatialIndexTool[IndexType any] Indices[IndexType]

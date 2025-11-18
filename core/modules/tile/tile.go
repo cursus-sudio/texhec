@@ -1,16 +1,24 @@
 package tile
 
+type Layer uint8
+
 const (
-	GroundLayer uint8 = iota
+	GroundLayer Layer = iota
 	BuildingLayer
 	UnitLayer
 )
 
 type PosComponent struct {
 	X, Y  int32
-	Layer uint8
+	Layer Layer
 }
 
-func NewPos(x, y int32, layer uint8) PosComponent {
+func NewPos(x, y int32, layer Layer) PosComponent {
 	return PosComponent{x, y, layer}
+}
+
+func (c PosComponent) GetColliderPos() ColliderPos { return ColliderPos{c.X, c.Y} }
+
+type ColliderPos struct {
+	X, Y int32
 }

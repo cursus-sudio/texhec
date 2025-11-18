@@ -56,6 +56,7 @@ type ComponentsArray[Component any] interface {
 	OnAdd(func([]EntityID))
 	OnChange(func([]EntityID))
 	OnRemove(func([]EntityID))
+	OnRemoveComponents(func([]EntityID, []Component))
 }
 
 // impl
@@ -67,10 +68,11 @@ type componentsArray[Component any] struct {
 	applyTransactionMutex sync.Mutex
 
 	// queries are used for change and remove listeners
-	queries  []*liveQuery
-	onAdd    []func([]EntityID)
-	onChange []func([]EntityID)
-	onRemove []func([]EntityID)
+	queries            []*liveQuery
+	onAdd              []func([]EntityID)
+	onChange           []func([]EntityID)
+	onRemove           []func([]EntityID)
+	onRemoveComponents []func([]EntityID, []Component)
 }
 
 func NewComponentsArray[Component any](entities datastructures.SparseSet[EntityID]) *componentsArray[Component] {
@@ -78,9 +80,10 @@ func NewComponentsArray[Component any](entities datastructures.SparseSet[EntityI
 		entities:   entities,
 		components: datastructures.NewSparseArray[EntityID, Component](),
 
-		onAdd:    make([]func([]EntityID), 0),
-		onChange: make([]func([]EntityID), 0),
-		onRemove: make([]func([]EntityID), 0),
+		onAdd:              make([]func([]EntityID), 0),
+		onChange:           make([]func([]EntityID), 0),
+		onRemove:           make([]func([]EntityID), 0),
+		onRemoveComponents: make([]func([]EntityID, []Component), 0),
 	}
 	return array
 }
@@ -140,12 +143,17 @@ func (c *componentsArray[Component]) DirtySaveAnyComponent(entity EntityID, anyC
 }
 
 func (c *componentsArray[Component]) RemoveComponent(entity EntityID) {
+	component, _ := c.components.Get(entity)
 	if removed := c.components.Remove(entity); !removed {
 		return
 	}
 	entities := []EntityID{entity}
 	for _, listener := range c.onRemove {
 		listener(entities)
+	}
+	components := []Component{component}
+	for _, listener := range c.onRemoveComponents {
+		listener(entities, components)
 	}
 }
 
@@ -180,4 +188,8 @@ func (c *componentsArray[Component]) OnChange(listener func([]EntityID)) {
 
 func (c *componentsArray[Component]) OnRemove(listener func([]EntityID)) {
 	c.onRemove = append(c.onRemove, listener)
+}
+
+func (c *componentsArray[Component]) OnRemoveComponents(listener func([]EntityID, []Component)) {
+	c.onRemoveComponents = append(c.onRemoveComponents, listener)
 }

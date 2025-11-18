@@ -196,6 +196,7 @@ func (t *componentsArrayTransaction[Component]) Flush() error {
 	onAdd := []EntityID{}
 	onChange := []EntityID{}
 	onRemove := []EntityID{}
+	onRemoveComponents := []Component{}
 
 	// apply
 	t.operations = datastructures.NewSparseArray[EntityID, operation]()
@@ -215,8 +216,10 @@ func (t *componentsArrayTransaction[Component]) Flush() error {
 	t.dirtySaves = datastructures.NewSparseArray[EntityID, save[Component]]()
 
 	for _, removedEntity := range t.removes.GetIndices() {
+		component, _ := t.array.components.Get(removedEntity)
 		if removed := t.array.components.Remove(removedEntity); removed {
 			onRemove = append(onRemove, removedEntity)
+			onRemoveComponents = append(onRemoveComponents, component)
 		}
 	}
 	t.removes = datastructures.NewSparseSet[EntityID]()
@@ -237,6 +240,9 @@ func (t *componentsArrayTransaction[Component]) Flush() error {
 	if len(onRemove) != 0 {
 		for _, listener := range t.array.onRemove {
 			listener(onRemove)
+		}
+		for _, listener := range t.array.onRemoveComponents {
+			listener(onRemove, onRemoveComponents)
 		}
 	}
 

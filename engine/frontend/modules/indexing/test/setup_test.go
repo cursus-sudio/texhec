@@ -27,14 +27,11 @@ func NewSetup() Setup {
 					Require(ecs.GetComponentType(Component{})).
 					Build()
 			},
-			func(w ecs.World) func(entity ecs.EntityID) uint32 {
+			func(w ecs.World) func(entity ecs.EntityID) (uint32, bool) {
 				componentArray := ecs.GetComponentsArray[Component](w.Components())
-				return func(entity ecs.EntityID) uint32 {
+				return func(entity ecs.EntityID) (uint32, bool) {
 					comp, err := componentArray.GetComponent(entity)
-					if err != nil {
-						return 0
-					}
-					return comp.Index
+					return comp.Index, err == nil
 				}
 			},
 			func(index uint32) uint32 { return index },

@@ -1,11 +1,11 @@
-package internal
+package tilerenderer
 
 import (
-	"core/modules/tilerenderer"
+	"core/modules/definition"
+	"core/modules/tile"
 	"frontend/modules/camera"
 	"frontend/modules/groups"
 	"frontend/modules/render"
-	"frontend/modules/transform"
 	"frontend/services/assets"
 	"frontend/services/graphics/program"
 	"frontend/services/graphics/shader"
@@ -20,13 +20,12 @@ import (
 	"sync"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
-	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/events"
 )
 
 type TileData struct {
-	Pos  tilerenderer.TilePosComponent
-	Type tilerenderer.TileTextureComponent
+	Pos  PosComponent
+	Type definition.DefinitionID
 }
 
 type global struct {
@@ -82,7 +81,7 @@ func NewTileRenderSystemRegister(
 	}
 }
 
-func (service TileRenderSystemRegister) AddType(addedAssets datastructures.SparseArray[uint32, assets.AssetID]) {
+func (service TileRenderSystemRegister) AddType(addedAssets datastructures.SparseArray[definition.DefinitionID, assets.AssetID]) {
 	for _, assetIndex := range addedAssets.GetIndices() {
 		asset, _ := addedAssets.Get(assetIndex)
 		texture, err := assets.StorageGet[render.TextureAsset](service.assetsStorage, asset)
@@ -90,7 +89,7 @@ func (service TileRenderSystemRegister) AddType(addedAssets datastructures.Spars
 			continue
 		}
 
-		service.textures.Set(assetIndex, texture.Images()[0])
+		service.textures.Set(uint32(assetIndex), texture.Images()[0])
 	}
 }
 
@@ -168,46 +167,30 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 		tiles:       tiles,
 	}
 
-	tileTypeArray := ecs.GetComponentsArray[tilerenderer.TileTextureComponent](w.Components())
-	tilePosArray := ecs.GetComponentsArray[tilerenderer.TilePosComponent](w.Components())
-	transformArray := ecs.GetComponentsArray[transform.TransformComponent](w.Components())
-	groupsArray := ecs.GetComponentsArray[groups.GroupsComponent](w.Components())
+	linkArray := ecs.GetComponentsArray[definition.DefinitionLinkComponent](w.Components())
+	posArray := ecs.GetComponentsArray[tile.PosComponent](w.Components())
 
 	onChangeOrAdd := func(ei []ecs.EntityID) {
 		changeMutex.Lock()
 		defer changeMutex.Unlock()
 		s.changed = true
 
-		transformTransaction := transformArray.Transaction()
-		groupsTransaction := groupsArray.Transaction()
-
 		for _, entity := range ei {
-			tileType, err := tileTypeArray.GetComponent(entity)
+			tileType, err := linkArray.GetComponent(entity)
 			if err != nil {
 				continue
 			}
-			tilePos, err := tilePosArray.GetComponent(entity)
+			tilePos, err := posArray.GetComponent(entity)
 			if err != nil {
 				continue
 			}
-			tile := TileData{tilePos, tileType}
+			tile := TileData{NewPos(tilePos), tileType.DefinitionID}
 			tiles.Set(entity, tile)
-
-			transformTransaction.SaveComponent(entity, transform.NewTransform().Ptr().
-				SetSize(mgl32.Vec3{float32(factory.tileSize), float32(factory.tileSize), 1}).
-				SetPos(mgl32.Vec3{
-					float32(factory.tileSize)*float32(tile.Pos.X) + float32(factory.tileSize)/2,
-					float32(factory.tileSize)*float32(tile.Pos.Y) + float32(factory.tileSize)/2,
-					factory.gridDepth + float32(tile.Pos.Z),
-				}).Val())
-			groupsTransaction.SaveComponent(entity, factory.groups)
 		}
-
-		factory.logger.Warn(ecs.FlushMany(transformTransaction, groupsTransaction))
 	}
-	tileTypeArray.OnAdd(onChangeOrAdd)
-	tileTypeArray.OnChange(onChangeOrAdd)
-	tileTypeArray.OnRemove(func(ei []ecs.EntityID) {
+	linkArray.OnAdd(onChangeOrAdd)
+	linkArray.OnChange(onChangeOrAdd)
+	linkArray.OnRemove(func(ei []ecs.EntityID) {
 		changeMutex.Lock()
 		defer changeMutex.Unlock()
 		s.changed = true

@@ -5,8 +5,8 @@ import (
 	backendscopes "backend/services/scopes"
 	gameassets "core/assets"
 	"core/modules/fpslogger/pkg"
-	"core/modules/tilerenderer"
-	tilepkg "core/modules/tilerenderer/pkg"
+	"core/modules/tile"
+	tilepkg "core/modules/tile/pkg"
 	gamescenes "core/scenes"
 	creditsscene "core/scenes/credits"
 	gamescene "core/scenes/game"
@@ -18,14 +18,16 @@ import (
 	"frontend/modules/animation/pkg"
 	"frontend/modules/audio/pkg"
 	"frontend/modules/camera/pkg"
+	"frontend/modules/collider"
 	"frontend/modules/collider/pkg"
 	"frontend/modules/drag/pkg"
 	"frontend/modules/genericrenderer/pkg"
 	"frontend/modules/groups"
 	"frontend/modules/groups/pkg"
-	"frontend/modules/indexing/pkg"
+	"frontend/modules/inputs"
 	"frontend/modules/inputs/pkg"
 	"frontend/modules/render/pkg"
+	scenessys "frontend/modules/scenes"
 	"frontend/modules/scenes/pkg"
 	"frontend/modules/text"
 	"frontend/modules/text/pkg"
@@ -47,7 +49,6 @@ import (
 	"path/filepath"
 	"shared/services/api"
 	"shared/services/datastructures"
-	"shared/services/ecs"
 	"shared/services/logger"
 	"shared/services/uuid"
 	"shared/utils/connection"
@@ -158,7 +159,25 @@ func frontendDic(
 
 		texture.Package(),
 		texturearray.Package(),
-		tilepkg.Package(100, -1., groups.EmptyGroups().Ptr().Enable(gamescene.GameGroup).Val()),
+		tilepkg.Package(
+			100,
+			-1,
+			groups.EmptyGroups().Ptr().Enable(gamescene.GameGroup).Val(),
+			collider.NewCollider(gameassets.SquareColliderID),
+
+			tile.GroundLayer,
+			[]tile.Layer{tile.UnitLayer, tile.BuildingLayer},
+			func() datastructures.SparseArray[tile.Layer, []any] {
+				set := datastructures.NewSparseArray[tile.Layer, []any]()
+				set.Set(tile.GroundLayer, []any{scenessys.NewChangeSceneEvent(gamescenes.CreditsID)})
+				set.Set(tile.BuildingLayer, []any{inputs.QuitEvent{}})
+				set.Set(tile.UnitLayer, []any{inputs.QuitEvent{}})
+				return set
+			}(),
+			0, 1000, // min-max x
+			0, 1000, // min-max y
+			0, 3, // min-max z
+		),
 
 		//
 
@@ -172,27 +191,6 @@ func frontendDic(
 		genericrendererpkg.Package(),
 		groupspkg.Package(),
 		inputspkg.Package(),
-		indexingpkg.SpatialIndexingPackage(
-			func(w ecs.World) ecs.LiveQuery {
-				return w.Query().
-					Require(ecs.GetComponentType(tilerenderer.TilePosComponent{})).
-					Build()
-			},
-			func(w ecs.World) func(entity ecs.EntityID) tilerenderer.TilePosComponent {
-				tilePosArray := ecs.GetComponentsArray[tilerenderer.TilePosComponent](w.Components())
-				return func(entity ecs.EntityID) tilerenderer.TilePosComponent {
-					comp, _ := tilePosArray.GetComponent(entity)
-					return comp
-				}
-			},
-			func(index tilerenderer.TilePosComponent) uint32 {
-				var minX, maxX, minY, maxY, minZ int32 = 0, 1000, 0, 1000, 0
-				xMul := maxX - minX
-				yMul := xMul * (maxY - minY)
-				result := (index.X+minX)*xMul + (index.Y+minY)*yMul + (index.Z + minZ)
-				return uint32(result)
-			},
-		),
 		renderpkg.Package(),
 		scenespkg.Package(),
 		textpkg.Package(

@@ -7,7 +7,7 @@ import (
 
 func NewSpatialIndexingFactory[IndexType any](
 	queryFactory func(ecs.World) ecs.LiveQuery,
-	componentIndexFactory func(ecs.World) func(ecs.EntityID) IndexType,
+	componentIndexFactory func(ecs.World) func(ecs.EntityID) (IndexType, bool),
 	indexNumber func(IndexType) uint32,
 ) ecs.ToolFactory[indexing.SpatialIndexTool[IndexType]] {
 	return ecs.NewToolFactory(func(w ecs.World) indexing.SpatialIndexTool[IndexType] {

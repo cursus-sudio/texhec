@@ -2,7 +2,7 @@ package gamescenes
 
 import (
 	"core/modules/fpslogger"
-	"core/modules/tilerenderer"
+	"core/modules/tile"
 	"frontend/modules/anchor"
 	"frontend/modules/animation"
 	"frontend/modules/audio"
@@ -10,6 +10,7 @@ import (
 	"frontend/modules/collider"
 	"frontend/modules/drag"
 	"frontend/modules/genericrenderer"
+	"frontend/modules/indexing"
 	"frontend/modules/inputs"
 	"frontend/modules/render"
 	scenesys "frontend/modules/scenes"
@@ -77,11 +78,14 @@ func (pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) CoreSystems {
-
 		return func(ctx scenes.SceneCtx) {
 			logger := ioc.Get[logger.Logger](c)
+			posFactory := ioc.Get[ecs.ToolFactory[indexing.SpatialIndexTool[tile.PosComponent]]](c)
+			colliderFactory := ioc.Get[ecs.ToolFactory[indexing.SpatialIndexTool[tile.ColliderPos]]](c)
 
 			temporaryInlineSystems := ecs.NewSystemRegister(func(w ecs.World) error {
+				posFactory.Build(w)
+				colliderFactory.Build(w)
 				events.Listen(w.EventsBuilder(), func(e sdl.KeyboardEvent) {
 					if e.Keysym.Sym == sdl.K_q {
 						logger.Info("quiting program due to pressing 'Q'")
@@ -120,13 +124,15 @@ func (pkg) Register(b ioc.Builder) {
 				ioc.Get[camera.System](c),
 				temporaryInlineSystems,
 
+				ioc.Get[tile.System](c),
+
 				// audio
 				ioc.Get[audio.System](c),
 
 				// render
 				ioc.Get[render.System](c),
 				ioc.Get[genericrenderer.System](c),
-				ioc.Get[tilerenderer.System](c),
+				ioc.Get[tile.SystemRenderer](c),
 				ioc.Get[text.System](c),
 				ioc.Get[fpslogger.System](c),
 

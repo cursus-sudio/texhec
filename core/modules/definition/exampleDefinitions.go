@@ -1,7 +1,7 @@
-package tilerenderer
+package definition
 
 const (
-	TileMountain uint32 = iota
+	TileMountain DefinitionID = iota
 	TileGround
 	TileForest
 	TileWater

@@ -7,6 +7,7 @@ import (
 	"frontend/services/assets"
 	"frontend/services/media/window"
 	"shared/services/ecs"
+	"shared/services/logger"
 
 	"github.com/ogiusek/events"
 	"github.com/veandco/go-sdl2/sdl"
@@ -25,6 +26,7 @@ type RayChangedTargetEvent struct {
 
 type cameraRaySystem struct {
 	world           ecs.World
+	logger          logger.Logger
 	transformArray  ecs.ComponentsArray[transform.TransformComponent]
 	cameraArray     ecs.ComponentsArray[camera.CameraComponent]
 	broadCollisions collider.CollisionTool
@@ -37,6 +39,7 @@ type cameraRaySystem struct {
 }
 
 func NewCameraRaySystem(
+	logger logger.Logger,
 	colliderFactory ecs.ToolFactory[collider.CollisionTool],
 	window window.Api,
 	cameraResolver ecs.ToolFactory[camera.CameraTool],
@@ -44,6 +47,7 @@ func NewCameraRaySystem(
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := &cameraRaySystem{
 			world:           w,
+			logger:          logger,
 			transformArray:  ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
 			cameraArray:     ecs.GetComponentsArray[camera.CameraComponent](w.Components()),
 			broadCollisions: colliderFactory.Build(w),

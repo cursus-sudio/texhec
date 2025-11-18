@@ -2,7 +2,8 @@ package gamescene
 
 import (
 	gameassets "core/assets"
-	"core/modules/tilerenderer"
+	"core/modules/definition"
+	"core/modules/tile"
 	gamescenes "core/scenes"
 	"frontend/modules/anchor"
 	"frontend/modules/camera"
@@ -66,17 +67,6 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world.Components(), signature, text.FontSizeComponent{FontSize: 32})
 			ecs.SaveComponent(world.Components(), signature, text.BreakComponent{Break: text.BreakNone})
 
-			background := world.NewEntity()
-			ecs.SaveComponent(world.Components(), background, anchor.NewParentAnchor(uiCamera).Ptr().
-				SetPivotPoint(mgl32.Vec3{.5, .5, .5}).
-				SetOffset(mgl32.Vec3{0, 0, -100}).
-				SetRelativeTransform(transform.NewTransform().Ptr().SetSize(mgl32.Vec3{1, 1, 1}).Val()).Val(),
-			)
-			ecs.SaveComponent(world.Components(), background, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
-			ecs.SaveComponent(world.Components(), background, render.NewMesh(gameassets.SquareMesh))
-			ecs.SaveComponent(world.Components(), background, render.NewTexture(gameassets.WaterTileTextureID))
-			ecs.SaveComponent(world.Components(), background, genericrenderer.PipelineComponent{})
-
 			quit := world.NewEntity()
 			ecs.SaveComponent(world.Components(), quit, transform.NewTransform().Ptr().
 				SetSize(mgl32.Vec3{50, 50, 1}).Val())
@@ -91,8 +81,8 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world.Components(), quit, render.NewTexture(gameassets.WaterTileTextureID))
 			ecs.SaveComponent(world.Components(), quit, genericrenderer.PipelineComponent{})
 
-			ecs.SaveComponent(world.Components(), quit, inputs.NewMouseEvents().
-				AddLeftClickEvents(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
+			ecs.SaveComponent(world.Components(), quit, inputs.NewMouseEvents().Ptr().
+				AddLeftClickEvents(scenessys.NewChangeSceneEvent(gamescenes.MenuID)).Val())
 			ecs.SaveComponent(world.Components(), quit, inputs.KeepSelectedComponent{})
 			ecs.SaveComponent(world.Components(), quit, collider.NewCollider(gameassets.SquareColliderID))
 
@@ -102,8 +92,9 @@ func (pkg) LoadObjects(b ioc.Builder) {
 
 			rand := rand.New(rand.NewPCG(2077, 7137))
 
-			tilesTypeArray := ecs.GetComponentsArray[tilerenderer.TileTextureComponent](world.Components())
-			tilesPosArray := ecs.GetComponentsArray[tilerenderer.TilePosComponent](world.Components())
+			// tilesTypeArray := ecs.GetComponentsArray[TileTextureComponent](world.Components())
+			tilesTypeArray := ecs.GetComponentsArray[definition.DefinitionLinkComponent](world.Components())
+			tilesPosArray := ecs.GetComponentsArray[tile.PosComponent](world.Components())
 			tilesTypeTransaction := tilesTypeArray.Transaction()
 			tilesPosTransaction := tilesPosArray.Transaction()
 			rows := 100
@@ -112,28 +103,28 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				row := i % cols
 				col := i / cols
 				entity := world.NewEntity()
-				tileType := tilerenderer.TileMountain
+				tileType := definition.TileMountain
 
 				num := rand.IntN(4)
 
 				switch num {
 				case 0:
-					tileType = tilerenderer.TileMountain
+					tileType = definition.TileMountain
 				case 1:
-					tileType = tilerenderer.TileGround
+					tileType = definition.TileGround
 				case 2:
-					tileType = tilerenderer.TileForest
+					tileType = definition.TileForest
 				case 3:
-					tileType = tilerenderer.TileWater
+					tileType = definition.TileWater
 				}
-				tilesPosTransaction.SaveAnyComponent(entity, tilerenderer.NewTilePos(int32(row), int32(col), 0))
-				tilesTypeTransaction.SaveComponent(entity, tilerenderer.TileTextureComponent{Texture: tileType})
+				tilesPosTransaction.SaveAnyComponent(entity, tile.NewPos(int32(row), int32(col), tile.GroundLayer))
+				tilesTypeTransaction.SaveComponent(entity, definition.NewLink(tileType))
 			}
 
 			{
 				unit := world.NewEntity()
-				tilesPosTransaction.SaveAnyComponent(unit, tilerenderer.NewTilePos(0, 0, 0))
-				tilesTypeTransaction.SaveComponent(unit, tilerenderer.TileTextureComponent{Texture: tilerenderer.TileU1})
+				tilesPosTransaction.SaveAnyComponent(unit, tile.NewPos(0, 0, tile.UnitLayer))
+				tilesTypeTransaction.SaveComponent(unit, definition.NewLink(definition.TileU1))
 			}
 			err := ecs.FlushMany(tilesTypeTransaction, tilesPosTransaction)
 			ioc.Get[logger.Logger](c).Warn(err)

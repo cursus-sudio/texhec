@@ -176,7 +176,7 @@ func frontendDic(
 			}(),
 			0, 1000, // min-max x
 			0, 1000, // min-max y
-			0, // min z
+			0, 3, // min-max z
 		),
 
 		//

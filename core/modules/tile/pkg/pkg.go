@@ -23,7 +23,7 @@ func Package(
 	mainLayer tile.Layer,
 	layers []tile.Layer,
 	layerEvents datastructures.SparseArray[tile.Layer, []any],
-	minX, maxX, minY, maxY, minZ int32,
+	minX, maxX, minY, maxY, minZ, maxZ int32,
 ) ioc.Pkg {
 	return pkg{
 		[]ioc.Pkg{

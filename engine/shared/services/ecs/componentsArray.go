@@ -31,6 +31,12 @@ type AnyComponentArray interface {
 	OnRemove(func([]EntityID))
 }
 
+type EntityComponent[Component any] interface {
+	Get() (Component, error)
+	Set(Component) error
+	Remove()
+}
+
 type ComponentsArray[Component any] interface {
 	Transaction() ComponentsArrayTransaction[Component]
 	AnyTransaction() AnyComponentsArrayTransaction
@@ -49,6 +55,7 @@ type ComponentsArray[Component any] interface {
 	// can return:
 	// - ErrComponentDoNotExists
 	// - ErrEntityDoNotExists
+	GetEntityComponent(entity EntityID) EntityComponent[Component]
 	GetComponent(entity EntityID) (Component, error)
 	GetAnyComponent(entity EntityID) (any, error)
 	GetEntities() []EntityID
@@ -155,6 +162,19 @@ func (c *componentsArray[Component]) RemoveComponent(entity EntityID) {
 	for _, listener := range c.onRemoveComponents {
 		listener(entities, components)
 	}
+}
+
+type entityComponent[Component any] struct {
+	arr    *componentsArray[Component]
+	entity EntityID
+}
+
+func (e entityComponent[Component]) Get() (Component, error) { return e.arr.GetComponent(e.entity) }
+func (e entityComponent[Component]) Set(c Component) error   { return e.arr.SaveComponent(e.entity, c) }
+func (e entityComponent[Component]) Remove()                 { e.arr.RemoveComponent(e.entity) }
+
+func (c *componentsArray[Component]) GetEntityComponent(entity EntityID) EntityComponent[Component] {
+	return entityComponent[Component]{c, entity}
 }
 
 func (c *componentsArray[Component]) GetComponent(entity EntityID) (Component, error) {

@@ -141,7 +141,7 @@ func (pkg) Register(b ioc.Builder) {
 		})
 		return b
 	})
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.TileTool) tile.TileTool {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.TileAssets) tile.TileAssets {
 		assets := datastructures.NewSparseArray[definition.DefinitionID, assets.AssetID]()
 		assets.Set(definition.TileMountain, MountainTileTextureID)
 		assets.Set(definition.TileGround, GroundTileTextureID)

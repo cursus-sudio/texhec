@@ -45,7 +45,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
 		)
 	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.TileTool {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.TileAssets {
 		return ioc.Get[TileRenderSystemRegister](c)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.SystemRenderer {

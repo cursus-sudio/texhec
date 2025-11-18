@@ -6,6 +6,6 @@ import (
 	"shared/services/datastructures"
 )
 
-type TileTool interface {
+type TileAssets interface {
 	AddType(addedAssets datastructures.SparseArray[definition.DefinitionID, assets.AssetID])
 }

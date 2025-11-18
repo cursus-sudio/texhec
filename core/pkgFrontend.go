@@ -7,7 +7,6 @@ import (
 	"core/modules/fpslogger/pkg"
 	"core/modules/tile"
 	tilepkg "core/modules/tile/pkg"
-	tilerendererpkg "core/modules/tilerenderer/pkg"
 	gamescenes "core/scenes"
 	creditsscene "core/scenes/credits"
 	gamescene "core/scenes/game"
@@ -160,7 +159,6 @@ func frontendDic(
 
 		texture.Package(),
 		texturearray.Package(),
-		tilerendererpkg.Package(100, -1., groups.EmptyGroups().Ptr().Enable(gamescene.GameGroup).Val()),
 		tilepkg.Package(
 			100,
 			-1,

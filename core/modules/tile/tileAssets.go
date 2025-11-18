@@ -1,4 +1,4 @@
-package tilerenderer
+package tile
 
 import (
 	"core/modules/definition"

@@ -2,7 +2,7 @@ package test
 
 import (
 	"core/modules/tile"
-	"core/modules/tile/internal"
+	"core/modules/tile/internal/tilecollider"
 	"testing"
 )
 
@@ -12,7 +12,7 @@ func TestCollider(t *testing.T) {
 		L2
 	)
 
-	collider := internal.NewCollider()
+	collider := tilecollider.NewCollider()
 	if collider.Has(L1) {
 		t.Error("empty collider already has l1. read or ctor fault")
 		return

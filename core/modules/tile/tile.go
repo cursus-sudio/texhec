@@ -1,13 +1,5 @@
 package tile
 
-type Layer uint8
-
-const (
-	GroundLayer Layer = iota
-	BuildingLayer
-	UnitLayer
-)
-
 type PosComponent struct {
 	X, Y  int32
 	Layer Layer

@@ -2,27 +2,17 @@ package tilepkg
 
 import (
 	"core/modules/tile"
-	"core/modules/tile/internal"
+	"core/modules/tile/internal/tilecollider"
+	"core/modules/tile/internal/tilerenderer"
 	"frontend/modules/collider"
 	"frontend/modules/groups"
-	"frontend/modules/indexing"
-	indexingpkg "frontend/modules/indexing/pkg"
 	"shared/services/datastructures"
-	"shared/services/ecs"
-	"shared/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
 )
 
 type pkg struct {
-	tileSize                     int32
-	gridDepth                    float32
-	tileGroups                   groups.GroupsComponent
-	colliderComponent            collider.ColliderComponent
-	mainLayer                    tile.Layer
-	layers                       []tile.Layer
-	layerEvents                  datastructures.SparseArray[tile.Layer, []any]
-	minX, maxX, minY, maxY, minZ int32
+	pkgs []ioc.Pkg
 }
 
 func Package(
@@ -36,145 +26,28 @@ func Package(
 	minX, maxX, minY, maxY, minZ int32,
 ) ioc.Pkg {
 	return pkg{
-		tileSize,
-		gridDepth,
-		tileGroups,
-		colliderComponent,
-		mainLayer,
-		layers,
-		layerEvents,
-		minX, maxX, minY, maxY, minZ,
+		[]ioc.Pkg{
+			tilecollider.Package(
+				tileSize,
+				gridDepth,
+				tileGroups,
+				colliderComponent,
+				mainLayer,
+				layers,
+				layerEvents,
+				minX, maxX, minY, maxY, minZ,
+			),
+			tilerenderer.Package(
+				tileSize,
+				gridDepth,
+				tileGroups,
+			),
+		},
 	}
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.System {
-		posIndexFactory := ioc.Get[ecs.ToolFactory[indexing.SpatialIndexTool[tile.PosComponent]]](c)
-		logger := ioc.Get[logger.Logger](c)
-		return ecs.NewSystemRegister(func(w ecs.World) error {
-			posIndex := posIndexFactory.Build(w)
-			errs := ecs.RegisterSystems(w,
-				internal.TileColliderSystem(
-					logger,
-					pkg.tileSize,
-					pkg.gridDepth,
-					pkg.tileGroups,
-					pkg.colliderComponent,
-					pkg.layerEvents,
-				),
-				ecs.NewSystemRegister(func(w ecs.World) error {
-					posArray := ecs.GetComponentsArray[tile.PosComponent](w.Components())
-					colliderArray := ecs.GetComponentsArray[internal.ColliderComponent](w.Components())
-					posArray.OnRemoveComponents(func(ei []ecs.EntityID, components []tile.PosComponent) {
-						colliderTransaction := colliderArray.Transaction()
-						set := datastructures.NewSparseSet[ecs.EntityID]()
-						for _, component := range components {
-							component.Layer = pkg.mainLayer
-							entity, ok := posIndex.Get(component)
-							if ok {
-								set.Add(entity)
-							}
-						}
-						for _, entity := range set.GetIndices() {
-							pos, err := posArray.GetComponent(entity)
-							if err != nil {
-								continue
-							}
-							collider := internal.NewCollider().Ptr().Add(pkg.mainLayer).Val()
-							for _, layer := range pkg.layers {
-								pos.Layer = layer
-								_, ok := posIndex.Get(pos)
-								if ok {
-									collider.Add(layer)
-								}
-							}
-							colliderTransaction.SaveComponent(entity, collider)
-						}
-						logger.Warn(colliderTransaction.Flush())
-					})
-					return nil
-				}),
-			)
-			if len(errs) != 0 {
-				return errs[0]
-			}
-			return nil
-		})
-	})
-
-	indexingpkg.SpatialIndexingPackage(
-		func(w ecs.World) ecs.LiveQuery {
-			return w.Query().
-				Require(ecs.GetComponentType(tile.PosComponent{})).
-				Build()
-		},
-		func(w ecs.World) func(entity ecs.EntityID) (tile.PosComponent, bool) {
-			tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w.Components())
-			return func(entity ecs.EntityID) (tile.PosComponent, bool) {
-				comp, err := tilePosArray.GetComponent(entity)
-				return comp, err == nil
-			}
-		},
-		func(index tile.PosComponent) uint32 {
-			xMul := pkg.maxX - pkg.minX
-			yMul := xMul * (pkg.maxY - pkg.minY)
-			result := (index.X+pkg.minX)*xMul + (index.Y+pkg.minY)*yMul + (int32(index.Layer) + pkg.minZ)
-			return uint32(result)
-		},
-	).Register(b)
-	indexingpkg.SpatialIndexingPackage(
-		func(w ecs.World) ecs.LiveQuery {
-			return w.Query().
-				Require(ecs.GetComponentType(tile.PosComponent{})).
-				Build()
-		},
-		func(w ecs.World) func(entity ecs.EntityID) (tile.ColliderPos, bool) {
-			tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w.Components())
-			return func(entity ecs.EntityID) (tile.ColliderPos, bool) {
-				tileComp, err := tilePosArray.GetComponent(entity)
-				if err != nil && tileComp.Layer != pkg.mainLayer {
-					return tile.ColliderPos{}, false
-				}
-				return tileComp.GetColliderPos(), true
-			}
-		},
-		func(pos tile.ColliderPos) uint32 {
-			xMul := pkg.maxX - pkg.minX
-			result := (pos.X+pkg.minX)*xMul + (pos.Y + pkg.minY)
-			return uint32(result)
-		},
-	).Register(b)
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, indices ecs.ToolFactory[indexing.SpatialIndexTool[tile.ColliderPos]]) ecs.ToolFactory[indexing.SpatialIndexTool[tile.ColliderPos]] {
-		posIndexFactory := ioc.Get[ecs.ToolFactory[indexing.SpatialIndexTool[tile.PosComponent]]](c)
-		logger := ioc.Get[logger.Logger](c)
-
-		return ecs.NewToolFactory(func(w ecs.World) indexing.SpatialIndexTool[tile.ColliderPos] {
-			posIndex := posIndexFactory.Build(w)
-			posArray := ecs.GetComponentsArray[tile.PosComponent](w.Components())
-			colliderArray := ecs.GetComponentsArray[internal.ColliderComponent](w.Components())
-			upsertEntities := func(ei []ecs.EntityID) {
-				colliderTransaction := colliderArray.Transaction()
-				for _, entity := range ei {
-					pos, err := posArray.GetComponent(entity)
-					if err != nil {
-						continue
-					}
-					collider := internal.NewCollider().Ptr().Add(pkg.mainLayer).Val()
-					for _, layer := range pkg.layers {
-						pos.Layer = layer
-						_, ok := posIndex.Get(pos)
-						if ok {
-							collider.Add(layer)
-						}
-					}
-					colliderTransaction.SaveComponent(entity, collider)
-				}
-				logger.Warn(colliderTransaction.Flush())
-			}
-			tool := indices.Build(w)
-			tool.OnUpsert(upsertEntities)
-			return tool
-		})
-
-	})
+	for _, pkg := range pkg.pkgs {
+		pkg.Register(b)
+	}
 }

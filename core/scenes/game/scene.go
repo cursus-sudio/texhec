@@ -67,17 +67,6 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world.Components(), signature, text.FontSizeComponent{FontSize: 32})
 			ecs.SaveComponent(world.Components(), signature, text.BreakComponent{Break: text.BreakNone})
 
-			// background := world.NewEntity()
-			// ecs.SaveComponent(world.Components(), background, anchor.NewParentAnchor(uiCamera).Ptr().
-			// 	SetPivotPoint(mgl32.Vec3{.5, .5, .5}).
-			// 	SetOffset(mgl32.Vec3{0, 0, -100}).
-			// 	SetRelativeTransform(transform.NewTransform().Ptr().SetSize(mgl32.Vec3{1, 1, 1}).Val()).Val(),
-			// )
-			// ecs.SaveComponent(world.Components(), background, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
-			// ecs.SaveComponent(world.Components(), background, render.NewMesh(gameassets.SquareMesh))
-			// ecs.SaveComponent(world.Components(), background, render.NewTexture(gameassets.WaterTileTextureID))
-			// ecs.SaveComponent(world.Components(), background, genericrenderer.PipelineComponent{})
-
 			quit := world.NewEntity()
 			ecs.SaveComponent(world.Components(), quit, transform.NewTransform().Ptr().
 				SetSize(mgl32.Vec3{50, 50, 1}).Val())

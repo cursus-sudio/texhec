@@ -1,4 +1,4 @@
-package internal
+package tilerenderer
 
 import "core/modules/tile"
 

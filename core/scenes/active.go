@@ -3,7 +3,6 @@ package gamescenes
 import (
 	"core/modules/fpslogger"
 	"core/modules/tile"
-	"core/modules/tilerenderer"
 	"frontend/modules/anchor"
 	"frontend/modules/animation"
 	"frontend/modules/audio"
@@ -133,7 +132,7 @@ func (pkg) Register(b ioc.Builder) {
 				// render
 				ioc.Get[render.System](c),
 				ioc.Get[genericrenderer.System](c),
-				ioc.Get[tilerenderer.System](c),
+				ioc.Get[tile.SystemRenderer](c),
 				ioc.Get[text.System](c),
 				ioc.Get[fpslogger.System](c),
 

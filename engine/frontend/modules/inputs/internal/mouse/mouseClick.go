@@ -157,7 +157,6 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
 			}
 			switch event.Clicks {
 			case 2:
-				eventToEmit = nil
 				if comp, err := s.doubleLeftClickArray.GetComponent(*entity); err == nil {
 					eventToEmit = comp.Event
 				}
@@ -170,7 +169,6 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
 			}
 			switch event.Clicks {
 			case 2:
-				eventToEmit = nil
 				if comp, err := s.doubleRightClickArray.GetComponent(*entity); err == nil {
 					eventToEmit = comp.Event
 				}

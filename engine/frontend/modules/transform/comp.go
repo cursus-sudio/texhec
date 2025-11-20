@@ -29,9 +29,13 @@ const (
 	RelativeSize
 )
 
-func NewPos(pos mgl32.Vec3) PosComponent                         { return PosComponent{pos} }
-func NewRotation(rotation mgl32.Quat) RotationComponent          { return RotationComponent{rotation} }
-func NewSize(size mgl32.Vec3) SizeComponent                      { return SizeComponent{size} }
-func NewPivotPoint(point mgl32.Vec3) PivotPointComponent         { return PivotPointComponent{point} }
-func NewParentPivotPoint(p mgl32.Vec3) ParentPivotPointComponent { return ParentPivotPointComponent{p} }
-func NewParent(p ecs.EntityID, mask uint8) ParentComponent       { return ParentComponent{p, mask} }
+func NewPos(x, y, z float32) PosComponent               { return PosComponent{mgl32.Vec3{x, y, z}} }
+func NewRotation(rotation mgl32.Quat) RotationComponent { return RotationComponent{rotation} }
+func NewSize(x, y, z float32) SizeComponent             { return SizeComponent{mgl32.Vec3{x, y, z}} }
+func NewPivotPoint(x, y, z float32) PivotPointComponent {
+	return PivotPointComponent{mgl32.Vec3{x, y, z}}
+}
+func NewParentPivotPoint(x, y, z float32) ParentPivotPointComponent {
+	return ParentPivotPointComponent{mgl32.Vec3{x, y, z}}
+}
+func NewParent(p ecs.EntityID, mask uint8) ParentComponent { return ParentComponent{p, mask} }

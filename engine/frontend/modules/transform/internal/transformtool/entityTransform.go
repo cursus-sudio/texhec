@@ -72,7 +72,7 @@ func (t entityTransform) ParentPivotPoint() ecs.EntityComponent[transform.Parent
 func (t entityTransform) Mat4() mgl32.Mat4 {
 	pos, err := t.absolutePos.Get()
 	if err != nil {
-		pos = transform.NewPos(mgl32.Vec3{0, 0, 0})
+		pos = transform.NewPos(0, 0, 0)
 	}
 	rot, err := t.absoluteRot.Get()
 	if err != nil {
@@ -80,7 +80,7 @@ func (t entityTransform) Mat4() mgl32.Mat4 {
 	}
 	size, err := t.absoluteSize.Get()
 	if err != nil {
-		size = transform.NewSize(mgl32.Vec3{1, 1, 1})
+		size = transform.NewSize(1, 1, 1)
 	}
 
 	translation := mgl32.Translate3D(pos.Pos.X(), pos.Pos.Y(), pos.Pos.Z())

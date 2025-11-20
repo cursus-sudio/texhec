@@ -231,11 +231,11 @@ func frontendDic(
 			0.8, // arbitrary number works for some reason
 		),
 		transformpkg.Package(
-			transform.NewPos(mgl32.Vec3{}),
+			transform.NewPos(0, 0, 0),
 			transform.NewRotation(mgl32.QuatIdent()),
-			transform.NewSize(mgl32.Vec3{1, 1, 1}),
-			transform.NewPivotPoint(mgl32.Vec3{.5, .5, .5}),
-			transform.NewParentPivotPoint(mgl32.Vec3{.5, .5, .5}),
+			transform.NewSize(1, 1, 1),
+			transform.NewPivotPoint(.5, .5, .5),
+			transform.NewParentPivotPoint(.5, .5, .5),
 		),
 
 		// game packages

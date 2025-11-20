@@ -80,6 +80,13 @@ func (s *orthoSys) ChangeListener(ei []ecs.EntityID) {
 			limits.Max.Z(),
 		}
 
+		for i := 0; i < 3; i++ {
+			if minPos[i] > maxPos[i] {
+				center := (minPos[i] + maxPos[i]) / 2
+				minPos[i], maxPos[i] = center, center
+			}
+		}
+
 		pos.Pos = mgl32.Vec3{
 			max(pos.Pos.X(), minPos.X()),
 			max(pos.Pos.Y(), minPos.Y()),

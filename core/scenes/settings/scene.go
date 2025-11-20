@@ -17,7 +17,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -34,11 +33,11 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world.Components(), cameraEntity, camera.NewDynamicOrtho(-1000, +1000, 1))
 
 			signature := world.NewEntity()
-			ecs.SaveComponent(world.Components(), signature, transform.NewPos(mgl32.Vec3{5, 5}))
-			ecs.SaveComponent(world.Components(), signature, transform.NewSize(mgl32.Vec3{100, 50, 1}))
-			ecs.SaveComponent(world.Components(), signature, transform.NewPivotPoint(mgl32.Vec3{1, .5, .5}))
+			ecs.SaveComponent(world.Components(), signature, transform.NewPos(5, 5, 0))
+			ecs.SaveComponent(world.Components(), signature, transform.NewSize(100, 50, 1))
+			ecs.SaveComponent(world.Components(), signature, transform.NewPivotPoint(1, .5, .5))
 			ecs.SaveComponent(world.Components(), signature, transform.NewParent(cameraEntity, transform.RelativePos))
-			ecs.SaveComponent(world.Components(), signature, transform.NewParentPivotPoint(mgl32.Vec3{0, 0, .5}))
+			ecs.SaveComponent(world.Components(), signature, transform.NewParentPivotPoint(0, 0, .5))
 
 			ecs.SaveComponent(world.Components(), signature, text.TextComponent{Text: "settings"})
 			ecs.SaveComponent(world.Components(), signature, text.FontSizeComponent{FontSize: 32})
@@ -51,7 +50,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world.Components(), background, genericrenderer.PipelineComponent{})
 
 			buttonArea := world.NewEntity()
-			ecs.SaveComponent(world.Components(), buttonArea, transform.NewSize(mgl32.Vec3{500, 200, 2}))
+			ecs.SaveComponent(world.Components(), buttonArea, transform.NewSize(500, 200, 2))
 			ecs.SaveComponent(world.Components(), buttonArea, transform.NewParent(cameraEntity, transform.RelativePos))
 
 			type Button struct {
@@ -68,9 +67,9 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			for i, button := range buttons {
 				btn := world.NewEntity()
 				normalizedIndex := float32(i) / (float32(len(buttons)) - 1)
-				ecs.SaveComponent(world.Components(), btn, transform.NewSize(mgl32.Vec3{500, 50, 1}))
+				ecs.SaveComponent(world.Components(), btn, transform.NewSize(500, 50, 1))
 				ecs.SaveComponent(world.Components(), btn, transform.NewParent(buttonArea, transform.RelativePos))
-				ecs.SaveComponent(world.Components(), btn, transform.NewParentPivotPoint(mgl32.Vec3{.5, normalizedIndex, .5}))
+				ecs.SaveComponent(world.Components(), btn, transform.NewParentPivotPoint(.5, normalizedIndex, .5))
 
 				ecs.SaveComponent(world.Components(), btn, render.NewMesh(gameassets.SquareMesh))
 				ecs.SaveComponent(world.Components(), btn, render.NewTexture(gameassets.WaterTileTextureID))

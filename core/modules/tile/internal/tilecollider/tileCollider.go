@@ -9,8 +9,6 @@ import (
 	"shared/services/datastructures"
 	"shared/services/ecs"
 	"shared/services/logger"
-
-	"github.com/go-gl/mathgl/mgl32"
 )
 
 func TileColliderSystem(
@@ -51,17 +49,17 @@ func TileColliderSystem(
 				if err != nil {
 					continue
 				}
-				posTransaction.SaveComponent(entity, transform.NewPos(mgl32.Vec3{
-					float32(tileSize)*float32(pos.X) + float32(tileSize)/2,
-					float32(tileSize)*float32(pos.Y) + float32(tileSize)/2,
-					gridDepth + float32(pos.Layer),
-				}))
+				posTransaction.SaveComponent(entity, transform.NewPos(
+					float32(tileSize)*float32(pos.X)+float32(tileSize)/2,
+					float32(tileSize)*float32(pos.Y)+float32(tileSize)/2,
+					gridDepth+float32(pos.Layer),
+				))
 			}
 
 			// transform
 			sizeTransaction := sizeArray.Transaction()
 			for _, entity := range ei {
-				sizeTransaction.SaveComponent(entity, transform.NewSize(mgl32.Vec3{float32(tileSize), float32(tileSize), 1}))
+				sizeTransaction.SaveComponent(entity, transform.NewSize(float32(tileSize), float32(tileSize), 1))
 			}
 
 			// collider

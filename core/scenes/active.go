@@ -122,9 +122,9 @@ func (pkg) Register(b ioc.Builder) {
 
 				// update
 				ioc.Get[animation.System](c),
+				ioc.Get[camera.System](c),
 				ioc.Get[collider.System](c),
 				ioc.Get[drag.System](c),
-				ioc.Get[camera.System](c),
 				temporaryInlineSystems,
 
 				ioc.Get[tile.System](c),

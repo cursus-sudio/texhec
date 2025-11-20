@@ -80,7 +80,7 @@ func (c *worldColliderImpl) Chunks() map[mgl32.Vec2]datastructures.Set[ecs.Entit
 func (c *worldColliderImpl) Add(entities ...ecs.EntityID) {
 	for _, entity := range entities {
 		transform := c.transformTransaction.GetEntity(entity)
-		aabb, err := collider.TransformAABB(transform)
+		aabb, err := TransformAABB(transform)
 		if err != nil {
 			c.logger.Warn(err)
 			continue

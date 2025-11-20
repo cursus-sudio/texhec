@@ -105,7 +105,8 @@ func (t *entityTransform) Init() {
 			relativeToParentPos := t.GetRelativeParentPos()
 
 			pos.Pos = absolutePos.Pos.
-				Sub(relativeToParentPos)
+				Sub(relativeToParentPos).
+				Sub(t.GetPivotPos())
 
 			t.pos.Set(pos)
 		},

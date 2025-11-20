@@ -50,7 +50,7 @@ func (c *collisionDetectionService) CollidesWithRay(entity ecs.EntityID, ray col
 	}
 
 	transform := c.transformTransaction.GetEntity(entity)
-	aabb, err := collider.TransformAABB(transform)
+	aabb, err := TransformAABB(transform)
 	if err != nil {
 		return nil, err
 	}

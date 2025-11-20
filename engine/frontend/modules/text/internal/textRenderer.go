@@ -25,11 +25,11 @@ type locations struct {
 }
 
 type textRenderer struct {
-	world          ecs.World
-	groupsArray    ecs.ComponentsArray[groups.GroupsComponent]
-	colorArray     ecs.ComponentsArray[text.TextColorComponent]
-	transformArray ecs.ComponentsArray[transform.TransformComponent]
-	cameraQuery    ecs.LiveQuery
+	world                ecs.World
+	groupsArray          ecs.ComponentsArray[groups.GroupsComponent]
+	colorArray           ecs.ComponentsArray[text.TextColorComponent]
+	transformTransaction transform.TransformTransaction
+	cameraQuery          ecs.LiveQuery
 
 	logger      logger.Logger
 	cameraCtors camera.CameraTool
@@ -144,11 +144,22 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 			continue
 		}
 
-		entityTransform, err := s.transformArray.GetComponent(entity)
+		entityTransform := s.transformTransaction.GetEntity(entity)
+		pos, err := entityTransform.AbsolutePos().Get()
 		if err != nil {
-			entityTransform = transform.NewTransform()
+			s.logger.Warn(err)
+			continue
 		}
-
+		rot, err := entityTransform.AbsoluteRotation().Get()
+		if err != nil {
+			s.logger.Warn(err)
+			continue
+		}
+		size, err := entityTransform.AbsoluteSize().Get()
+		if err != nil {
+			s.logger.Warn(err)
+			continue
+		}
 		entityColor, err := s.colorArray.GetComponent(entity)
 		if err != nil {
 			entityColor = s.defaultColor
@@ -166,17 +177,20 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 
 		{
 			offset := mgl32.Vec2{
-				(-entityTransform.Size.X() / 2) / float32(layout.Layout.FontSize),
-				(entityTransform.Size.Y()/2 - float32(layout.Layout.FontSize)) / float32(layout.Layout.FontSize),
+				(-size.Size.X() / 2) / float32(layout.Layout.FontSize),
+				(size.Size.Y()/2 - float32(layout.Layout.FontSize)) / float32(layout.Layout.FontSize),
 			}
 			gl.Uniform2f(s.locations.Offset, offset.X(), offset.Y())
 		}
 
-		entityTransform.SetSize(mgl32.Vec3{
-			float32(layout.Layout.FontSize) * 2,
-			float32(layout.Layout.FontSize) * 2,
-			float32(layout.Layout.FontSize) * 2,
-		})
+		translation := mgl32.Translate3D(pos.Pos.Elem())
+		rotation := rot.Rotation.Mat4()
+		scale := mgl32.Scale3D(
+			float32(layout.Layout.FontSize),
+			float32(layout.Layout.FontSize),
+			float32(layout.Layout.FontSize),
+		)
+		entityMvp := translation.Mul4(rotation).Mul4(scale)
 
 		for _, cameraEntity := range s.cameraQuery.Entities() {
 			camera, err := s.cameraCtors.Get(cameraEntity)
@@ -193,7 +207,7 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 				continue
 			}
 
-			mvp := camera.Mat4().Mul4(entityTransform.Mat4())
+			mvp := camera.Mat4().Mul4(entityMvp)
 			gl.UniformMatrix4fv(s.locations.Mvp, 1, false, &mvp[0])
 			gl.Uniform4fv(s.locations.Color, 1, &entityColor.Color[0])
 

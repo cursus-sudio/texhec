@@ -2,6 +2,7 @@ package internal
 
 import (
 	"frontend/modules/text"
+	"frontend/modules/transform"
 	"shared/services/ecs"
 	"shared/services/logger"
 )
@@ -15,6 +16,8 @@ type layoutServiceFactory struct {
 	fontService FontService
 	fontsKeys   FontKeys
 
+	transformToolFactory ecs.ToolFactory[transform.TransformTool]
+
 	defaultFontFamily text.FontFamilyComponent
 	defaultFontSize   text.FontSizeComponent
 	// defaultOverflow   text.Overflow
@@ -27,6 +30,8 @@ func NewLayoutServiceFactory(
 	fontService FontService,
 	fontsKeys FontKeys,
 
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+
 	defaultFontFamily text.FontFamilyComponent,
 	defaultFontSize text.FontSizeComponent,
 	// defaultOverflow text.Overflow,
@@ -37,6 +42,8 @@ func NewLayoutServiceFactory(
 		logger:      logger,
 		fontService: fontService,
 		fontsKeys:   fontsKeys,
+
+		transformToolFactory: transformToolFactory,
 
 		defaultFontFamily: defaultFontFamily,
 		defaultFontSize:   defaultFontSize,
@@ -49,6 +56,7 @@ func NewLayoutServiceFactory(
 func (f *layoutServiceFactory) New(world ecs.World) LayoutService {
 	return NewLayoutService(
 		world,
+		f.transformToolFactory,
 		f.logger,
 		f.fontService,
 		f.fontsKeys,

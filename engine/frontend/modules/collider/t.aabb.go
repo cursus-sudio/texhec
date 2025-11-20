@@ -16,8 +16,20 @@ func NewAABB(min, max mgl32.Vec3) AABB {
 
 // TODO move to tool
 
-func TransformAABB(t transform.TransformComponent) AABB {
-	halfSize := t.Size.Mul(0.5)
+func TransformAABB(t transform.EntityTransform) (AABB, error) {
+	pos, err := t.AbsolutePos().Get()
+	if err != nil {
+		return AABB{}, err
+	}
+	rot, err := t.AbsoluteRotation().Get()
+	if err != nil {
+		return AABB{}, err
+	}
+	size, err := t.AbsoluteSize().Get()
+	if err != nil {
+		return AABB{}, err
+	}
+	halfSize := size.Size.Mul(0.5)
 
 	corners := [8]mgl32.Vec3{
 		{-1, -1, -1}, {1, -1, -1}, {-1, 1, -1}, {1, 1, -1},
@@ -27,9 +39,9 @@ func TransformAABB(t transform.TransformComponent) AABB {
 	var minCorner, maxCorner mgl32.Vec3
 
 	for i, corner := range corners {
-		transformedCorner := t.Rotation.
+		transformedCorner := rot.Rotation.
 			Rotate(mgl32.Vec3{corner[0] * halfSize[0], corner[1] * halfSize[1], corner[2] * halfSize[2]}).
-			Add(t.Pos)
+			Add(pos.Pos)
 
 		if i == 0 {
 			minCorner, maxCorner = transformedCorner, transformedCorner
@@ -47,5 +59,5 @@ func TransformAABB(t transform.TransformComponent) AABB {
 		}
 	}
 
-	return NewAABB(minCorner, maxCorner)
+	return NewAABB(minCorner, maxCorner), nil
 }

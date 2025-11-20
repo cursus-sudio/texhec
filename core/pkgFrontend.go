@@ -14,7 +14,6 @@ import (
 	settingsscene "core/scenes/settings"
 	"errors"
 	"fmt"
-	"frontend/modules/anchor/pkg"
 	"frontend/modules/animation/pkg"
 	"frontend/modules/audio/pkg"
 	"frontend/modules/camera/pkg"
@@ -31,6 +30,7 @@ import (
 	"frontend/modules/scenes/pkg"
 	"frontend/modules/text"
 	"frontend/modules/text/pkg"
+	"frontend/modules/transform"
 	"frontend/modules/transform/pkg"
 	frontendapi "frontend/services/api"
 	frontendtcp "frontend/services/api/tcp"
@@ -182,7 +182,6 @@ func frontendDic(
 		//
 
 		// engine packages
-		anchorpkg.Package(),
 		audiopkg.Package(),
 		animationpkg.Package(),
 		camerapkg.Package(.1, 10),
@@ -231,7 +230,13 @@ func frontendDic(
 			// 0.8125, // suggested (52/64)
 			0.8, // arbitrary number works for some reason
 		),
-		transformpkg.Package(),
+		transformpkg.Package(
+			transform.NewPos(mgl32.Vec3{}),
+			transform.NewRotation(mgl32.QuatIdent()),
+			transform.NewSize(mgl32.Vec3{1, 1, 1}),
+			transform.NewPivotPoint(mgl32.Vec3{.5, .5, .5}),
+			transform.NewParentPivotPoint(mgl32.Vec3{.5, .5, .5}),
+		),
 
 		// game packages
 		fpsloggerpkg.Package(),

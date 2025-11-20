@@ -5,7 +5,6 @@ import (
 	"core/modules/definition"
 	"core/modules/tile"
 	gamescenes "core/scenes"
-	"frontend/modules/anchor"
 	"frontend/modules/camera"
 	"frontend/modules/collider"
 	"frontend/modules/genericrenderer"
@@ -39,12 +38,10 @@ func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.GameBuilder) gamescenes.GameBuilder {
 		b.OnLoad(func(world scenes.SceneCtx) {
 			uiCamera := world.NewEntity()
-			ecs.SaveComponent(world.Components(), uiCamera, transform.NewTransform())
 			ecs.SaveComponent(world.Components(), uiCamera, camera.NewDynamicOrtho(-1000, +1000, 1))
 			ecs.SaveComponent(world.Components(), uiCamera, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
 			gameCamera := world.NewEntity()
-			ecs.SaveComponent(world.Components(), gameCamera, transform.NewTransform())
 			ecs.SaveComponent(world.Components(), gameCamera, camera.NewDynamicOrtho(-1000, +1000, 1))
 			ecs.SaveComponent(world.Components(), gameCamera, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 			ecs.SaveComponent(world.Components(), gameCamera, camera.NewMobileCamera())
@@ -54,13 +51,11 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			))
 
 			signature := world.NewEntity()
-			ecs.SaveComponent(world.Components(), signature, transform.NewTransform().Ptr().
-				SetSize(mgl32.Vec3{100, 50, 1}).Val())
+			ecs.SaveComponent(world.Components(), signature, transform.NewPos(mgl32.Vec3{5, 5}))
+			ecs.SaveComponent(world.Components(), signature, transform.NewSize(mgl32.Vec3{100, 50, 1}))
 			ecs.SaveComponent(world.Components(), signature, transform.NewPivotPoint(mgl32.Vec3{1, .5, .5}))
-			ecs.SaveComponent(world.Components(), signature, anchor.NewParentAnchor(uiCamera).Ptr().
-				SetPivotPoint(mgl32.Vec3{0, 0, .5}).
-				SetOffset(mgl32.Vec3{5, 5}).
-				Val())
+			ecs.SaveComponent(world.Components(), signature, transform.NewParent(uiCamera, transform.RelativePos))
+			ecs.SaveComponent(world.Components(), signature, transform.NewParentPivotPoint(mgl32.Vec3{0, 0, .5}))
 			ecs.SaveComponent(world.Components(), signature, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
 			ecs.SaveComponent(world.Components(), signature, text.TextComponent{Text: "game"})
@@ -68,13 +63,11 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world.Components(), signature, text.BreakComponent{Break: text.BreakNone})
 
 			quit := world.NewEntity()
-			ecs.SaveComponent(world.Components(), quit, transform.NewTransform().Ptr().
-				SetSize(mgl32.Vec3{50, 50, 1}).Val())
+			ecs.SaveComponent(world.Components(), quit, transform.NewPos(mgl32.Vec3{-10, -10}))
+			ecs.SaveComponent(world.Components(), quit, transform.NewSize(mgl32.Vec3{50, 50, 1}))
 			ecs.SaveComponent(world.Components(), quit, transform.NewPivotPoint(mgl32.Vec3{0, 0, .5}))
-			ecs.SaveComponent(world.Components(), quit, anchor.NewParentAnchor(uiCamera).Ptr().
-				SetPivotPoint(mgl32.Vec3{1, 1, .5}).
-				SetOffset(mgl32.Vec3{-10, -10}).
-				Val())
+			ecs.SaveComponent(world.Components(), quit, transform.NewParent(uiCamera, transform.RelativePos))
+			ecs.SaveComponent(world.Components(), quit, transform.NewParentPivotPoint(mgl32.Vec3{1, 1, .5}))
 			ecs.SaveComponent(world.Components(), quit, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
 			ecs.SaveComponent(world.Components(), quit, render.NewMesh(gameassets.SquareMesh))

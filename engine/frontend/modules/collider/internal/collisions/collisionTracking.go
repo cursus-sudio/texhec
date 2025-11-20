@@ -6,6 +6,7 @@ import (
 	"math"
 	"shared/services/datastructures"
 	"shared/services/ecs"
+	"shared/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -24,20 +25,27 @@ type worldCollider interface {
 }
 
 type worldColliderImpl struct {
-	world             ecs.World
-	transformArray    ecs.ComponentsArray[transform.TransformComponent]
-	chunkSize         float32
-	chunks            map[mgl32.Vec2]datastructures.Set[ecs.EntityID]
-	entitiesPositions map[ecs.EntityID][]mgl32.Vec2
+	logger               logger.Logger
+	world                ecs.World
+	transformTransaction transform.TransformTransaction
+	chunkSize            float32
+	chunks               map[mgl32.Vec2]datastructures.Set[ecs.EntityID]
+	entitiesPositions    map[ecs.EntityID][]mgl32.Vec2
 }
 
-func newWorldCollider(world ecs.World, chunkSize float32) worldCollider {
+func newWorldCollider(
+	logger logger.Logger,
+	world ecs.World,
+	transformTransaction transform.TransformTransaction,
+	chunkSize float32,
+) worldCollider {
 	return &worldColliderImpl{
-		world:             world,
-		transformArray:    ecs.GetComponentsArray[transform.TransformComponent](world.Components()),
-		chunkSize:         chunkSize,
-		chunks:            make(map[mgl32.Vec2]datastructures.Set[ecs.EntityID]),
-		entitiesPositions: make(map[ecs.EntityID][]mgl32.Vec2),
+		logger:               logger,
+		world:                world,
+		transformTransaction: transformTransaction,
+		chunkSize:            chunkSize,
+		chunks:               make(map[mgl32.Vec2]datastructures.Set[ecs.EntityID]),
+		entitiesPositions:    make(map[ecs.EntityID][]mgl32.Vec2),
 	}
 }
 
@@ -71,11 +79,13 @@ func (c *worldColliderImpl) Chunks() map[mgl32.Vec2]datastructures.Set[ecs.Entit
 
 func (c *worldColliderImpl) Add(entities ...ecs.EntityID) {
 	for _, entity := range entities {
-		transformComponent, err := c.transformArray.GetComponent(entity)
+		transform := c.transformTransaction.GetEntity(entity)
+		aabb, err := collider.TransformAABB(transform)
 		if err != nil {
-			transformComponent = transform.NewTransform()
+			c.logger.Warn(err)
+			continue
 		}
-		positions := c.getPositions(collider.TransformAABB(transformComponent))
+		positions := c.getPositions(aabb)
 		c.entitiesPositions[entity] = positions
 		for _, position := range positions {
 			arr, ok := c.chunks[position]

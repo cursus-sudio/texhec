@@ -20,7 +20,7 @@ type updateProjetionsSystem struct {
 	window window.Api
 	logger logger.Logger
 
-	transformArray ecs.ComponentsArray[transform.TransformComponent]
+	transformTool transform.TransformTool
 
 	cameraArray              ecs.ComponentsArray[camera.CameraComponent]
 	dynamicPerspectivesArray ecs.ComponentsArray[camera.DynamicPerspective]
@@ -29,14 +29,18 @@ type updateProjetionsSystem struct {
 	orthoArray               ecs.ComponentsArray[camera.OrthoComponent]
 }
 
-func NewUpdateProjectionsSystem(window window.Api, logger logger.Logger) ecs.SystemRegister {
+func NewUpdateProjectionsSystem(
+	window window.Api,
+	logger logger.Logger,
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := &updateProjetionsSystem{
 			world:  w,
 			window: window,
 			logger: logger,
 
-			transformArray: ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
+			transformTool: transformToolFactory.Build(w),
 
 			dynamicPerspectivesArray: ecs.GetComponentsArray[camera.DynamicPerspective](w.Components()),
 			dynamicOrthoArray:        ecs.GetComponentsArray[camera.DynamicOrthoComponent](w.Components()),
@@ -66,23 +70,25 @@ func (s *updateProjetionsSystem) AspectRatio() float32 {
 }
 
 func (s *updateProjetionsSystem) UpsertOrtho(ei []ecs.EntityID) {
-	transformTransaction := s.transformArray.Transaction()
+	transformTransaction := s.transformTool.Transaction()
 	orthoTransaction := s.orthoArray.Transaction()
 	w, h := s.Resolution()
 	for _, entity := range ei {
-		transformComponent, err := s.transformArray.GetComponent(entity)
+		transform := transformTransaction.GetEntity(entity)
+		size, err := transform.AbsoluteSize().Get()
 		if err != nil {
-			transformComponent = transform.NewTransform()
+			s.logger.Warn(err)
+			continue
 		}
 		resizeOrtho, err := s.dynamicOrthoArray.GetComponent(entity)
 		if err != nil {
 			continue
 		}
 
-		transformComponent.SetSize(mgl32.Vec3{
-			w / resizeOrtho.Zoom, h / resizeOrtho.Zoom, transformComponent.Size.Z(),
-		})
-		transformTransaction.SaveComponent(entity, transformComponent)
+		size.Size = mgl32.Vec3{
+			w / resizeOrtho.Zoom, h / resizeOrtho.Zoom, size.Size.Z(),
+		}
+		transform.AbsoluteSize().Set(size)
 
 		ortho := camera.NewOrtho(
 			w, h,
@@ -92,7 +98,7 @@ func (s *updateProjetionsSystem) UpsertOrtho(ei []ecs.EntityID) {
 		orthoTransaction.SaveComponent(entity, ortho)
 	}
 
-	s.logger.Warn(ecs.FlushMany(transformTransaction, orthoTransaction))
+	s.logger.Warn(ecs.FlushMany(append(transformTransaction.Transactions(), orthoTransaction)...))
 }
 
 func (s *updateProjetionsSystem) UpsertPerspective(ei []ecs.EntityID) {
@@ -109,7 +115,7 @@ func (s *updateProjetionsSystem) UpsertPerspective(ei []ecs.EntityID) {
 		)
 		perspectiveTransaction.SaveComponent(entity, perspective)
 	}
-	s.logger.Warn(perspectiveTransaction.Flush())
+	s.logger.Warn(ecs.FlushMany(perspectiveTransaction))
 }
 
 func (s *updateProjetionsSystem) Listen(e camera.ChangedResolutionEvent) {

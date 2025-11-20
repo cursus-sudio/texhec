@@ -51,7 +51,7 @@ func BenchmarkGetComponentInWorld(b *testing.B) {
 		transaction.SaveComponent(entity, Component{})
 		entities[i] = entity
 	}
-	transaction.Flush()
+	ecs.FlushMany(transaction)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -78,7 +78,7 @@ func BenchmarkGetComponentInArray(b *testing.B) {
 		transaction.SaveComponent(entity, Component{})
 		entities[i] = entity
 	}
-	transaction.Flush()
+	ecs.FlushMany(transaction)
 
 	b.ResetTimer()
 	sum := 0
@@ -120,23 +120,6 @@ func BenchmarkCreateComponentsInArray(b *testing.B) {
 	}
 }
 
-func BenchmarkDirtyCreateComponentsInArray(b *testing.B) {
-	entities := datastructures.NewSparseSet[ecs.EntityID]()
-	arr := ecs.NewComponentsArray[Component](entities)
-
-	for i := 0; i < b.N; i++ {
-		entity := ecs.NewEntityID(uint64(i))
-		entities.Add(entity)
-	}
-
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		entity := ecs.NewEntityID(uint64(i))
-		arr.DirtySaveComponent(entity, Component{})
-	}
-}
-
 func BenchmarkUpdateComponentsInArray(b *testing.B) {
 	entities := datastructures.NewSparseSet[ecs.EntityID]()
 	arr := ecs.NewComponentsArray[Component](entities)
@@ -148,7 +131,7 @@ func BenchmarkUpdateComponentsInArray(b *testing.B) {
 		transaction.SaveComponent(entity, Component{})
 	}
 
-	transaction.Flush()
+	ecs.FlushMany(transaction)
 
 	b.ResetTimer()
 
@@ -168,35 +151,13 @@ func BenchmarkTransactionUpdateComponentsInArray(b *testing.B) {
 		entities.Add(entity)
 		transaction.SaveComponent(entity, Component{})
 	}
-	transaction.Flush()
+	ecs.FlushMany(transaction)
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
 		arr.SaveComponent(entity, Component{})
-	}
-}
-
-func BenchmarkDirtyUpdateComponentsInArray10Times(b *testing.B) {
-	entities := datastructures.NewSparseSet[ecs.EntityID]()
-	arr := ecs.NewComponentsArray[Component](entities)
-	transaction := arr.Transaction()
-
-	for i := 0; i < b.N; i++ {
-		entity := ecs.NewEntityID(uint64(i))
-		entities.Add(entity)
-		transaction.SaveComponent(entity, Component{})
-	}
-	transaction.Flush()
-
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		entity := ecs.NewEntityID(uint64(i))
-		for j := 0; j < 10; j++ {
-			arr.DirtySaveComponent(entity, Component{})
-		}
 	}
 }
 
@@ -210,7 +171,7 @@ func BenchmarkGetComponentsInArray10Times(b *testing.B) {
 		entities.Add(entity)
 		transaction.SaveComponent(entity, Component{})
 	}
-	transaction.Flush()
+	ecs.FlushMany(transaction)
 
 	b.ResetTimer()
 
@@ -232,7 +193,7 @@ func BenchmarkRemoveComponentInArray(b *testing.B) {
 		entities.Add(entity)
 		transaction.SaveComponent(entity, Component{})
 	}
-	transaction.Flush()
+	ecs.FlushMany(transaction)
 
 	b.ResetTimer()
 

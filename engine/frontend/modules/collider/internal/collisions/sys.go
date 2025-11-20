@@ -9,13 +9,14 @@ import (
 
 func NewColliderSystem(
 	logger logger.Logger,
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
 	serviceFactory ecs.ToolFactory[CollisionService],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
-		query := w.Query().Require(
-			ecs.GetComponentType(transform.TransformComponent{}),
-			ecs.GetComponentType(collider.ColliderComponent{}),
-		).Build()
+		transformTool := transformToolFactory.Build(w)
+		query := transformTool.Query(w.Query()).
+			Require(ecs.GetComponentType(collider.ColliderComponent{})).
+			Build()
 		service := serviceFactory.Build(w)
 		query.OnAdd(func(ei []ecs.EntityID) { service.Add(ei...) })
 		query.OnChange(func(ei []ecs.EntityID) { service.Update(ei...) })

@@ -20,10 +20,14 @@ type global struct {
 	mutex                sync.Locker
 }
 
-func newRegister(world ecs.World) global {
+func newRegister(
+	logger logger.Logger,
+	transformTransaction transform.TransformTransaction,
+	world ecs.World,
+) global {
 	r := global{
-		newWorldCollider(world, 100),
-		newWorldCollider(world, 100),
+		newWorldCollider(logger, world, transformTransaction, 100),
+		newWorldCollider(logger, world, transformTransaction, 100),
 		&sync.Mutex{},
 	}
 	world.SaveGlobal(r)
@@ -32,15 +36,21 @@ func newRegister(world ecs.World) global {
 
 type collisionsService struct {
 	world                ecs.World
+	transformTransaction transform.TransformTransaction
 	transformStaticArray ecs.ComponentsArray[transform.StaticComponent]
 	assets               assets.Assets
 	logger               logger.Logger
 }
 
-func Factory(assets assets.Assets, logger logger.Logger) ecs.ToolFactory[CollisionService] {
+func Factory(
+	assets assets.Assets,
+	logger logger.Logger,
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+) ecs.ToolFactory[CollisionService] {
 	return ecs.NewToolFactory(func(w ecs.World) CollisionService {
 		return &collisionsService{
 			world:                w,
+			transformTransaction: transformToolFactory.Build(w).Transaction(),
 			transformStaticArray: ecs.GetComponentsArray[transform.StaticComponent](w.Components()),
 			assets:               assets,
 			logger:               logger,
@@ -49,26 +59,26 @@ func Factory(assets assets.Assets, logger logger.Logger) ecs.ToolFactory[Collisi
 }
 
 func (s *collisionsService) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) (collider.ObjectRayCollision, error) {
-	return newCollisionDetectionService(s.world, s.assets, nil, s.logger).
+	return newCollisionDetectionService(s.world, s.transformTransaction, s.assets, nil, s.logger).
 		CollidesWithRay(entity, ray)
 }
 func (s *collisionsService) CollidesWithObject(entityA ecs.EntityID, entityB ecs.EntityID) (collider.ObjectObjectCollision, error) {
-	return newCollisionDetectionService(s.world, s.assets, nil, s.logger).
+	return newCollisionDetectionService(s.world, s.transformTransaction, s.assets, nil, s.logger).
 		CollidesWithObject(entityA, entityB)
 }
 
 func (s *collisionsService) ShootRay(ray collider.Ray) (collider.ObjectRayCollision, error) {
 	r, err := ecs.GetGlobal[global](s.world)
 	if err != nil {
-		r = newRegister(s.world)
+		r = newRegister(s.logger, s.transformTransaction, s.world)
 	}
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	c1, err := newCollisionDetectionService(s.world, s.assets, r.staticWorldCollider, s.logger).ShootRay(ray)
+	c1, err := newCollisionDetectionService(s.world, s.transformTransaction, s.assets, r.staticWorldCollider, s.logger).ShootRay(ray)
 	if err != nil {
 		return nil, err
 	}
-	c2, err := newCollisionDetectionService(s.world, s.assets, r.dynamicWorldCollider, s.logger).ShootRay(ray)
+	c2, err := newCollisionDetectionService(s.world, s.transformTransaction, s.assets, r.dynamicWorldCollider, s.logger).ShootRay(ray)
 	if err != nil {
 		return nil, err
 	}
@@ -86,15 +96,15 @@ func (s *collisionsService) ShootRay(ray collider.Ray) (collider.ObjectRayCollis
 func (s *collisionsService) NarrowCollisions(entity ecs.EntityID) ([]ecs.EntityID, error) {
 	r, err := ecs.GetGlobal[global](s.world)
 	if err != nil {
-		r = newRegister(s.world)
+		r = newRegister(s.logger, s.transformTransaction, s.world)
 	}
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	c1, err := newCollisionDetectionService(s.world, s.assets, r.staticWorldCollider, s.logger).NarrowCollisions(entity)
+	c1, err := newCollisionDetectionService(s.world, s.transformTransaction, s.assets, r.staticWorldCollider, s.logger).NarrowCollisions(entity)
 	if err != nil {
 		return nil, err
 	}
-	c2, err := newCollisionDetectionService(s.world, s.assets, r.dynamicWorldCollider, s.logger).NarrowCollisions(entity)
+	c2, err := newCollisionDetectionService(s.world, s.transformTransaction, s.assets, r.dynamicWorldCollider, s.logger).NarrowCollisions(entity)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +115,7 @@ func (s *collisionsService) NarrowCollisions(entity ecs.EntityID) ([]ecs.EntityI
 func (s *collisionsService) Add(entities ...ecs.EntityID) {
 	r, err := ecs.GetGlobal[global](s.world)
 	if err != nil {
-		r = newRegister(s.world)
+		r = newRegister(s.logger, s.transformTransaction, s.world)
 	}
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
@@ -128,7 +138,7 @@ func (s *collisionsService) Add(entities ...ecs.EntityID) {
 func (s *collisionsService) Update(entities ...ecs.EntityID) {
 	r, err := ecs.GetGlobal[global](s.world)
 	if err != nil {
-		r = newRegister(s.world)
+		r = newRegister(s.logger, s.transformTransaction, s.world)
 	}
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
@@ -137,7 +147,7 @@ func (s *collisionsService) Update(entities ...ecs.EntityID) {
 func (s *collisionsService) Remove(entities ...ecs.EntityID) {
 	r, err := ecs.GetGlobal[global](s.world)
 	if err != nil {
-		r = newRegister(s.world)
+		r = newRegister(s.logger, s.transformTransaction, s.world)
 	}
 	r.mutex.Lock()
 	defer r.mutex.Unlock()

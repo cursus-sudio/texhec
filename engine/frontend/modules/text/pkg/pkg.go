@@ -4,6 +4,7 @@ import (
 	"frontend/modules/camera"
 	"frontend/modules/text"
 	"frontend/modules/text/internal"
+	"frontend/modules/transform"
 	"frontend/services/assets"
 	"frontend/services/graphics/texturearray"
 	"frontend/services/graphics/vao/vbo"
@@ -77,6 +78,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			ioc.Get[logger.Logger](c),
 			ioc.Get[internal.FontService](c),
 			ioc.Get[internal.FontKeys](c),
+			ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
 			pkg.defaultFontFamily,
 			pkg.defaultFontSize,
 			// pkg.defaultOverflow,
@@ -92,6 +94,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) text.System {
 		return internal.NewTextRendererRegister(
 			ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
+			ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
 			ioc.Get[internal.FontService](c),
 			ioc.Get[vbo.VBOFactory[internal.Glyph]](c),
 			ioc.Get[internal.LayoutServiceFactory](c),

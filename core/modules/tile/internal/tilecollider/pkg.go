@@ -89,7 +89,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 							}
 							colliderTransaction.SaveComponent(entity, collider)
 						}
-						logger.Warn(colliderTransaction.Flush())
+						logger.Warn(ecs.FlushMany(colliderTransaction))
 					})
 					return nil
 				}),
@@ -168,7 +168,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 					}
 					colliderTransaction.SaveComponent(entity, collider)
 				}
-				logger.Warn(colliderTransaction.Flush())
+				logger.Warn(ecs.FlushMany(colliderTransaction))
 			}
 			tool := indices.Build(w)
 			tool.OnUpsert(upsertEntities)

@@ -3,7 +3,6 @@ package mouse
 import (
 	"frontend/modules/camera"
 	"frontend/modules/collider"
-	"frontend/modules/transform"
 	"frontend/services/assets"
 	"frontend/services/media/window"
 	"shared/services/ecs"
@@ -27,7 +26,6 @@ type RayChangedTargetEvent struct {
 type cameraRaySystem struct {
 	world           ecs.World
 	logger          logger.Logger
-	transformArray  ecs.ComponentsArray[transform.TransformComponent]
 	cameraArray     ecs.ComponentsArray[camera.CameraComponent]
 	broadCollisions collider.CollisionTool
 	window          window.Api
@@ -48,7 +46,6 @@ func NewCameraRaySystem(
 		s := &cameraRaySystem{
 			world:           w,
 			logger:          logger,
-			transformArray:  ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
 			cameraArray:     ecs.GetComponentsArray[camera.CameraComponent](w.Components()),
 			broadCollisions: colliderFactory.Build(w),
 			window:          window,

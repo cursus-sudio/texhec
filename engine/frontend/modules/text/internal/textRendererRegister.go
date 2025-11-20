@@ -30,6 +30,7 @@ var fragSource string
 
 type textRendererRegister struct {
 	cameraCtorsFactory   ecs.ToolFactory[camera.CameraTool]
+	transformToolFactory ecs.ToolFactory[transform.TransformTool]
 	fontService          FontService
 	vboFactory           vbo.VBOFactory[Glyph]
 	layoutServiceFactory LayoutServiceFactory
@@ -46,6 +47,7 @@ type textRendererRegister struct {
 
 func NewTextRendererRegister(
 	cameraCtorsFactory ecs.ToolFactory[camera.CameraTool],
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
 	fontService FontService,
 	vboFactory vbo.VBOFactory[Glyph],
 	layoutServiceFactory LayoutServiceFactory,
@@ -58,6 +60,7 @@ func NewTextRendererRegister(
 ) text.System {
 	return &textRendererRegister{
 		cameraCtorsFactory:   cameraCtorsFactory,
+		transformToolFactory: transformToolFactory,
 		fontService:          fontService,
 		vboFactory:           vboFactory,
 		layoutServiceFactory: layoutServiceFactory,
@@ -107,12 +110,13 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 		return err
 	}
 
+	transformTool := f.transformToolFactory.Build(w)
 	renderer := textRenderer{
-		world:          w,
-		transformArray: ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
-		colorArray:     ecs.GetComponentsArray[text.TextColorComponent](w.Components()),
-		groupsArray:    ecs.GetComponentsArray[groups.GroupsComponent](w.Components()),
-		cameraQuery:    w.Query().Require(ecs.GetComponentType(camera.OrthoComponent{})).Build(),
+		world:                w,
+		colorArray:           ecs.GetComponentsArray[text.TextColorComponent](w.Components()),
+		groupsArray:          ecs.GetComponentsArray[groups.GroupsComponent](w.Components()),
+		transformTransaction: transformTool.Transaction(),
+		cameraQuery:          w.Query().Require(ecs.GetComponentType(camera.OrthoComponent{})).Build(),
 
 		logger:      f.logger,
 		cameraCtors: f.cameraCtorsFactory.Build(w),
@@ -131,10 +135,9 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 		layoutsBatches: datastructures.NewSparseArray[ecs.EntityID, layoutBatch](),
 	}
 
-	query := w.Query().Require(
-		ecs.GetComponentType(text.TextComponent{}),
-		ecs.GetComponentType(transform.TransformComponent{}),
-	).Build()
+	query := transformTool.Query(w.Query()).
+		Require(ecs.GetComponentType(text.TextComponent{})).
+		Build()
 
 	addOrChangeListener := func(ei []ecs.EntityID) {
 		for _, entity := range ei {

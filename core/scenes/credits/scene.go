@@ -3,7 +3,6 @@ package creditsscene
 import (
 	gameassets "core/assets"
 	gamescenes "core/scenes"
-	"frontend/modules/anchor"
 	"frontend/modules/camera"
 	"frontend/modules/collider"
 	"frontend/modules/drag"
@@ -31,41 +30,33 @@ func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.CreditsBuilder) gamescenes.CreditsBuilder {
 		b.OnLoad(func(world scenes.SceneCtx) {
 			cameraEntity := world.NewEntity()
-			ecs.SaveComponent(world.Components(), cameraEntity, transform.NewTransform())
 			ecs.SaveComponent(world.Components(), cameraEntity, camera.NewDynamicOrtho(-1000, +1000, 1))
 
 			signature := world.NewEntity()
-			ecs.SaveComponent(world.Components(), signature, transform.NewTransform().Ptr().
-				SetSize(mgl32.Vec3{100, 50, 1}).Val())
+			ecs.SaveComponent(world.Components(), signature, transform.NewPos(mgl32.Vec3{5, 5}))
+			ecs.SaveComponent(world.Components(), signature, transform.NewSize(mgl32.Vec3{100, 50, 1}))
 			ecs.SaveComponent(world.Components(), signature, transform.NewPivotPoint(mgl32.Vec3{1, .5, .5}))
-			ecs.SaveComponent(world.Components(), signature, anchor.NewParentAnchor(cameraEntity).Ptr().
-				SetPivotPoint(mgl32.Vec3{0, 0, .5}).
-				SetOffset(mgl32.Vec3{5, 5}).
-				Val())
+			ecs.SaveComponent(world.Components(), signature, transform.NewParent(cameraEntity, transform.RelativePos))
+			ecs.SaveComponent(world.Components(), signature, transform.NewParentPivotPoint(mgl32.Vec3{0, 0, .5}))
 
 			ecs.SaveComponent(world.Components(), signature, text.TextComponent{Text: "credits"})
 			ecs.SaveComponent(world.Components(), signature, text.FontSizeComponent{FontSize: 32})
 			ecs.SaveComponent(world.Components(), signature, text.BreakComponent{Break: text.BreakNone})
 
 			background := world.NewEntity()
-			ecs.SaveComponent(world.Components(), background, anchor.NewParentAnchor(cameraEntity).Ptr().
-				SetPivotPoint(mgl32.Vec3{.5, .5, .5}).
-				SetRelativeTransform(transform.NewTransform().Ptr().SetSize(mgl32.Vec3{1, 1, 1}).Val()).Val(),
-			)
+			ecs.SaveComponent(world.Components(), background,
+				transform.NewParent(cameraEntity, transform.RelativePos|transform.RelativeSize))
+			ecs.SaveComponent(world.Components(), background, transform.NewParentPivotPoint(mgl32.Vec3{.5, .5, .5}))
 			ecs.SaveComponent(world.Components(), background, render.NewMesh(gameassets.SquareMesh))
 			ecs.SaveComponent(world.Components(), background, render.NewTexture(gameassets.MountainTileTextureID))
 			ecs.SaveComponent(world.Components(), background, genericrenderer.PipelineComponent{})
 
 			buttonArea := world.NewEntity()
-			ecs.SaveComponent(world.Components(), buttonArea, transform.NewTransform().Ptr().
-				SetSize(mgl32.Vec3{500, 200, 1}).Val())
-			ecs.SaveComponent(world.Components(), buttonArea, anchor.NewParentAnchor(cameraEntity).Ptr().
-				SetPivotPoint(mgl32.Vec3{.5, .5, .5}).Val())
+			ecs.SaveComponent(world.Components(), buttonArea, transform.NewSize(mgl32.Vec3{500, 200, 1}))
+			ecs.SaveComponent(world.Components(), buttonArea, transform.NewParent(cameraEntity, transform.RelativePos))
 
 			draggable := world.NewEntity()
-			ecs.SaveComponent(world.Components(), draggable, transform.NewTransform().Ptr().
-				SetSize(mgl32.Vec3{50, 50, 1}).Val())
-
+			ecs.SaveComponent(world.Components(), draggable, transform.NewSize(mgl32.Vec3{50, 50, 3}))
 			ecs.SaveComponent(world.Components(), draggable, render.NewColor(mgl32.Vec4{0, 1, 0, .2}))
 			ecs.SaveComponent(world.Components(), draggable, render.NewMesh(gameassets.SquareMesh))
 			ecs.SaveComponent(world.Components(), draggable, render.NewTexture(gameassets.WaterTileTextureID))
@@ -82,11 +73,9 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world.Components(), draggable, text.TextColorComponent{Color: mgl32.Vec4{.5, 0, 1, 1}})
 
 			btn := world.NewEntity()
-			ecs.SaveComponent(world.Components(), btn, transform.NewTransform().Ptr().
-				SetSize(mgl32.Vec3{500, 50, 1}).Val())
-			ecs.SaveComponent(world.Components(), btn, anchor.NewParentAnchor(buttonArea).Ptr().
-				SetPivotPoint(mgl32.Vec3{.5, 0, .5}).
-				Val())
+			ecs.SaveComponent(world.Components(), btn, transform.NewSize(mgl32.Vec3{500, 50, 2}))
+			ecs.SaveComponent(world.Components(), btn, transform.NewParent(buttonArea, transform.RelativePos))
+			ecs.SaveComponent(world.Components(), btn, transform.NewParentPivotPoint(mgl32.Vec3{.5, 0, .5}))
 
 			ecs.SaveComponent(world.Components(), btn, render.NewMesh(gameassets.SquareMesh))
 			ecs.SaveComponent(world.Components(), btn, render.NewTexture(gameassets.WaterTileTextureID))

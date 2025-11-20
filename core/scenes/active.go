@@ -3,7 +3,6 @@ package gamescenes
 import (
 	"core/modules/fpslogger"
 	"core/modules/tile"
-	"frontend/modules/anchor"
 	"frontend/modules/animation"
 	"frontend/modules/audio"
 	"frontend/modules/camera"
@@ -15,7 +14,6 @@ import (
 	"frontend/modules/render"
 	scenesys "frontend/modules/scenes"
 	"frontend/modules/text"
-	"frontend/modules/transform"
 	"frontend/services/media/window"
 	"frontend/services/scenes"
 	"shared/services/ecs"
@@ -115,9 +113,6 @@ func (pkg) Register(b ioc.Builder) {
 				ioc.Get[inputs.System](c),
 
 				// update
-				ioc.Get[anchor.System](c),
-				ioc.Get[transform.System](c),
-
 				ioc.Get[animation.System](c),
 				ioc.Get[collider.System](c),
 				ioc.Get[drag.System](c),

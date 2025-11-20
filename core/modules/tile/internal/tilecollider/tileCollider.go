@@ -32,7 +32,8 @@ func TileColliderSystem(
 		mouseClickArray := ecs.GetComponentsArray[inputs.MouseEventsComponent](w.Components())
 		collidersArray := ecs.GetComponentsArray[collider.ColliderComponent](w.Components())
 
-		transformArray := ecs.GetComponentsArray[transform.TransformComponent](w.Components())
+		posArray := ecs.GetComponentsArray[transform.PosComponent](w.Components())
+		sizeArray := ecs.GetComponentsArray[transform.SizeComponent](w.Components())
 
 		groupsArray := ecs.GetComponentsArray[groups.GroupsComponent](w.Components())
 
@@ -43,21 +44,24 @@ func TileColliderSystem(
 				groupsTransaction.SaveComponent(entity, tileGroups)
 			}
 
-			// transform
-			transformTransaction := transformArray.Transaction()
+			// pos
+			posTransaction := posArray.Transaction()
 			for _, entity := range ei {
 				pos, err := tilePosArray.GetComponent(entity)
 				if err != nil {
 					continue
 				}
-				tranformComponent := transform.NewTransform().Ptr().
-					SetSize(mgl32.Vec3{float32(tileSize), float32(tileSize), 1}).
-					SetPos(mgl32.Vec3{
-						float32(tileSize)*float32(pos.X) + float32(tileSize)/2,
-						float32(tileSize)*float32(pos.Y) + float32(tileSize)/2,
-						gridDepth + float32(pos.Layer),
-					}).Val()
-				transformTransaction.SaveComponent(entity, tranformComponent)
+				posTransaction.SaveComponent(entity, transform.NewPos(mgl32.Vec3{
+					float32(tileSize)*float32(pos.X) + float32(tileSize)/2,
+					float32(tileSize)*float32(pos.Y) + float32(tileSize)/2,
+					gridDepth + float32(pos.Layer),
+				}))
+			}
+
+			// transform
+			sizeTransaction := sizeArray.Transaction()
+			for _, entity := range ei {
+				sizeTransaction.SaveComponent(entity, transform.NewSize(mgl32.Vec3{float32(tileSize), float32(tileSize), 1}))
 			}
 
 			// collider
@@ -92,7 +96,8 @@ func TileColliderSystem(
 			}
 			logger.Warn(ecs.FlushMany(
 				groupsTransaction,
-				transformTransaction,
+				posTransaction,
+				sizeTransaction,
 				mouseClickTransaction,
 				colliderTransaction,
 			))

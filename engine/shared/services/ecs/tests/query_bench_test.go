@@ -164,7 +164,7 @@ func benchmarkNEntitiesSaveWith7LiveQueriesWithTransaction(b *testing.B, entitie
 		for i := 0; i < entitiesCount; i++ {
 			transaction.SaveComponent(entity, Component{})
 		}
-		transaction.Flush()
+		ecs.FlushMany(transaction)
 	}
 }
 

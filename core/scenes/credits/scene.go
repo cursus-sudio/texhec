@@ -63,8 +63,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world.Components(), draggable, genericrenderer.PipelineComponent{})
 
 			ecs.SaveComponent(world.Components(), draggable, collider.NewCollider(gameassets.SquareColliderID))
-			ecs.SaveComponent(world.Components(), draggable, inputs.NewMouseEvents().Ptr().
-				AddDragEvents(drag.NewDraggable(draggable)).Val())
+			ecs.SaveComponent(world.Components(), draggable, inputs.NewMouseDragComponent(drag.NewDraggable(draggable)))
 
 			ecs.SaveComponent(world.Components(), draggable, text.TextComponent{Text: strings.ToUpper("drag me")})
 			ecs.SaveComponent(world.Components(), draggable, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
@@ -80,8 +79,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world.Components(), btn, render.NewTexture(gameassets.WaterTileTextureID))
 			ecs.SaveComponent(world.Components(), btn, genericrenderer.PipelineComponent{})
 
-			ecs.SaveComponent(world.Components(), btn, inputs.NewMouseEvents().Ptr().
-				AddLeftClickEvents(scenessys.NewChangeSceneEvent(gamescenes.MenuID)).Val())
+			ecs.SaveComponent(world.Components(), btn, inputs.NewMouseLeftClick(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
 			ecs.SaveComponent(world.Components(), btn, inputs.KeepSelectedComponent{})
 			ecs.SaveComponent(world.Components(), btn, collider.NewCollider(gameassets.SquareColliderID))
 

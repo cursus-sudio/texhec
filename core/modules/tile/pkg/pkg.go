@@ -6,7 +6,6 @@ import (
 	"core/modules/tile/internal/tilerenderer"
 	"frontend/modules/collider"
 	"frontend/modules/groups"
-	"shared/services/datastructures"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -22,7 +21,6 @@ func Package(
 	colliderComponent collider.ColliderComponent,
 	mainLayer tile.Layer,
 	layers []tile.Layer,
-	layerEvents datastructures.SparseArray[tile.Layer, []any],
 	minX, maxX, minY, maxY, minZ, maxZ int32,
 ) ioc.Pkg {
 	return pkg{
@@ -34,7 +32,6 @@ func Package(
 				colliderComponent,
 				mainLayer,
 				layers,
-				layerEvents,
 				minX, maxX, minY, maxY, minZ,
 			),
 			tilerenderer.Package(

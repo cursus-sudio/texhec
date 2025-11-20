@@ -20,7 +20,6 @@ type pkg struct {
 	colliderComponent            collider.ColliderComponent
 	mainLayer                    tile.Layer
 	layers                       []tile.Layer
-	layerEvents                  datastructures.SparseArray[tile.Layer, []any]
 	minX, maxX, minY, maxY, minZ int32
 }
 
@@ -31,7 +30,6 @@ func Package(
 	colliderComponent collider.ColliderComponent,
 	mainLayer tile.Layer,
 	layers []tile.Layer,
-	layerEvents datastructures.SparseArray[tile.Layer, []any],
 	minX, maxX, minY, maxY, minZ int32,
 ) ioc.Pkg {
 	return pkg{
@@ -41,7 +39,6 @@ func Package(
 		colliderComponent,
 		mainLayer,
 		layers,
-		layerEvents,
 		minX, maxX, minY, maxY, minZ,
 	}
 }
@@ -59,7 +56,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 					pkg.gridDepth,
 					pkg.tileGroups,
 					pkg.colliderComponent,
-					pkg.layerEvents,
 				),
 				ecs.NewSystemRegister(func(w ecs.World) error {
 					posArray := ecs.GetComponentsArray[tile.PosComponent](w.Components())

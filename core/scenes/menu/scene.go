@@ -88,8 +88,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				))
 				ecs.SaveComponent(world.Components(), btn, animation.NewLoopComponent())
 
-				ecs.SaveComponent(world.Components(), btn, inputs.NewMouseEvents().Ptr().
-					AddLeftClickEvents(button.OnClick).Val())
+				ecs.SaveComponent(world.Components(), btn, inputs.NewMouseLeftClick(button.OnClick))
 				ecs.SaveComponent(world.Components(), btn, collider.NewCollider(gameassets.SquareColliderID))
 				ecs.SaveComponent(world.Components(), btn, inputs.KeepSelectedComponent{})
 

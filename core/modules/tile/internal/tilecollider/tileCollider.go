@@ -6,7 +6,6 @@ import (
 	"frontend/modules/groups"
 	"frontend/modules/inputs"
 	"frontend/modules/transform"
-	"shared/services/datastructures"
 	"shared/services/ecs"
 	"shared/services/logger"
 )
@@ -20,14 +19,12 @@ func TileColliderSystem(
 	tileGroups groups.GroupsComponent,
 	// collider
 	colliderComponent collider.ColliderComponent,
-	// mouse
-	clickEvents datastructures.SparseArray[tile.Layer, []any],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w.Components())
 		tileColliderArray := ecs.GetComponentsArray[ColliderComponent](w.Components())
 
-		mouseClickArray := ecs.GetComponentsArray[inputs.MouseEventsComponent](w.Components())
+		leftClickArray := ecs.GetComponentsArray[inputs.MouseLeftClickComponent](w.Components())
 		collidersArray := ecs.GetComponentsArray[collider.ColliderComponent](w.Components())
 
 		posArray := ecs.GetComponentsArray[transform.PosComponent](w.Components())
@@ -69,34 +66,16 @@ func TileColliderSystem(
 			}
 
 			// mouse
-			mouseClickTransaction := mouseClickArray.Transaction()
+			leftClickTransaction := leftClickArray.Transaction()
 			for _, entity := range ei {
-				colliderComponent, err := tileColliderArray.GetComponent(entity)
-				if err != nil {
-					continue
-				}
-				mouseClickEvents := []any{}
-				for _, layer := range clickEvents.GetIndices() {
-					if !colliderComponent.Has(layer) {
-						continue
-					}
-					events, ok := clickEvents.Get(layer)
-					if !ok {
-						continue
-					}
-					mouseClickEvents = append(mouseClickEvents, events...)
-				}
-				comp := inputs.NewMouseEvents()
-				for _, event := range mouseClickEvents {
-					comp.AddLeftClickEvents(event)
-				}
-				mouseClickTransaction.SaveComponent(entity, comp)
+				comp := inputs.NewMouseLeftClick(tile.NewTileClickEvent(entity))
+				leftClickTransaction.SaveComponent(entity, comp)
 			}
 			logger.Warn(ecs.FlushMany(
 				groupsTransaction,
 				posTransaction,
 				sizeTransaction,
-				mouseClickTransaction,
+				leftClickTransaction,
 				colliderTransaction,
 			))
 		}

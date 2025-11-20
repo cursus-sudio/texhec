@@ -23,10 +23,8 @@ import (
 	"frontend/modules/genericrenderer/pkg"
 	"frontend/modules/groups"
 	"frontend/modules/groups/pkg"
-	"frontend/modules/inputs"
 	"frontend/modules/inputs/pkg"
 	"frontend/modules/render/pkg"
-	scenessys "frontend/modules/scenes"
 	"frontend/modules/scenes/pkg"
 	"frontend/modules/text"
 	"frontend/modules/text/pkg"
@@ -167,13 +165,6 @@ func frontendDic(
 
 			tile.GroundLayer,
 			[]tile.Layer{tile.UnitLayer, tile.BuildingLayer},
-			func() datastructures.SparseArray[tile.Layer, []any] {
-				set := datastructures.NewSparseArray[tile.Layer, []any]()
-				set.Set(tile.GroundLayer, []any{scenessys.NewChangeSceneEvent(gamescenes.CreditsID)})
-				set.Set(tile.BuildingLayer, []any{inputs.QuitEvent{}})
-				set.Set(tile.UnitLayer, []any{inputs.QuitEvent{}})
-				return set
-			}(),
 			0, 1000, // min-max x
 			0, 1000, // min-max y
 			0, 3, // min-max z

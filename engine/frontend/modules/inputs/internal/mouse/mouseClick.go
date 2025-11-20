@@ -21,9 +21,14 @@ var (
 type clickSystem struct {
 	logger logger.Logger
 
-	world            ecs.World
-	hoveredArray     ecs.ComponentsArray[inputs.HoveredComponent]
-	mouseEventsArray ecs.ComponentsArray[inputs.MouseEventsComponent]
+	world        ecs.World
+	hoveredArray ecs.ComponentsArray[inputs.HoveredComponent]
+
+	dragArray             ecs.ComponentsArray[inputs.MouseDragComponent]
+	leftClickArray        ecs.ComponentsArray[inputs.MouseLeftClickComponent]
+	doubleLeftClickArray  ecs.ComponentsArray[inputs.MouseDoubleLeftClickComponent]
+	rightClickArray       ecs.ComponentsArray[inputs.MouseRightClickComponent]
+	doubleRightClickArray ecs.ComponentsArray[inputs.MouseDoubleRightClickComponent]
 
 	keepSelectedArray ecs.ComponentsArray[inputs.KeepSelectedComponent]
 
@@ -39,10 +44,15 @@ type clickSystem struct {
 func NewClickSystem(logger logger.Logger, window window.Api) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := &clickSystem{
-			logger:           logger,
-			world:            w,
-			hoveredArray:     ecs.GetComponentsArray[inputs.HoveredComponent](w.Components()),
-			mouseEventsArray: ecs.GetComponentsArray[inputs.MouseEventsComponent](w.Components()),
+			logger:       logger,
+			world:        w,
+			hoveredArray: ecs.GetComponentsArray[inputs.HoveredComponent](w.Components()),
+
+			dragArray:             ecs.GetComponentsArray[inputs.MouseDragComponent](w.Components()),
+			leftClickArray:        ecs.GetComponentsArray[inputs.MouseLeftClickComponent](w.Components()),
+			doubleLeftClickArray:  ecs.GetComponentsArray[inputs.MouseDoubleLeftClickComponent](w.Components()),
+			rightClickArray:       ecs.GetComponentsArray[inputs.MouseRightClickComponent](w.Components()),
+			doubleRightClickArray: ecs.GetComponentsArray[inputs.MouseDoubleRightClickComponent](w.Components()),
 
 			keepSelectedArray: ecs.GetComponentsArray[inputs.KeepSelectedComponent](w.Components()),
 
@@ -78,17 +88,15 @@ func (s *clickSystem) ListenMove(event sdl.MouseMotionEvent) {
 
 	if s.movedEntity != nil {
 		entity := *s.movedEntity
-		mouseEvents, err := s.mouseEventsArray.GetComponent(entity)
+		dragComponent, err := s.dragArray.GetComponent(entity)
 		if err != nil {
 			goto cleanUp
 		}
 
-		for _, e := range mouseEvents.DragEvents {
-			if i, ok := e.(inputs.ApplyDragEvent); ok {
-				e = i.Apply(dragEvent)
-			}
-			events.EmitAny(s.world.Events(), e)
+		if i, ok := dragComponent.Event.(inputs.ApplyDragEvent); ok {
+			dragComponent.Event = i.Apply(dragEvent)
 		}
+		events.EmitAny(s.world.Events(), dragComponent.Event)
 	}
 
 cleanUp:
@@ -140,34 +148,39 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
 			break
 		}
 
-		mouseEvents, err := s.mouseEventsArray.GetComponent(*entity)
-		if err != nil {
-			break
-		}
-
-		var eventsToEmit []any
+		var eventToEmit any
 
 		switch event.Button {
 		case sdl.BUTTON_LEFT:
-			eventsToEmit = mouseEvents.LeftClickEvents
+			if comp, err := s.leftClickArray.GetComponent(*entity); err == nil {
+				eventToEmit = comp.Event
+			}
 			switch event.Clicks {
 			case 2:
-				eventsToEmit = mouseEvents.DoubleLeftClickEvents
+				eventToEmit = nil
+				if comp, err := s.doubleLeftClickArray.GetComponent(*entity); err == nil {
+					eventToEmit = comp.Event
+				}
 				break
 			}
 			break
 		case sdl.BUTTON_RIGHT:
-			eventsToEmit = mouseEvents.RightClickEvents
+			if comp, err := s.rightClickArray.GetComponent(*entity); err == nil {
+				eventToEmit = comp.Event
+			}
 			switch event.Clicks {
 			case 2:
-				eventsToEmit = mouseEvents.DoubleRightClickEvents
+				eventToEmit = nil
+				if comp, err := s.doubleRightClickArray.GetComponent(*entity); err == nil {
+					eventToEmit = comp.Event
+				}
 				break
 			}
 			break
 		}
 
-		for _, event := range eventsToEmit {
-			events.EmitAny(s.world.Events(), event)
+		if eventToEmit != nil {
+			events.EmitAny(s.world.Events(), eventToEmit)
 		}
 	}
 	return nil

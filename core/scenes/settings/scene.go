@@ -67,7 +67,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			for i, button := range buttons {
 				btn := world.NewEntity()
 				normalizedIndex := float32(i) / (float32(len(buttons)) - 1)
-				ecs.SaveComponent(world.Components(), btn, transform.NewSize(500, 50, 1))
+				ecs.SaveComponent(world.Components(), btn, transform.NewSize(500, 50, 2))
 				ecs.SaveComponent(world.Components(), btn, transform.NewParent(buttonArea, transform.RelativePos))
 				ecs.SaveComponent(world.Components(), btn, transform.NewParentPivotPoint(.5, normalizedIndex, .5))
 
@@ -75,8 +75,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				ecs.SaveComponent(world.Components(), btn, render.NewTexture(gameassets.WaterTileTextureID))
 				ecs.SaveComponent(world.Components(), btn, genericrenderer.PipelineComponent{})
 
-				ecs.SaveComponent(world.Components(), btn, inputs.NewMouseEvents().Ptr().
-					AddLeftClickEvents(button.OnClick).Val())
+				ecs.SaveComponent(world.Components(), btn, inputs.NewMouseLeftClick(button.OnClick))
 				ecs.SaveComponent(world.Components(), btn, collider.NewCollider(gameassets.SquareColliderID))
 				ecs.SaveComponent(world.Components(), btn, inputs.KeepSelectedComponent{})
 

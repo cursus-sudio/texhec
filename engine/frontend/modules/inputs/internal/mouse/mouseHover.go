@@ -8,21 +8,23 @@ import (
 )
 
 type hoverSystem struct {
-	world            ecs.World
-	mouseEventsArray ecs.ComponentsArray[inputs.MouseEventsComponent]
-	hoveredArray     ecs.ComponentsArray[inputs.HoveredComponent]
-	events           events.Events
-	target           *ecs.EntityID
+	world           ecs.World
+	hoveredArray    ecs.ComponentsArray[inputs.HoveredComponent]
+	mouseEnterArray ecs.ComponentsArray[inputs.MouseEnterComponent]
+	mouseLeaveArray ecs.ComponentsArray[inputs.MouseLeaveComponent]
+	events          events.Events
+	target          *ecs.EntityID
 }
 
 func NewHoverSystem() ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := &hoverSystem{
-			world:            w,
-			mouseEventsArray: ecs.GetComponentsArray[inputs.MouseEventsComponent](w.Components()),
-			hoveredArray:     ecs.GetComponentsArray[inputs.HoveredComponent](w.Components()),
-			events:           w.Events(),
-			target:           nil,
+			world:           w,
+			hoveredArray:    ecs.GetComponentsArray[inputs.HoveredComponent](w.Components()),
+			mouseEnterArray: ecs.GetComponentsArray[inputs.MouseEnterComponent](w.Components()),
+			mouseLeaveArray: ecs.GetComponentsArray[inputs.MouseLeaveComponent](w.Components()),
+			events:          w.Events(),
+			target:          nil,
 		}
 
 		events.Listen(w.EventsBuilder(), s.Listen)
@@ -33,13 +35,11 @@ func NewHoverSystem() ecs.SystemRegister {
 func (s *hoverSystem) handleMouseLeave(entity ecs.EntityID) {
 	s.hoveredArray.RemoveComponent(entity)
 
-	mouseEvents, err := s.mouseEventsArray.GetComponent(entity)
+	mouseLeave, err := s.mouseLeaveArray.GetComponent(entity)
 	if err != nil {
 		return
 	}
-	for _, event := range mouseEvents.MouseLeaveEvents {
-		events.EmitAny(s.events, event)
-	}
+	events.EmitAny(s.events, mouseLeave.Event)
 }
 
 func (s *hoverSystem) Listen(event RayChangedTargetEvent) {
@@ -53,12 +53,9 @@ func (s *hoverSystem) Listen(event RayChangedTargetEvent) {
 	s.target = event.EntityID
 	entity := *event.EntityID
 
-	mouseEvents, err := s.mouseEventsArray.GetComponent(entity)
-	if err != nil {
-		return
-	}
 	s.hoveredArray.SaveComponent(entity, inputs.HoveredComponent{Camera: event.Camera})
-	for _, event := range mouseEvents.MouseEnterEvents {
-		events.EmitAny(s.events, event)
+
+	if mouseEnter, err := s.mouseEnterArray.GetComponent(entity); err == nil {
+		events.EmitAny(s.events, mouseEnter.Event)
 	}
 }

@@ -1,5 +1,1 @@
 add internal absolute components so transform is marked as changed when parent position change
-
-// transform psudo code
-// on transform change
-// notify all children and trigged that they've been changed to

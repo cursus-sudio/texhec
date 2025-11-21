@@ -15,10 +15,6 @@ func TestChildren(t *testing.T) {
 	childTransform := setup.Transaction.GetEntity(child)
 	grandChildTransform := setup.Transaction.GetEntity(grandChild)
 
-	if false {
-		t.Error(parentTransform, childTransform, grandChildTransform)
-	}
-
 	childTransform.Parent().Set(transform.NewParent(parent, transform.RelativePos))
 	grandChildTransform.Parent().Set(transform.NewParent(child, transform.RelativePos))
 

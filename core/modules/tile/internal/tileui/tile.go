@@ -79,15 +79,16 @@ type Option struct {
 
 func (s *system) Listen(e tile.TileClickEvent) {
 	options := []Option{
-		{"quit", inputs.QuitEvent{}},
+		{"sese", inputs.QuitEvent{}},
+		{"quit 2", inputs.QuitEvent{}},
 		{"quit 2", inputs.QuitEvent{}},
 	}
 	optionsLen := float32(len(options))
 	menuWrapper := s.w.NewEntity()
-	ecs.SaveComponent(s.w, menuWrapper, transform.NewSize(100, 50*optionsLen, 1))
-	ecs.SaveComponent(s.w, menuWrapper, transform.NewPivotPoint(0, 1, .5))
+	ecs.SaveComponent(s.w, menuWrapper, transform.NewSize(100, (100/3)*optionsLen, 1))
+	ecs.SaveComponent(s.w, menuWrapper, transform.NewPivotPoint(.5, 1, .5))
 	ecs.SaveComponent(s.w, menuWrapper, transform.NewParent(e.Tile, transform.RelativePos))
-	ecs.SaveComponent(s.w, menuWrapper, transform.NewParentPivotPoint(1, 1, .5))
+	ecs.SaveComponent(s.w, menuWrapper, transform.NewParentPivotPoint(.5, 1, .5))
 
 	menu := s.w.NewEntity()
 	ecs.SaveComponent(s.w, menu, transform.NewSize(1, 1, 1))

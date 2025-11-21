@@ -105,7 +105,7 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	// TODO add overflow read, text align read and transform modification
 
 	transform := s.transformTransaction.GetEntity(entity)
-	size, err := transform.Size().Get()
+	size, err := transform.AbsoluteSize().Get()
 	if err != nil {
 		return Layout{}, err
 	}

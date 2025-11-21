@@ -38,15 +38,15 @@ func (t entityTransform) GetPivotPos() mgl32.Vec3 {
 	if err != nil {
 		return mgl32.Vec3{}
 	}
-	size, err := t.size.Get()
+	size, err := t.absoluteSize.Get()
 	if err != nil {
-		size = t.defaultSize
+		return mgl32.Vec3{}
 	}
 	pivot.Point = pivot.Point.Sub(t.defaultPivot.Point)
 	return mgl32.Vec3{
-		size.Size[0] * pivot.Point[0],
-		size.Size[1] * pivot.Point[1],
-		size.Size[2] * pivot.Point[2],
+		size.Size[0] * (-pivot.Point[0]),
+		size.Size[1] * (-pivot.Point[1]),
+		size.Size[2] * (-pivot.Point[2]),
 	}
 }
 
@@ -70,12 +70,12 @@ func (t entityTransform) GetRelativeParentRotation() mgl32.Quat {
 func (t entityTransform) GetRelativeParentSize() mgl32.Vec3 {
 	parent, err := t.parent.Get()
 	if err != nil || parent.RelativeMask&transform.RelativeSize == 0 {
-		return mgl32.Vec3{}
+		return mgl32.Vec3{1, 1, 1}
 	}
 	parentTransform := t.GetEntity(parent.Parent)
 	parentSize, err := parentTransform.AbsoluteSize().Get()
 	if err != nil {
-		return mgl32.Vec3{}
+		return mgl32.Vec3{1, 1, 1}
 	}
 	return parentSize.Size
 }
@@ -144,8 +144,12 @@ func (t *entityTransform) Init() {
 				size = t.defaultSize
 			}
 
-			size.Size = size.Size.
-				Add(t.GetRelativeParentSize())
+			relativeParentSize := t.GetRelativeParentSize()
+			size.Size = mgl32.Vec3{
+				size.Size[0] * relativeParentSize[0],
+				size.Size[1] * relativeParentSize[1],
+				size.Size[2] * relativeParentSize[2],
+			}
 
 			return size, nil
 		},

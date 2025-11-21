@@ -14,6 +14,7 @@ type TransformTool interface {
 type TransformTransaction interface {
 	GetEntity(ecs.EntityID) EntityTransform
 	Transactions() []ecs.AnyComponentsArrayTransaction
+	Flush() error
 }
 
 // absolute components return errors only in case when
@@ -29,6 +30,8 @@ type EntityTransform interface {
 	AbsoluteSize() ecs.EntityComponent[SizeComponent]
 
 	PivotPoint() ecs.EntityComponent[PivotPointComponent]
+
+	Parent() ecs.EntityComponent[ParentComponent]
 	ParentPivotPoint() ecs.EntityComponent[ParentPivotPointComponent]
 
 	Mat4() mgl32.Mat4

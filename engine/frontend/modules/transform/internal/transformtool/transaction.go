@@ -44,3 +44,7 @@ func (t transformTransaction) Transactions() []ecs.AnyComponentsArrayTransaction
 		t.parentPivotPointTransaction,
 	}
 }
+
+func (t transformTransaction) Flush() error {
+	return ecs.FlushMany(t.Transactions()...)
+}

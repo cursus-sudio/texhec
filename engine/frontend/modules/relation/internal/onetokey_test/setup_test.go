@@ -1,8 +1,8 @@
 package test
 
 import (
-	"frontend/modules/indexing"
-	indexingpkg "frontend/modules/indexing/pkg"
+	"frontend/modules/relation"
+	"frontend/modules/relation/pkg"
 	"shared/services/ecs"
 
 	"github.com/ogiusek/ioc/v2"
@@ -15,13 +15,13 @@ type Component struct {
 type Setup struct {
 	W     ecs.World
 	Array ecs.ComponentsArray[Component]
-	Tool  func() indexing.Indices[uint32]
+	Tool  func() relation.EntityToKeyTool[uint32]
 }
 
 func NewSetup() Setup {
 	b := ioc.NewBuilder()
 	pkgs := []ioc.Pkg{
-		indexingpkg.SpatialIndexPackage(
+		relationpkg.SpatialRelationPackage(
 			func(w ecs.World) ecs.LiveQuery {
 				return w.Query().
 					Require(ecs.GetComponentType(Component{})).
@@ -42,12 +42,12 @@ func NewSetup() Setup {
 	}
 
 	c := b.Build()
-	toolFactory := ioc.Get[ecs.ToolFactory[indexing.Indices[uint32]]](c)
+	toolFactory := ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[uint32]]](c)
 
 	w := ecs.NewWorld()
 	return Setup{
 		W:     w,
 		Array: ecs.GetComponentsArray[Component](w),
-		Tool:  func() indexing.Indices[uint32] { return toolFactory.Build(w) },
+		Tool:  func() relation.EntityToKeyTool[uint32] { return toolFactory.Build(w) },
 	}
 }

@@ -1,22 +1,22 @@
-package indices
+package onetokey
 
 import (
-	"frontend/modules/indexing"
+	"frontend/modules/relation"
 	"shared/services/ecs"
 )
 
-func NewSpatialIndexingFactory[IndexType any](
+func NewSpatialRelationFactory[IndexType any](
 	queryFactory func(ecs.World) ecs.LiveQuery,
 	componentIndexFactory func(ecs.World) func(ecs.EntityID) (IndexType, bool),
 	indexNumber func(IndexType) uint32,
-) ecs.ToolFactory[indexing.Indices[IndexType]] {
-	return ecs.NewToolFactory(func(w ecs.World) indexing.Indices[IndexType] {
-		if index, err := ecs.GetGlobal[spatialIndex[IndexType]](w); err == nil {
+) ecs.ToolFactory[relation.EntityToKeyTool[IndexType]] {
+	return ecs.NewToolFactory(func(w ecs.World) relation.EntityToKeyTool[IndexType] {
+		if index, err := ecs.GetGlobal[spatialRelation[IndexType]](w); err == nil {
 			return index
 		}
 		w.LockGlobals()
 		defer w.UnlockGlobals()
-		if index, err := ecs.GetGlobal[spatialIndex[IndexType]](w); err == nil {
+		if index, err := ecs.GetGlobal[spatialRelation[IndexType]](w); err == nil {
 			return index
 		}
 		query := queryFactory(w)

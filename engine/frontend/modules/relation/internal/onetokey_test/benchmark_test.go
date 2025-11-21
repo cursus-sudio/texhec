@@ -37,6 +37,7 @@ func BenchmarkSpatialIndexingSave(b *testing.B) {
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
+		setup.Array.RemoveComponent(entity)
 		setup.Array.SaveComponent(entity, component)
 	}
 }
@@ -48,6 +49,7 @@ func BenchmarkSpatialIndexingSaveWithoutTool(b *testing.B) {
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
+		setup.Array.RemoveComponent(entity)
 		setup.Array.SaveComponent(entity, component)
 	}
 }

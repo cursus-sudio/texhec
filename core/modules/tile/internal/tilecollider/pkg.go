@@ -4,8 +4,8 @@ import (
 	"core/modules/tile"
 	"frontend/modules/collider"
 	"frontend/modules/groups"
-	"frontend/modules/indexing"
-	indexingpkg "frontend/modules/indexing/pkg"
+	"frontend/modules/relation"
+	"frontend/modules/relation/pkg"
 	"shared/services/datastructures"
 	"shared/services/ecs"
 	"shared/services/logger"
@@ -45,7 +45,7 @@ func Package(
 
 func (pkg pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.System) tile.System {
-		posIndexFactory := ioc.Get[ecs.ToolFactory[indexing.Indices[tile.PosComponent]]](c)
+		posIndexFactory := ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[tile.PosComponent]]](c)
 		logger := ioc.Get[logger.Logger](c)
 		return ecs.NewSystemRegister(func(w ecs.World) error {
 			if err := s.Register(w); err != nil {
@@ -100,7 +100,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 		})
 	})
 
-	indexingpkg.SpatialIndexPackage(
+	relationpkg.SpatialRelationPackage(
 		func(w ecs.World) ecs.LiveQuery {
 			return w.Query().
 				Require(ecs.GetComponentType(tile.PosComponent{})).
@@ -120,7 +120,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			return uint32(result)
 		},
 	).Register(b)
-	indexingpkg.SpatialIndexPackage(
+	relationpkg.SpatialRelationPackage(
 		func(w ecs.World) ecs.LiveQuery {
 			return w.Query().
 				Require(ecs.GetComponentType(tile.PosComponent{})).
@@ -142,11 +142,11 @@ func (pkg pkg) Register(b ioc.Builder) {
 			return uint32(result)
 		},
 	).Register(b)
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, indices ecs.ToolFactory[indexing.Indices[tile.ColliderPos]]) ecs.ToolFactory[indexing.Indices[tile.ColliderPos]] {
-		posIndexFactory := ioc.Get[ecs.ToolFactory[indexing.Indices[tile.PosComponent]]](c)
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, indices ecs.ToolFactory[relation.EntityToKeyTool[tile.ColliderPos]]) ecs.ToolFactory[relation.EntityToKeyTool[tile.ColliderPos]] {
+		posIndexFactory := ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[tile.PosComponent]]](c)
 		logger := ioc.Get[logger.Logger](c)
 
-		return ecs.NewToolFactory(func(w ecs.World) indexing.Indices[tile.ColliderPos] {
+		return ecs.NewToolFactory(func(w ecs.World) relation.EntityToKeyTool[tile.ColliderPos] {
 			posIndex := posIndexFactory.Build(w)
 			posArray := ecs.GetComponentsArray[tile.PosComponent](w)
 			colliderArray := ecs.GetComponentsArray[ColliderComponent](w)

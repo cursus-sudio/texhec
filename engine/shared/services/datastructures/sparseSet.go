@@ -4,9 +4,13 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-type SparseSet[Index constraints.Integer] interface {
+type SparseSetReader[Index constraints.Integer] interface {
 	Get(index Index) (ok bool)
 	GetIndices() []Index
+}
+
+type SparseSet[Index constraints.Integer] interface {
+	SparseSetReader[Index]
 	Add(index Index) (added bool)
 	Remove(index Index) (removed bool)
 }

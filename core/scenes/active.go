@@ -10,8 +10,8 @@ import (
 	"frontend/modules/collider"
 	"frontend/modules/drag"
 	"frontend/modules/genericrenderer"
-	"frontend/modules/indexing"
 	"frontend/modules/inputs"
+	"frontend/modules/relation"
 	"frontend/modules/render"
 	scenesys "frontend/modules/scenes"
 	"frontend/modules/text"
@@ -79,8 +79,8 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) CoreSystems {
 		return func(ctx scenes.SceneCtx) {
 			logger := ioc.Get[logger.Logger](c)
-			posFactory := ioc.Get[ecs.ToolFactory[indexing.Indices[tile.PosComponent]]](c)
-			colliderFactory := ioc.Get[ecs.ToolFactory[indexing.Indices[tile.ColliderPos]]](c)
+			posFactory := ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[tile.PosComponent]]](c)
+			colliderFactory := ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[tile.ColliderPos]]](c)
 
 			temporaryInlineSystems := ecs.NewSystemRegister(func(w ecs.World) error {
 				posFactory.Build(w)

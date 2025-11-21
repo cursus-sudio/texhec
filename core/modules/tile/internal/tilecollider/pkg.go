@@ -45,7 +45,7 @@ func Package(
 
 func (pkg pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.System) tile.System {
-		posIndexFactory := ioc.Get[ecs.ToolFactory[indexing.SpatialIndexTool[tile.PosComponent]]](c)
+		posIndexFactory := ioc.Get[ecs.ToolFactory[indexing.Indices[tile.PosComponent]]](c)
 		logger := ioc.Get[logger.Logger](c)
 		return ecs.NewSystemRegister(func(w ecs.World) error {
 			if err := s.Register(w); err != nil {
@@ -100,7 +100,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 		})
 	})
 
-	indexingpkg.SpatialIndexingPackage(
+	indexingpkg.SpatialIndexPackage(
 		func(w ecs.World) ecs.LiveQuery {
 			return w.Query().
 				Require(ecs.GetComponentType(tile.PosComponent{})).
@@ -120,7 +120,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			return uint32(result)
 		},
 	).Register(b)
-	indexingpkg.SpatialIndexingPackage(
+	indexingpkg.SpatialIndexPackage(
 		func(w ecs.World) ecs.LiveQuery {
 			return w.Query().
 				Require(ecs.GetComponentType(tile.PosComponent{})).
@@ -142,11 +142,11 @@ func (pkg pkg) Register(b ioc.Builder) {
 			return uint32(result)
 		},
 	).Register(b)
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, indices ecs.ToolFactory[indexing.SpatialIndexTool[tile.ColliderPos]]) ecs.ToolFactory[indexing.SpatialIndexTool[tile.ColliderPos]] {
-		posIndexFactory := ioc.Get[ecs.ToolFactory[indexing.SpatialIndexTool[tile.PosComponent]]](c)
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, indices ecs.ToolFactory[indexing.Indices[tile.ColliderPos]]) ecs.ToolFactory[indexing.Indices[tile.ColliderPos]] {
+		posIndexFactory := ioc.Get[ecs.ToolFactory[indexing.Indices[tile.PosComponent]]](c)
 		logger := ioc.Get[logger.Logger](c)
 
-		return ecs.NewToolFactory(func(w ecs.World) indexing.SpatialIndexTool[tile.ColliderPos] {
+		return ecs.NewToolFactory(func(w ecs.World) indexing.Indices[tile.ColliderPos] {
 			posIndex := posIndexFactory.Build(w)
 			posArray := ecs.GetComponentsArray[tile.PosComponent](w.Components())
 			colliderArray := ecs.GetComponentsArray[ColliderComponent](w.Components())

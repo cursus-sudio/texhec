@@ -79,8 +79,8 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) CoreSystems {
 		return func(ctx scenes.SceneCtx) {
 			logger := ioc.Get[logger.Logger](c)
-			posFactory := ioc.Get[ecs.ToolFactory[indexing.SpatialIndexTool[tile.PosComponent]]](c)
-			colliderFactory := ioc.Get[ecs.ToolFactory[indexing.SpatialIndexTool[tile.ColliderPos]]](c)
+			posFactory := ioc.Get[ecs.ToolFactory[indexing.Indices[tile.PosComponent]]](c)
+			colliderFactory := ioc.Get[ecs.ToolFactory[indexing.Indices[tile.ColliderPos]]](c)
 
 			temporaryInlineSystems := ecs.NewSystemRegister(func(w ecs.World) error {
 				posFactory.Build(w)

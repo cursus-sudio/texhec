@@ -13,8 +13,8 @@ type EntityToKeyTool[Key any] interface {
 
 //
 
-type EntityToEntitiesTool[Component any] interface {
-	GetMany(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID]
+type ParentTool[Component any] interface {
+	GetChildren(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID]
 	// notifies about parent change
 	OnUpsert(newParentChildListener func([]ecs.EntityID))
 	// notifies about parent removal

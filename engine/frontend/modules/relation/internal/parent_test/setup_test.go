@@ -1,4 +1,4 @@
-package test
+package parent_test
 
 import (
 	"frontend/modules/relation"
@@ -15,25 +15,25 @@ type Component struct {
 type Setup struct {
 	W     ecs.World
 	Array ecs.ComponentsArray[Component]
-	Tool  func() relation.EntityToEntitiesTool[Component]
+	Tool  func() relation.ParentTool[Component]
 }
 
 func NewSetup() Setup {
 	b := ioc.NewBuilder()
 	pkgs := []ioc.Pkg{
-		relationpkg.ManyToOnePackage(func(c Component) ecs.EntityID { return c.Parent }),
+		relationpkg.ParentPackage(func(c Component) ecs.EntityID { return c.Parent }),
 	}
 	for _, pkg := range pkgs {
 		pkg.Register(b)
 	}
 
 	c := b.Build()
-	toolFactory := ioc.Get[ecs.ToolFactory[relation.EntityToEntitiesTool[Component]]](c)
+	toolFactory := ioc.Get[ecs.ToolFactory[relation.ParentTool[Component]]](c)
 
 	w := ecs.NewWorld()
 	return Setup{
 		W:     w,
 		Array: ecs.GetComponentsArray[Component](w),
-		Tool:  func() relation.EntityToEntitiesTool[Component] { return toolFactory.Build(w) },
+		Tool:  func() relation.ParentTool[Component] { return toolFactory.Build(w) },
 	}
 }

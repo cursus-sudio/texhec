@@ -1,4 +1,4 @@
-package test
+package parent_test
 
 import "testing"
 
@@ -8,7 +8,7 @@ func BenchmarkGetEmpty(b *testing.B) {
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		tool.GetMany(0)
+		tool.GetChildren(0)
 	}
 }
 
@@ -25,7 +25,7 @@ func BenchmarkGet(b *testing.B) {
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		tool.GetMany(parent)
+		tool.GetChildren(parent)
 	}
 }
 

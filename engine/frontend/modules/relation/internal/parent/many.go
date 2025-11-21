@@ -1,4 +1,4 @@
-package manytoone
+package parent
 
 import (
 	"frontend/modules/relation"
@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-type manyToOne[Component any] struct {
+type parent[Component any] struct {
 	world          ecs.World
 	childrenArray  ecs.ComponentsArray[Component]
 	mutex          *sync.Mutex
@@ -22,10 +22,10 @@ type manyToOne[Component any] struct {
 func newIndex[Component any](
 	w ecs.World,
 	componentParent func(Component) ecs.EntityID,
-) relation.EntityToEntitiesTool[Component] {
+) relation.ParentTool[Component] {
 	childrenArray := ecs.GetComponentsArray[Component](w)
 
-	indexGlobal := manyToOne[Component]{
+	indexGlobal := parent[Component]{
 		world:          w,
 		childrenArray:  childrenArray,
 		mutex:          &sync.Mutex{},
@@ -44,7 +44,7 @@ func newIndex[Component any](
 
 	return indexGlobal
 }
-func (i manyToOne[IndexType]) GetMany(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID] {
+func (i parent[IndexType]) GetChildren(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID] {
 	children, ok := i.parentChildren.Get(parent)
 	if !ok {
 		return datastructures.NewSparseSet[ecs.EntityID]()
@@ -52,7 +52,7 @@ func (i manyToOne[IndexType]) GetMany(parent ecs.EntityID) datastructures.Sparse
 	return children
 }
 
-func (i manyToOne[IndexType]) OnUpsert(listener func([]ecs.EntityID)) {
+func (i parent[IndexType]) OnUpsert(listener func([]ecs.EntityID)) {
 	if values := i.parentChildren.GetIndices(); len(values) != 0 {
 		listener(values)
 	}
@@ -60,12 +60,12 @@ func (i manyToOne[IndexType]) OnUpsert(listener func([]ecs.EntityID)) {
 	i.world.SaveGlobal(i)
 }
 
-func (i manyToOne[IndexType]) OnRemove(listener func([]ecs.EntityID)) {
+func (i parent[IndexType]) OnRemove(listener func([]ecs.EntityID)) {
 	i.removeListeners = append(i.removeListeners, listener)
 	i.world.SaveGlobal(i)
 }
 
-func (i manyToOne[Component]) Upsert(ei []ecs.EntityID) {
+func (i parent[Component]) Upsert(ei []ecs.EntityID) {
 	i.mutex.Lock()
 	defer i.mutex.Unlock()
 	upsertedParents := datastructures.NewSparseSet[ecs.EntityID]()
@@ -91,7 +91,7 @@ func (i manyToOne[Component]) Upsert(ei []ecs.EntityID) {
 	}
 }
 
-func (r manyToOne[Components]) Remove(ei []ecs.EntityID, components []Components) {
+func (r parent[Components]) Remove(ei []ecs.EntityID, components []Components) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	changedParents := datastructures.NewSparseSet[ecs.EntityID]()

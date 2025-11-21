@@ -63,13 +63,13 @@ func (r releasable) Release() {
 //
 
 type system struct {
-	world             ecs.World
-	transformArray    ecs.ComponentsArray[transform.TransformComponent]
-	groupsArray       ecs.ComponentsArray[groups.GroupsComponent]
-	textureArray      ecs.ComponentsArray[render.TextureComponent]
-	textureFrameArray ecs.ComponentsArray[render.TextureFrameComponent]
-	colorArray        ecs.ComponentsArray[render.ColorComponent]
-	meshArray         ecs.ComponentsArray[render.MeshComponent]
+	world                ecs.World
+	transformTransaction transform.TransformTransaction
+	groupsArray          ecs.ComponentsArray[groups.GroupsComponent]
+	textureArray         ecs.ComponentsArray[render.TextureComponent]
+	textureFrameArray    ecs.ComponentsArray[render.TextureFrameComponent]
+	colorArray           ecs.ComponentsArray[render.ColorComponent]
+	meshArray            ecs.ComponentsArray[render.MeshComponent]
 
 	cameraArray ecs.ComponentsArray[camera.CameraComponent]
 
@@ -92,6 +92,7 @@ func NewSystem(
 	vboFactory vbo.VBOFactory[genericrenderer.Vertex],
 	textureFactory texture.Factory,
 	camerasCtors ecs.ToolFactory[camera.CameraTool],
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		vert, err := shader.NewShader(vertSource, shader.VertexShader)
@@ -130,14 +131,15 @@ func NewSystem(
 
 		w.SaveGlobal(releasable)
 
+		transformTool := transformToolFactory.Build(w)
 		system := &system{
-			world:             w,
-			transformArray:    ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
-			groupsArray:       ecs.GetComponentsArray[groups.GroupsComponent](w.Components()),
-			textureArray:      ecs.GetComponentsArray[render.TextureComponent](w.Components()),
-			textureFrameArray: ecs.GetComponentsArray[render.TextureFrameComponent](w.Components()),
-			colorArray:        ecs.GetComponentsArray[render.ColorComponent](w.Components()),
-			meshArray:         ecs.GetComponentsArray[render.MeshComponent](w.Components()),
+			world:                w,
+			transformTransaction: transformTool.Transaction(),
+			groupsArray:          ecs.GetComponentsArray[groups.GroupsComponent](w.Components()),
+			textureArray:         ecs.GetComponentsArray[render.TextureComponent](w.Components()),
+			textureFrameArray:    ecs.GetComponentsArray[render.TextureFrameComponent](w.Components()),
+			colorArray:           ecs.GetComponentsArray[render.ColorComponent](w.Components()),
+			meshArray:            ecs.GetComponentsArray[render.MeshComponent](w.Components()),
 
 			cameraArray: ecs.GetComponentsArray[camera.CameraComponent](w.Components()),
 
@@ -148,14 +150,13 @@ func NewSystem(
 			textureFactory: textureFactory,
 			camerasCtors:   camerasCtors.Build(w),
 
-			query: w.Query().
+			query: transformTool.Query(w.Query()).
 				Require(
 					ecs.GetComponentType(genericrenderer.PipelineComponent{}),
 					ecs.GetComponentType(render.MeshComponent{}),
 					ecs.GetComponentType(render.TextureComponent{}),
 				).
 				Track(
-					ecs.GetComponentType(transform.TransformComponent{}),
 					ecs.GetComponentType(render.ColorComponent{}),
 					ecs.GetComponentType(render.TextureFrameComponent{}),
 				).
@@ -252,11 +253,8 @@ func (m *system) Listen(render.RenderEvent) error {
 				continue
 			}
 
-			transformComponent, err := m.transformArray.GetComponent(entity)
-			if err != nil {
-				transformComponent = transform.NewTransform()
-			}
-			model := transformComponent.Mat4()
+			transform := m.transformTransaction.GetEntity(entity)
+			model := transform.Mat4()
 
 			textureAsset, err := m.getTexture(entity)
 			if err != nil {

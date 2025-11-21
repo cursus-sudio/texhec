@@ -19,8 +19,8 @@ type scrollSystem struct {
 	logger      logger.Logger
 
 	world             ecs.World
+	transformTool     transform.TransformTool
 	dynamicOrthoArray ecs.ComponentsArray[camera.DynamicOrthoComponent]
-	transformArray    ecs.ComponentsArray[transform.TransformComponent]
 	query             ecs.LiveQuery
 
 	minZoom, maxZoom float32
@@ -29,6 +29,7 @@ type scrollSystem struct {
 func NewScrollSystem(
 	logger logger.Logger,
 	cameraCtors ecs.ToolFactory[camera.CameraTool],
+	transformTool ecs.ToolFactory[transform.TransformTool],
 	window window.Api,
 	minZoom, maxZoom float32,
 ) ecs.SystemRegister {
@@ -40,7 +41,7 @@ func NewScrollSystem(
 
 			world:             w,
 			dynamicOrthoArray: ecs.GetComponentsArray[camera.DynamicOrthoComponent](w.Components()),
-			transformArray:    ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
+			transformTool:     transformTool.Build(w),
 			query: w.Query().Require(
 				ecs.GetComponentType(camera.MobileCameraComponent{}),
 			).Build(),
@@ -62,15 +63,24 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) error {
 
 	mousePos := s.window.NormalizeMousePos(s.window.GetMousePos())
 
+	transformTransaction := s.transformTool.Transaction()
+
 	for _, cameraEntity := range s.query.Entities() {
 		ortho, err := s.dynamicOrthoArray.GetComponent(cameraEntity)
 		if err != nil {
 			continue
 		}
 
-		transformComponent, err := s.transformArray.GetComponent(cameraEntity)
+		transform := transformTransaction.GetEntity(cameraEntity)
+		pos, err := transform.AbsolutePos().Get()
 		if err != nil {
-			transformComponent = transform.NewTransform()
+			s.logger.Warn(err)
+			continue
+		}
+		rot, err := transform.AbsoluteRotation().Get()
+		if err != nil {
+			s.logger.Warn(err)
+			continue
 		}
 
 		camera, err := s.cameraCtors.Get(cameraEntity)
@@ -92,16 +102,14 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) error {
 		rayAfter := camera.ShootRay(mousePos)
 
 		// apply transform
-		transformComponent.Pos = transformComponent.Pos.Add(rayBefore.Pos.Sub(rayAfter.Pos))
+		pos.Pos = pos.Pos.Add(rayBefore.Pos.Sub(rayAfter.Pos))
 
 		rotationDifference := mgl32.QuatBetweenVectors(rayBefore.Direction, rayAfter.Direction)
-		transformComponent.Rotation = rotationDifference.Mul(transformComponent.Rotation)
+		rot.Rotation = rotationDifference.Mul(rot.Rotation)
 
-		if err := s.transformArray.SaveComponent(cameraEntity, transformComponent); err != nil {
-			return err
-		}
-
+		transform.AbsolutePos().Set(pos)
+		transform.AbsoluteRotation().Set(rot)
 	}
 
-	return nil
+	return ecs.FlushMany(transformTransaction.Transactions()...)
 }

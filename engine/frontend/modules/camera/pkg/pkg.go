@@ -42,24 +42,27 @@ func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) camera.CameraForward { return camera.CameraForward(mgl32.Vec3{0, 0, -1}) })
 
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s cameratool.CameraResolverFactory) cameratool.CameraResolverFactory {
-		getCameraTransform := func(transformArray ecs.ComponentsArray[transform.TransformComponent], entity ecs.EntityID) transform.TransformComponent {
-			t, err := transformArray.GetComponent(entity)
-			if err != nil {
-				return transform.NewTransform()
-			}
-			return t
-		}
-
 		s.Register(ecs.GetComponentType(camera.OrthoComponent{}), func(world ecs.World) func(entity ecs.EntityID) (camera.CameraService, error) {
-			transformArray := ecs.GetComponentsArray[transform.TransformComponent](world.Components())
+			logger := ioc.Get[logger.Logger](c)
+			transformTransaction := ioc.Get[ecs.ToolFactory[transform.TransformTool]](c).Build(world).Transaction()
 			orthoArray := ecs.GetComponentsArray[camera.OrthoComponent](world.Components())
 			return func(entity ecs.EntityID) (camera.CameraService, error) {
+				transform := transformTransaction.GetEntity(entity)
 				getCameraTransformMatrix := func() mgl32.Mat4 {
-					cameraTransform := getCameraTransform(transformArray, entity)
+					pos, err := transform.AbsolutePos().Get()
+					if err != nil {
+						logger.Warn(err)
+						return mgl32.Mat4{}
+					}
+					rot, err := transform.AbsoluteRotation().Get()
+					if err != nil {
+						logger.Warn(err)
+						return mgl32.Mat4{}
+					}
 
-					cameraRotation := cameraTransform.Rotation.Inverse()
-					cameraPosition := cameraTransform.Rotation.Rotate(cameraTransform.Pos.Mul(-1))
-					return cameraRotation.Mat4().Mul4(mgl32.Translate3D(cameraPosition.X(), cameraPosition.Y(), cameraPosition.Z()))
+					cameraRot := rot.Rotation.Inverse()
+					cameraPos := rot.Rotation.Rotate(pos.Pos.Mul(-1))
+					return cameraRot.Mat4().Mul4(mgl32.Translate3D(cameraPos.X(), cameraPos.Y(), cameraPos.Z()))
 				}
 				getProjection := func() camera.OrthoComponent {
 					ortho, err := orthoArray.GetComponent(entity)
@@ -104,17 +107,28 @@ func (pkg pkg) Register(b ioc.Builder) {
 		//
 
 		s.Register(ecs.GetComponentType(camera.Perspective{}), func(world ecs.World) func(entity ecs.EntityID) (camera.CameraService, error) {
-			transformArray := ecs.GetComponentsArray[transform.TransformComponent](world.Components())
+			logger := ioc.Get[logger.Logger](c)
+			transformTransaction := ioc.Get[ecs.ToolFactory[transform.TransformTool]](c).Build(world).Transaction()
 			perspectiveArray := ecs.GetComponentsArray[camera.Perspective](world.Components())
 
 			return func(entity ecs.EntityID) (camera.CameraService, error) {
+				transform := transformTransaction.GetEntity(entity)
 				getCameraTransformMatrix := func() mgl32.Mat4 {
-					cameraTransform := getCameraTransform(transformArray, entity)
+					pos, err := transform.AbsolutePos().Get()
+					if err != nil {
+						logger.Warn(err)
+						return mgl32.Mat4{}
+					}
+					rot, err := transform.AbsoluteRotation().Get()
+					if err != nil {
+						logger.Warn(err)
+						return mgl32.Mat4{}
+					}
 
 					up, forward := ioc.Get[camera.CameraUp](c), ioc.Get[camera.CameraForward](c)
 					return mgl32.LookAtV(
-						cameraTransform.Pos,
-						cameraTransform.Pos.Add(cameraTransform.Rotation.Rotate(mgl32.Vec3(forward))),
+						pos.Pos,
+						pos.Pos.Add(rot.Rotation.Rotate(mgl32.Vec3(forward))),
 						mgl32.Vec3(up),
 					)
 				}
@@ -141,12 +155,16 @@ func (pkg pkg) Register(b ioc.Builder) {
 						return projMatrix.Mul4(cameraTransformMatrix)
 					},
 					func(mousePos mgl32.Vec2) collider.Ray {
-						cameraTransform := getCameraTransform(transformArray, entity)
+						pos, err := transform.AbsolutePos().Get()
+						if err != nil {
+							logger.Warn(err)
+							return collider.Ray{}
+						}
 						return mobilecamerasys.ShootRay(
 							getProjectionMatrix(),
 							getCameraTransformMatrix(),
 							mousePos,
-							&cameraTransform.Pos,
+							&pos.Pos,
 						)
 					},
 					cameraGroups,
@@ -162,22 +180,34 @@ func (pkg pkg) Register(b ioc.Builder) {
 		return ecs.NewSystemRegister(func(w ecs.World) error {
 			logger := ioc.Get[logger.Logger](c)
 			ecs.RegisterSystems(w,
-				projectionsys.NewUpdateProjectionsSystem(ioc.Get[window.Api](c), logger),
+				projectionsys.NewUpdateProjectionsSystem(
+					ioc.Get[window.Api](c),
+					logger,
+					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
+				),
 				mobilecamerasys.NewScrollSystem(
 					logger,
 					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
+					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
 					ioc.Get[window.Api](c),
 					pkg.minZoom, pkg.maxZoom, // min and max zoom
 				),
 				mobilecamerasys.NewDragSystem(
 					sdl.BUTTON_LEFT,
 					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
+					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
 					ioc.Get[window.Api](c),
 					logger,
 				),
 				mobilecamerasys.NewWasdSystem(
+					logger,
 					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
+					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
 					1.0, // speed
+				),
+				cameralimitsys.NewOrthoSys(
+					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
+					logger,
 				),
 				ecs.NewSystemRegister(func(w ecs.World) error {
 					cameraArray := ecs.GetComponentsArray[camera.CameraComponent](w.Components())
@@ -188,7 +218,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 						for _, e := range ei {
 							t.SaveComponent(e, camera.NewCamera(ecs.GetComponentType(camera.OrthoComponent{})))
 						}
-						logger.Warn(t.Flush())
+						logger.Warn(ecs.FlushMany(t))
 					})
 
 					perspectiveArray := ecs.GetComponentsArray[camera.Perspective](w.Components())
@@ -197,7 +227,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 						for _, e := range ei {
 							t.SaveComponent(e, camera.NewCamera(ecs.GetComponentType(camera.Perspective{})))
 						}
-						logger.Warn(t.Flush())
+						logger.Warn(ecs.FlushMany(t))
 					})
 
 					events.Listen(w.EventsBuilder(), func(e sdl.WindowEvent) {
@@ -205,10 +235,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 							events.Emit(w.Events(), camera.NewUpdateProjectionsEvent())
 						}
 					})
-					return nil
-				}),
-				ecs.NewSystemRegister(func(w ecs.World) error {
-					cameralimitsys.NewOrthoSys(w, logger)
 					return nil
 				}),
 			)

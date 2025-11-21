@@ -6,11 +6,8 @@ import (
 	"frontend/modules/groups"
 	"frontend/modules/inputs"
 	"frontend/modules/transform"
-	"shared/services/datastructures"
 	"shared/services/ecs"
 	"shared/services/logger"
-
-	"github.com/go-gl/mathgl/mgl32"
 )
 
 func TileColliderSystem(
@@ -22,17 +19,16 @@ func TileColliderSystem(
 	tileGroups groups.GroupsComponent,
 	// collider
 	colliderComponent collider.ColliderComponent,
-	// mouse
-	clickEvents datastructures.SparseArray[tile.Layer, []any],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w.Components())
 		tileColliderArray := ecs.GetComponentsArray[ColliderComponent](w.Components())
 
-		mouseClickArray := ecs.GetComponentsArray[inputs.MouseEventsComponent](w.Components())
+		leftClickArray := ecs.GetComponentsArray[inputs.MouseLeftClickComponent](w.Components())
 		collidersArray := ecs.GetComponentsArray[collider.ColliderComponent](w.Components())
 
-		transformArray := ecs.GetComponentsArray[transform.TransformComponent](w.Components())
+		posArray := ecs.GetComponentsArray[transform.PosComponent](w.Components())
+		sizeArray := ecs.GetComponentsArray[transform.SizeComponent](w.Components())
 
 		groupsArray := ecs.GetComponentsArray[groups.GroupsComponent](w.Components())
 
@@ -43,21 +39,24 @@ func TileColliderSystem(
 				groupsTransaction.SaveComponent(entity, tileGroups)
 			}
 
-			// transform
-			transformTransaction := transformArray.Transaction()
+			// pos
+			posTransaction := posArray.Transaction()
 			for _, entity := range ei {
 				pos, err := tilePosArray.GetComponent(entity)
 				if err != nil {
 					continue
 				}
-				tranformComponent := transform.NewTransform().Ptr().
-					SetSize(mgl32.Vec3{float32(tileSize), float32(tileSize), 1}).
-					SetPos(mgl32.Vec3{
-						float32(tileSize)*float32(pos.X) + float32(tileSize)/2,
-						float32(tileSize)*float32(pos.Y) + float32(tileSize)/2,
-						gridDepth + float32(pos.Layer),
-					}).Val()
-				transformTransaction.SaveComponent(entity, tranformComponent)
+				posTransaction.SaveComponent(entity, transform.NewPos(
+					float32(tileSize)*float32(pos.X)+float32(tileSize)/2,
+					float32(tileSize)*float32(pos.Y)+float32(tileSize)/2,
+					gridDepth+float32(pos.Layer),
+				))
+			}
+
+			// transform
+			sizeTransaction := sizeArray.Transaction()
+			for _, entity := range ei {
+				sizeTransaction.SaveComponent(entity, transform.NewSize(float32(tileSize), float32(tileSize), 1))
 			}
 
 			// collider
@@ -67,33 +66,16 @@ func TileColliderSystem(
 			}
 
 			// mouse
-			mouseClickTransaction := mouseClickArray.Transaction()
+			leftClickTransaction := leftClickArray.Transaction()
 			for _, entity := range ei {
-				colliderComponent, err := tileColliderArray.GetComponent(entity)
-				if err != nil {
-					continue
-				}
-				mouseClickEvents := []any{}
-				for _, layer := range clickEvents.GetIndices() {
-					if !colliderComponent.Has(layer) {
-						continue
-					}
-					events, ok := clickEvents.Get(layer)
-					if !ok {
-						continue
-					}
-					mouseClickEvents = append(mouseClickEvents, events...)
-				}
-				comp := inputs.NewMouseEvents()
-				for _, event := range mouseClickEvents {
-					comp.AddLeftClickEvents(event)
-				}
-				mouseClickTransaction.SaveComponent(entity, comp)
+				comp := inputs.NewMouseLeftClick(tile.NewTileClickEvent(entity))
+				leftClickTransaction.SaveComponent(entity, comp)
 			}
 			logger.Warn(ecs.FlushMany(
 				groupsTransaction,
-				transformTransaction,
-				mouseClickTransaction,
+				posTransaction,
+				sizeTransaction,
+				leftClickTransaction,
 				colliderTransaction,
 			))
 		}

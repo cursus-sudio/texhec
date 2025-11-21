@@ -2,6 +2,7 @@ package ecs
 
 import (
 	"errors"
+	"reflect"
 	"shared/services/datastructures"
 	"sync"
 )
@@ -17,7 +18,6 @@ type AnyComponentArray interface {
 	// - ErrEntityDoNotExists
 	SaveAnyComponent(EntityID, any) error // upsert
 	// differs from save component by not triggering events
-	DirtySaveAnyComponent(EntityID, any) error // upsert
 	RemoveComponent(EntityID)
 
 	// can return:
@@ -31,6 +31,12 @@ type AnyComponentArray interface {
 	OnRemove(func([]EntityID))
 }
 
+type EntityComponent[Component any] interface {
+	Get() (Component, error)
+	Set(Component)
+	Remove()
+}
+
 type ComponentsArray[Component any] interface {
 	Transaction() ComponentsArrayTransaction[Component]
 	AnyTransaction() AnyComponentsArrayTransaction
@@ -40,15 +46,12 @@ type ComponentsArray[Component any] interface {
 	SaveComponent(EntityID, Component) error // upsert
 	SaveAnyComponent(EntityID, any) error    // upsert
 
-	// differs from save component by not triggering events
-	DirtySaveComponent(EntityID, Component) error // upsert
-	DirtySaveAnyComponent(EntityID, any) error    // upsert
-
 	RemoveComponent(EntityID)
 
 	// can return:
 	// - ErrComponentDoNotExists
 	// - ErrEntityDoNotExists
+	GetEntityComponent(entity EntityID, transaction ComponentsArrayTransaction[Component]) EntityComponent[Component]
 	GetComponent(entity EntityID) (Component, error)
 	GetAnyComponent(entity EntityID) (any, error)
 	GetEntities() []EntityID
@@ -62,6 +65,7 @@ type ComponentsArray[Component any] interface {
 // impl
 
 type componentsArray[Component any] struct {
+	equal      func(Component, Component) bool
 	entities   datastructures.SparseSet[EntityID]
 	components datastructures.SparseArray[EntityID, Component]
 
@@ -76,7 +80,12 @@ type componentsArray[Component any] struct {
 }
 
 func NewComponentsArray[Component any](entities datastructures.SparseSet[EntityID]) *componentsArray[Component] {
+	equal := func(Component, Component) bool { return false }
+	if reflect.TypeFor[Component]().Comparable() {
+		equal = func(c1, c2 Component) bool { return any(c1) == any(c2) }
+	}
 	array := &componentsArray[Component]{
+		equal:      equal,
 		entities:   entities,
 		components: datastructures.NewSparseArray[EntityID, Component](),
 
@@ -104,6 +113,10 @@ func (c *componentsArray[Component]) SaveComponent(entity EntityID, component Co
 	if ok := c.entities.Get(entity); !ok {
 		return ErrEntityDoNotExists
 	}
+	value, ok := c.components.Get(entity)
+	if ok && c.equal(value, component) {
+		return nil
+	}
 	added := c.components.Set(entity, component)
 	entities := []EntityID{entity}
 	if added {
@@ -126,22 +139,6 @@ func (c *componentsArray[Component]) SaveAnyComponent(entity EntityID, anyCompon
 	return c.SaveComponent(entity, component)
 }
 
-func (c *componentsArray[Component]) DirtySaveComponent(entity EntityID, component Component) error {
-	if ok := c.entities.Get(entity); !ok {
-		return ErrEntityDoNotExists
-	}
-	c.components.Set(entity, component)
-	return nil
-}
-
-func (c *componentsArray[Component]) DirtySaveAnyComponent(entity EntityID, anyComponent any) error {
-	component, ok := anyComponent.(Component)
-	if !ok {
-		return ErrInvalidType
-	}
-	return c.SaveComponent(entity, component)
-}
-
 func (c *componentsArray[Component]) RemoveComponent(entity EntityID) {
 	component, _ := c.components.Get(entity)
 	if removed := c.components.Remove(entity); !removed {
@@ -155,6 +152,53 @@ func (c *componentsArray[Component]) RemoveComponent(entity EntityID) {
 	for _, listener := range c.onRemoveComponents {
 		listener(entities, components)
 	}
+}
+
+type entityComponent[Component any] struct {
+	get func() (Component, error)
+	set func(Component)
+	del func()
+}
+
+func newEntityComponent[Component any](
+	entity EntityID,
+	get func(EntityID) (Component, error),
+	set func(EntityID, Component),
+	del func(EntityID),
+) EntityComponent[Component] {
+	return entityComponent[Component]{
+		func() (Component, error) { return get(entity) },
+		func(c Component) { set(entity, c) },
+		func() { del(entity) },
+	}
+}
+
+func NewEntityComponent[Component any](
+	get func() (Component, error),
+	set func(Component),
+	del func(),
+) EntityComponent[Component] {
+	return entityComponent[Component]{
+		func() (Component, error) { return get() },
+		func(c Component) { set(c) },
+		func() { del() },
+	}
+}
+
+func (e entityComponent[Component]) Get() (Component, error) { return e.get() }
+func (e entityComponent[Component]) Set(c Component)         { e.set(c) }
+func (e entityComponent[Component]) Remove()                 { e.del() }
+
+func (c *componentsArray[Component]) GetEntityComponent(
+	entity EntityID,
+	transaction ComponentsArrayTransaction[Component],
+) EntityComponent[Component] {
+	return newEntityComponent(
+		entity,
+		c.GetComponent,
+		transaction.SaveComponent,
+		transaction.RemoveComponent,
+	)
 }
 
 func (c *componentsArray[Component]) GetComponent(entity EntityID) (Component, error) {

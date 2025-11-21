@@ -10,29 +10,35 @@ import (
 )
 
 type orthoSys struct {
-	world          ecs.World
-	query          ecs.LiveQuery
-	limitsArray    ecs.ComponentsArray[camera.CameraLimitsComponent]
-	orthoArray     ecs.ComponentsArray[camera.OrthoComponent]
-	transformArray ecs.ComponentsArray[transform.TransformComponent]
+	world         ecs.World
+	query         ecs.LiveQuery
+	limitsArray   ecs.ComponentsArray[camera.CameraLimitsComponent]
+	orthoArray    ecs.ComponentsArray[camera.OrthoComponent]
+	transformTool transform.TransformTool
 
 	logger logger.Logger
 }
 
-func NewOrthoSys(w ecs.World, logger logger.Logger) {
-	s := &orthoSys{
-		world: w,
-		query: w.Query().
-			Require(ecs.GetComponentType(camera.CameraLimitsComponent{})).
-			Require(ecs.GetComponentType(camera.OrthoComponent{})).
-			Track(ecs.GetComponentType(transform.TransformComponent{})).
-			Build(),
-		limitsArray:    ecs.GetComponentsArray[camera.CameraLimitsComponent](w.Components()),
-		orthoArray:     ecs.GetComponentsArray[camera.OrthoComponent](w.Components()),
-		transformArray: ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
-		logger:         logger,
-	}
-	s.Addlisteners()
+func NewOrthoSys(
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+	logger logger.Logger,
+) ecs.SystemRegister {
+	return ecs.NewSystemRegister(func(w ecs.World) error {
+		transformTool := transformToolFactory.Build(w)
+		s := &orthoSys{
+			world: w,
+			query: transformTool.Query(w.Query()).
+				Require(ecs.GetComponentType(camera.CameraLimitsComponent{})).
+				Require(ecs.GetComponentType(camera.OrthoComponent{})).
+				Build(),
+			limitsArray:   ecs.GetComponentsArray[camera.CameraLimitsComponent](w.Components()),
+			orthoArray:    ecs.GetComponentsArray[camera.OrthoComponent](w.Components()),
+			transformTool: transformTool,
+			logger:        logger,
+		}
+		s.Addlisteners()
+		return nil
+	})
 }
 
 func (s *orthoSys) Addlisteners() {
@@ -41,7 +47,7 @@ func (s *orthoSys) Addlisteners() {
 }
 
 func (s *orthoSys) ChangeListener(ei []ecs.EntityID) {
-	transformTransaction := s.transformArray.Transaction()
+	transformTransaction := s.transformTool.Transaction()
 	for _, entity := range ei {
 		limits, err := s.limitsArray.GetComponent(entity)
 		if err != nil {
@@ -52,9 +58,11 @@ func (s *orthoSys) ChangeListener(ei []ecs.EntityID) {
 			continue
 		}
 
-		transformComponent, err := s.transformArray.GetComponent(entity)
+		transform := transformTransaction.GetEntity(entity)
+		pos, err := transform.AbsolutePos().Get()
 		if err != nil {
-			transformComponent = transform.NewTransform()
+			s.logger.Warn(err)
+			continue
 		}
 
 		halfWidth := orthoComponent.Width / 2.0
@@ -72,20 +80,27 @@ func (s *orthoSys) ChangeListener(ei []ecs.EntityID) {
 			limits.Max.Z(),
 		}
 
-		transformComponent.Pos = mgl32.Vec3{
-			max(transformComponent.Pos.X(), minPos.X()),
-			max(transformComponent.Pos.Y(), minPos.Y()),
-			max(transformComponent.Pos.Z(), minPos.Z()),
+		for i := 0; i < 3; i++ {
+			if minPos[i] > maxPos[i] {
+				center := (minPos[i] + maxPos[i]) / 2
+				minPos[i], maxPos[i] = center, center
+			}
 		}
 
-		transformComponent.Pos = mgl32.Vec3{
-			min(transformComponent.Pos.X(), maxPos.X()),
-			min(transformComponent.Pos.Y(), maxPos.Y()),
-			min(transformComponent.Pos.Z(), maxPos.Z()),
+		pos.Pos = mgl32.Vec3{
+			max(pos.Pos.X(), minPos.X()),
+			max(pos.Pos.Y(), minPos.Y()),
+			max(pos.Pos.Z(), minPos.Z()),
 		}
 
-		transformTransaction.DirtySaveComponent(entity, transformComponent)
+		pos.Pos = mgl32.Vec3{
+			min(pos.Pos.X(), maxPos.X()),
+			min(pos.Pos.Y(), maxPos.Y()),
+			min(pos.Pos.Z(), maxPos.Z()),
+		}
+
+		transform.AbsolutePos().Set(pos)
 	}
 
-	s.logger.Warn(transformTransaction.Flush())
+	s.logger.Warn(ecs.FlushMany(transformTransaction.Transactions()...))
 }

@@ -107,7 +107,7 @@ func (repoStateCodec *worldStateCodec) Load(data SaveData) error {
 		array := getter(repoStateCodec.world)
 		transaction := transactions[key]
 		for _, entity := range array.GetEntities() {
-			transaction.RemoveAnyComponent(entity)
+			transaction.RemoveComponent(entity)
 		}
 
 		for _, element := range snapshot {

@@ -13,24 +13,25 @@ import (
 )
 
 type collisionDetectionService struct {
-	world           ecs.World
-	transformsArray ecs.ComponentsArray[transform.TransformComponent]
-	groupsArray     ecs.ComponentsArray[groups.GroupsComponent]
-	colliderArray   ecs.ComponentsArray[collider.ColliderComponent]
-	assets          assets.Assets
-	worldCollider   worldCollider
-	logger          logger.Logger
+	world                ecs.World
+	transformTransaction transform.TransformTransaction
+	groupsArray          ecs.ComponentsArray[groups.GroupsComponent]
+	colliderArray        ecs.ComponentsArray[collider.ColliderComponent]
+	assets               assets.Assets
+	worldCollider        worldCollider
+	logger               logger.Logger
 }
 
 func newCollisionDetectionService(
 	world ecs.World,
+	transformTransaction transform.TransformTransaction,
 	assets assets.Assets,
 	worldCollider worldCollider,
 	logger logger.Logger,
 ) collider.CollisionTool {
 	return &collisionDetectionService{
 		world,
-		ecs.GetComponentsArray[transform.TransformComponent](world.Components()),
+		transformTransaction,
 		ecs.GetComponentsArray[groups.GroupsComponent](world.Components()),
 		ecs.GetComponentsArray[collider.ColliderComponent](world.Components()),
 		assets,
@@ -48,11 +49,11 @@ func (c *collisionDetectionService) CollidesWithRay(entity ecs.EntityID, ray col
 		return nil, nil
 	}
 
-	transformComponent, err := c.transformsArray.GetComponent(entity)
+	transform := c.transformTransaction.GetEntity(entity)
+	aabb, err := TransformAABB(transform)
 	if err != nil {
-		transformComponent = transform.NewTransform()
+		return nil, err
 	}
-	aabb := collider.TransformAABB(transformComponent)
 	if ok, _ := RayAABBIntersect(ray, aabb); !ok {
 		return nil, nil
 	}
@@ -68,7 +69,7 @@ func (c *collisionDetectionService) CollidesWithRay(entity ecs.EntityID, ray col
 
 	//
 
-	ray.Apply(transformComponent.Mat4().Inv())
+	ray.Apply(transform.Mat4().Inv())
 
 	aabbs := colliderAsset.AABBs()
 	ranges := colliderAsset.Ranges()

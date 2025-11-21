@@ -3,7 +3,6 @@ package menuscene
 import (
 	gameassets "core/assets"
 	gamescenes "core/scenes"
-	"frontend/modules/anchor"
 	"frontend/modules/animation"
 	"frontend/modules/camera"
 	"frontend/modules/collider"
@@ -19,7 +18,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -33,27 +31,21 @@ func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.MenuBuilder) gamescenes.MenuBuilder {
 		b.OnLoad(func(world scenes.SceneCtx) {
 			cameraEntity := world.NewEntity()
-			ecs.SaveComponent(world.Components(), cameraEntity, transform.NewTransform())
 			ecs.SaveComponent(world.Components(), cameraEntity, camera.NewDynamicOrtho(-1000, +1000, 1))
 
 			signature := world.NewEntity()
-			ecs.SaveComponent(world.Components(), signature, transform.NewTransform().Ptr().
-				SetSize(mgl32.Vec3{100, 50, 1}).Val())
-			ecs.SaveComponent(world.Components(), signature, transform.NewPivotPoint(mgl32.Vec3{1, .5, .5}))
-			ecs.SaveComponent(world.Components(), signature, anchor.NewParentAnchor(cameraEntity).Ptr().
-				SetPivotPoint(mgl32.Vec3{0, 0, .5}).
-				SetOffset(mgl32.Vec3{5, 5}).
-				Val())
+			ecs.SaveComponent(world.Components(), signature, transform.NewPos(5, 5, 0))
+			ecs.SaveComponent(world.Components(), signature, transform.NewSize(100, 50, 1))
+			ecs.SaveComponent(world.Components(), signature, transform.NewPivotPoint(1, .5, .5))
+			ecs.SaveComponent(world.Components(), signature, transform.NewParent(cameraEntity, transform.RelativePos))
+			ecs.SaveComponent(world.Components(), signature, transform.NewParentPivotPoint(0, 0, .5))
 
 			ecs.SaveComponent(world.Components(), signature, text.TextComponent{Text: "menu"})
 			ecs.SaveComponent(world.Components(), signature, text.FontSizeComponent{FontSize: 32})
 			ecs.SaveComponent(world.Components(), signature, text.BreakComponent{Break: text.BreakNone})
 
 			background := world.NewEntity()
-			ecs.SaveComponent(world.Components(), background, anchor.NewParentAnchor(cameraEntity).Ptr().
-				SetPivotPoint(mgl32.Vec3{.5, .5, .5}).
-				SetRelativeTransform(transform.NewTransform().Ptr().SetSize(mgl32.Vec3{1, 1, 1}).Val()).Val(),
-			)
+			ecs.SaveComponent(world.Components(), background, transform.NewParent(cameraEntity, transform.RelativePos|transform.RelativeSize))
 			ecs.SaveComponent(world.Components(), background, render.NewMesh(gameassets.SquareMesh))
 			ecs.SaveComponent(world.Components(), background, render.NewTexture(gameassets.ForestTileTextureID))
 			ecs.SaveComponent(world.Components(), background, genericrenderer.PipelineComponent{})
@@ -64,10 +56,8 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			// ecs.SaveComponent(world.Components(), background, animation.NewLoopComponent())
 
 			buttonArea := world.NewEntity()
-			ecs.SaveComponent(world.Components(), buttonArea, transform.NewTransform().Ptr().
-				SetSize(mgl32.Vec3{500, 200, 1}).Val())
-			ecs.SaveComponent(world.Components(), buttonArea, anchor.NewParentAnchor(cameraEntity).Ptr().
-				SetPivotPoint(mgl32.Vec3{.5, .5, .5}).Val())
+			ecs.SaveComponent(world.Components(), buttonArea, transform.NewSize(500, 200, 1))
+			ecs.SaveComponent(world.Components(), buttonArea, transform.NewParent(cameraEntity, transform.RelativePos))
 
 			type Button struct {
 				Text    string
@@ -84,11 +74,9 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			for i, button := range buttons {
 				btn := world.NewEntity()
 				normalizedIndex := float32(i) / (float32(len(buttons)) - 1)
-				ecs.SaveComponent(world.Components(), btn, transform.NewTransform().Ptr().
-					SetSize(mgl32.Vec3{500, 50, 1}).Val())
-				ecs.SaveComponent(world.Components(), btn, anchor.NewParentAnchor(buttonArea).Ptr().
-					SetPivotPoint(mgl32.Vec3{.5, normalizedIndex, .5}).
-					Val())
+				ecs.SaveComponent(world.Components(), btn, transform.NewSize(500, 50, 2))
+				ecs.SaveComponent(world.Components(), btn, transform.NewParent(buttonArea, transform.RelativePos))
+				ecs.SaveComponent(world.Components(), btn, transform.NewParentPivotPoint(.5, normalizedIndex, .5))
 
 				ecs.SaveComponent(world.Components(), btn, render.NewMesh(gameassets.SquareMesh))
 				ecs.SaveComponent(world.Components(), btn, render.NewTexture(gameassets.WaterTileTextureID))
@@ -100,8 +88,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				))
 				ecs.SaveComponent(world.Components(), btn, animation.NewLoopComponent())
 
-				ecs.SaveComponent(world.Components(), btn, inputs.NewMouseEvents().Ptr().
-					AddLeftClickEvents(button.OnClick).Val())
+				ecs.SaveComponent(world.Components(), btn, inputs.NewMouseLeftClick(button.OnClick))
 				ecs.SaveComponent(world.Components(), btn, collider.NewCollider(gameassets.SquareColliderID))
 				ecs.SaveComponent(world.Components(), btn, inputs.KeepSelectedComponent{})
 

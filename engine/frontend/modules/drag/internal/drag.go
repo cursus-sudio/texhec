@@ -5,32 +5,44 @@ import (
 	"frontend/modules/drag"
 	"frontend/modules/transform"
 	"shared/services/ecs"
+	"shared/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/events"
 )
 
 type s struct {
-	camera ecs.ToolFactory[camera.CameraTool]
+	logger               logger.Logger
+	cameraToolFactory    ecs.ToolFactory[camera.CameraTool]
+	transformToolFactory ecs.ToolFactory[transform.TransformTool]
 }
 
 func NewSystem(
-	camera ecs.ToolFactory[camera.CameraTool],
+	logger logger.Logger,
+	cameraToolFactory ecs.ToolFactory[camera.CameraTool],
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
 ) ecs.SystemRegister {
-	return s{camera}
+	return s{logger, cameraToolFactory, transformToolFactory}
 }
 
 func (s s) Register(w ecs.World) error {
-	transformArray := ecs.GetComponentsArray[transform.TransformComponent](w.Components())
-	cameraTool := s.camera.Build(w)
+	cameraTool := s.cameraToolFactory.Build(w)
+	transformTransaction := s.transformToolFactory.Build(w).Transaction()
 	events.Listen(w.EventsBuilder(), func(event drag.DraggableEvent) {
 		camera, err := cameraTool.Get(event.Drag.Camera)
 		if err != nil {
 			return
 		}
 
-		transform, err := transformArray.GetComponent(event.Entity)
+		transform := transformTransaction.GetEntity(event.Entity)
+		pos, err := transform.AbsolutePos().Get()
 		if err != nil {
+			s.logger.Warn(err)
+			return
+		}
+		rot, err := transform.AbsoluteRotation().Get()
+		if err != nil {
+			s.logger.Warn(err)
 			return
 		}
 
@@ -38,11 +50,13 @@ func (s s) Register(w ecs.World) error {
 		toRay := camera.ShootRay(event.Drag.To)
 
 		posDiff := toRay.Pos.Sub(fromRay.Pos)
-		transform.Pos = transform.Pos.Add(posDiff)
+		pos.Pos = pos.Pos.Add(posDiff)
+		transform.AbsolutePos().Set(pos)
 
 		rotDiff := mgl32.QuatBetweenVectors(toRay.Direction, fromRay.Direction)
-		transform.Rotation = transform.Rotation.Mul(rotDiff)
-		transformArray.SaveComponent(event.Entity, transform)
+		rot.Rotation = rot.Rotation.Mul(rotDiff)
+		transform.AbsoluteRotation().Set(rot)
+		s.logger.Warn(ecs.FlushMany(transformTransaction.Transactions()...))
 	})
 	return nil
 }

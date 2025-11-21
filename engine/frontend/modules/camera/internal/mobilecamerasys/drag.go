@@ -16,9 +16,9 @@ type dragSystem struct {
 	isHeld bool
 	button uint8
 
-	world          ecs.World
-	transformArray ecs.ComponentsArray[transform.TransformComponent]
-	query          ecs.LiveQuery
+	world         ecs.World
+	transformTool transform.TransformTool
+	query         ecs.LiveQuery
 
 	cameraCtors camera.CameraTool
 	window      window.Api
@@ -28,6 +28,7 @@ type dragSystem struct {
 func NewDragSystem(
 	dragButton uint8,
 	cameraCtors ecs.ToolFactory[camera.CameraTool],
+	transformTool ecs.ToolFactory[transform.TransformTool],
 	window window.Api,
 	logger logger.Logger,
 ) ecs.SystemRegister {
@@ -36,8 +37,8 @@ func NewDragSystem(
 			isHeld: false,
 			button: dragButton,
 
-			world:          w,
-			transformArray: ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
+			world:         w,
+			transformTool: transformTool.Build(w),
 			query: w.Query().Require(
 				ecs.GetComponentType(camera.MobileCameraComponent{}),
 			).Build(),
@@ -52,11 +53,19 @@ func NewDragSystem(
 }
 
 func (s *dragSystem) Listen(e inputs.DragEvent) {
+	transformTransaction := s.transformTool.Transaction()
 
 	for _, cameraEntity := range s.query.Entities() {
-		transformComponent, err := s.transformArray.GetComponent(cameraEntity)
+		transform := transformTransaction.GetEntity(cameraEntity)
+		pos, err := transform.AbsolutePos().Get()
 		if err != nil {
-			transformComponent = transform.NewTransform()
+			s.logger.Warn(err)
+			continue
+		}
+		rot, err := transform.AbsoluteRotation().Get()
+		if err != nil {
+			s.logger.Warn(err)
+			continue
 		}
 
 		camera, err := s.cameraCtors.Get(cameraEntity)
@@ -67,11 +76,14 @@ func (s *dragSystem) Listen(e inputs.DragEvent) {
 		rayAfter := camera.ShootRay(e.To)
 
 		// apply difference
-		transformComponent.Pos = transformComponent.Pos.Add(rayBefore.Pos.Sub(rayAfter.Pos))
+		pos.Pos = pos.Pos.Add(rayBefore.Pos.Sub(rayAfter.Pos))
 
 		rotationDifference := mgl32.QuatBetweenVectors(rayBefore.Direction, rayAfter.Direction)
-		transformComponent.Rotation = rotationDifference.Mul(transformComponent.Rotation)
+		rot.Rotation = rotationDifference.Mul(rot.Rotation)
 
-		s.transformArray.SaveComponent(cameraEntity, transformComponent)
+		transform.AbsolutePos().Set(pos)
+		transform.AbsoluteRotation().Set(rot)
 	}
+
+	ecs.FlushMany(transformTransaction.Transactions()...)
 }

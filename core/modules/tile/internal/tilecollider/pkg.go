@@ -20,7 +20,6 @@ type pkg struct {
 	colliderComponent            collider.ColliderComponent
 	mainLayer                    tile.Layer
 	layers                       []tile.Layer
-	layerEvents                  datastructures.SparseArray[tile.Layer, []any]
 	minX, maxX, minY, maxY, minZ int32
 }
 
@@ -31,7 +30,6 @@ func Package(
 	colliderComponent collider.ColliderComponent,
 	mainLayer tile.Layer,
 	layers []tile.Layer,
-	layerEvents datastructures.SparseArray[tile.Layer, []any],
 	minX, maxX, minY, maxY, minZ int32,
 ) ioc.Pkg {
 	return pkg{
@@ -41,16 +39,18 @@ func Package(
 		colliderComponent,
 		mainLayer,
 		layers,
-		layerEvents,
 		minX, maxX, minY, maxY, minZ,
 	}
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.System {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.System) tile.System {
 		posIndexFactory := ioc.Get[ecs.ToolFactory[indexing.SpatialIndexTool[tile.PosComponent]]](c)
 		logger := ioc.Get[logger.Logger](c)
 		return ecs.NewSystemRegister(func(w ecs.World) error {
+			if err := s.Register(w); err != nil {
+				return err
+			}
 			posIndex := posIndexFactory.Build(w)
 			errs := ecs.RegisterSystems(w,
 				TileColliderSystem(
@@ -59,7 +59,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 					pkg.gridDepth,
 					pkg.tileGroups,
 					pkg.colliderComponent,
-					pkg.layerEvents,
 				),
 				ecs.NewSystemRegister(func(w ecs.World) error {
 					posArray := ecs.GetComponentsArray[tile.PosComponent](w.Components())
@@ -89,7 +88,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 							}
 							colliderTransaction.SaveComponent(entity, collider)
 						}
-						logger.Warn(colliderTransaction.Flush())
+						logger.Warn(ecs.FlushMany(colliderTransaction))
 					})
 					return nil
 				}),
@@ -168,7 +167,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 					}
 					colliderTransaction.SaveComponent(entity, collider)
 				}
-				logger.Warn(colliderTransaction.Flush())
+				logger.Warn(ecs.FlushMany(colliderTransaction))
 			}
 			tool := indices.Build(w)
 			tool.OnUpsert(upsertEntities)

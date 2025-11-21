@@ -170,5 +170,5 @@ func (s *system) ListenE(event frames.FrameEvent) error {
 
 		s.animationsTransaction.SaveComponent(entity, animationComp)
 	}
-	return s.animationsTransaction.Flush()
+	return ecs.FlushMany(s.animationsTransaction)
 }

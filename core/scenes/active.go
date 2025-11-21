@@ -3,7 +3,7 @@ package gamescenes
 import (
 	"core/modules/fpslogger"
 	"core/modules/tile"
-	"frontend/modules/anchor"
+	"fmt"
 	"frontend/modules/animation"
 	"frontend/modules/audio"
 	"frontend/modules/camera"
@@ -15,7 +15,6 @@ import (
 	"frontend/modules/render"
 	scenesys "frontend/modules/scenes"
 	"frontend/modules/text"
-	"frontend/modules/transform"
 	"frontend/services/media/window"
 	"frontend/services/scenes"
 	"shared/services/ecs"
@@ -110,18 +109,22 @@ func (pkg) Register(b ioc.Builder) {
 				return nil
 			})
 
+			// temporary system to say wich tile was pressed
+			events.Listen(ctx.EventsBuilder(), func(event tile.TileClickEvent) {
+				tileColliderArray := ecs.GetComponentsArray[tile.PosComponent](ctx.Components())
+				tileCollider, _ := tileColliderArray.GetComponent(event.Tile)
+				logger.Info(fmt.Sprintf("collider: %v", tileCollider))
+			})
+
 			ecs.RegisterSystems(ctx,
 				// inputs
 				ioc.Get[inputs.System](c),
 
 				// update
-				ioc.Get[anchor.System](c),
-				ioc.Get[transform.System](c),
-
 				ioc.Get[animation.System](c),
+				ioc.Get[camera.System](c),
 				ioc.Get[collider.System](c),
 				ioc.Get[drag.System](c),
-				ioc.Get[camera.System](c),
 				temporaryInlineSystems,
 
 				ioc.Get[tile.System](c),

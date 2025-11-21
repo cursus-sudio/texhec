@@ -5,6 +5,7 @@ import (
 	"frontend/modules/transform"
 	"frontend/services/frames"
 	"shared/services/ecs"
+	"shared/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/events"
@@ -12,28 +13,30 @@ import (
 )
 
 type wasdMoveSystem struct {
-	world                ecs.World
-	transformArray       ecs.ComponentsArray[transform.TransformComponent]
-	orthoArray           ecs.ComponentsArray[camera.OrthoComponent]
-	transformTransaction ecs.ComponentsArrayTransaction[transform.TransformComponent]
-	query                ecs.LiveQuery
+	logger        logger.Logger
+	world         ecs.World
+	transformTool transform.TransformTool
+	orthoArray    ecs.ComponentsArray[camera.OrthoComponent]
+	query         ecs.LiveQuery
 
 	cameraCtors camera.CameraTool
 	cameraSpeed float32
 }
 
 func NewWasdSystem(
+	logger logger.Logger,
 	cameraCtors ecs.ToolFactory[camera.CameraTool],
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
 	cameraSpeed float32,
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
+		transformTool := transformToolFactory.Build(w)
 		s := &wasdMoveSystem{
-			world:                w,
-			transformArray:       ecs.GetComponentsArray[transform.TransformComponent](w.Components()),
-			orthoArray:           ecs.GetComponentsArray[camera.OrthoComponent](w.Components()),
-			transformTransaction: ecs.GetComponentsArray[transform.TransformComponent](w.Components()).Transaction(),
-			query: w.Query().Require(
-				ecs.GetComponentType(transform.TransformComponent{}),
+			logger:        logger,
+			world:         w,
+			transformTool: transformTool,
+			orthoArray:    ecs.GetComponentsArray[camera.OrthoComponent](w.Components()),
+			query: transformTool.Query(w.Query()).Require(
 				ecs.GetComponentType(camera.OrthoComponent{}),
 				ecs.GetComponentType(camera.MobileCameraComponent{}),
 			).Build(),
@@ -71,10 +74,14 @@ func (s *wasdMoveSystem) Listen(event frames.FrameEvent) error {
 		moveVerticaly *= float32(event.Delta.Milliseconds()) * s.cameraSpeed
 	}
 
+	transformTransaction := s.transformTool.Transaction()
+
 	for _, camera := range s.query.Entities() {
-		transformComp, err := s.transformArray.GetComponent(camera)
+		transform := transformTransaction.GetEntity(camera)
+		pos, err := transform.AbsolutePos().Get()
 		if err != nil {
-			transformComp = transform.NewTransform()
+			s.logger.Warn(err)
+			continue
 		}
 
 		ortho, err := s.orthoArray.GetComponent(camera)
@@ -82,14 +89,13 @@ func (s *wasdMoveSystem) Listen(event frames.FrameEvent) error {
 			continue
 		}
 
-		transformComp.SetPos(mgl32.Vec3{
-			transformComp.Pos.X() + moveHorizontaly/ortho.Zoom,
-			transformComp.Pos.Y() + moveVerticaly/ortho.Zoom,
-			transformComp.Pos.Z(),
-		})
-
-		s.transformTransaction.SaveComponent(camera, transformComp)
+		pos.Pos = mgl32.Vec3{
+			pos.Pos.X() + moveHorizontaly/ortho.Zoom,
+			pos.Pos.Y() + moveVerticaly/ortho.Zoom,
+			pos.Pos.Z(),
+		}
+		transform.AbsolutePos().Set(pos)
 	}
 
-	return s.transformTransaction.Flush()
+	return ecs.FlushMany(transformTransaction.Transactions()...)
 }

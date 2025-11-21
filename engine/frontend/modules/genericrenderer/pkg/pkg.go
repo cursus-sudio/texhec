@@ -4,6 +4,7 @@ import (
 	"frontend/modules/camera"
 	"frontend/modules/genericrenderer"
 	"frontend/modules/genericrenderer/internal/renderer"
+	"frontend/modules/transform"
 	"frontend/services/assets"
 	"frontend/services/graphics/texture"
 	"frontend/services/graphics/vao/vbo"
@@ -46,6 +47,7 @@ func (pkg) Register(b ioc.Builder) {
 			ioc.Get[vbo.VBOFactory[genericrenderer.Vertex]](c),
 			ioc.Get[texture.Factory](c),
 			ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
+			ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
 		)
 	})
 }

@@ -204,6 +204,7 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 				break
 			}
 		}
+		lastLineLetterIndex = max(1, lastLineLetterIndex)
 
 		if lastLineLetterIndex < len(updatedLine.letters) {
 			updatedLine.width = updatedLine.letters[lastLineLetterIndex].xPos

@@ -28,7 +28,6 @@ import (
 	"frontend/modules/scenes/pkg"
 	"frontend/modules/text"
 	"frontend/modules/text/pkg"
-	"frontend/modules/transform"
 	"frontend/modules/transform/pkg"
 	frontendapi "frontend/services/api"
 	frontendtcp "frontend/services/api/tcp"
@@ -221,13 +220,7 @@ func frontendDic(
 			// 0.8125, // suggested (52/64)
 			0.8, // arbitrary number works for some reason
 		),
-		transformpkg.Package(
-			transform.NewPos(0, 0, 0),
-			transform.NewRotation(mgl32.QuatIdent()),
-			transform.NewSize(1, 1, 1),
-			transform.NewPivotPoint(.5, .5, .5),
-			transform.NewParentPivotPoint(.5, .5, .5),
-		),
+		transformpkg.Package(),
 
 		// game packages
 		fpsloggerpkg.Package(),

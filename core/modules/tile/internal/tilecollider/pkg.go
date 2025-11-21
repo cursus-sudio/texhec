@@ -44,10 +44,13 @@ func Package(
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.System {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.System) tile.System {
 		posIndexFactory := ioc.Get[ecs.ToolFactory[indexing.SpatialIndexTool[tile.PosComponent]]](c)
 		logger := ioc.Get[logger.Logger](c)
 		return ecs.NewSystemRegister(func(w ecs.World) error {
+			if err := s.Register(w); err != nil {
+				return err
+			}
 			posIndex := posIndexFactory.Build(w)
 			errs := ecs.RegisterSystems(w,
 				TileColliderSystem(

@@ -4,8 +4,10 @@ import (
 	"core/modules/tile"
 	"core/modules/tile/internal/tilecollider"
 	"core/modules/tile/internal/tilerenderer"
+	"core/modules/tile/internal/tileui"
 	"frontend/modules/collider"
 	"frontend/modules/groups"
+	"shared/services/ecs"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -39,11 +41,17 @@ func Package(
 				gridDepth,
 				tileGroups,
 			),
+			tileui.Package(),
 		},
 	}
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.System {
+		return ecs.NewSystemRegister(func(w ecs.World) error {
+			return nil
+		})
+	})
 	for _, pkg := range pkg.pkgs {
 		pkg.Register(b)
 	}

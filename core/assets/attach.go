@@ -11,12 +11,14 @@ import (
 	"frontend/modules/genericrenderer"
 	"frontend/modules/render"
 	"frontend/modules/text"
+	"frontend/modules/transform"
 	"frontend/services/assets"
 	gtexture "frontend/services/graphics/texture"
 	"frontend/services/graphics/vao/ebo"
 	"frontend/services/scenes"
 	"image"
 	_ "image/png"
+	"math"
 	"shared/services/datastructures"
 	appruntime "shared/services/runtime"
 
@@ -66,10 +68,12 @@ const (
 const (
 	ChangeColorsAnimation animation.AnimationID = iota
 	ButtonAnimation
+	ShowMenuAnimation
 )
 const (
 	MyEasingFunction animation.EasingFunctionID = iota
 	LinearEasingFunction
+	EaseOutElastic
 )
 
 type pkg struct{}
@@ -79,7 +83,6 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) Register(b ioc.Builder) {
-
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b animation.AnimationSystemBuilder) animation.AnimationSystemBuilder {
 		b.AddEasingFunction(LinearEasingFunction, func(t animation.AnimationState) animation.AnimationState { return t })
 		b.AddEasingFunction(MyEasingFunction, func(t animation.AnimationState) animation.AnimationState {
@@ -98,6 +101,22 @@ func (pkg) Register(b ioc.Builder) {
 				t -= 2.625 / d1
 				return n1*t*t + 0.984375
 			}
+		})
+		b.AddEasingFunction(EaseOutElastic, func(t animation.AnimationState) animation.AnimationState {
+			const c1 float64 = 10
+			const c2 float64 = .75
+			const c3 float64 = (2 * math.Pi) / 3
+			if t == 0 {
+				return 0
+			}
+			if t == 1 {
+				return 1
+			}
+			x := float64(t)
+			x = math.Pow(2, -c1*x)*
+				math.Sin((x*c1-c2)*c3) +
+				1
+			return animation.AnimationState(x)
 		})
 		b.AddAnimation(ButtonAnimation, animation.NewAnimation(
 			[]animation.Event{},
@@ -126,6 +145,21 @@ func (pkg) Register(b ioc.Builder) {
 					render.NewColor(mgl32.Vec4{1, 0, 1, 1}),
 					render.NewColor(mgl32.Vec4{1, 1, 1, 1}),
 					MyEasingFunction,
+				),
+			},
+		))
+		b.AddAnimation(ShowMenuAnimation, animation.NewAnimation(
+			[]animation.Event{},
+			[]animation.Transition{
+				animation.NewTransition(
+					transform.NewSize(0, 0, 1),
+					transform.NewSize(1, 1, 1),
+					EaseOutElastic,
+				),
+				animation.NewTransition(
+					transform.NewPos(-100, 0, 0),
+					transform.NewPos(0, 0, 0),
+					EaseOutElastic,
 				),
 			},
 		))

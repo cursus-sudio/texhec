@@ -80,9 +80,7 @@ type Option struct {
 func (s *system) Listen(e tile.TileClickEvent) {
 	options := []Option{
 		{"quit", inputs.QuitEvent{}},
-		{"sucker", inputs.QuitEvent{}},
-		// {"sucker", inputs.QuitEvent{}},
-		// {"succer", inputs.QuitEvent{}},
+		{"quit 2", inputs.QuitEvent{}},
 	}
 	optionsLen := float32(len(options))
 	menuWrapper := s.w.NewEntity()
@@ -126,7 +124,7 @@ func (s *system) Listen(e tile.TileClickEvent) {
 		// text
 		ecs.SaveComponent(s.w.Components(), entity, text.TextComponent{Text: option.Text})
 		ecs.SaveComponent(s.w.Components(), entity, text.BreakComponent{Break: text.BreakNone})
-		ecs.SaveComponent(s.w.Components(), entity, text.TextAlignComponent{Vertical: 0, Horizontal: 0})
-		ecs.SaveComponent(s.w.Components(), entity, text.FontSizeComponent{FontSize: 32})
+		ecs.SaveComponent(s.w.Components(), entity, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+		ecs.SaveComponent(s.w.Components(), entity, text.FontSizeComponent{FontSize: 24})
 	}
 }

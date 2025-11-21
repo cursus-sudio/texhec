@@ -37,17 +37,17 @@ func (pkg pkg) Register(b ioc.Builder) {
 			s := system{
 				w,
 				tool.Transaction(),
-				ecs.GetComponentsArray[animation.AnimationComponent](w.Components()),
-				ecs.GetComponentsArray[groups.GroupsComponent](w.Components()),
-				ecs.GetComponentsArray[collider.ColliderComponent](w.Components()),
-				ecs.GetComponentsArray[inputs.MouseLeftClickComponent](w.Components()),
-				ecs.GetComponentsArray[render.MeshComponent](w.Components()),
-				ecs.GetComponentsArray[render.TextureComponent](w.Components()),
-				ecs.GetComponentsArray[genericrenderer.PipelineComponent](w.Components()),
-				ecs.GetComponentsArray[text.TextComponent](w.Components()),
-				ecs.GetComponentsArray[text.BreakComponent](w.Components()),
-				ecs.GetComponentsArray[text.TextAlignComponent](w.Components()),
-				ecs.GetComponentsArray[text.FontSizeComponent](w.Components()),
+				ecs.GetComponentsArray[animation.AnimationComponent](w),
+				ecs.GetComponentsArray[groups.GroupsComponent](w),
+				ecs.GetComponentsArray[collider.ColliderComponent](w),
+				ecs.GetComponentsArray[inputs.MouseLeftClickComponent](w),
+				ecs.GetComponentsArray[render.MeshComponent](w),
+				ecs.GetComponentsArray[render.TextureComponent](w),
+				ecs.GetComponentsArray[genericrenderer.PipelineComponent](w),
+				ecs.GetComponentsArray[text.TextComponent](w),
+				ecs.GetComponentsArray[text.BreakComponent](w),
+				ecs.GetComponentsArray[text.TextAlignComponent](w),
+				ecs.GetComponentsArray[text.FontSizeComponent](w),
 			}
 			events.Listen(w.EventsBuilder(), s.Listen)
 			return nil
@@ -84,15 +84,15 @@ func (s *system) Listen(e tile.TileClickEvent) {
 	}
 	optionsLen := float32(len(options))
 	menuWrapper := s.w.NewEntity()
-	ecs.SaveComponent(s.w.Components(), menuWrapper, transform.NewSize(100, 50*optionsLen, 1))
-	ecs.SaveComponent(s.w.Components(), menuWrapper, transform.NewPivotPoint(0, 1, .5))
-	ecs.SaveComponent(s.w.Components(), menuWrapper, transform.NewParent(e.Tile, transform.RelativePos))
-	ecs.SaveComponent(s.w.Components(), menuWrapper, transform.NewParentPivotPoint(1, 1, .5))
+	ecs.SaveComponent(s.w, menuWrapper, transform.NewSize(100, 50*optionsLen, 1))
+	ecs.SaveComponent(s.w, menuWrapper, transform.NewPivotPoint(0, 1, .5))
+	ecs.SaveComponent(s.w, menuWrapper, transform.NewParent(e.Tile, transform.RelativePos))
+	ecs.SaveComponent(s.w, menuWrapper, transform.NewParentPivotPoint(1, 1, .5))
 
 	menu := s.w.NewEntity()
-	ecs.SaveComponent(s.w.Components(), menu, transform.NewSize(1, 1, 1))
-	ecs.SaveComponent(s.w.Components(), menu, transform.NewParent(menuWrapper, transform.RelativePos|transform.RelativeSize))
-	ecs.SaveComponent(s.w.Components(), menu, animation.NewAnimationComponent(gameassets.ShowMenuAnimation, time.Second))
+	ecs.SaveComponent(s.w, menu, transform.NewSize(1, 1, 1))
+	ecs.SaveComponent(s.w, menu, transform.NewParent(menuWrapper, transform.RelativePos|transform.RelativeSize))
+	ecs.SaveComponent(s.w, menu, animation.NewAnimationComponent(gameassets.ShowMenuAnimation, time.Second))
 
 	size := 1 / optionsLen
 
@@ -103,28 +103,28 @@ func (s *system) Listen(e tile.TileClickEvent) {
 		}
 
 		// transform
-		ecs.SaveComponent(s.w.Components(), entity, transform.NewSize(1, size, 1))
-		ecs.SaveComponent(s.w.Components(), entity, transform.NewPivotPoint(.5, 1, .5))
-		ecs.SaveComponent(s.w.Components(), entity, transform.NewParent(menu, transform.RelativePos|transform.RelativeSize))
-		ecs.SaveComponent(s.w.Components(), entity, transform.NewParentPivotPoint(.5, 1-normalizedI, .5))
+		ecs.SaveComponent(s.w, entity, transform.NewSize(1, size, 1))
+		ecs.SaveComponent(s.w, entity, transform.NewPivotPoint(.5, 1, .5))
+		ecs.SaveComponent(s.w, entity, transform.NewParent(menu, transform.RelativePos|transform.RelativeSize))
+		ecs.SaveComponent(s.w, entity, transform.NewParentPivotPoint(.5, 1-normalizedI, .5))
 
 		//
-		ecs.SaveComponent(s.w.Components(), entity, groups.EmptyGroups().Ptr().Enable(gamescene.GameGroup).Val())
+		ecs.SaveComponent(s.w, entity, groups.EmptyGroups().Ptr().Enable(gamescene.GameGroup).Val())
 
 		// mouse
-		ecs.SaveComponent(s.w.Components(), entity, collider.NewCollider(gameassets.SquareColliderID))
-		ecs.SaveComponent(s.w.Components(), entity, inputs.NewMouseLeftClick(option.OnClick))
+		ecs.SaveComponent(s.w, entity, collider.NewCollider(gameassets.SquareColliderID))
+		ecs.SaveComponent(s.w, entity, inputs.NewMouseLeftClick(option.OnClick))
 
 		// texture
-		ecs.SaveComponent(s.w.Components(), entity, render.NewMesh(gameassets.SquareMesh))
-		ecs.SaveComponent(s.w.Components(), entity, render.NewTexture(gameassets.MountainTileTextureID))
-		ecs.SaveComponent(s.w.Components(), entity, render.NewColor(mgl32.Vec4{1, normalizedI, 1, 1}))
-		ecs.SaveComponent(s.w.Components(), entity, genericrenderer.PipelineComponent{})
+		ecs.SaveComponent(s.w, entity, render.NewMesh(gameassets.SquareMesh))
+		ecs.SaveComponent(s.w, entity, render.NewTexture(gameassets.MountainTileTextureID))
+		ecs.SaveComponent(s.w, entity, render.NewColor(mgl32.Vec4{1, normalizedI, 1, 1}))
+		ecs.SaveComponent(s.w, entity, genericrenderer.PipelineComponent{})
 
 		// text
-		ecs.SaveComponent(s.w.Components(), entity, text.TextComponent{Text: option.Text})
-		ecs.SaveComponent(s.w.Components(), entity, text.BreakComponent{Break: text.BreakNone})
-		ecs.SaveComponent(s.w.Components(), entity, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
-		ecs.SaveComponent(s.w.Components(), entity, text.FontSizeComponent{FontSize: 24})
+		ecs.SaveComponent(s.w, entity, text.TextComponent{Text: option.Text})
+		ecs.SaveComponent(s.w, entity, text.BreakComponent{Break: text.BreakNone})
+		ecs.SaveComponent(s.w, entity, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+		ecs.SaveComponent(s.w, entity, text.FontSizeComponent{FontSize: 24})
 	}
 }

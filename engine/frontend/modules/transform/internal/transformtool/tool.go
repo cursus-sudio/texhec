@@ -42,12 +42,12 @@ func NewTransformTool(
 			defaultSize,
 			defaultPivot,
 			defaultParentPivot,
-			ecs.GetComponentsArray[transform.PosComponent](w.Components()),
-			ecs.GetComponentsArray[transform.RotationComponent](w.Components()),
-			ecs.GetComponentsArray[transform.SizeComponent](w.Components()),
-			ecs.GetComponentsArray[transform.PivotPointComponent](w.Components()),
-			ecs.GetComponentsArray[transform.ParentComponent](w.Components()),
-			ecs.GetComponentsArray[transform.ParentPivotPointComponent](w.Components()),
+			ecs.GetComponentsArray[transform.PosComponent](w),
+			ecs.GetComponentsArray[transform.RotationComponent](w),
+			ecs.GetComponentsArray[transform.SizeComponent](w),
+			ecs.GetComponentsArray[transform.PivotPointComponent](w),
+			ecs.GetComponentsArray[transform.ParentComponent](w),
+			ecs.GetComponentsArray[transform.ParentPivotPointComponent](w),
 		}
 	})
 }

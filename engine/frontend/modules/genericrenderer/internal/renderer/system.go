@@ -135,13 +135,13 @@ func NewSystem(
 		system := &system{
 			world:                w,
 			transformTransaction: transformTool.Transaction(),
-			groupsArray:          ecs.GetComponentsArray[groups.GroupsComponent](w.Components()),
-			textureArray:         ecs.GetComponentsArray[render.TextureComponent](w.Components()),
-			textureFrameArray:    ecs.GetComponentsArray[render.TextureFrameComponent](w.Components()),
-			colorArray:           ecs.GetComponentsArray[render.ColorComponent](w.Components()),
-			meshArray:            ecs.GetComponentsArray[render.MeshComponent](w.Components()),
+			groupsArray:          ecs.GetComponentsArray[groups.GroupsComponent](w),
+			textureArray:         ecs.GetComponentsArray[render.TextureComponent](w),
+			textureFrameArray:    ecs.GetComponentsArray[render.TextureFrameComponent](w),
+			colorArray:           ecs.GetComponentsArray[render.ColorComponent](w),
+			meshArray:            ecs.GetComponentsArray[render.MeshComponent](w),
 
-			cameraArray: ecs.GetComponentsArray[camera.CameraComponent](w.Components()),
+			cameraArray: ecs.GetComponentsArray[camera.CameraComponent](w),
 
 			window:         window,
 			assetsStorage:  assetsStorage,

@@ -42,10 +42,10 @@ func NewUpdateProjectionsSystem(
 
 			transformTool: transformToolFactory.Build(w),
 
-			dynamicPerspectivesArray: ecs.GetComponentsArray[camera.DynamicPerspective](w.Components()),
-			dynamicOrthoArray:        ecs.GetComponentsArray[camera.DynamicOrthoComponent](w.Components()),
-			perspectivesArray:        ecs.GetComponentsArray[camera.Perspective](w.Components()),
-			orthoArray:               ecs.GetComponentsArray[camera.OrthoComponent](w.Components()),
+			dynamicPerspectivesArray: ecs.GetComponentsArray[camera.DynamicPerspective](w),
+			dynamicOrthoArray:        ecs.GetComponentsArray[camera.DynamicOrthoComponent](w),
+			perspectivesArray:        ecs.GetComponentsArray[camera.Perspective](w),
+			orthoArray:               ecs.GetComponentsArray[camera.OrthoComponent](w),
 		}
 
 		s.dynamicPerspectivesArray.OnAdd(s.UpsertPerspective)

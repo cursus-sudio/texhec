@@ -124,7 +124,8 @@ func (components *componentsStorage) whenArrExists(t ComponentType, l func(array
 	components.onArrayAddListeners[t] = onAdd
 }
 
-func GetComponentsArray[Component any](components ComponentsStorage) ComponentsArray[Component] {
+func GetComponentsArray[Component any](world World) ComponentsArray[Component] {
+	components := world.Components()
 	var zero Component
 	componentType := GetComponentType(zero)
 
@@ -143,27 +144,27 @@ func GetComponentsArray[Component any](components ComponentsStorage) ComponentsA
 }
 
 func SaveComponent[Component any](
-	components ComponentsStorage,
+	w World,
 	entity EntityID,
 	component Component,
 ) error {
-	return GetComponentsArray[Component](components).
+	return GetComponentsArray[Component](w).
 		SaveComponent(entity, component)
 }
 
 func GetComponent[Component any](
-	components ComponentsStorage,
+	w World,
 	entity EntityID,
 ) (Component, error) {
-	return GetComponentsArray[Component](components).
+	return GetComponentsArray[Component](w).
 		GetComponent(entity)
 }
 
 func RemoveComponent[Component any](
-	components ComponentsStorage,
+	w World,
 	entity EntityID,
 ) {
-	GetComponentsArray[Component](components).
+	GetComponentsArray[Component](w).
 		RemoveComponent(entity)
 }
 

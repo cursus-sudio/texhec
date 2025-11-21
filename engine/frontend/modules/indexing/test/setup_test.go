@@ -28,7 +28,7 @@ func NewSetup() Setup {
 					Build()
 			},
 			func(w ecs.World) func(entity ecs.EntityID) (uint32, bool) {
-				componentArray := ecs.GetComponentsArray[Component](w.Components())
+				componentArray := ecs.GetComponentsArray[Component](w)
 				return func(entity ecs.EntityID) (uint32, bool) {
 					comp, err := componentArray.GetComponent(entity)
 					return comp.Index, err == nil
@@ -47,7 +47,7 @@ func NewSetup() Setup {
 	w := ecs.NewWorld()
 	return Setup{
 		W:     w,
-		Array: ecs.GetComponentsArray[Component](w.Components()),
+		Array: ecs.GetComponentsArray[Component](w),
 		Tool:  func() indexing.Indices[uint32] { return toolFactory.Build(w) },
 	}
 }

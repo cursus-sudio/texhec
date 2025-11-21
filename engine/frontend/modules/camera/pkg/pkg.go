@@ -45,7 +45,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 		s.Register(ecs.GetComponentType(camera.OrthoComponent{}), func(world ecs.World) func(entity ecs.EntityID) (camera.CameraService, error) {
 			logger := ioc.Get[logger.Logger](c)
 			transformTransaction := ioc.Get[ecs.ToolFactory[transform.TransformTool]](c).Build(world).Transaction()
-			orthoArray := ecs.GetComponentsArray[camera.OrthoComponent](world.Components())
+			orthoArray := ecs.GetComponentsArray[camera.OrthoComponent](world)
 			return func(entity ecs.EntityID) (camera.CameraService, error) {
 				transform := transformTransaction.GetEntity(entity)
 				getCameraTransformMatrix := func() mgl32.Mat4 {
@@ -80,7 +80,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 					)
 				}
 
-				cameraGroups, err := ecs.GetComponent[groups.GroupsComponent](world.Components(), entity)
+				cameraGroups, err := ecs.GetComponent[groups.GroupsComponent](world, entity)
 				if err != nil {
 					cameraGroups = groups.DefaultGroups()
 				}
@@ -109,7 +109,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 		s.Register(ecs.GetComponentType(camera.Perspective{}), func(world ecs.World) func(entity ecs.EntityID) (camera.CameraService, error) {
 			logger := ioc.Get[logger.Logger](c)
 			transformTransaction := ioc.Get[ecs.ToolFactory[transform.TransformTool]](c).Build(world).Transaction()
-			perspectiveArray := ecs.GetComponentsArray[camera.Perspective](world.Components())
+			perspectiveArray := ecs.GetComponentsArray[camera.Perspective](world)
 
 			return func(entity ecs.EntityID) (camera.CameraService, error) {
 				transform := transformTransaction.GetEntity(entity)
@@ -144,7 +144,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 					return mgl32.Perspective(p.FovY, p.AspectRatio, p.Near, p.Far)
 				}
 
-				cameraGroups, err := ecs.GetComponent[groups.GroupsComponent](world.Components(), entity)
+				cameraGroups, err := ecs.GetComponent[groups.GroupsComponent](world, entity)
 				if err != nil {
 					cameraGroups = groups.DefaultGroups()
 				}
@@ -210,9 +210,9 @@ func (pkg pkg) Register(b ioc.Builder) {
 					logger,
 				),
 				ecs.NewSystemRegister(func(w ecs.World) error {
-					cameraArray := ecs.GetComponentsArray[camera.CameraComponent](w.Components())
+					cameraArray := ecs.GetComponentsArray[camera.CameraComponent](w)
 
-					orthoArray := ecs.GetComponentsArray[camera.OrthoComponent](w.Components())
+					orthoArray := ecs.GetComponentsArray[camera.OrthoComponent](w)
 					orthoArray.OnAdd(func(ei []ecs.EntityID) {
 						t := cameraArray.Transaction()
 						for _, e := range ei {
@@ -221,7 +221,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 						logger.Warn(ecs.FlushMany(t))
 					})
 
-					perspectiveArray := ecs.GetComponentsArray[camera.Perspective](w.Components())
+					perspectiveArray := ecs.GetComponentsArray[camera.Perspective](w)
 					perspectiveArray.OnAdd(func(ei []ecs.EntityID) {
 						t := cameraArray.Transaction()
 						for _, e := range ei {

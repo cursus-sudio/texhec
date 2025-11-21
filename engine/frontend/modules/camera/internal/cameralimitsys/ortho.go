@@ -31,8 +31,8 @@ func NewOrthoSys(
 				Require(ecs.GetComponentType(camera.CameraLimitsComponent{})).
 				Require(ecs.GetComponentType(camera.OrthoComponent{})).
 				Build(),
-			limitsArray:   ecs.GetComponentsArray[camera.CameraLimitsComponent](w.Components()),
-			orthoArray:    ecs.GetComponentsArray[camera.OrthoComponent](w.Components()),
+			limitsArray:   ecs.GetComponentsArray[camera.CameraLimitsComponent](w),
+			orthoArray:    ecs.GetComponentsArray[camera.OrthoComponent](w),
 			transformTool: transformTool,
 			logger:        logger,
 		}

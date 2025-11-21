@@ -66,12 +66,12 @@ func NewLayoutService(
 	return &layoutService{
 		world:                world,
 		transformTransaction: transformToolFactory.Build(world).Transaction(),
-		textArray:            ecs.GetComponentsArray[text.TextComponent](world.Components()),
-		fontFamilyArray:      ecs.GetComponentsArray[text.FontFamilyComponent](world.Components()),
-		fontSizeArray:        ecs.GetComponentsArray[text.FontSizeComponent](world.Components()),
-		// overflowArray:   ecs.GetComponentsArray[text.Overflow](world.Components()),
-		breakArray:     ecs.GetComponentsArray[text.BreakComponent](world.Components()),
-		textAlignArray: ecs.GetComponentsArray[text.TextAlignComponent](world.Components()),
+		textArray:            ecs.GetComponentsArray[text.TextComponent](world),
+		fontFamilyArray:      ecs.GetComponentsArray[text.FontFamilyComponent](world),
+		fontSizeArray:        ecs.GetComponentsArray[text.FontSizeComponent](world),
+		// overflowArray:   ecs.GetComponentsArray[text.Overflow](world),
+		breakArray:     ecs.GetComponentsArray[text.BreakComponent](world),
+		textAlignArray: ecs.GetComponentsArray[text.TextAlignComponent](world),
 
 		logger:      logger,
 		fontService: fontService,

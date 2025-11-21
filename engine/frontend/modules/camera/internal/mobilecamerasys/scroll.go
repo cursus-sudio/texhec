@@ -40,7 +40,7 @@ func NewScrollSystem(
 			logger:      logger,
 
 			world:             w,
-			dynamicOrthoArray: ecs.GetComponentsArray[camera.DynamicOrthoComponent](w.Components()),
+			dynamicOrthoArray: ecs.GetComponentsArray[camera.DynamicOrthoComponent](w),
 			transformTool:     transformTool.Build(w),
 			query: w.Query().Require(
 				ecs.GetComponentType(camera.MobileCameraComponent{}),

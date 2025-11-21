@@ -157,7 +157,7 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 		gridDepth: factory.gridDepth,
 
 		world:       w,
-		groupsArray: ecs.GetComponentsArray[groups.GroupsComponent](w.Components()),
+		groupsArray: ecs.GetComponentsArray[groups.GroupsComponent](w),
 		gridGroups:  factory.groups,
 		cameraQuery: w.Query().Require(ecs.GetComponentType(camera.OrthoComponent{})).Build(),
 		cameraCtors: factory.cameraCtorsFactory.Build(w),
@@ -167,8 +167,8 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 		tiles:       tiles,
 	}
 
-	linkArray := ecs.GetComponentsArray[definition.DefinitionLinkComponent](w.Components())
-	posArray := ecs.GetComponentsArray[tile.PosComponent](w.Components())
+	linkArray := ecs.GetComponentsArray[definition.DefinitionLinkComponent](w)
+	posArray := ecs.GetComponentsArray[tile.PosComponent](w)
 
 	onChangeOrAdd := func(ei []ecs.EntityID) {
 		changeMutex.Lock()

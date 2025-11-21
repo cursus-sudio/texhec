@@ -61,8 +61,8 @@ func (pkg pkg) Register(b ioc.Builder) {
 					pkg.colliderComponent,
 				),
 				ecs.NewSystemRegister(func(w ecs.World) error {
-					posArray := ecs.GetComponentsArray[tile.PosComponent](w.Components())
-					colliderArray := ecs.GetComponentsArray[ColliderComponent](w.Components())
+					posArray := ecs.GetComponentsArray[tile.PosComponent](w)
+					colliderArray := ecs.GetComponentsArray[ColliderComponent](w)
 					posArray.OnRemoveComponents(func(ei []ecs.EntityID, components []tile.PosComponent) {
 						colliderTransaction := colliderArray.Transaction()
 						set := datastructures.NewSparseSet[ecs.EntityID]()
@@ -107,7 +107,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 				Build()
 		},
 		func(w ecs.World) func(entity ecs.EntityID) (tile.PosComponent, bool) {
-			tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w.Components())
+			tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w)
 			return func(entity ecs.EntityID) (tile.PosComponent, bool) {
 				comp, err := tilePosArray.GetComponent(entity)
 				return comp, err == nil
@@ -127,7 +127,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 				Build()
 		},
 		func(w ecs.World) func(entity ecs.EntityID) (tile.ColliderPos, bool) {
-			tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w.Components())
+			tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w)
 			return func(entity ecs.EntityID) (tile.ColliderPos, bool) {
 				tileComp, err := tilePosArray.GetComponent(entity)
 				if err != nil && tileComp.Layer != pkg.mainLayer {
@@ -148,8 +148,8 @@ func (pkg pkg) Register(b ioc.Builder) {
 
 		return ecs.NewToolFactory(func(w ecs.World) indexing.Indices[tile.ColliderPos] {
 			posIndex := posIndexFactory.Build(w)
-			posArray := ecs.GetComponentsArray[tile.PosComponent](w.Components())
-			colliderArray := ecs.GetComponentsArray[ColliderComponent](w.Components())
+			posArray := ecs.GetComponentsArray[tile.PosComponent](w)
+			colliderArray := ecs.GetComponentsArray[ColliderComponent](w)
 			upsertEntities := func(ei []ecs.EntityID) {
 				colliderTransaction := colliderArray.Transaction()
 				for _, entity := range ei {

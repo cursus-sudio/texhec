@@ -46,7 +46,7 @@ func NewCameraRaySystem(
 		s := &cameraRaySystem{
 			world:           w,
 			logger:          logger,
-			cameraArray:     ecs.GetComponentsArray[camera.CameraComponent](w.Components()),
+			cameraArray:     ecs.GetComponentsArray[camera.CameraComponent](w),
 			broadCollisions: colliderFactory.Build(w),
 			window:          window,
 			events:          w.Events(),

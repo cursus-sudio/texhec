@@ -15,52 +15,52 @@ var secondComponent = Component{Counter: 8}
 func TestComponents(t *testing.T) {
 	world := ecs.NewWorld()
 
-	if _, err := ecs.GetComponent[Component](world.Components(), ecs.EntityID(0)); err != ecs.ErrEntityDoNotExists {
+	if _, err := ecs.GetComponent[Component](world, ecs.EntityID(0)); err != ecs.ErrEntityDoNotExists {
 		t.Errorf("when retrieving component from not existing entity do not got ErrEntityDoNotExists error")
 	}
 
 	entityId := world.NewEntity()
-	if err := ecs.SaveComponent(world.Components(), entityId, component); err != nil {
+	if err := ecs.SaveComponent(world, entityId, component); err != nil {
 		t.Errorf("when trying to save component on existing entity got unexpected error")
 	}
 
-	if retrievedComponent, err := ecs.GetComponent[Component](world.Components(), entityId); err != nil {
+	if retrievedComponent, err := ecs.GetComponent[Component](world, entityId); err != nil {
 		t.Errorf("unexpected error when retrieving component")
 	} else if retrievedComponent != component {
 		t.Errorf("retrieved component isn't equal to saved component")
 	}
 
-	if err := ecs.SaveComponent(world.Components(), ecs.EntityID(0), secondComponent); err != ecs.ErrEntityDoNotExists {
+	if err := ecs.SaveComponent(world, ecs.EntityID(0), secondComponent); err != ecs.ErrEntityDoNotExists {
 		t.Errorf("when trying to save existing component on not existing entity do not got ErrEntityDoNotExists error")
 	}
 
-	if err := ecs.SaveComponent(world.Components(), entityId, secondComponent); err != nil {
+	if err := ecs.SaveComponent(world, entityId, secondComponent); err != nil {
 		t.Errorf("when saving component got unexpected error")
 	}
 
-	if retrievedComponent, err := ecs.GetComponent[Component](world.Components(), entityId); err != nil {
+	if retrievedComponent, err := ecs.GetComponent[Component](world, entityId); err != nil {
 		t.Errorf("unexpected error when retrieving component")
 	} else if retrievedComponent != secondComponent {
 		t.Errorf("retrieved component isn't equal to saved component")
 	}
 
-	ecs.RemoveComponent[Component](world.Components(), entityId)
+	ecs.RemoveComponent[Component](world, entityId)
 
-	if _, err := ecs.GetComponent[Component](world.Components(), entityId); err != ecs.ErrComponentDoNotExists {
+	if _, err := ecs.GetComponent[Component](world, entityId); err != ecs.ErrComponentDoNotExists {
 		t.Errorf("retrieving removed component didn't return ecs.ErrComponentDoNotExists but %v\n", err)
 	}
 
-	ecs.SaveComponent(world.Components(), entityId, component)
+	ecs.SaveComponent(world, entityId, component)
 	world.RemoveEntity(entityId)
 
-	if _, err := ecs.GetComponent[Component](world.Components(), entityId); err != ecs.ErrEntityDoNotExists {
+	if _, err := ecs.GetComponent[Component](world, entityId); err != ecs.ErrEntityDoNotExists {
 		t.Errorf("retrieving component from removed entity didn't return ecs.ErrEntityDoNotExists but %v\n", err)
 	}
 }
 
 func TestComponentsArrays(t *testing.T) {
 	world := ecs.NewWorld()
-	componentArray := ecs.GetComponentsArray[Component](world.Components())
+	componentArray := ecs.GetComponentsArray[Component](world)
 
 	if _, err := componentArray.GetComponent(ecs.EntityID(0)); err != ecs.ErrEntityDoNotExists {
 		t.Errorf("when retrieving component from not existing entity do not got ErrEntityDoNotExists error")
@@ -131,10 +131,10 @@ func TestComponentsQuery(t *testing.T) {
 
 	entity := world.NewEntity()
 
-	component := ecs.GetComponentsArray[Component](world.Components())
-	component2 := ecs.GetComponentsArray[Component2](world.Components())
-	forbiddenComponent := ecs.GetComponentsArray[ForbiddenComponent](world.Components())
-	trackedComponent := ecs.GetComponentsArray[TrackedComponent](world.Components())
+	component := ecs.GetComponentsArray[Component](world)
+	component2 := ecs.GetComponentsArray[Component2](world)
+	forbiddenComponent := ecs.GetComponentsArray[ForbiddenComponent](world)
+	trackedComponent := ecs.GetComponentsArray[TrackedComponent](world)
 
 	expectNothing := func() bool {
 		if adds != expectedAdds {

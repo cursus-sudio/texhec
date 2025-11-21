@@ -51,7 +51,7 @@ func Factory(
 		return &collisionsService{
 			world:                w,
 			transformTransaction: transformToolFactory.Build(w).Transaction(),
-			transformStaticArray: ecs.GetComponentsArray[transform.StaticComponent](w.Components()),
+			transformStaticArray: ecs.GetComponentsArray[transform.StaticComponent](w),
 			assets:               assets,
 			logger:               logger,
 		}

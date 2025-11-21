@@ -35,7 +35,7 @@ func NewWasdSystem(
 			logger:        logger,
 			world:         w,
 			transformTool: transformTool,
-			orthoArray:    ecs.GetComponentsArray[camera.OrthoComponent](w.Components()),
+			orthoArray:    ecs.GetComponentsArray[camera.OrthoComponent](w),
 			query: transformTool.Query(w.Query()).Require(
 				ecs.GetComponentType(camera.OrthoComponent{}),
 				ecs.GetComponentType(camera.MobileCameraComponent{}),

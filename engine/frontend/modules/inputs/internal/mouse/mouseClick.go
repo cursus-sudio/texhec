@@ -46,15 +46,15 @@ func NewClickSystem(logger logger.Logger, window window.Api) ecs.SystemRegister 
 		s := &clickSystem{
 			logger:       logger,
 			world:        w,
-			hoveredArray: ecs.GetComponentsArray[inputs.HoveredComponent](w.Components()),
+			hoveredArray: ecs.GetComponentsArray[inputs.HoveredComponent](w),
 
-			dragArray:             ecs.GetComponentsArray[inputs.MouseDragComponent](w.Components()),
-			leftClickArray:        ecs.GetComponentsArray[inputs.MouseLeftClickComponent](w.Components()),
-			doubleLeftClickArray:  ecs.GetComponentsArray[inputs.MouseDoubleLeftClickComponent](w.Components()),
-			rightClickArray:       ecs.GetComponentsArray[inputs.MouseRightClickComponent](w.Components()),
-			doubleRightClickArray: ecs.GetComponentsArray[inputs.MouseDoubleRightClickComponent](w.Components()),
+			dragArray:             ecs.GetComponentsArray[inputs.MouseDragComponent](w),
+			leftClickArray:        ecs.GetComponentsArray[inputs.MouseLeftClickComponent](w),
+			doubleLeftClickArray:  ecs.GetComponentsArray[inputs.MouseDoubleLeftClickComponent](w),
+			rightClickArray:       ecs.GetComponentsArray[inputs.MouseRightClickComponent](w),
+			doubleRightClickArray: ecs.GetComponentsArray[inputs.MouseDoubleRightClickComponent](w),
 
-			keepSelectedArray: ecs.GetComponentsArray[inputs.KeepSelectedComponent](w.Components()),
+			keepSelectedArray: ecs.GetComponentsArray[inputs.KeepSelectedComponent](w),
 
 			window: window,
 

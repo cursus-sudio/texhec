@@ -1,6 +1,7 @@
 package transformtool
 
 import (
+	"frontend/modules/relation"
 	"frontend/modules/transform"
 	"shared/services/ecs"
 	"shared/services/logger"
@@ -9,7 +10,8 @@ import (
 type transformTool struct {
 	logger logger.Logger
 
-	world ecs.World
+	world      ecs.World
+	parentTool relation.ParentTool[transform.ParentComponent]
 
 	defaultPos         transform.PosComponent
 	defaultRot         transform.RotationComponent
@@ -27,6 +29,7 @@ type transformTool struct {
 
 func NewTransformTool(
 	logger logger.Logger,
+	parentToolFactory ecs.ToolFactory[relation.ParentTool[transform.ParentComponent]],
 	defaultPos transform.PosComponent,
 	defaultRot transform.RotationComponent,
 	defaultSize transform.SizeComponent,
@@ -37,6 +40,7 @@ func NewTransformTool(
 		return transformTool{
 			logger,
 			w,
+			parentToolFactory.Build(w),
 			defaultPos,
 			defaultRot,
 			defaultSize,

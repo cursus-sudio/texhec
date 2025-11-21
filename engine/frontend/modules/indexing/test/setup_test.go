@@ -15,13 +15,13 @@ type Component struct {
 type Setup struct {
 	W     ecs.World
 	Array ecs.ComponentsArray[Component]
-	Tool  func() indexing.SpatialIndexTool[uint32]
+	Tool  func() indexing.Indices[uint32]
 }
 
 func NewSetup() Setup {
 	b := ioc.NewBuilder()
 	pkgs := []ioc.Pkg{
-		indexingpkg.SpatialIndexingPackage(
+		indexingpkg.SpatialIndexPackage(
 			func(w ecs.World) ecs.LiveQuery {
 				return w.Query().
 					Require(ecs.GetComponentType(Component{})).
@@ -42,12 +42,12 @@ func NewSetup() Setup {
 	}
 
 	c := b.Build()
-	toolFactory := ioc.Get[ecs.ToolFactory[indexing.SpatialIndexTool[uint32]]](c)
+	toolFactory := ioc.Get[ecs.ToolFactory[indexing.Indices[uint32]]](c)
 
 	w := ecs.NewWorld()
 	return Setup{
 		W:     w,
 		Array: ecs.GetComponentsArray[Component](w.Components()),
-		Tool:  func() indexing.SpatialIndexTool[uint32] { return toolFactory.Build(w) },
+		Tool:  func() indexing.Indices[uint32] { return toolFactory.Build(w) },
 	}
 }

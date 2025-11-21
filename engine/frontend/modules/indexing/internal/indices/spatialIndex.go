@@ -1,4 +1,4 @@
-package internal
+package indices
 
 import (
 	"frontend/modules/indexing"

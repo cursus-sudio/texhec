@@ -2,11 +2,13 @@ package indexingpkg
 
 import (
 	"frontend/modules/indexing"
-	"frontend/modules/indexing/internal"
+	"frontend/modules/indexing/internal/indices"
 	"shared/services/ecs"
 
 	"github.com/ogiusek/ioc/v2"
 )
+
+type SpatialIndexTool[IndexType any] indexing.Indices[IndexType]
 
 type spatialIndexingPkg[IndexType any] struct {
 	queryFactory   func(ecs.World) ecs.LiveQuery
@@ -14,7 +16,7 @@ type spatialIndexingPkg[IndexType any] struct {
 	indexNumber    func(IndexType) uint32
 }
 
-func SpatialIndexingPackage[IndexType any](
+func SpatialIndexPackage[IndexType any](
 	queryFactory func(ecs.World) ecs.LiveQuery,
 	componentIndex func(ecs.World) func(entity ecs.EntityID) (indexType IndexType, ok bool),
 	indexNumber func(index IndexType) uint32,
@@ -27,8 +29,8 @@ func SpatialIndexingPackage[IndexType any](
 }
 
 func (pkg spatialIndexingPkg[IndexType]) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[indexing.SpatialIndexTool[IndexType]] {
-		return internal.NewSpatialIndexingFactory(
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[indexing.Indices[IndexType]] {
+		return indices.NewSpatialIndexingFactory(
 			pkg.queryFactory,
 			pkg.componentIndex,
 			pkg.indexNumber,

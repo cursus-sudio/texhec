@@ -52,6 +52,10 @@ func NewTransformTool(
 			ecs.GetComponentsArray[transform.PivotPointComponent](w),
 			ecs.GetComponentsArray[transform.ParentComponent](w),
 			ecs.GetComponentsArray[transform.ParentPivotPointComponent](w),
+			// ecs.GetComponentsArray[AbsolutePos](w),
+			// ecs.GetComponentsArray[AbsoluteRot](w),
+			// ecs.GetComponentsArray[AbsoluteSize](w),
+			// ecs.GetComponentsArray[FlatChildren](w),
 		}
 	})
 }
@@ -68,5 +72,9 @@ func (tool transformTool) Query(b ecs.LiveQueryBuilder) ecs.LiveQueryBuilder {
 		ecs.GetComponentType(transform.PivotPointComponent{}),
 		ecs.GetComponentType(transform.ParentComponent{}),
 		ecs.GetComponentType(transform.ParentPivotPointComponent{}),
+		// ecs.GetComponentType(AbsolutePos{}),
+		// ecs.GetComponentType(AbsoluteRot{}),
+		// ecs.GetComponentType(AbsoluteSize{}),
+		// ecs.GetComponentType(FlatChildren{}),
 	)
 }

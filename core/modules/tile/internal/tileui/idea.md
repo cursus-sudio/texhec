@@ -1,3 +1,6 @@
+# ui idea
+## main idea
+
 1. select target by clicking on tile.
 if there are multiple targets maybe click multiple times
 2. show on ui actions.
@@ -12,4 +15,21 @@ when to uselect:
 - on button click
 - on right click
 
+## actions menus
 
+main:
+- profits
+- players
+- build buildings
+- sell
+
+build buildings:
+
+
+building:
+- profit
+- recruit
+- attacks
+
+players:
+- players list

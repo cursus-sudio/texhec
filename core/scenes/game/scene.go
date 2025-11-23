@@ -65,7 +65,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			quit := world.NewEntity()
 			ecs.SaveComponent(world, quit, transform.NewPos(-10, -10, 0))
 			ecs.SaveComponent(world, quit, transform.NewSize(50, 50, 1))
-			ecs.SaveComponent(world, quit, transform.NewPivotPoint(0, 0, .5))
+			ecs.SaveComponent(world, quit, transform.NewPivotPoint(1, 1, .5))
 			ecs.SaveComponent(world, quit, transform.NewParent(uiCamera, transform.RelativePos))
 			ecs.SaveComponent(world, quit, transform.NewParentPivotPoint(1, 1, .5))
 			ecs.SaveComponent(world, quit, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())

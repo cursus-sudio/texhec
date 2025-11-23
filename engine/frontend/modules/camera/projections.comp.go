@@ -5,37 +5,39 @@ import (
 )
 
 type OrthoComponent struct {
-	Width, Height float32
-	Near, Far     float32
-	Zoom          float32
-}
-
-func NewOrtho(w, h, near, far float32, zoom float32) OrthoComponent {
-	return OrthoComponent{
-		Width:  w / zoom,
-		Height: h / zoom,
-		Near:   min(near, far),
-		Far:    max(near, far),
-		Zoom:   zoom,
-	}
-}
-
-//
-
-type DynamicOrthoComponent struct {
 	Near, Far float32
 	Zoom      float32
 }
 
-func NewDynamicOrtho(near, far float32, zoom float32) DynamicOrthoComponent {
-	return DynamicOrthoComponent{
-		Near: near,
-		Far:  far,
+func NewOrtho(near, far float32, zoom float32) OrthoComponent {
+	return OrthoComponent{
+		Near: min(near, far),
+		Far:  max(near, far),
 		Zoom: zoom,
 	}
 }
 
+func (c OrthoComponent) GetMatrix(w, h int32) mgl32.Mat4 {
+	fW, fH := float32(w), float32(h)
+
+	return mgl32.Ortho(
+		-fW/c.Zoom/2, fW/c.Zoom/2,
+		-fH/c.Zoom/2, fH/c.Zoom/2,
+		c.Near, c.Far,
+	)
+}
+
 //
+
+type OrthoResolutionComponent struct {
+	W, H int32
+}
+
+func NewOrthoResolution(w, h int32) OrthoResolutionComponent { return OrthoResolutionComponent{w, h} }
+func GetViewportOrthoResolution(x, y, w, h int32) OrthoResolutionComponent {
+	return OrthoResolutionComponent{w - x, h - y}
+}
+func (c *OrthoResolutionComponent) Elem() (w, h int32) { return c.W, c.H }
 
 //
 

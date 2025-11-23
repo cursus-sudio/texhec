@@ -31,12 +31,12 @@ func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.MenuBuilder) gamescenes.MenuBuilder {
 		b.OnLoad(func(world scenes.SceneCtx) {
 			cameraEntity := world.NewEntity()
-			ecs.SaveComponent(world, cameraEntity, camera.NewDynamicOrtho(-1000, +1000, 1))
+			ecs.SaveComponent(world, cameraEntity, camera.NewOrtho(-1000, +1000, 1))
 
 			signature := world.NewEntity()
 			ecs.SaveComponent(world, signature, transform.NewPos(5, 5, 0))
 			ecs.SaveComponent(world, signature, transform.NewSize(100, 50, 1))
-			ecs.SaveComponent(world, signature, transform.NewPivotPoint(1, .5, .5))
+			ecs.SaveComponent(world, signature, transform.NewPivotPoint(0, .5, .5))
 			ecs.SaveComponent(world, signature, transform.NewParent(cameraEntity, transform.RelativePos))
 			ecs.SaveComponent(world, signature, transform.NewParentPivotPoint(0, 0, .5))
 

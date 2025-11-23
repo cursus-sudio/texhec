@@ -38,11 +38,11 @@ func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.GameBuilder) gamescenes.GameBuilder {
 		b.OnLoad(func(world scenes.SceneCtx) {
 			uiCamera := world.NewEntity()
-			ecs.SaveComponent(world, uiCamera, camera.NewDynamicOrtho(-1000, +1000, 1))
+			ecs.SaveComponent(world, uiCamera, camera.NewOrtho(-1000, +1000, 1))
 			ecs.SaveComponent(world, uiCamera, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
 			gameCamera := world.NewEntity()
-			ecs.SaveComponent(world, gameCamera, camera.NewDynamicOrtho(-1000, +1000, 1))
+			ecs.SaveComponent(world, gameCamera, camera.NewOrtho(-1000, +1000, 1))
 			ecs.SaveComponent(world, gameCamera, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 			ecs.SaveComponent(world, gameCamera, camera.NewNormalizedViewportComponent(0, 0, .9, 1))
 			ecs.SaveComponent(world, gameCamera, camera.NewMobileCamera())
@@ -54,7 +54,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			signature := world.NewEntity()
 			ecs.SaveComponent(world, signature, transform.NewPos(5, 5, 0))
 			ecs.SaveComponent(world, signature, transform.NewSize(100, 50, 1))
-			ecs.SaveComponent(world, signature, transform.NewPivotPoint(1, .5, .5))
+			ecs.SaveComponent(world, signature, transform.NewPivotPoint(0, .5, .5))
 			ecs.SaveComponent(world, signature, transform.NewParent(uiCamera, transform.RelativePos))
 			ecs.SaveComponent(world, signature, transform.NewParentPivotPoint(0, 0, .5))
 			ecs.SaveComponent(world, signature, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())

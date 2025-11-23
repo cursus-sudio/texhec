@@ -18,10 +18,10 @@ type scrollSystem struct {
 	cameraCtors camera.CameraTool
 	logger      logger.Logger
 
-	world             ecs.World
-	transformTool     transform.TransformTool
-	dynamicOrthoArray ecs.ComponentsArray[camera.DynamicOrthoComponent]
-	query             ecs.LiveQuery
+	world         ecs.World
+	transformTool transform.TransformTool
+	orthoArray    ecs.ComponentsArray[camera.OrthoComponent]
+	query         ecs.LiveQuery
 
 	minZoom, maxZoom float32
 }
@@ -39,9 +39,9 @@ func NewScrollSystem(
 			cameraCtors: cameraCtors.Build(w),
 			logger:      logger,
 
-			world:             w,
-			dynamicOrthoArray: ecs.GetComponentsArray[camera.DynamicOrthoComponent](w),
-			transformTool:     transformTool.Build(w),
+			world:         w,
+			orthoArray:    ecs.GetComponentsArray[camera.OrthoComponent](w),
+			transformTool: transformTool.Build(w),
 			query: w.Query().Require(
 				ecs.GetComponentType(camera.MobileCameraComponent{}),
 			).Build(),
@@ -66,7 +66,7 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) error {
 	transformTransaction := s.transformTool.Transaction()
 
 	for _, cameraEntity := range s.query.Entities() {
-		ortho, err := s.dynamicOrthoArray.GetComponent(cameraEntity)
+		ortho, err := s.orthoArray.GetComponent(cameraEntity)
 		if err != nil {
 			continue
 		}
@@ -94,7 +94,7 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) error {
 		ortho.Zoom *= mul
 		ortho.Zoom = max(min(ortho.Zoom, s.maxZoom), s.minZoom)
 
-		if err := s.dynamicOrthoArray.SaveComponent(cameraEntity, ortho); err != nil {
+		if err := s.orthoArray.SaveComponent(cameraEntity, ortho); err != nil {
 			return err
 		}
 

@@ -66,6 +66,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			logger := ioc.Get[logger.Logger](c)
 			transformTransaction := ioc.Get[ecs.ToolFactory[transform.TransformTool]](c).Build(world).Transaction()
 			orthoArray := ecs.GetComponentsArray[camera.OrthoComponent](world)
+			orthoResolutionArray := ecs.GetComponentsArray[camera.OrthoResolutionComponent](world)
 			viewport := viewport(world)
 			return func(entity ecs.EntityID) (camera.CameraService, error) {
 				viewport := viewport(entity)
@@ -95,11 +96,11 @@ func (pkg pkg) Register(b ioc.Builder) {
 				}
 				getProjectionMatrix := func() mgl32.Mat4 {
 					p := getProjection()
-					return mgl32.Ortho(
-						-p.Width/2, p.Width/2,
-						-p.Height/2, p.Height/2,
-						p.Near, p.Far,
-					)
+					orthoResolution, err := orthoResolutionArray.GetComponent(entity)
+					if err != nil {
+						orthoResolution = camera.GetViewportOrthoResolution(viewport())
+					}
+					return p.GetMatrix(orthoResolution.Elem())
 				}
 
 				cameraGroups, err := ecs.GetComponent[groups.GroupsComponent](world, entity)
@@ -207,35 +208,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 		return ecs.NewSystemRegister(func(w ecs.World) error {
 			logger := ioc.Get[logger.Logger](c)
 			ecs.RegisterSystems(w,
-				projectionsys.NewUpdateProjectionsSystem(
-					ioc.Get[window.Api](c),
-					logger,
-					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
-				),
-				mobilecamerasys.NewScrollSystem(
-					logger,
-					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
-					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
-					ioc.Get[window.Api](c),
-					pkg.minZoom, pkg.maxZoom, // min and max zoom
-				),
-				mobilecamerasys.NewDragSystem(
-					sdl.BUTTON_LEFT,
-					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
-					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
-					ioc.Get[window.Api](c),
-					logger,
-				),
-				mobilecamerasys.NewWasdSystem(
-					logger,
-					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
-					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
-					1.0, // speed
-				),
-				cameralimitsys.NewOrthoSys(
-					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
-					logger,
-				),
 				ecs.NewSystemRegister(func(w ecs.World) error {
 					cameraArray := ecs.GetComponentsArray[camera.CameraComponent](w)
 
@@ -264,6 +236,38 @@ func (pkg pkg) Register(b ioc.Builder) {
 					})
 					return nil
 				}),
+				// todo change this to change ortho and size according to viewport
+				projectionsys.NewUpdateProjectionsSystem(
+					ioc.Get[window.Api](c),
+					logger,
+					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
+					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
+				),
+				mobilecamerasys.NewScrollSystem(
+					logger,
+					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
+					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
+					ioc.Get[window.Api](c),
+					pkg.minZoom, pkg.maxZoom, // min and max zoom
+				),
+				mobilecamerasys.NewDragSystem(
+					sdl.BUTTON_LEFT,
+					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
+					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
+					ioc.Get[window.Api](c),
+					logger,
+				),
+				mobilecamerasys.NewWasdSystem(
+					logger,
+					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
+					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
+					1.0, // speed
+				),
+				cameralimitsys.NewOrthoSys(
+					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
+					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
+					logger,
+				),
 			)
 			return nil
 		})

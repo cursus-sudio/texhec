@@ -9,9 +9,13 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-type CameraService interface {
-	Mat4() mgl32.Mat4
+type ViewportService interface {
 	Viewport() (x, y, w, h int32)
+}
+
+type CameraService interface {
+	ViewportService
+	Mat4() mgl32.Mat4
 	ShootRay(mousePos window.MousePos) collider.Ray
 }
 

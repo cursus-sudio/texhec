@@ -210,6 +210,7 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 			mvp := camera.Mat4().Mul4(entityMvp)
 			gl.UniformMatrix4fv(s.locations.Mvp, 1, false, &mvp[0])
 			gl.Uniform4fv(s.locations.Color, 1, &entityColor.Color[0])
+			gl.Viewport(camera.Viewport())
 
 			gl.DrawArrays(gl.POINTS, 0, layout.verticesCount)
 		}

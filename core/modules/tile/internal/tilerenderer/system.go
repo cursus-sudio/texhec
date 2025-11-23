@@ -101,6 +101,7 @@ func (s *system) Listen(render.RenderEvent) {
 		cameraMatrix := camera.Mat4()
 		gl.UniformMatrix4fv(s.locations.Camera, 1, false, &cameraMatrix[0])
 
+		gl.Viewport(camera.Viewport())
 		gl.DrawArrays(gl.POINTS, 0, s.verticesCount)
 	}
 }

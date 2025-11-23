@@ -3,6 +3,7 @@ package camera
 import (
 	"errors"
 	"frontend/modules/collider"
+	"frontend/services/media/window"
 	"shared/services/ecs"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -10,7 +11,8 @@ import (
 
 type CameraService interface {
 	Mat4() mgl32.Mat4
-	ShootRay(mousePos mgl32.Vec2) collider.Ray
+	Viewport() (x, y, w, h int32)
+	ShootRay(mousePos window.MousePos) collider.Ray
 }
 
 //

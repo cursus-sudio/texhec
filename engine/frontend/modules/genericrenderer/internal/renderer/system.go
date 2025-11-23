@@ -280,6 +280,7 @@ func (m *system) Listen(render.RenderEvent) error {
 			gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, meshAsset.EBO().ID())
 
 			mvp := camera.Mat4().Mul4(model)
+			gl.Viewport(camera.Viewport())
 			gl.UniformMatrix4fv(m.locations.Mvp, 1, false, &mvp[0])
 			gl.Uniform4fv(m.locations.Color, 1, &colorComponent.Color[0])
 

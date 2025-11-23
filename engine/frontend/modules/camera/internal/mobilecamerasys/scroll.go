@@ -61,7 +61,7 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) error {
 
 	var mul = float32(math.Pow(10, float64(event.Y)/50))
 
-	mousePos := s.window.NormalizeMousePos(s.window.GetMousePos())
+	mousePos := s.window.GetMousePos()
 
 	transformTransaction := s.transformTool.Transaction()
 

@@ -7,7 +7,6 @@ import (
 	"shared/services/ecs"
 	"shared/services/logger"
 
-	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/events"
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -38,7 +37,7 @@ type clickSystem struct {
 	emitDrag     bool
 	movingCamera ecs.EntityID
 	movedEntity  *ecs.EntityID
-	movedFrom    *mgl32.Vec2
+	movedFrom    *window.MousePos
 }
 
 func NewClickSystem(logger logger.Logger, window window.Api) ecs.SystemRegister {
@@ -75,7 +74,7 @@ func (s *clickSystem) ListenMove(event sdl.MouseMotionEvent) {
 	}
 
 	from := *s.movedFrom
-	to := s.window.NormalizeMousePos(int(event.X), int(event.Y))
+	to := window.NewMousePos(event.X, event.Y)
 	dragEvent := inputs.DragEvent{
 		Camera: s.movingCamera,
 		From:   from,
@@ -115,7 +114,7 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
 		e := entities[0]
 		entity = &e
 	}
-	pos := s.window.NormalizeMousePos(int(event.X), int(event.Y))
+	pos := window.NewMousePos(event.X, event.Y)
 
 	switch event.State {
 	case sdl.PRESSED:

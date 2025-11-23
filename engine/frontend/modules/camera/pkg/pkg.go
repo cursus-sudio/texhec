@@ -42,11 +42,33 @@ func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) camera.CameraForward { return camera.CameraForward(mgl32.Vec3{0, 0, -1}) })
 
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s cameratool.CameraResolverFactory) cameratool.CameraResolverFactory {
+		viewport := func(w ecs.World) func(entity ecs.EntityID) func() (x, y, w, h int32) {
+			window := ioc.Get[window.Api](c)
+			viewportArray := ecs.GetComponentsArray[camera.ViewportComponent](w)
+			normalizedViewportArray := ecs.GetComponentsArray[camera.NormalizedViewportComponent](w)
+			return func(entity ecs.EntityID) func() (x int32, y int32, w int32, h int32) {
+				return func() (rx int32, ry int32, rw int32, rh int32) { // r from result
+					viewportComponent, err := viewportArray.GetComponent(entity)
+					if err == nil {
+						return viewportComponent.Viewport()
+					}
+					normalizedViewportComponent, err := normalizedViewportArray.GetComponent(entity)
+					if err == nil {
+						return normalizedViewportComponent.Viewport(window.Window().GetSize())
+					}
+
+					w, h := window.Window().GetSize()
+					return 0, 0, w, h
+				}
+			}
+		}
 		s.Register(ecs.GetComponentType(camera.OrthoComponent{}), func(world ecs.World) func(entity ecs.EntityID) (camera.CameraService, error) {
 			logger := ioc.Get[logger.Logger](c)
 			transformTransaction := ioc.Get[ecs.ToolFactory[transform.TransformTool]](c).Build(world).Transaction()
 			orthoArray := ecs.GetComponentsArray[camera.OrthoComponent](world)
+			viewport := viewport(world)
 			return func(entity ecs.EntityID) (camera.CameraService, error) {
+				viewport := viewport(entity)
 				transform := transformTransaction.GetEntity(entity)
 				getCameraTransformMatrix := func() mgl32.Mat4 {
 					pos, err := transform.AbsolutePos().Get()
@@ -90,11 +112,13 @@ func (pkg pkg) Register(b ioc.Builder) {
 						cameraTransformMatrix := getCameraTransformMatrix()
 						return projMatrix.Mul4(cameraTransformMatrix)
 					},
-					func(mousePos mgl32.Vec2) collider.Ray {
+					viewport,
+					func(mousePos window.MousePos) collider.Ray {
 						return mobilecamerasys.ShootRay(
 							getProjectionMatrix(),
 							getCameraTransformMatrix(),
 							mousePos,
+							viewport,
 							nil,
 						)
 					},
@@ -110,8 +134,9 @@ func (pkg pkg) Register(b ioc.Builder) {
 			logger := ioc.Get[logger.Logger](c)
 			transformTransaction := ioc.Get[ecs.ToolFactory[transform.TransformTool]](c).Build(world).Transaction()
 			perspectiveArray := ecs.GetComponentsArray[camera.Perspective](world)
-
+			viewport := viewport(world)
 			return func(entity ecs.EntityID) (camera.CameraService, error) {
+				viewport := viewport(entity)
 				transform := transformTransaction.GetEntity(entity)
 				getCameraTransformMatrix := func() mgl32.Mat4 {
 					pos, err := transform.AbsolutePos().Get()
@@ -154,7 +179,8 @@ func (pkg pkg) Register(b ioc.Builder) {
 						cameraTransformMatrix := getCameraTransformMatrix()
 						return projMatrix.Mul4(cameraTransformMatrix)
 					},
-					func(mousePos mgl32.Vec2) collider.Ray {
+					viewport,
+					func(mousePos window.MousePos) collider.Ray {
 						pos, err := transform.AbsolutePos().Get()
 						if err != nil {
 							logger.Warn(err)
@@ -164,6 +190,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 							getProjectionMatrix(),
 							getCameraTransformMatrix(),
 							mousePos,
+							viewport,
 							&pos.Pos,
 						)
 					},

@@ -38,7 +38,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.GameBuilder) gamescenes.GameBuilder {
 		b.OnLoad(func(world scenes.SceneCtx) {
 			uiCamera := world.NewEntity()
-			ecs.SaveComponent(world, uiCamera, camera.NewOrtho(-1000, +1000, 1))
+			ecs.SaveComponent(world, uiCamera, camera.NewOrtho(-100, +1000, 1))
 			ecs.SaveComponent(world, uiCamera, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
 			gameCamera := world.NewEntity()
@@ -116,6 +116,11 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			{
 				unit := world.NewEntity()
 				tilesPosTransaction.SaveAnyComponent(unit, tile.NewPos(0, 0, tile.UnitLayer))
+				tilesTypeTransaction.SaveComponent(unit, definition.NewLink(definition.TileU1))
+			}
+			{
+				unit := world.NewEntity()
+				tilesPosTransaction.SaveAnyComponent(unit, tile.NewPos(1, 1, tile.UnitLayer))
 				tilesTypeTransaction.SaveComponent(unit, definition.NewLink(definition.TileU1))
 			}
 			err := ecs.FlushMany(tilesTypeTransaction, tilesPosTransaction)

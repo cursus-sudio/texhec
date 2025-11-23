@@ -44,7 +44,6 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			gameCamera := world.NewEntity()
 			ecs.SaveComponent(world, gameCamera, camera.NewOrtho(-1000, +1000, 1))
 			ecs.SaveComponent(world, gameCamera, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
-			ecs.SaveComponent(world, gameCamera, camera.NewNormalizedViewportComponent(0, 0, .9, 1))
 			ecs.SaveComponent(world, gameCamera, camera.NewMobileCamera())
 			ecs.SaveComponent(world, gameCamera, camera.NewCameraLimits(
 				mgl32.Vec3{0, 0, -1000},                // min

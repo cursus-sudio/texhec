@@ -51,7 +51,6 @@ type ComponentsArray[Component any] interface {
 	// can return:
 	// - ErrComponentDoNotExists
 	// - ErrEntityDoNotExists
-	GetEntityComponent(entity EntityID, transaction ComponentsArrayTransaction[Component]) EntityComponent[Component]
 	GetComponent(entity EntityID) (Component, error)
 	GetAnyComponent(entity EntityID) (any, error)
 	GetEntities() []EntityID
@@ -188,18 +187,6 @@ func NewEntityComponent[Component any](
 func (e entityComponent[Component]) Get() (Component, error) { return e.get() }
 func (e entityComponent[Component]) Set(c Component)         { e.set(c) }
 func (e entityComponent[Component]) Remove()                 { e.del() }
-
-func (c *componentsArray[Component]) GetEntityComponent(
-	entity EntityID,
-	transaction ComponentsArrayTransaction[Component],
-) EntityComponent[Component] {
-	return newEntityComponent(
-		entity,
-		c.GetComponent,
-		transaction.SaveComponent,
-		transaction.RemoveComponent,
-	)
-}
 
 func (c *componentsArray[Component]) GetComponent(entity EntityID) (Component, error) {
 	var zero Component

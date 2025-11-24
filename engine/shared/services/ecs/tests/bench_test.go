@@ -31,7 +31,7 @@ func BenchmarkSaveComponentInWorld(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		ecs.SaveComponent(world.Components(), entity, Component{})
+		ecs.SaveComponent(world, entity, Component{})
 	}
 }
 
@@ -44,7 +44,7 @@ func BenchmarkGetComponentInWorld(b *testing.B) {
 	}
 
 	entities := make([]ecs.EntityID, b.N)
-	arr := ecs.GetComponentsArray[Component](world.Components())
+	arr := ecs.GetComponentsArray[Component](world)
 	transaction := arr.Transaction()
 	for i := 0; i < b.N; i++ {
 		entity := world.NewEntity()
@@ -55,7 +55,7 @@ func BenchmarkGetComponentInWorld(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		ecs.GetComponent[Component](world.Components(), entities[i])
+		ecs.GetComponent[Component](world, entities[i])
 	}
 }
 
@@ -71,7 +71,7 @@ func BenchmarkGetComponentInArray(b *testing.B) {
 
 	entitiesCount := min(b.N, 10000)
 	entities := make([]ecs.EntityID, entitiesCount)
-	arr := ecs.GetComponentsArray[Component](world.Components())
+	arr := ecs.GetComponentsArray[Component](world)
 	transaction := arr.Transaction()
 	for i := 0; i < entitiesCount; i++ {
 		entity := world.NewEntity()

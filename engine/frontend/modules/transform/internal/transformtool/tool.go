@@ -1,6 +1,7 @@
 package transformtool
 
 import (
+	"frontend/modules/relation"
 	"frontend/modules/transform"
 	"shared/services/ecs"
 	"shared/services/logger"
@@ -9,7 +10,8 @@ import (
 type transformTool struct {
 	logger logger.Logger
 
-	world ecs.World
+	world      ecs.World
+	parentTool relation.ParentTool[transform.ParentComponent]
 
 	defaultPos         transform.PosComponent
 	defaultRot         transform.RotationComponent
@@ -27,6 +29,7 @@ type transformTool struct {
 
 func NewTransformTool(
 	logger logger.Logger,
+	parentToolFactory ecs.ToolFactory[relation.ParentTool[transform.ParentComponent]],
 	defaultPos transform.PosComponent,
 	defaultRot transform.RotationComponent,
 	defaultSize transform.SizeComponent,
@@ -37,17 +40,22 @@ func NewTransformTool(
 		return transformTool{
 			logger,
 			w,
+			parentToolFactory.Build(w),
 			defaultPos,
 			defaultRot,
 			defaultSize,
 			defaultPivot,
 			defaultParentPivot,
-			ecs.GetComponentsArray[transform.PosComponent](w.Components()),
-			ecs.GetComponentsArray[transform.RotationComponent](w.Components()),
-			ecs.GetComponentsArray[transform.SizeComponent](w.Components()),
-			ecs.GetComponentsArray[transform.PivotPointComponent](w.Components()),
-			ecs.GetComponentsArray[transform.ParentComponent](w.Components()),
-			ecs.GetComponentsArray[transform.ParentPivotPointComponent](w.Components()),
+			ecs.GetComponentsArray[transform.PosComponent](w),
+			ecs.GetComponentsArray[transform.RotationComponent](w),
+			ecs.GetComponentsArray[transform.SizeComponent](w),
+			ecs.GetComponentsArray[transform.PivotPointComponent](w),
+			ecs.GetComponentsArray[transform.ParentComponent](w),
+			ecs.GetComponentsArray[transform.ParentPivotPointComponent](w),
+			// ecs.GetComponentsArray[AbsolutePos](w),
+			// ecs.GetComponentsArray[AbsoluteRot](w),
+			// ecs.GetComponentsArray[AbsoluteSize](w),
+			// ecs.GetComponentsArray[FlatChildren](w),
 		}
 	})
 }
@@ -64,5 +72,9 @@ func (tool transformTool) Query(b ecs.LiveQueryBuilder) ecs.LiveQueryBuilder {
 		ecs.GetComponentType(transform.PivotPointComponent{}),
 		ecs.GetComponentType(transform.ParentComponent{}),
 		ecs.GetComponentType(transform.ParentPivotPointComponent{}),
+		// ecs.GetComponentType(AbsolutePos{}),
+		// ecs.GetComponentType(AbsoluteRot{}),
+		// ecs.GetComponentType(AbsoluteSize{}),
+		// ecs.GetComponentType(FlatChildren{}),
 	)
 }

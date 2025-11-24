@@ -44,14 +44,14 @@ func (pkg) Register(b ioc.Builder) {
 
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b animation.AnimationSystemBuilder) animation.AnimationSystemBuilder {
 		animation.AddTransitionFunction(b, func(w ecs.World) animation.TransitionFunction[render.ColorComponent] {
-			componentArray := ecs.GetComponentsArray[render.ColorComponent](w.Components())
+			componentArray := ecs.GetComponentsArray[render.ColorComponent](w)
 			return func(arg animation.TransitionFunctionArgument[render.ColorComponent]) error {
 				comp := arg.From.Blend(arg.To, float32(arg.State))
 				return componentArray.SaveComponent(arg.Entity, comp)
 			}
 		})
 		animation.AddTransitionFunction(b, func(w ecs.World) animation.TransitionFunction[render.TextureFrameComponent] {
-			componentArray := ecs.GetComponentsArray[render.TextureFrameComponent](w.Components())
+			componentArray := ecs.GetComponentsArray[render.TextureFrameComponent](w)
 			return func(arg animation.TransitionFunctionArgument[render.TextureFrameComponent]) error {
 				comp := arg.From.Blend(arg.To, float64(arg.State))
 				return componentArray.SaveComponent(arg.Entity, comp)

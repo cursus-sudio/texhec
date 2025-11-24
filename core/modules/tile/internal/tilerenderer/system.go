@@ -9,6 +9,7 @@ import (
 	"frontend/services/graphics/texturearray"
 	"frontend/services/graphics/vao"
 	"frontend/services/graphics/vao/vbo"
+	"frontend/services/media/window"
 	"image"
 	"shared/services/datastructures"
 	"shared/services/ecs"
@@ -34,6 +35,7 @@ type TileType struct {
 type system struct {
 	program   program.Program
 	locations locations
+	window    window.Api
 
 	logger logger.Logger
 
@@ -63,6 +65,9 @@ type locations struct {
 }
 
 func (s *system) Listen(render.RenderEvent) {
+	w, h := s.window.Window().GetSize()
+	// gl.Viewport(0, 0, w-100, h-100)
+	defer func() { gl.Viewport(0, 0, w, h) }()
 	if s.changed {
 		s.changeMutex.Lock()
 		s.vertices.SetVertices(s.tiles.GetValues())
@@ -96,6 +101,7 @@ func (s *system) Listen(render.RenderEvent) {
 		cameraMatrix := camera.Mat4()
 		gl.UniformMatrix4fv(s.locations.Camera, 1, false, &cameraMatrix[0])
 
+		gl.Viewport(camera.Viewport())
 		gl.DrawArrays(gl.POINTS, 0, s.verticesCount)
 	}
 }

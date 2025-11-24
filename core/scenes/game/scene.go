@@ -4,6 +4,7 @@ import (
 	gameassets "core/assets"
 	"core/modules/definition"
 	"core/modules/tile"
+	"core/modules/ui"
 	gamescenes "core/scenes"
 	"frontend/modules/camera"
 	"frontend/modules/collider"
@@ -38,55 +39,56 @@ func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.GameBuilder) gamescenes.GameBuilder {
 		b.OnLoad(func(world scenes.SceneCtx) {
 			uiCamera := world.NewEntity()
-			ecs.SaveComponent(world.Components(), uiCamera, camera.NewDynamicOrtho(-1000, +1000, 1))
-			ecs.SaveComponent(world.Components(), uiCamera, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
+			ecs.SaveComponent(world, uiCamera, camera.NewOrtho(-100, +1000, 1))
+			ecs.SaveComponent(world, uiCamera, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
+			ecs.SaveComponent(world, uiCamera, ui.UiCameraComponent{})
 
 			gameCamera := world.NewEntity()
-			ecs.SaveComponent(world.Components(), gameCamera, camera.NewDynamicOrtho(-1000, +1000, 1))
-			ecs.SaveComponent(world.Components(), gameCamera, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
-			ecs.SaveComponent(world.Components(), gameCamera, camera.NewMobileCamera())
-			ecs.SaveComponent(world.Components(), gameCamera, camera.NewCameraLimits(
+			ecs.SaveComponent(world, gameCamera, camera.NewOrtho(-1000, +1000, 1))
+			ecs.SaveComponent(world, gameCamera, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
+			ecs.SaveComponent(world, gameCamera, camera.NewMobileCamera())
+			ecs.SaveComponent(world, gameCamera, camera.NewCameraLimits(
 				mgl32.Vec3{0, 0, -1000},                // min
 				mgl32.Vec3{100 * 100, 100 * 100, 1000}, // max
 			))
 
 			signature := world.NewEntity()
-			ecs.SaveComponent(world.Components(), signature, transform.NewPos(5, 5, 0))
-			ecs.SaveComponent(world.Components(), signature, transform.NewSize(100, 50, 1))
-			ecs.SaveComponent(world.Components(), signature, transform.NewPivotPoint(1, .5, .5))
-			ecs.SaveComponent(world.Components(), signature, transform.NewParent(uiCamera, transform.RelativePos))
-			ecs.SaveComponent(world.Components(), signature, transform.NewParentPivotPoint(0, 0, .5))
-			ecs.SaveComponent(world.Components(), signature, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
+			ecs.SaveComponent(world, signature, transform.NewPos(5, 5, 0))
+			ecs.SaveComponent(world, signature, transform.NewSize(100, 50, 1))
+			ecs.SaveComponent(world, signature, transform.NewPivotPoint(0, .5, .5))
+			ecs.SaveComponent(world, signature, transform.NewParent(uiCamera, transform.RelativePos))
+			ecs.SaveComponent(world, signature, transform.NewParentPivotPoint(0, 0, .5))
+			ecs.SaveComponent(world, signature, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
-			ecs.SaveComponent(world.Components(), signature, text.TextComponent{Text: "game"})
-			ecs.SaveComponent(world.Components(), signature, text.FontSizeComponent{FontSize: 32})
-			ecs.SaveComponent(world.Components(), signature, text.BreakComponent{Break: text.BreakNone})
+			ecs.SaveComponent(world, signature, text.TextComponent{Text: "game"})
+			ecs.SaveComponent(world, signature, text.FontSizeComponent{FontSize: 32})
+			ecs.SaveComponent(world, signature, text.BreakComponent{Break: text.BreakNone})
 
 			quit := world.NewEntity()
-			ecs.SaveComponent(world.Components(), quit, transform.NewPos(-10, -10, 0))
-			ecs.SaveComponent(world.Components(), quit, transform.NewSize(50, 50, 1))
-			ecs.SaveComponent(world.Components(), quit, transform.NewPivotPoint(0, 0, .5))
-			ecs.SaveComponent(world.Components(), quit, transform.NewParent(uiCamera, transform.RelativePos))
-			ecs.SaveComponent(world.Components(), quit, transform.NewParentPivotPoint(1, 1, .5))
-			ecs.SaveComponent(world.Components(), quit, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
+			ecs.SaveComponent(world, quit, transform.NewPos(-10, -10, 0))
+			ecs.SaveComponent(world, quit, transform.NewSize(50, 50, 1))
+			ecs.SaveComponent(world, quit, transform.NewPivotPoint(1, 1, .5))
+			ecs.SaveComponent(world, quit, transform.NewParent(uiCamera, transform.RelativePos))
+			ecs.SaveComponent(world, quit, transform.NewParentPivotPoint(1, 1, .5))
+			ecs.SaveComponent(world, quit, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
-			ecs.SaveComponent(world.Components(), quit, render.NewMesh(gameassets.SquareMesh))
-			ecs.SaveComponent(world.Components(), quit, render.NewTexture(gameassets.WaterTileTextureID))
-			ecs.SaveComponent(world.Components(), quit, genericrenderer.PipelineComponent{})
+			ecs.SaveComponent(world, quit, render.NewMesh(gameassets.SquareMesh))
+			ecs.SaveComponent(world, quit, render.NewTexture(gameassets.WaterTileTextureID))
+			ecs.SaveComponent(world, quit, genericrenderer.PipelineComponent{})
 
-			ecs.SaveComponent(world.Components(), quit, inputs.NewMouseLeftClick(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
-			ecs.SaveComponent(world.Components(), quit, inputs.KeepSelectedComponent{})
-			ecs.SaveComponent(world.Components(), quit, collider.NewCollider(gameassets.SquareColliderID))
+			ecs.SaveComponent(world, quit, inputs.NewMouseLeftClick(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
+			ecs.SaveComponent(world, quit, inputs.KeepSelectedComponent{})
+			ecs.SaveComponent(world, quit, collider.NewCollider(gameassets.SquareColliderID))
 
-			ecs.SaveComponent(world.Components(), quit, text.TextComponent{Text: "X"})
-			ecs.SaveComponent(world.Components(), quit, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
-			ecs.SaveComponent(world.Components(), quit, text.FontSizeComponent{FontSize: 32})
+			ecs.SaveComponent(world, quit, text.TextComponent{Text: "X"})
+			ecs.SaveComponent(world, quit, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+			ecs.SaveComponent(world, quit, text.FontSizeComponent{FontSize: 32})
 
 			rand := rand.New(rand.NewPCG(2077, 7137))
 
-			// tilesTypeArray := ecs.GetComponentsArray[TileTextureComponent](world.Components())
-			tilesTypeArray := ecs.GetComponentsArray[definition.DefinitionLinkComponent](world.Components())
-			tilesPosArray := ecs.GetComponentsArray[tile.PosComponent](world.Components())
+			// tilesTypeArray := ecs.GetComponentsArray[TileTextureComponent](world)
+			tilesTypeArray := ecs.GetComponentsArray[definition.DefinitionLinkComponent](world)
+			tilesPosArray := ecs.GetComponentsArray[tile.PosComponent](world)
 			tilesTypeTransaction := tilesTypeArray.Transaction()
 			tilesPosTransaction := tilesPosArray.Transaction()
 			rows := 100
@@ -116,6 +118,11 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			{
 				unit := world.NewEntity()
 				tilesPosTransaction.SaveAnyComponent(unit, tile.NewPos(0, 0, tile.UnitLayer))
+				tilesTypeTransaction.SaveComponent(unit, definition.NewLink(definition.TileU1))
+			}
+			{
+				unit := world.NewEntity()
+				tilesPosTransaction.SaveAnyComponent(unit, tile.NewPos(1, 1, tile.UnitLayer))
 				tilesTypeTransaction.SaveComponent(unit, definition.NewLink(definition.TileU1))
 			}
 			err := ecs.FlushMany(tilesTypeTransaction, tilesPosTransaction)

@@ -7,6 +7,7 @@ import (
 	"frontend/services/assets"
 	"frontend/services/graphics/texturearray"
 	"frontend/services/graphics/vao/vbo"
+	"frontend/services/media/window"
 	"shared/services/ecs"
 	"shared/services/logger"
 	"unsafe"
@@ -37,6 +38,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 		return NewTileRenderSystemRegister(
 			ioc.Get[texturearray.Factory](c),
 			ioc.Get[logger.Logger](c),
+			ioc.Get[window.Api](c),
 			ioc.Get[vbo.VBOFactory[TileData]](c),
 			ioc.Get[assets.AssetsStorage](c),
 			pkg.tileSize,

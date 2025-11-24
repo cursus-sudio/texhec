@@ -32,8 +32,8 @@ func newCollisionDetectionService(
 	return &collisionDetectionService{
 		world,
 		transformTransaction,
-		ecs.GetComponentsArray[groups.GroupsComponent](world.Components()),
-		ecs.GetComponentsArray[collider.ColliderComponent](world.Components()),
+		ecs.GetComponentsArray[groups.GroupsComponent](world),
+		ecs.GetComponentsArray[collider.ColliderComponent](world),
 		assets,
 		worldCollider,
 		logger,

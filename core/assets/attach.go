@@ -156,11 +156,6 @@ func (pkg) Register(b ioc.Builder) {
 					transform.NewSize(1, 1, 1),
 					EaseOutElastic,
 				),
-				animation.NewTransition(
-					transform.NewPos(-100, 0, 0),
-					transform.NewPos(0, 0, 0),
-					EaseOutElastic,
-				),
 			},
 		))
 		return b

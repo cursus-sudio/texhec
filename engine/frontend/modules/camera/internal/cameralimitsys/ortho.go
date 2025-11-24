@@ -15,25 +15,31 @@ type orthoSys struct {
 	limitsArray   ecs.ComponentsArray[camera.CameraLimitsComponent]
 	orthoArray    ecs.ComponentsArray[camera.OrthoComponent]
 	transformTool transform.TransformTool
+	cameraTool    camera.CameraTool
 
 	logger logger.Logger
 }
 
 func NewOrthoSys(
 	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+	cameraToolFactory ecs.ToolFactory[camera.CameraTool],
 	logger logger.Logger,
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		transformTool := transformToolFactory.Build(w)
+		cameraTool := cameraToolFactory.Build(w)
 		s := &orthoSys{
 			world: w,
 			query: transformTool.Query(w.Query()).
 				Require(ecs.GetComponentType(camera.CameraLimitsComponent{})).
 				Require(ecs.GetComponentType(camera.OrthoComponent{})).
+				Track(ecs.GetComponentType(camera.ViewportComponent{})).
+				Track(ecs.GetComponentType(camera.NormalizedViewportComponent{})).
 				Build(),
-			limitsArray:   ecs.GetComponentsArray[camera.CameraLimitsComponent](w.Components()),
-			orthoArray:    ecs.GetComponentsArray[camera.OrthoComponent](w.Components()),
+			limitsArray:   ecs.GetComponentsArray[camera.CameraLimitsComponent](w),
+			orthoArray:    ecs.GetComponentsArray[camera.OrthoComponent](w),
 			transformTool: transformTool,
+			cameraTool:    cameraTool,
 			logger:        logger,
 		}
 		s.Addlisteners()
@@ -49,12 +55,18 @@ func (s *orthoSys) Addlisteners() {
 func (s *orthoSys) ChangeListener(ei []ecs.EntityID) {
 	transformTransaction := s.transformTool.Transaction()
 	for _, entity := range ei {
+		camera, err := s.cameraTool.Get(entity)
+		if err != nil {
+			s.logger.Warn(err)
+			continue
+		}
 		limits, err := s.limitsArray.GetComponent(entity)
 		if err != nil {
 			continue
 		}
-		orthoComponent, err := s.orthoArray.GetComponent(entity)
+		ortho, err := s.orthoArray.GetComponent(entity)
 		if err != nil {
+			s.logger.Warn(err)
 			continue
 		}
 
@@ -64,9 +76,9 @@ func (s *orthoSys) ChangeListener(ei []ecs.EntityID) {
 			s.logger.Warn(err)
 			continue
 		}
-
-		halfWidth := orthoComponent.Width / 2.0
-		halfHeight := orthoComponent.Height / 2.0
+		x, y, w, h := camera.Viewport()
+		var halfWidth float32 = float32(w-x) / 2 / ortho.Zoom
+		var halfHeight float32 = float32(h-y) / 2 / ortho.Zoom
 
 		minPos := mgl32.Vec3{
 			limits.Min.X() + halfWidth,

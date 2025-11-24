@@ -20,9 +20,9 @@ func NewHoverSystem() ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := &hoverSystem{
 			world:           w,
-			hoveredArray:    ecs.GetComponentsArray[inputs.HoveredComponent](w.Components()),
-			mouseEnterArray: ecs.GetComponentsArray[inputs.MouseEnterComponent](w.Components()),
-			mouseLeaveArray: ecs.GetComponentsArray[inputs.MouseLeaveComponent](w.Components()),
+			hoveredArray:    ecs.GetComponentsArray[inputs.HoveredComponent](w),
+			mouseEnterArray: ecs.GetComponentsArray[inputs.MouseEnterComponent](w),
+			mouseLeaveArray: ecs.GetComponentsArray[inputs.MouseLeaveComponent](w),
 			events:          w.Events(),
 			target:          nil,
 		}

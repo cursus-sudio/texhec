@@ -72,8 +72,8 @@ func NewSystem(
 			animations.Set(id, animation)
 		}
 
-		animationsArray := ecs.GetComponentsArray[animation.AnimationComponent](w.Components())
-		loopArray := ecs.GetComponentsArray[animation.LoopComponent](w.Components())
+		animationsArray := ecs.GetComponentsArray[animation.AnimationComponent](w)
+		loopArray := ecs.GetComponentsArray[animation.LoopComponent](w)
 		s := &system{
 			easingFunctions: b.easingFunctions,
 			animations:      animations,

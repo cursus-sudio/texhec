@@ -23,7 +23,7 @@ func NewHoverEventsSystem() ecs.SystemRegister {
 		).Build()
 		s := &hoverEventSystem{
 			world:           w,
-			hoverEventArray: ecs.GetComponentsArray[inputs.MouseHoverComponent](w.Components()),
+			hoverEventArray: ecs.GetComponentsArray[inputs.MouseHoverComponent](w),
 			events:          w.Events(),
 			query:           query,
 		}

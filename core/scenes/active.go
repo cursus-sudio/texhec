@@ -3,6 +3,7 @@ package gamescenes
 import (
 	"core/modules/fpslogger"
 	"core/modules/tile"
+	"core/modules/ui"
 	"fmt"
 	"frontend/modules/animation"
 	"frontend/modules/audio"
@@ -10,8 +11,8 @@ import (
 	"frontend/modules/collider"
 	"frontend/modules/drag"
 	"frontend/modules/genericrenderer"
-	"frontend/modules/indexing"
 	"frontend/modules/inputs"
+	"frontend/modules/relation"
 	"frontend/modules/render"
 	scenesys "frontend/modules/scenes"
 	"frontend/modules/text"
@@ -79,8 +80,8 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) CoreSystems {
 		return func(ctx scenes.SceneCtx) {
 			logger := ioc.Get[logger.Logger](c)
-			posFactory := ioc.Get[ecs.ToolFactory[indexing.SpatialIndexTool[tile.PosComponent]]](c)
-			colliderFactory := ioc.Get[ecs.ToolFactory[indexing.SpatialIndexTool[tile.ColliderPos]]](c)
+			posFactory := ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[tile.PosComponent]]](c)
+			colliderFactory := ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[tile.ColliderPos]]](c)
 
 			temporaryInlineSystems := ecs.NewSystemRegister(func(w ecs.World) error {
 				posFactory.Build(w)
@@ -111,7 +112,7 @@ func (pkg) Register(b ioc.Builder) {
 
 			// temporary system to say wich tile was pressed
 			events.Listen(ctx.EventsBuilder(), func(event tile.TileClickEvent) {
-				tileColliderArray := ecs.GetComponentsArray[tile.PosComponent](ctx.Components())
+				tileColliderArray := ecs.GetComponentsArray[tile.PosComponent](ctx)
 				tileCollider, _ := tileColliderArray.GetComponent(event.Tile)
 				logger.Info(fmt.Sprintf("collider: %v", tileCollider))
 			})
@@ -128,14 +129,15 @@ func (pkg) Register(b ioc.Builder) {
 				temporaryInlineSystems,
 
 				ioc.Get[tile.System](c),
+				ioc.Get[ui.System](c),
 
 				// audio
 				ioc.Get[audio.System](c),
 
 				// render
 				ioc.Get[render.System](c),
-				ioc.Get[genericrenderer.System](c),
 				ioc.Get[tile.SystemRenderer](c),
+				ioc.Get[genericrenderer.System](c),
 				ioc.Get[text.System](c),
 				ioc.Get[fpslogger.System](c),
 

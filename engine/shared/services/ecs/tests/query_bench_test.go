@@ -28,7 +28,7 @@ func BenchmarkQueryEntitiesWithComponents(b *testing.B) {
 	requiredEntitiesPresent := 10000
 	for i := 0; i < requiredEntitiesPresent; i++ {
 		entity := world.NewEntity()
-		ecs.SaveComponent(world.Components(), entity, Component{})
+		ecs.SaveComponent(world, entity, Component{})
 	}
 
 	b.ResetTimer()
@@ -49,9 +49,9 @@ func BenchmarkSaveWithLiveQuery(b *testing.B) {
 		ecs.GetComponentType(c1{}),
 	)
 	entity := world.NewEntity()
-	ecs.SaveComponent(world.Components(), entity, c1{})
+	ecs.SaveComponent(world, entity, c1{})
 
-	array := ecs.GetComponentsArray[Component](world.Components())
+	array := ecs.GetComponentsArray[Component](world)
 	array.SaveComponent(entity, Component{})
 
 	b.ResetTimer()
@@ -76,12 +76,12 @@ func BenchmarkSaveWith4LiveQueries(b *testing.B) {
 		ecs.GetComponentType(c4{}),
 	)
 	entity := world.NewEntity()
-	ecs.SaveComponent(world.Components(), entity, c1{})
-	ecs.SaveComponent(world.Components(), entity, c2{})
-	ecs.SaveComponent(world.Components(), entity, c3{})
-	ecs.SaveComponent(world.Components(), entity, c4{})
+	ecs.SaveComponent(world, entity, c1{})
+	ecs.SaveComponent(world, entity, c2{})
+	ecs.SaveComponent(world, entity, c3{})
+	ecs.SaveComponent(world, entity, c4{})
 
-	array := ecs.GetComponentsArray[Component](world.Components())
+	array := ecs.GetComponentsArray[Component](world)
 	array.SaveComponent(entity, Component{})
 
 	b.ResetTimer()
@@ -109,13 +109,13 @@ func add7LiveQueriesAndAddComponenets(world ecs.World, entity ecs.EntityID) {
 		ecs.GetComponentType(c6{}),
 		ecs.GetComponentType(c7{}),
 	)
-	ecs.SaveComponent(world.Components(), entity, c1{})
-	ecs.SaveComponent(world.Components(), entity, c2{})
-	ecs.SaveComponent(world.Components(), entity, c3{})
-	ecs.SaveComponent(world.Components(), entity, c4{})
-	ecs.SaveComponent(world.Components(), entity, c5{})
-	ecs.SaveComponent(world.Components(), entity, c6{})
-	ecs.SaveComponent(world.Components(), entity, c7{})
+	ecs.SaveComponent(world, entity, c1{})
+	ecs.SaveComponent(world, entity, c2{})
+	ecs.SaveComponent(world, entity, c3{})
+	ecs.SaveComponent(world, entity, c4{})
+	ecs.SaveComponent(world, entity, c5{})
+	ecs.SaveComponent(world, entity, c6{})
+	ecs.SaveComponent(world, entity, c7{})
 }
 
 func BenchmarkSaveWith7LiveQueries(b *testing.B) {
@@ -124,7 +124,7 @@ func BenchmarkSaveWith7LiveQueries(b *testing.B) {
 	entity := world.NewEntity()
 	add7LiveQueriesAndAddComponenets(world, entity)
 
-	array := ecs.GetComponentsArray[Component](world.Components())
+	array := ecs.GetComponentsArray[Component](world)
 	array.SaveComponent(entity, Component{})
 
 	b.ResetTimer()
@@ -139,7 +139,7 @@ func benchmarkNEntitiesSaveWith7LiveQueries(b *testing.B, entitiesCount int) {
 	entity := world.NewEntity()
 	add7LiveQueriesAndAddComponenets(world, entity)
 
-	array := ecs.GetComponentsArray[Component](world.Components())
+	array := ecs.GetComponentsArray[Component](world)
 	array.SaveComponent(entity, Component{})
 
 	b.ResetTimer()
@@ -155,7 +155,7 @@ func benchmarkNEntitiesSaveWith7LiveQueriesWithTransaction(b *testing.B, entitie
 	entity := world.NewEntity()
 	add7LiveQueriesAndAddComponenets(world, entity)
 
-	array := ecs.GetComponentsArray[Component](world.Components())
+	array := ecs.GetComponentsArray[Component](world)
 	array.SaveComponent(entity, Component{})
 	transaction := array.Transaction()
 

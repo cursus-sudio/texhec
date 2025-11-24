@@ -30,28 +30,28 @@ func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.SettingsBuilder) gamescenes.SettingsBuilder {
 		b.OnLoad(func(world scenes.SceneCtx) {
 			cameraEntity := world.NewEntity()
-			ecs.SaveComponent(world.Components(), cameraEntity, camera.NewDynamicOrtho(-1000, +1000, 1))
+			ecs.SaveComponent(world, cameraEntity, camera.NewOrtho(-1000, +1000, 1))
 
 			signature := world.NewEntity()
-			ecs.SaveComponent(world.Components(), signature, transform.NewPos(5, 5, 0))
-			ecs.SaveComponent(world.Components(), signature, transform.NewSize(100, 50, 1))
-			ecs.SaveComponent(world.Components(), signature, transform.NewPivotPoint(1, .5, .5))
-			ecs.SaveComponent(world.Components(), signature, transform.NewParent(cameraEntity, transform.RelativePos))
-			ecs.SaveComponent(world.Components(), signature, transform.NewParentPivotPoint(0, 0, .5))
+			ecs.SaveComponent(world, signature, transform.NewPos(5, 5, 0))
+			ecs.SaveComponent(world, signature, transform.NewSize(100, 50, 1))
+			ecs.SaveComponent(world, signature, transform.NewPivotPoint(0, .5, .5))
+			ecs.SaveComponent(world, signature, transform.NewParent(cameraEntity, transform.RelativePos))
+			ecs.SaveComponent(world, signature, transform.NewParentPivotPoint(0, 0, .5))
 
-			ecs.SaveComponent(world.Components(), signature, text.TextComponent{Text: "settings"})
-			ecs.SaveComponent(world.Components(), signature, text.FontSizeComponent{FontSize: 32})
-			ecs.SaveComponent(world.Components(), signature, text.BreakComponent{Break: text.BreakNone})
+			ecs.SaveComponent(world, signature, text.TextComponent{Text: "settings"})
+			ecs.SaveComponent(world, signature, text.FontSizeComponent{FontSize: 32})
+			ecs.SaveComponent(world, signature, text.BreakComponent{Break: text.BreakNone})
 
 			background := world.NewEntity()
-			ecs.SaveComponent(world.Components(), background, transform.NewParent(cameraEntity, transform.RelativePos|transform.RelativeSize))
-			ecs.SaveComponent(world.Components(), background, render.NewMesh(gameassets.SquareMesh))
-			ecs.SaveComponent(world.Components(), background, render.NewTexture(gameassets.GroundTileTextureID))
-			ecs.SaveComponent(world.Components(), background, genericrenderer.PipelineComponent{})
+			ecs.SaveComponent(world, background, transform.NewParent(cameraEntity, transform.RelativePos|transform.RelativeSize))
+			ecs.SaveComponent(world, background, render.NewMesh(gameassets.SquareMesh))
+			ecs.SaveComponent(world, background, render.NewTexture(gameassets.GroundTileTextureID))
+			ecs.SaveComponent(world, background, genericrenderer.PipelineComponent{})
 
 			buttonArea := world.NewEntity()
-			ecs.SaveComponent(world.Components(), buttonArea, transform.NewSize(500, 200, 2))
-			ecs.SaveComponent(world.Components(), buttonArea, transform.NewParent(cameraEntity, transform.RelativePos))
+			ecs.SaveComponent(world, buttonArea, transform.NewSize(500, 200, 2))
+			ecs.SaveComponent(world, buttonArea, transform.NewParent(cameraEntity, transform.RelativePos))
 
 			type Button struct {
 				Text    string
@@ -67,21 +67,21 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			for i, button := range buttons {
 				btn := world.NewEntity()
 				normalizedIndex := float32(i) / (float32(len(buttons)) - 1)
-				ecs.SaveComponent(world.Components(), btn, transform.NewSize(500, 50, 2))
-				ecs.SaveComponent(world.Components(), btn, transform.NewParent(buttonArea, transform.RelativePos))
-				ecs.SaveComponent(world.Components(), btn, transform.NewParentPivotPoint(.5, normalizedIndex, .5))
+				ecs.SaveComponent(world, btn, transform.NewSize(500, 50, 2))
+				ecs.SaveComponent(world, btn, transform.NewParent(buttonArea, transform.RelativePos))
+				ecs.SaveComponent(world, btn, transform.NewParentPivotPoint(.5, normalizedIndex, .5))
 
-				ecs.SaveComponent(world.Components(), btn, render.NewMesh(gameassets.SquareMesh))
-				ecs.SaveComponent(world.Components(), btn, render.NewTexture(gameassets.WaterTileTextureID))
-				ecs.SaveComponent(world.Components(), btn, genericrenderer.PipelineComponent{})
+				ecs.SaveComponent(world, btn, render.NewMesh(gameassets.SquareMesh))
+				ecs.SaveComponent(world, btn, render.NewTexture(gameassets.WaterTileTextureID))
+				ecs.SaveComponent(world, btn, genericrenderer.PipelineComponent{})
 
-				ecs.SaveComponent(world.Components(), btn, inputs.NewMouseLeftClick(button.OnClick))
-				ecs.SaveComponent(world.Components(), btn, collider.NewCollider(gameassets.SquareColliderID))
-				ecs.SaveComponent(world.Components(), btn, inputs.KeepSelectedComponent{})
+				ecs.SaveComponent(world, btn, inputs.NewMouseLeftClick(button.OnClick))
+				ecs.SaveComponent(world, btn, collider.NewCollider(gameassets.SquareColliderID))
+				ecs.SaveComponent(world, btn, inputs.KeepSelectedComponent{})
 
-				ecs.SaveComponent(world.Components(), btn, text.TextComponent{Text: strings.ToUpper(button.Text)})
-				ecs.SaveComponent(world.Components(), btn, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
-				ecs.SaveComponent(world.Components(), btn, text.FontSizeComponent{FontSize: 32})
+				ecs.SaveComponent(world, btn, text.TextComponent{Text: strings.ToUpper(button.Text)})
+				ecs.SaveComponent(world, btn, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+				ecs.SaveComponent(world, btn, text.FontSizeComponent{FontSize: 32})
 			}
 		})
 

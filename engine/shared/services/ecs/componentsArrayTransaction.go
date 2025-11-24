@@ -12,6 +12,7 @@ type ComponentsArrayTransaction[Component any] interface {
 	// can return:
 	// - ErrEntityDoNotExists
 	SaveComponent(EntityID, Component) // upsert
+	GetEntityComponent(entity EntityID) EntityComponent[Component]
 	AnyComponentsArrayTransaction
 }
 
@@ -87,6 +88,17 @@ func (t *componentsArrayTransaction[Component]) removeOperation(entity EntityID)
 	}
 }
 
+func (c *componentsArrayTransaction[Component]) GetEntityComponent(
+	entity EntityID,
+) EntityComponent[Component] {
+	return newEntityComponent(
+		entity,
+		c.array.GetComponent,
+		c.SaveComponent,
+		c.RemoveComponent,
+	)
+}
+
 func (t *componentsArrayTransaction[Component]) SaveComponent(entity EntityID, component Component) {
 	t.removeOperation(entity)
 	t.saves.Set(entity, save[Component]{entity, component})
@@ -109,21 +121,11 @@ func (t *componentsArrayTransaction[Component]) RemoveComponent(entity EntityID)
 }
 
 func (t *componentsArrayTransaction[Component]) PrepareFlush() {
-	// fmt.Printf("prepare single flush %v ?\n", reflect.TypeFor[Component]().String())
 	if t.prepared {
 		return
 	}
-	// locked := t.array.applyTransactionMutex.TryLock()
 	t.prepared = true
 	t.array.applyTransactionMutex.Lock()
-	// if !locked {
-	// fmt.Printf("hatered floods the scene from %v component which should be %t (released)\n",
-	// reflect.TypeFor[Component]().String(),
-	// t.prepared,
-	// )
-	// panic("error confirmed\n")
-	// }
-	// print("prepare single flush!\n")
 }
 
 func (t *componentsArrayTransaction[Component]) Error() error {
@@ -144,15 +146,12 @@ func (t *componentsArrayTransaction[Component]) Error() error {
 
 func (t *componentsArrayTransaction[Component]) Flush() (func(), error) {
 	if !t.prepared {
-		// print("prepared before flush?")
 		t.array.applyTransactionMutex.Lock()
-		// print("!\n")
 		// unlock happens before listeners
 	}
 	t.prepared = false
 
 	if err := t.Error(); err != nil {
-		// fmt.Printf("unlocked early %v ?!\n", reflect.TypeFor[Component]().String())
 		t.array.applyTransactionMutex.Unlock()
 		return nil, err
 	}
@@ -188,9 +187,7 @@ func (t *componentsArrayTransaction[Component]) Flush() (func(), error) {
 	}
 	t.removes = datastructures.NewSparseSet[EntityID]()
 
-	// fmt.Printf("unlocked %v ?!\n", reflect.TypeFor[Component]().String())
 	t.array.applyTransactionMutex.Unlock()
-	// print("unlocked. calling listeners\n")
 
 	// notify listeners
 	return func() {
@@ -228,26 +225,20 @@ var i int = 0
 
 func FlushMany(transactions ...AnyComponentsArrayTransaction) error {
 	i += 1
-	// fmt.Printf("preparing %v\n", i)
 	var err error
-	// print("prepare many ?\n")
 	for _, transaction := range transactions {
 		transaction.PrepareFlush()
 		if err = transaction.Error(); err != nil {
 			break
 		}
 	}
-	// print("prepare many !\n")
 	if err != nil {
-		// print("discard many ?\n")
 		for _, transaction := range transactions {
 			transaction.Discard()
 		}
-		// print("discard many!\n")
 		return err
 	}
 
-	// print("flush many ?\n")
 	listeners := make([]func(), 0, len(transactions))
 	for _, transaction := range transactions {
 		listener, _ := transaction.Flush()
@@ -257,7 +248,5 @@ func FlushMany(transactions ...AnyComponentsArrayTransaction) error {
 	for _, listener := range listeners {
 		listener()
 	}
-	// print("flush many !\n")
-	// fmt.Printf("finished %v\n", i)
 	return nil
 }

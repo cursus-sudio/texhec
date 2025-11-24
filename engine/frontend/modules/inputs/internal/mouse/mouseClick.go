@@ -7,7 +7,6 @@ import (
 	"shared/services/ecs"
 	"shared/services/logger"
 
-	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/events"
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -38,7 +37,7 @@ type clickSystem struct {
 	emitDrag     bool
 	movingCamera ecs.EntityID
 	movedEntity  *ecs.EntityID
-	movedFrom    *mgl32.Vec2
+	movedFrom    *window.MousePos
 }
 
 func NewClickSystem(logger logger.Logger, window window.Api) ecs.SystemRegister {
@@ -46,15 +45,15 @@ func NewClickSystem(logger logger.Logger, window window.Api) ecs.SystemRegister 
 		s := &clickSystem{
 			logger:       logger,
 			world:        w,
-			hoveredArray: ecs.GetComponentsArray[inputs.HoveredComponent](w.Components()),
+			hoveredArray: ecs.GetComponentsArray[inputs.HoveredComponent](w),
 
-			dragArray:             ecs.GetComponentsArray[inputs.MouseDragComponent](w.Components()),
-			leftClickArray:        ecs.GetComponentsArray[inputs.MouseLeftClickComponent](w.Components()),
-			doubleLeftClickArray:  ecs.GetComponentsArray[inputs.MouseDoubleLeftClickComponent](w.Components()),
-			rightClickArray:       ecs.GetComponentsArray[inputs.MouseRightClickComponent](w.Components()),
-			doubleRightClickArray: ecs.GetComponentsArray[inputs.MouseDoubleRightClickComponent](w.Components()),
+			dragArray:             ecs.GetComponentsArray[inputs.MouseDragComponent](w),
+			leftClickArray:        ecs.GetComponentsArray[inputs.MouseLeftClickComponent](w),
+			doubleLeftClickArray:  ecs.GetComponentsArray[inputs.MouseDoubleLeftClickComponent](w),
+			rightClickArray:       ecs.GetComponentsArray[inputs.MouseRightClickComponent](w),
+			doubleRightClickArray: ecs.GetComponentsArray[inputs.MouseDoubleRightClickComponent](w),
 
-			keepSelectedArray: ecs.GetComponentsArray[inputs.KeepSelectedComponent](w.Components()),
+			keepSelectedArray: ecs.GetComponentsArray[inputs.KeepSelectedComponent](w),
 
 			window: window,
 
@@ -75,7 +74,7 @@ func (s *clickSystem) ListenMove(event sdl.MouseMotionEvent) {
 	}
 
 	from := *s.movedFrom
-	to := s.window.NormalizeMousePos(int(event.X), int(event.Y))
+	to := window.NewMousePos(event.X, event.Y)
 	dragEvent := inputs.DragEvent{
 		Camera: s.movingCamera,
 		From:   from,
@@ -115,7 +114,7 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
 		e := entities[0]
 		entity = &e
 	}
-	pos := s.window.NormalizeMousePos(int(event.X), int(event.Y))
+	pos := window.NewMousePos(event.X, event.Y)
 
 	switch event.State {
 	case sdl.PRESSED:

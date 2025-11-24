@@ -46,7 +46,7 @@ func NewCameraRaySystem(
 		s := &cameraRaySystem{
 			world:           w,
 			logger:          logger,
-			cameraArray:     ecs.GetComponentsArray[camera.CameraComponent](w.Components()),
+			cameraArray:     ecs.GetComponentsArray[camera.CameraComponent](w),
 			broadCollisions: colliderFactory.Build(w),
 			window:          window,
 			events:          w.Events(),
@@ -64,7 +64,7 @@ func NewCameraRaySystem(
 }
 
 func (s *cameraRaySystem) Listen(args ShootRayEvent) error {
-	mousePos := s.window.NormalizeMousePos(s.window.GetMousePos())
+	mousePos := s.window.GetMousePos()
 
 	var nearestCollision collider.ObjectRayCollision
 	var nearestCamera ecs.EntityID

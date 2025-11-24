@@ -1,9 +1,8 @@
 package inputs
 
 import (
+	"frontend/services/media/window"
 	"shared/services/ecs"
-
-	"github.com/go-gl/mathgl/mgl32"
 )
 
 type System ecs.SystemRegister
@@ -15,7 +14,7 @@ func NewQuitEvent() QuitEvent { return QuitEvent{} }
 // this event is called when nothing is dragged
 type DragEvent struct {
 	Camera   ecs.EntityID
-	From, To mgl32.Vec2 // from and to is normalized
+	From, To window.MousePos // from and to is normalized
 }
 
 //

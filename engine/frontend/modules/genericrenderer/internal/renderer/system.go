@@ -135,13 +135,13 @@ func NewSystem(
 		system := &system{
 			world:                w,
 			transformTransaction: transformTool.Transaction(),
-			groupsArray:          ecs.GetComponentsArray[groups.GroupsComponent](w.Components()),
-			textureArray:         ecs.GetComponentsArray[render.TextureComponent](w.Components()),
-			textureFrameArray:    ecs.GetComponentsArray[render.TextureFrameComponent](w.Components()),
-			colorArray:           ecs.GetComponentsArray[render.ColorComponent](w.Components()),
-			meshArray:            ecs.GetComponentsArray[render.MeshComponent](w.Components()),
+			groupsArray:          ecs.GetComponentsArray[groups.GroupsComponent](w),
+			textureArray:         ecs.GetComponentsArray[render.TextureComponent](w),
+			textureFrameArray:    ecs.GetComponentsArray[render.TextureFrameComponent](w),
+			colorArray:           ecs.GetComponentsArray[render.ColorComponent](w),
+			meshArray:            ecs.GetComponentsArray[render.MeshComponent](w),
 
-			cameraArray: ecs.GetComponentsArray[camera.CameraComponent](w.Components()),
+			cameraArray: ecs.GetComponentsArray[camera.CameraComponent](w),
 
 			window:         window,
 			assetsStorage:  assetsStorage,
@@ -280,6 +280,7 @@ func (m *system) Listen(render.RenderEvent) error {
 			gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, meshAsset.EBO().ID())
 
 			mvp := camera.Mat4().Mul4(model)
+			gl.Viewport(camera.Viewport())
 			gl.UniformMatrix4fv(m.locations.Mvp, 1, false, &mvp[0])
 			gl.Uniform4fv(m.locations.Color, 1, &colorComponent.Color[0])
 

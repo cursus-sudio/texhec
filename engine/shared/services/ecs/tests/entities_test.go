@@ -34,4 +34,9 @@ func TestEntities(t *testing.T) {
 	if world.EntityExists(entity) {
 		t.Errorf("removed entity exists")
 	}
+
+	entity = world.NewEntity()
+	if !world.EntityExists(entity) {
+		t.Errorf("added entity do not exists")
+	}
 }

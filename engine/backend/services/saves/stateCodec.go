@@ -23,7 +23,7 @@ func AddPersistedArray[ComponentType any](b WorldStateCodecBuilder) {
 	repoName := reflect.TypeFor[ComponentType]().String()
 	repoID := RepoId(repoName)
 	b.arrays[repoID] = func(w ecs.World) ecs.AnyComponentArray {
-		return ecs.GetComponentsArray[ComponentType](w.Components())
+		return ecs.GetComponentsArray[ComponentType](w)
 	}
 }
 

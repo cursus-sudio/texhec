@@ -3,6 +3,7 @@ package mobilecamerasys
 import (
 	"frontend/modules/collider"
 	"frontend/modules/groups"
+	"frontend/services/media/window"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -33,10 +34,17 @@ func RayDirection(
 func ShootRay(
 	projectionMatrix mgl32.Mat4,
 	viewMatrix mgl32.Mat4,
-	mousePos mgl32.Vec2,
+	mousePos window.MousePos,
+	viewport func() (x, y, w, h int32),
 	defaultRayOrigin *mgl32.Vec3,
 ) collider.Ray {
-	nearWorld, direction, maxDistance := RayDirection(projectionMatrix, viewMatrix, mousePos)
+	vX, vY, vW, vH := viewport()
+	mX, mY := mousePos.Elem()
+	normalizedMousePos := mgl32.Vec2{
+		(2*float32(mX-vX)/float32(vW-vX) - 1),
+		-(2*float32(mY-vY)/float32(vH-vY) - 1),
+	}
+	nearWorld, direction, maxDistance := RayDirection(projectionMatrix, viewMatrix, normalizedMousePos)
 	var rayOrigin mgl32.Vec3
 	if defaultRayOrigin != nil {
 		rayOrigin = *defaultRayOrigin

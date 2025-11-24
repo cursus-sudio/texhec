@@ -21,16 +21,16 @@ func TileColliderSystem(
 	colliderComponent collider.ColliderComponent,
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
-		tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w.Components())
-		tileColliderArray := ecs.GetComponentsArray[ColliderComponent](w.Components())
+		tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w)
+		tileColliderArray := ecs.GetComponentsArray[ColliderComponent](w)
 
-		leftClickArray := ecs.GetComponentsArray[inputs.MouseLeftClickComponent](w.Components())
-		collidersArray := ecs.GetComponentsArray[collider.ColliderComponent](w.Components())
+		leftClickArray := ecs.GetComponentsArray[inputs.MouseLeftClickComponent](w)
+		collidersArray := ecs.GetComponentsArray[collider.ColliderComponent](w)
 
-		posArray := ecs.GetComponentsArray[transform.PosComponent](w.Components())
-		sizeArray := ecs.GetComponentsArray[transform.SizeComponent](w.Components())
+		posArray := ecs.GetComponentsArray[transform.PosComponent](w)
+		sizeArray := ecs.GetComponentsArray[transform.SizeComponent](w)
 
-		groupsArray := ecs.GetComponentsArray[groups.GroupsComponent](w.Components())
+		groupsArray := ecs.GetComponentsArray[groups.GroupsComponent](w)
 
 		onUpsert := func(ei []ecs.EntityID) {
 			// groups

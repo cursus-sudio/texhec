@@ -2,6 +2,7 @@ package transformtool
 
 import (
 	"frontend/modules/transform"
+	"shared/services/datastructures"
 	"shared/services/ecs"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -32,13 +33,13 @@ func newEntityTransform(
 	s := entityTransform{
 		transformTransaction: t,
 
-		pos:  t.posArray.GetEntityComponent(entity, t.posTransaction),
-		rot:  t.rotationArray.GetEntityComponent(entity, t.rotationTransaction),
-		size: t.sizeArray.GetEntityComponent(entity, t.sizeTransaction),
+		pos:  t.posTransaction.GetEntityComponent(entity),
+		rot:  t.rotationTransaction.GetEntityComponent(entity),
+		size: t.sizeTransaction.GetEntityComponent(entity),
 
-		pivotPoint:       t.pivotPointArray.GetEntityComponent(entity, t.pivotPointTransaction),
-		parent:           t.parentArray.GetEntityComponent(entity, t.parentTransaction),
-		parentPivotPoint: t.parentPivotPointArray.GetEntityComponent(entity, t.parentPivotPointTransaction),
+		pivotPoint:       t.pivotPointTransaction.GetEntityComponent(entity),
+		parent:           t.parentTransaction.GetEntityComponent(entity),
+		parentPivotPoint: t.parentPivotPointTransaction.GetEntityComponent(entity),
 		entity:           entity,
 	}
 	s.Init()
@@ -67,6 +68,27 @@ func (t entityTransform) PivotPoint() ecs.EntityComponent[transform.PivotPointCo
 func (t entityTransform) Parent() ecs.EntityComponent[transform.ParentComponent] { return t.parent }
 func (t entityTransform) ParentPivotPoint() ecs.EntityComponent[transform.ParentPivotPointComponent] {
 	return t.parentPivotPoint
+}
+
+func (t entityTransform) Children() datastructures.SparseSetReader[ecs.EntityID] {
+	return t.parentTool.GetChildren(t.entity)
+}
+
+func (t entityTransform) FlatChildren() datastructures.SparseSetReader[ecs.EntityID] {
+	flatChildren := datastructures.NewSparseSet[ecs.EntityID]()
+	leftParents := []ecs.EntityID{t.entity}
+	for len(leftParents) != 0 {
+		parent := leftParents[0]
+		leftParents = leftParents[1:]
+		parentTransform := t.GetEntity(parent)
+		childrenSet := parentTransform.Children()
+		children := childrenSet.GetIndices()
+		for _, child := range children {
+			flatChildren.Add(child)
+		}
+		leftParents = append(leftParents, children...)
+	}
+	return flatChildren
 }
 
 func (t entityTransform) Mat4() mgl32.Mat4 {

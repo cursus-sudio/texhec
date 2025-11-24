@@ -7,6 +7,7 @@ import (
 	"core/modules/fpslogger/pkg"
 	"core/modules/tile"
 	tilepkg "core/modules/tile/pkg"
+	uipkg "core/modules/ui/pkg"
 	gamescenes "core/scenes"
 	creditsscene "core/scenes/credits"
 	gamescene "core/scenes/game"
@@ -168,6 +169,7 @@ func frontendDic(
 			0, 1000, // min-max y
 			0, 3, // min-max z
 		),
+		uipkg.Package(3),
 
 		//
 

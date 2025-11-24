@@ -13,6 +13,7 @@ import (
 	"frontend/services/graphics/vao"
 	"frontend/services/graphics/vao/ebo"
 	"frontend/services/graphics/vao/vbo"
+	"frontend/services/media/window"
 	"image"
 	"shared/services/datastructures"
 	"shared/services/ecs"
@@ -44,6 +45,7 @@ func (g global) Release() {
 
 type TileRenderSystemRegister struct {
 	logger              logger.Logger
+	window              window.Api
 	textures            datastructures.SparseArray[uint32, image.Image]
 	textureArrayFactory texturearray.Factory
 	vboFactory          vbo.VBOFactory[TileData]
@@ -59,6 +61,7 @@ type TileRenderSystemRegister struct {
 func NewTileRenderSystemRegister(
 	textureArrayFactory texturearray.Factory,
 	logger logger.Logger,
+	window window.Api,
 	vboFactory vbo.VBOFactory[TileData],
 	assetsStorage assets.AssetsStorage,
 	tileSize int32,
@@ -68,6 +71,7 @@ func NewTileRenderSystemRegister(
 ) TileRenderSystemRegister {
 	return TileRenderSystemRegister{
 		logger:              logger,
+		window:              window,
 		textures:            datastructures.NewSparseArray[uint32, image.Image](),
 		textureArrayFactory: textureArrayFactory,
 		vboFactory:          vboFactory,
@@ -145,6 +149,7 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 	s := system{
 		program:   p,
 		locations: locations,
+		window:    factory.window,
 
 		logger: factory.logger,
 
@@ -157,7 +162,7 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 		gridDepth: factory.gridDepth,
 
 		world:       w,
-		groupsArray: ecs.GetComponentsArray[groups.GroupsComponent](w.Components()),
+		groupsArray: ecs.GetComponentsArray[groups.GroupsComponent](w),
 		gridGroups:  factory.groups,
 		cameraQuery: w.Query().Require(ecs.GetComponentType(camera.OrthoComponent{})).Build(),
 		cameraCtors: factory.cameraCtorsFactory.Build(w),
@@ -167,8 +172,8 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 		tiles:       tiles,
 	}
 
-	linkArray := ecs.GetComponentsArray[definition.DefinitionLinkComponent](w.Components())
-	posArray := ecs.GetComponentsArray[tile.PosComponent](w.Components())
+	linkArray := ecs.GetComponentsArray[definition.DefinitionLinkComponent](w)
+	posArray := ecs.GetComponentsArray[tile.PosComponent](w)
 
 	onChangeOrAdd := func(ei []ecs.EntityID) {
 		changeMutex.Lock()

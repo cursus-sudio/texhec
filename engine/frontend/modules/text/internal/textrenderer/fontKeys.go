@@ -1,4 +1,4 @@
-package internal
+package textrenderer
 
 import (
 	"frontend/services/assets"

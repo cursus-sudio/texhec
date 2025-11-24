@@ -3,7 +3,8 @@ package textpkg
 import (
 	"frontend/modules/camera"
 	"frontend/modules/text"
-	"frontend/modules/text/internal"
+	"frontend/modules/text/internal/textrenderer"
+	"frontend/modules/text/internal/texttool"
 	"frontend/modules/transform"
 	"frontend/services/assets"
 	"frontend/services/graphics/texturearray"
@@ -62,8 +63,11 @@ func Package(
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) internal.FontService {
-		return internal.NewFontService(
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[text.Tool] {
+		return texttool.NewTool(ioc.Get[logger.Logger](c))
+	})
+	ioc.RegisterSingleton(b, func(c ioc.Dic) textrenderer.FontService {
+		return textrenderer.NewFontService(
 			ioc.Get[assets.Assets](c),
 			pkg.usedGlyphs,
 			pkg.faceOptions,
@@ -73,11 +77,11 @@ func (pkg pkg) Register(b ioc.Builder) {
 		)
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) internal.LayoutServiceFactory {
-		return internal.NewLayoutServiceFactory(
+	ioc.RegisterSingleton(b, func(c ioc.Dic) textrenderer.LayoutServiceFactory {
+		return textrenderer.NewLayoutServiceFactory(
 			ioc.Get[logger.Logger](c),
-			ioc.Get[internal.FontService](c),
-			ioc.Get[internal.FontKeys](c),
+			ioc.Get[textrenderer.FontService](c),
+			ioc.Get[textrenderer.FontKeys](c),
 			ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
 			pkg.defaultFontFamily,
 			pkg.defaultFontSize,
@@ -87,38 +91,38 @@ func (pkg pkg) Register(b ioc.Builder) {
 		)
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) internal.FontKeys {
-		return internal.NewFontKeys()
+	ioc.RegisterSingleton(b, func(c ioc.Dic) textrenderer.FontKeys {
+		return textrenderer.NewFontKeys()
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) text.System {
-		return internal.NewTextRendererRegister(
+		return textrenderer.NewTextRendererRegister(
 			ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
 			ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
-			ioc.Get[internal.FontService](c),
-			ioc.Get[vbo.VBOFactory[internal.Glyph]](c),
-			ioc.Get[internal.LayoutServiceFactory](c),
+			ioc.Get[textrenderer.FontService](c),
+			ioc.Get[vbo.VBOFactory[textrenderer.Glyph]](c),
+			ioc.Get[textrenderer.LayoutServiceFactory](c),
 			ioc.Get[logger.Logger](c),
 			pkg.defaultFontFamily.FontFamily,
 			pkg.defaultColor,
 			ioc.Get[texturearray.Factory](c),
-			ioc.Get[internal.FontKeys](c),
+			ioc.Get[textrenderer.FontKeys](c),
 			1,
 		)
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) vbo.VBOFactory[internal.Glyph] {
-		return func() vbo.VBOSetter[internal.Glyph] {
-			vbo := vbo.NewVBO[internal.Glyph](func() {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) vbo.VBOFactory[textrenderer.Glyph] {
+		return func() vbo.VBOSetter[textrenderer.Glyph] {
+			vbo := vbo.NewVBO[textrenderer.Glyph](func() {
 				var i uint32 = 0
 
 				gl.VertexAttribPointerWithOffset(0, 2, gl.FLOAT, false,
-					int32(unsafe.Sizeof(internal.Glyph{})), uintptr(unsafe.Offsetof(internal.Glyph{}.Pos)))
+					int32(unsafe.Sizeof(textrenderer.Glyph{})), uintptr(unsafe.Offsetof(textrenderer.Glyph{}.Pos)))
 				gl.EnableVertexAttribArray(i)
 				i++
 
 				gl.VertexAttribIPointerWithOffset(i, 1, gl.INT,
-					int32(unsafe.Sizeof(internal.Glyph{})), uintptr(unsafe.Offsetof(internal.Glyph{}.Glyph)))
+					int32(unsafe.Sizeof(textrenderer.Glyph{})), uintptr(unsafe.Offsetof(textrenderer.Glyph{}.Glyph)))
 				gl.EnableVertexAttribArray(i)
 				i++
 			})

@@ -44,7 +44,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			pkg.tileSize,
 			pkg.gridDepth,
 			pkg.gridGroups,
-			ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
+			ioc.Get[ecs.ToolFactory[camera.Tool]](c),
 		)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.TileAssets {

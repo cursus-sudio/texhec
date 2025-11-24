@@ -28,11 +28,11 @@ type textRenderer struct {
 	world                ecs.World
 	groupsArray          ecs.ComponentsArray[groups.GroupsComponent]
 	colorArray           ecs.ComponentsArray[text.TextColorComponent]
-	transformTransaction transform.TransformTransaction
+	transformTransaction transform.Transaction
 	cameraQuery          ecs.LiveQuery
 
 	logger      logger.Logger
-	cameraCtors camera.CameraTool
+	cameraCtors camera.Tool
 	fontService FontService
 
 	program   program.Program
@@ -144,7 +144,7 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 			continue
 		}
 
-		entityTransform := s.transformTransaction.GetEntity(entity)
+		entityTransform := s.transformTransaction.GetObject(entity)
 		pos, err := entityTransform.AbsolutePos().Get()
 		if err != nil {
 			s.logger.Warn(err)
@@ -193,7 +193,7 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 		entityMvp := translation.Mul4(rotation).Mul4(scale)
 
 		for _, cameraEntity := range s.cameraQuery.Entities() {
-			camera, err := s.cameraCtors.Get(cameraEntity)
+			camera, err := s.cameraCtors.GetObject(cameraEntity)
 			if err != nil {
 				continue
 			}

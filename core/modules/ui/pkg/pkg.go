@@ -31,8 +31,8 @@ func (pkg pkg) Register(b ioc.Builder) {
 			errs := ecs.RegisterSystems(w,
 				uimodule.NewSystem(
 					ioc.Get[logger.Logger](c),
-					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
-					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
+					ioc.Get[ecs.ToolFactory[camera.Tool]](c),
+					ioc.Get[ecs.ToolFactory[transform.Tool]](c),
 					ioc.Get[ecs.ToolFactory[tile.Tool]](c),
 					ioc.Get[ecs.ToolFactory[text.Tool]](c),
 					pkg.maxLayer,

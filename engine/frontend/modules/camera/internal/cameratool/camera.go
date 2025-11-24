@@ -9,25 +9,25 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-type cameraService struct {
+type object struct {
 	mat4     func() mgl32.Mat4
 	viewport func() (x, y, w, h int32)
 	shootRay func(window.MousePos) collider.Ray
 	groups   groups.GroupsComponent
 }
 
-func NewCameraService(
+func NewObject(
 	mat4 func() mgl32.Mat4,
 	viewport func() (x, y, w, h int32),
 	shootRay func(mousePos window.MousePos) collider.Ray,
 	groups groups.GroupsComponent,
-) camera.CameraService {
-	return &cameraService{mat4, viewport, shootRay, groups}
+) camera.Object {
+	return &object{mat4, viewport, shootRay, groups}
 }
 
-func (c *cameraService) Mat4() mgl32.Mat4             { return c.mat4() }
-func (c *cameraService) Viewport() (x, y, w, h int32) { return c.viewport() }
-func (c *cameraService) ShootRay(mousePos window.MousePos) collider.Ray {
+func (c *object) Mat4() mgl32.Mat4             { return c.mat4() }
+func (c *object) Viewport() (x, y, w, h int32) { return c.viewport() }
+func (c *object) ShootRay(mousePos window.MousePos) collider.Ray {
 	ray := c.shootRay(mousePos)
 	ray.Groups = c.groups
 	return ray

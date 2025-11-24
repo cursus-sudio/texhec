@@ -8,12 +8,12 @@ import (
 func TestParentPivot(t *testing.T) {
 	setup := NewSetup()
 	parent := setup.World.NewEntity()
-	parentTransform := setup.Transaction.GetEntity(parent)
+	parentTransform := setup.Transaction.GetObject(parent)
 	parentTransform.Pos().Set(transform.NewPos(10, 10, 10))
 	parentTransform.Size().Set(transform.NewSize(10, 10, 10))
 
 	entity := setup.World.NewEntity()
-	entityTransform := setup.Transaction.GetEntity(entity)
+	entityTransform := setup.Transaction.GetObject(entity)
 
 	entityTransform.Parent().Set(transform.NewParent(parent, transform.RelativePos))
 	if err := setup.Transaction.Flush(); err != nil {

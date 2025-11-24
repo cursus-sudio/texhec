@@ -13,8 +13,8 @@ import (
 
 type Setup struct {
 	World       ecs.World
-	Tool        transform.TransformTool
-	Transaction transform.TransformTransaction
+	Tool        transform.Tool
+	Transaction transform.Transaction
 }
 
 func NewSetup() Setup {
@@ -28,7 +28,7 @@ func NewSetup() Setup {
 	}
 	c := b.Build()
 	world := ecs.NewWorld()
-	toolFactory := ioc.Get[ecs.ToolFactory[transform.TransformTool]](c)
+	toolFactory := ioc.Get[ecs.ToolFactory[transform.Tool]](c)
 	tool := toolFactory.Build(world)
 	return Setup{
 		world,

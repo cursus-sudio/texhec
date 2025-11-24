@@ -31,7 +31,7 @@ type cameraRaySystem struct {
 	window          window.Api
 	events          events.Events
 	assets          assets.Assets
-	cameraResolver  camera.CameraTool
+	cameraResolver  camera.Tool
 
 	hoversOverEntity *ecs.EntityID
 }
@@ -40,7 +40,7 @@ func NewCameraRaySystem(
 	logger logger.Logger,
 	colliderFactory ecs.ToolFactory[collider.CollisionTool],
 	window window.Api,
-	cameraResolver ecs.ToolFactory[camera.CameraTool],
+	cameraResolver ecs.ToolFactory[camera.Tool],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := &cameraRaySystem{
@@ -69,7 +69,7 @@ func (s *cameraRaySystem) Listen(args ShootRayEvent) error {
 	var nearestCollision collider.ObjectRayCollision
 	var nearestCamera ecs.EntityID
 	for _, cameraEntity := range s.cameraArray.GetEntities() {
-		camera, err := s.cameraResolver.Get(cameraEntity)
+		camera, err := s.cameraResolver.GetObject(cameraEntity)
 		if err != nil {
 			return err
 		}

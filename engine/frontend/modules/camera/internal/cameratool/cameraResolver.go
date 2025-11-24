@@ -9,10 +9,10 @@ import (
 
 type cameraResolver struct {
 	cameraArray  ecs.ComponentsArray[camera.CameraComponent]
-	constructors map[ecs.ComponentType]func(ecs.EntityID) (camera.CameraService, error)
+	constructors map[ecs.ComponentType]func(ecs.EntityID) (camera.Object, error)
 }
 
-func (c *cameraResolver) Get(entity ecs.EntityID) (camera.CameraService, error) {
+func (c *cameraResolver) GetObject(entity ecs.EntityID) (camera.Object, error) {
 	cameraComponent, err := c.cameraArray.GetComponent(entity)
 	if err != nil {
 		return nil, errors.Join(

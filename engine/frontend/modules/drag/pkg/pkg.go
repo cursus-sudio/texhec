@@ -21,8 +21,8 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) drag.System {
 		return internal.NewSystem(
 			ioc.Get[logger.Logger](c),
-			ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
-			ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
+			ioc.Get[ecs.ToolFactory[camera.Tool]](c),
+			ioc.Get[ecs.ToolFactory[transform.Tool]](c),
 		)
 	})
 }

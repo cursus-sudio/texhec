@@ -55,7 +55,7 @@ type TileRenderSystemRegister struct {
 	gridDepth float32
 
 	groups             groups.GroupsComponent
-	cameraCtorsFactory ecs.ToolFactory[camera.CameraTool]
+	cameraCtorsFactory ecs.ToolFactory[camera.Tool]
 }
 
 func NewTileRenderSystemRegister(
@@ -67,7 +67,7 @@ func NewTileRenderSystemRegister(
 	tileSize int32,
 	gridDepth float32,
 	groups groups.GroupsComponent,
-	cameraCtorsFactory ecs.ToolFactory[camera.CameraTool],
+	cameraCtorsFactory ecs.ToolFactory[camera.Tool],
 ) TileRenderSystemRegister {
 	return TileRenderSystemRegister{
 		logger:              logger,

@@ -11,9 +11,9 @@ func TestChildren(t *testing.T) {
 	child := setup.World.NewEntity()
 	grandChild := setup.World.NewEntity()
 
-	parentTransform := setup.Transaction.GetEntity(parent)
-	childTransform := setup.Transaction.GetEntity(child)
-	grandChildTransform := setup.Transaction.GetEntity(grandChild)
+	parentTransform := setup.Transaction.GetObject(parent)
+	childTransform := setup.Transaction.GetObject(child)
+	grandChildTransform := setup.Transaction.GetObject(grandChild)
 
 	childTransform.Parent().Set(transform.NewParent(parent, transform.RelativePos))
 	grandChildTransform.Parent().Set(transform.NewParent(child, transform.RelativePos))

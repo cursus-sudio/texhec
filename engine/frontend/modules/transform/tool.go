@@ -7,20 +7,20 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-type TransformTool interface {
-	Transaction() TransformTransaction
+type Tool interface {
+	Transaction() Transaction
 	Query(ecs.LiveQueryBuilder) ecs.LiveQueryBuilder
 }
 
-type TransformTransaction interface {
-	GetEntity(ecs.EntityID) EntityTransform
+type Transaction interface {
+	GetObject(ecs.EntityID) Object
 	Transactions() []ecs.AnyComponentsArrayTransaction
 	Flush() error
 }
 
 // absolute components return errors only in case when
 // entity is relative to parent that doesn't exist
-type EntityTransform interface {
+type Object interface {
 	Pos() ecs.EntityComponent[PosComponent]
 	AbsolutePos() ecs.EntityComponent[PosComponent]
 

@@ -5,8 +5,8 @@ import (
 	"shared/services/ecs"
 )
 
-type transformTransaction struct {
-	transformTool
+type transaction struct {
+	tool
 
 	posTransaction              ecs.ComponentsArrayTransaction[transform.PosComponent]
 	rotationTransaction         ecs.ComponentsArrayTransaction[transform.RotationComponent]
@@ -17,9 +17,9 @@ type transformTransaction struct {
 }
 
 func newTransformTransaction(
-	tool transformTool,
-) transform.TransformTransaction {
-	return transformTransaction{
+	tool tool,
+) transform.Transaction {
+	return transaction{
 		tool,
 		tool.posArray.Transaction(),
 		tool.rotationArray.Transaction(),
@@ -30,11 +30,11 @@ func newTransformTransaction(
 	}
 }
 
-func (t transformTransaction) GetEntity(entity ecs.EntityID) transform.EntityTransform {
+func (t transaction) GetObject(entity ecs.EntityID) transform.Object {
 	return newEntityTransform(t, entity)
 }
 
-func (t transformTransaction) Transactions() []ecs.AnyComponentsArrayTransaction {
+func (t transaction) Transactions() []ecs.AnyComponentsArrayTransaction {
 	return []ecs.AnyComponentsArrayTransaction{
 		t.posTransaction,
 		t.rotationTransaction,
@@ -45,6 +45,6 @@ func (t transformTransaction) Transactions() []ecs.AnyComponentsArrayTransaction
 	}
 }
 
-func (t transformTransaction) Flush() error {
+func (t transaction) Flush() error {
 	return ecs.FlushMany(t.Transactions()...)
 }

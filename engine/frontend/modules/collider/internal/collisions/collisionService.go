@@ -22,7 +22,7 @@ type global struct {
 
 func newRegister(
 	logger logger.Logger,
-	transformTransaction transform.TransformTransaction,
+	transformTransaction transform.Transaction,
 	world ecs.World,
 ) global {
 	r := global{
@@ -36,7 +36,7 @@ func newRegister(
 
 type collisionsService struct {
 	world                ecs.World
-	transformTransaction transform.TransformTransaction
+	transformTransaction transform.Transaction
 	transformStaticArray ecs.ComponentsArray[transform.StaticComponent]
 	assets               assets.Assets
 	logger               logger.Logger
@@ -45,7 +45,7 @@ type collisionsService struct {
 func Factory(
 	assets assets.Assets,
 	logger logger.Logger,
-	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+	transformToolFactory ecs.ToolFactory[transform.Tool],
 ) ecs.ToolFactory[CollisionService] {
 	return ecs.NewToolFactory(func(w ecs.World) CollisionService {
 		return &collisionsService{

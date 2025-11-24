@@ -64,7 +64,7 @@ func (r releasable) Release() {
 
 type system struct {
 	world                ecs.World
-	transformTransaction transform.TransformTransaction
+	transformTransaction transform.Transaction
 	groupsArray          ecs.ComponentsArray[groups.GroupsComponent]
 	textureArray         ecs.ComponentsArray[render.TextureComponent]
 	textureFrameArray    ecs.ComponentsArray[render.TextureFrameComponent]
@@ -78,7 +78,7 @@ type system struct {
 	logger         logger.Logger
 	vboFactory     vbo.VBOFactory[genericrenderer.Vertex]
 	textureFactory texture.Factory
-	camerasCtors   camera.CameraTool
+	camerasCtors   camera.Tool
 
 	query ecs.LiveQuery
 
@@ -91,8 +91,8 @@ func NewSystem(
 	logger logger.Logger,
 	vboFactory vbo.VBOFactory[genericrenderer.Vertex],
 	textureFactory texture.Factory,
-	camerasCtors ecs.ToolFactory[camera.CameraTool],
-	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+	camerasCtors ecs.ToolFactory[camera.Tool],
+	transformToolFactory ecs.ToolFactory[transform.Tool],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		vert, err := shader.NewShader(vertSource, shader.VertexShader)
@@ -239,7 +239,7 @@ func (m *system) Listen(render.RenderEvent) error {
 			cameraGroups = groups.DefaultGroups()
 		}
 
-		camera, err := m.camerasCtors.Get(cameraEntity)
+		camera, err := m.camerasCtors.GetObject(cameraEntity)
 		if err != nil {
 			continue
 		}
@@ -253,7 +253,7 @@ func (m *system) Listen(render.RenderEvent) error {
 				continue
 			}
 
-			transform := m.transformTransaction.GetEntity(entity)
+			transform := m.transformTransaction.GetObject(entity)
 			model := transform.Mat4()
 
 			textureAsset, err := m.getTexture(entity)

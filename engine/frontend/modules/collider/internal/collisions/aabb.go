@@ -7,7 +7,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-func TransformAABB(t transform.EntityTransform) (collider.AABB, error) {
+func TransformAABB(t transform.Object) (collider.AABB, error) {
 	pos, err := t.AbsolutePos().Get()
 	if err != nil {
 		return collider.AABB{}, err

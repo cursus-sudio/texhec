@@ -9,7 +9,7 @@ import (
 
 func NewColliderSystem(
 	logger logger.Logger,
-	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+	transformToolFactory ecs.ToolFactory[transform.Tool],
 	serviceFactory ecs.ToolFactory[CollisionService],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {

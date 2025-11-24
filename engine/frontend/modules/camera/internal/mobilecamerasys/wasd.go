@@ -15,18 +15,18 @@ import (
 type wasdMoveSystem struct {
 	logger        logger.Logger
 	world         ecs.World
-	transformTool transform.TransformTool
+	transformTool transform.Tool
 	orthoArray    ecs.ComponentsArray[camera.OrthoComponent]
 	query         ecs.LiveQuery
 
-	cameraCtors camera.CameraTool
+	cameraCtors camera.Tool
 	cameraSpeed float32
 }
 
 func NewWasdSystem(
 	logger logger.Logger,
-	cameraCtors ecs.ToolFactory[camera.CameraTool],
-	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+	cameraCtors ecs.ToolFactory[camera.Tool],
+	transformToolFactory ecs.ToolFactory[transform.Tool],
 	cameraSpeed float32,
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
@@ -77,7 +77,7 @@ func (s *wasdMoveSystem) Listen(event frames.FrameEvent) error {
 	transformTransaction := s.transformTool.Transaction()
 
 	for _, camera := range s.query.Entities() {
-		transform := transformTransaction.GetEntity(camera)
+		transform := transformTransaction.GetObject(camera)
 		pos, err := transform.AbsolutePos().Get()
 		if err != nil {
 			s.logger.Warn(err)

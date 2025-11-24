@@ -29,7 +29,7 @@ type LayoutService interface {
 
 type layoutService struct {
 	world                ecs.World
-	transformTransaction transform.TransformTransaction
+	transformTransaction transform.Transaction
 	textArray            ecs.ComponentsArray[text.TextComponent]
 	fontFamilyArray      ecs.ComponentsArray[text.FontFamilyComponent]
 	fontSizeArray        ecs.ComponentsArray[text.FontSizeComponent]
@@ -51,7 +51,7 @@ type layoutService struct {
 func NewLayoutService(
 	world ecs.World,
 
-	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+	transformToolFactory ecs.ToolFactory[transform.Tool],
 
 	logger logger.Logger,
 	fontService FontService,
@@ -104,7 +104,7 @@ type line struct {
 func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	// TODO add overflow read, text align read and transform modification
 
-	transform := s.transformTransaction.GetEntity(entity)
+	transform := s.transformTransaction.GetObject(entity)
 	size, err := transform.AbsoluteSize().Get()
 	if err != nil {
 		return Layout{}, err

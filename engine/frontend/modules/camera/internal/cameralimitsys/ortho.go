@@ -14,15 +14,15 @@ type orthoSys struct {
 	query         ecs.LiveQuery
 	limitsArray   ecs.ComponentsArray[camera.CameraLimitsComponent]
 	orthoArray    ecs.ComponentsArray[camera.OrthoComponent]
-	transformTool transform.TransformTool
-	cameraTool    camera.CameraTool
+	transformTool transform.Tool
+	cameraTool    camera.Tool
 
 	logger logger.Logger
 }
 
 func NewOrthoSys(
-	transformToolFactory ecs.ToolFactory[transform.TransformTool],
-	cameraToolFactory ecs.ToolFactory[camera.CameraTool],
+	transformToolFactory ecs.ToolFactory[transform.Tool],
+	cameraToolFactory ecs.ToolFactory[camera.Tool],
 	logger logger.Logger,
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
@@ -55,7 +55,7 @@ func (s *orthoSys) Addlisteners() {
 func (s *orthoSys) ChangeListener(ei []ecs.EntityID) {
 	transformTransaction := s.transformTool.Transaction()
 	for _, entity := range ei {
-		camera, err := s.cameraTool.Get(entity)
+		camera, err := s.cameraTool.GetObject(entity)
 		if err != nil {
 			s.logger.Warn(err)
 			continue
@@ -70,7 +70,7 @@ func (s *orthoSys) ChangeListener(ei []ecs.EntityID) {
 			continue
 		}
 
-		transform := transformTransaction.GetEntity(entity)
+		transform := transformTransaction.GetObject(entity)
 		pos, err := transform.AbsolutePos().Get()
 		if err != nil {
 			s.logger.Warn(err)

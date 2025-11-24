@@ -43,8 +43,8 @@ type uiSys struct {
 	world  ecs.World
 	logger logger.Logger
 
-	cameraTool    camera.CameraTool
-	transformTool transform.TransformTool
+	cameraTool    camera.Tool
+	transformTool transform.Tool
 	tileTool      tile.Tool
 	textTool      text.Tool
 
@@ -66,8 +66,8 @@ type uiSys struct {
 
 func NewSystem(
 	logger logger.Logger,
-	cameraToolFactory ecs.ToolFactory[camera.CameraTool],
-	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+	cameraToolFactory ecs.ToolFactory[camera.Tool],
+	transformToolFactory ecs.ToolFactory[transform.Tool],
 	tileToolFactory ecs.ToolFactory[tile.Tool],
 	textToolFactory ecs.ToolFactory[text.Tool],
 	maxTileDepth tile.Layer,
@@ -131,7 +131,7 @@ func (s *uiSys) Render() error {
 			continue
 		}
 		menu := s.world.NewEntity()
-		menuTransform := transformTransaction.GetEntity(menu)
+		menuTransform := transformTransaction.GetObject(menu)
 		menuTransform.Parent().Set(transform.NewParent(camera, transform.RelativePos))
 		menuTransform.ParentPivotPoint().Set(transform.NewParentPivotPoint(.5, 0, .5))
 		menuTransform.Size().Set(transform.NewSize(500, 100, 1))
@@ -151,7 +151,7 @@ func (s *uiSys) Render() error {
 		genericTransaction.SaveComponent(menu, genericrenderer.PipelineComponent{})
 
 		quit := s.world.NewEntity()
-		quitTransform := transformTransaction.GetEntity(quit)
+		quitTransform := transformTransaction.GetObject(quit)
 		quitTransform.Parent().Set(transform.NewParent(menu, transform.RelativePos))
 		quitTransform.ParentPivotPoint().Set(transform.NewParentPivotPoint(1, 1, .5))
 		quitTransform.Size().Set(transform.NewSize(25, 25, 2))

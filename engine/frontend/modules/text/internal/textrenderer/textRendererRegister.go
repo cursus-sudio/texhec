@@ -29,8 +29,8 @@ var geomSource string
 var fragSource string
 
 type textRendererRegister struct {
-	cameraCtorsFactory   ecs.ToolFactory[camera.CameraTool]
-	transformToolFactory ecs.ToolFactory[transform.TransformTool]
+	cameraCtorsFactory   ecs.ToolFactory[camera.Tool]
+	transformToolFactory ecs.ToolFactory[transform.Tool]
 	fontService          FontService
 	vboFactory           vbo.VBOFactory[Glyph]
 	layoutServiceFactory LayoutServiceFactory
@@ -46,8 +46,8 @@ type textRendererRegister struct {
 }
 
 func NewTextRendererRegister(
-	cameraCtorsFactory ecs.ToolFactory[camera.CameraTool],
-	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+	cameraCtorsFactory ecs.ToolFactory[camera.Tool],
+	transformToolFactory ecs.ToolFactory[transform.Tool],
 	fontService FontService,
 	vboFactory vbo.VBOFactory[Glyph],
 	layoutServiceFactory LayoutServiceFactory,

@@ -7,12 +7,12 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-func (t entityTransform) GetRelativeParentPos() mgl32.Vec3 {
+func (t object) GetRelativeParentPos() mgl32.Vec3 {
 	parent, err := t.parent.Get()
 	if err != nil || parent.RelativeMask&transform.RelativePos == 0 {
 		return mgl32.Vec3{}
 	}
-	parentTransform := t.GetEntity(parent.Parent)
+	parentTransform := t.GetObject(parent.Parent)
 	parentPos, err := parentTransform.AbsolutePos().Get()
 	if err != nil {
 		parentPos = t.defaultPos
@@ -33,7 +33,7 @@ func (t entityTransform) GetRelativeParentPos() mgl32.Vec3 {
 	})
 }
 
-func (t entityTransform) GetPivotPos() mgl32.Vec3 {
+func (t object) GetPivotPos() mgl32.Vec3 {
 	pivot, err := t.pivotPoint.Get()
 	if err != nil {
 		return mgl32.Vec3{}
@@ -52,12 +52,12 @@ func (t entityTransform) GetPivotPos() mgl32.Vec3 {
 
 //
 
-func (t entityTransform) GetRelativeParentRotation() mgl32.Quat {
+func (t object) GetRelativeParentRotation() mgl32.Quat {
 	parent, err := t.parent.Get()
 	if err != nil || parent.RelativeMask&transform.RelativeRotation == 0 {
 		return mgl32.QuatIdent()
 	}
-	parentTransform := t.GetEntity(parent.Parent)
+	parentTransform := t.GetObject(parent.Parent)
 	parentRot, err := parentTransform.AbsoluteRotation().Get()
 	if err != nil {
 		return mgl32.QuatIdent()
@@ -67,12 +67,12 @@ func (t entityTransform) GetRelativeParentRotation() mgl32.Quat {
 
 //
 
-func (t entityTransform) GetRelativeParentSize() mgl32.Vec3 {
+func (t object) GetRelativeParentSize() mgl32.Vec3 {
 	parent, err := t.parent.Get()
 	if err != nil || parent.RelativeMask&transform.RelativeSize == 0 {
 		return mgl32.Vec3{1, 1, 1}
 	}
-	parentTransform := t.GetEntity(parent.Parent)
+	parentTransform := t.GetObject(parent.Parent)
 	parentSize, err := parentTransform.AbsoluteSize().Get()
 	if err != nil {
 		return mgl32.Vec3{1, 1, 1}
@@ -82,7 +82,7 @@ func (t entityTransform) GetRelativeParentSize() mgl32.Vec3 {
 
 //
 
-func (t *entityTransform) Init() {
+func (t *object) Init() {
 	t.absolutePos = ecs.NewEntityComponent(
 		func() (transform.PosComponent, error) {
 			pos, err := t.pos.Get()

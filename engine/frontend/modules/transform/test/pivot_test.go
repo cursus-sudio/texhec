@@ -8,7 +8,7 @@ import (
 func TestPivot(t *testing.T) {
 	setup := NewSetup()
 	entity := setup.World.NewEntity()
-	entityTransform := setup.Transaction.GetEntity(entity)
+	entityTransform := setup.Transaction.GetObject(entity)
 
 	entityTransform.Size().Set(transform.NewSize(10, 10, 10))
 	if err := setup.Transaction.Flush(); err != nil {

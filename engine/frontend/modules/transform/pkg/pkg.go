@@ -40,7 +40,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 		pkg.Register(b)
 	}
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[transform.TransformTool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[transform.Tool] {
 		return transformtool.NewTransformTool(
 			ioc.Get[logger.Logger](c),
 			ioc.Get[ecs.ToolFactory[relation.ParentTool[transform.ParentComponent]]](c),

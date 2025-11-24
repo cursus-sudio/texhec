@@ -13,14 +13,14 @@ import (
 
 type s struct {
 	logger               logger.Logger
-	cameraToolFactory    ecs.ToolFactory[camera.CameraTool]
-	transformToolFactory ecs.ToolFactory[transform.TransformTool]
+	cameraToolFactory    ecs.ToolFactory[camera.Tool]
+	transformToolFactory ecs.ToolFactory[transform.Tool]
 }
 
 func NewSystem(
 	logger logger.Logger,
-	cameraToolFactory ecs.ToolFactory[camera.CameraTool],
-	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+	cameraToolFactory ecs.ToolFactory[camera.Tool],
+	transformToolFactory ecs.ToolFactory[transform.Tool],
 ) ecs.SystemRegister {
 	return s{logger, cameraToolFactory, transformToolFactory}
 }
@@ -29,12 +29,12 @@ func (s s) Register(w ecs.World) error {
 	cameraTool := s.cameraToolFactory.Build(w)
 	transformTransaction := s.transformToolFactory.Build(w).Transaction()
 	events.Listen(w.EventsBuilder(), func(event drag.DraggableEvent) {
-		camera, err := cameraTool.Get(event.Drag.Camera)
+		camera, err := cameraTool.GetObject(event.Drag.Camera)
 		if err != nil {
 			return
 		}
 
-		transform := transformTransaction.GetEntity(event.Entity)
+		transform := transformTransaction.GetObject(event.Entity)
 		pos, err := transform.AbsolutePos().Get()
 		if err != nil {
 			s.logger.Warn(err)

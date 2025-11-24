@@ -43,7 +43,7 @@ func (pkg) Register(b ioc.Builder) {
 					ioc.Get[logger.Logger](c),
 					ioc.Get[ecs.ToolFactory[collider.CollisionTool]](c),
 					ioc.Get[window.Api](c),
-					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
+					ioc.Get[ecs.ToolFactory[camera.Tool]](c),
 				),
 				mouse.NewHoverSystem(),
 				mouse.NewHoverEventsSystem(),

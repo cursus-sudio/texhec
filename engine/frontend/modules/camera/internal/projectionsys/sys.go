@@ -20,8 +20,8 @@ type updateProjetionsSystem struct {
 	window window.Api
 	logger logger.Logger
 
-	transformTool transform.TransformTool
-	cameraTool    camera.CameraTool
+	transformTool transform.Tool
+	cameraTool    camera.Tool
 
 	cameraArray              ecs.ComponentsArray[camera.CameraComponent]
 	dynamicPerspectivesArray ecs.ComponentsArray[camera.DynamicPerspective]
@@ -32,8 +32,8 @@ type updateProjetionsSystem struct {
 func NewUpdateProjectionsSystem(
 	window window.Api,
 	logger logger.Logger,
-	transformToolFactory ecs.ToolFactory[transform.TransformTool],
-	cameraToolFactory ecs.ToolFactory[camera.CameraTool],
+	transformToolFactory ecs.ToolFactory[transform.Tool],
+	cameraToolFactory ecs.ToolFactory[camera.Tool],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := &updateProjetionsSystem{
@@ -79,13 +79,13 @@ func (s *updateProjetionsSystem) AspectRatio() float32 {
 func (s *updateProjetionsSystem) UpsertOrtho(ei []ecs.EntityID) {
 	transformTransaction := s.transformTool.Transaction()
 	for _, entity := range ei {
-		camera, err := s.cameraTool.Get(entity)
+		camera, err := s.cameraTool.GetObject(entity)
 		if err != nil {
 			s.logger.Warn(err)
 			continue
 		}
-		transform := transformTransaction.GetEntity(entity)
-		s.cameraTool.Get(entity)
+		transform := transformTransaction.GetObject(entity)
+		s.cameraTool.GetObject(entity)
 		size, err := transform.AbsoluteSize().Get()
 		if err != nil {
 			s.logger.Warn(err)

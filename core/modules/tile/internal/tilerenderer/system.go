@@ -51,7 +51,7 @@ type system struct {
 	cameraQuery ecs.LiveQuery
 	groupsArray ecs.ComponentsArray[groups.GroupsComponent]
 	gridGroups  groups.GroupsComponent
-	cameraCtors camera.CameraTool
+	cameraCtors camera.Tool
 
 	changed     bool
 	changeMutex sync.Locker
@@ -84,7 +84,7 @@ func (s *system) Listen(render.RenderEvent) {
 	gl.Uniform1f(s.locations.GridDepth, s.gridDepth)
 
 	for _, cameraEntity := range s.cameraQuery.Entities() {
-		camera, err := s.cameraCtors.Get(cameraEntity)
+		camera, err := s.cameraCtors.GetObject(cameraEntity)
 		if err != nil {
 			continue
 		}

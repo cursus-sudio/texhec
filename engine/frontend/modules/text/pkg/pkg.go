@@ -82,7 +82,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			ioc.Get[logger.Logger](c),
 			ioc.Get[textrenderer.FontService](c),
 			ioc.Get[textrenderer.FontKeys](c),
-			ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
+			ioc.Get[ecs.ToolFactory[transform.Tool]](c),
 			pkg.defaultFontFamily,
 			pkg.defaultFontSize,
 			// pkg.defaultOverflow,
@@ -97,8 +97,8 @@ func (pkg pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) text.System {
 		return textrenderer.NewTextRendererRegister(
-			ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
-			ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
+			ioc.Get[ecs.ToolFactory[camera.Tool]](c),
+			ioc.Get[ecs.ToolFactory[transform.Tool]](c),
 			ioc.Get[textrenderer.FontService](c),
 			ioc.Get[vbo.VBOFactory[textrenderer.Glyph]](c),
 			ioc.Get[textrenderer.LayoutServiceFactory](c),

@@ -15,11 +15,11 @@ import (
 
 type scrollSystem struct {
 	window      window.Api
-	cameraCtors camera.CameraTool
+	cameraCtors camera.Tool
 	logger      logger.Logger
 
 	world         ecs.World
-	transformTool transform.TransformTool
+	transformTool transform.Tool
 	orthoArray    ecs.ComponentsArray[camera.OrthoComponent]
 	query         ecs.LiveQuery
 
@@ -28,8 +28,8 @@ type scrollSystem struct {
 
 func NewScrollSystem(
 	logger logger.Logger,
-	cameraCtors ecs.ToolFactory[camera.CameraTool],
-	transformTool ecs.ToolFactory[transform.TransformTool],
+	cameraCtors ecs.ToolFactory[camera.Tool],
+	transformTool ecs.ToolFactory[transform.Tool],
 	window window.Api,
 	minZoom, maxZoom float32,
 ) ecs.SystemRegister {
@@ -71,7 +71,7 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) error {
 			continue
 		}
 
-		transform := transformTransaction.GetEntity(cameraEntity)
+		transform := transformTransaction.GetObject(cameraEntity)
 		pos, err := transform.AbsolutePos().Get()
 		if err != nil {
 			s.logger.Warn(err)
@@ -83,7 +83,7 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) error {
 			continue
 		}
 
-		camera, err := s.cameraCtors.Get(cameraEntity)
+		camera, err := s.cameraCtors.GetObject(cameraEntity)
 		if err != nil {
 			continue
 		}

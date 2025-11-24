@@ -14,7 +14,7 @@ import (
 
 type collisionDetectionService struct {
 	world                ecs.World
-	transformTransaction transform.TransformTransaction
+	transformTransaction transform.Transaction
 	groupsArray          ecs.ComponentsArray[groups.GroupsComponent]
 	colliderArray        ecs.ComponentsArray[collider.ColliderComponent]
 	assets               assets.Assets
@@ -24,7 +24,7 @@ type collisionDetectionService struct {
 
 func newCollisionDetectionService(
 	world ecs.World,
-	transformTransaction transform.TransformTransaction,
+	transformTransaction transform.Transaction,
 	assets assets.Assets,
 	worldCollider worldCollider,
 	logger logger.Logger,
@@ -49,7 +49,7 @@ func (c *collisionDetectionService) CollidesWithRay(entity ecs.EntityID, ray col
 		return nil, nil
 	}
 
-	transform := c.transformTransaction.GetEntity(entity)
+	transform := c.transformTransaction.GetObject(entity)
 	aabb, err := TransformAABB(transform)
 	if err != nil {
 		return nil, err

@@ -27,7 +27,7 @@ type worldCollider interface {
 type worldColliderImpl struct {
 	logger               logger.Logger
 	world                ecs.World
-	transformTransaction transform.TransformTransaction
+	transformTransaction transform.Transaction
 	chunkSize            float32
 	chunks               map[mgl32.Vec2]datastructures.Set[ecs.EntityID]
 	entitiesPositions    map[ecs.EntityID][]mgl32.Vec2
@@ -36,7 +36,7 @@ type worldColliderImpl struct {
 func newWorldCollider(
 	logger logger.Logger,
 	world ecs.World,
-	transformTransaction transform.TransformTransaction,
+	transformTransaction transform.Transaction,
 	chunkSize float32,
 ) worldCollider {
 	return &worldColliderImpl{
@@ -79,7 +79,7 @@ func (c *worldColliderImpl) Chunks() map[mgl32.Vec2]datastructures.Set[ecs.Entit
 
 func (c *worldColliderImpl) Add(entities ...ecs.EntityID) {
 	for _, entity := range entities {
-		transform := c.transformTransaction.GetEntity(entity)
+		transform := c.transformTransaction.GetObject(entity)
 		aabb, err := TransformAABB(transform)
 		if err != nil {
 			c.logger.Warn(err)

@@ -17,18 +17,18 @@ type dragSystem struct {
 	button uint8
 
 	world         ecs.World
-	transformTool transform.TransformTool
+	transformTool transform.Tool
 	query         ecs.LiveQuery
 
-	cameraCtors camera.CameraTool
+	cameraCtors camera.Tool
 	window      window.Api
 	logger      logger.Logger
 }
 
 func NewDragSystem(
 	dragButton uint8,
-	cameraCtors ecs.ToolFactory[camera.CameraTool],
-	transformTool ecs.ToolFactory[transform.TransformTool],
+	cameraCtors ecs.ToolFactory[camera.Tool],
+	transformTool ecs.ToolFactory[transform.Tool],
 	window window.Api,
 	logger logger.Logger,
 ) ecs.SystemRegister {
@@ -56,7 +56,7 @@ func (s *dragSystem) Listen(e inputs.DragEvent) {
 	transformTransaction := s.transformTool.Transaction()
 
 	for _, cameraEntity := range s.query.Entities() {
-		transform := transformTransaction.GetEntity(cameraEntity)
+		transform := transformTransaction.GetObject(cameraEntity)
 		pos, err := transform.AbsolutePos().Get()
 		if err != nil {
 			s.logger.Warn(err)
@@ -68,7 +68,7 @@ func (s *dragSystem) Listen(e inputs.DragEvent) {
 			continue
 		}
 
-		camera, err := s.cameraCtors.Get(cameraEntity)
+		camera, err := s.cameraCtors.GetObject(cameraEntity)
 		if err != nil {
 			continue
 		}

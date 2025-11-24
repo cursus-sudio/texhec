@@ -7,7 +7,7 @@ import (
 	"shared/services/logger"
 )
 
-type transformTool struct {
+type tool struct {
 	logger logger.Logger
 
 	world      ecs.World
@@ -35,9 +35,9 @@ func NewTransformTool(
 	defaultSize transform.SizeComponent,
 	defaultPivot transform.PivotPointComponent,
 	defaultParentPivot transform.ParentPivotPointComponent,
-) ecs.ToolFactory[transform.TransformTool] {
-	return ecs.NewToolFactory(func(w ecs.World) transform.TransformTool {
-		return transformTool{
+) ecs.ToolFactory[transform.Tool] {
+	return ecs.NewToolFactory(func(w ecs.World) transform.Tool {
+		return tool{
 			logger,
 			w,
 			parentToolFactory.Build(w),
@@ -60,11 +60,11 @@ func NewTransformTool(
 	})
 }
 
-func (tool transformTool) Transaction() transform.TransformTransaction {
+func (tool tool) Transaction() transform.Transaction {
 	return newTransformTransaction(tool)
 }
 
-func (tool transformTool) Query(b ecs.LiveQueryBuilder) ecs.LiveQueryBuilder {
+func (tool tool) Query(b ecs.LiveQueryBuilder) ecs.LiveQueryBuilder {
 	return b.Track(
 		ecs.GetComponentType(transform.PosComponent{}),
 		ecs.GetComponentType(transform.RotationComponent{}),

@@ -12,6 +12,7 @@ type ComponentsArrayTransaction[Component any] interface {
 	// can return:
 	// - ErrEntityDoNotExists
 	SaveComponent(EntityID, Component) // upsert
+	GetEntityComponent(entity EntityID) EntityComponent[Component]
 	AnyComponentsArrayTransaction
 }
 
@@ -85,6 +86,17 @@ func (t *componentsArrayTransaction[Component]) removeOperation(entity EntityID)
 			break
 		}
 	}
+}
+
+func (c *componentsArrayTransaction[Component]) GetEntityComponent(
+	entity EntityID,
+) EntityComponent[Component] {
+	return newEntityComponent(
+		entity,
+		c.array.GetComponent,
+		c.SaveComponent,
+		c.RemoveComponent,
+	)
 }
 
 func (t *componentsArrayTransaction[Component]) SaveComponent(entity EntityID, component Component) {

@@ -49,6 +49,7 @@ func newEntities() *entitiesImpl {
 func (entitiesStorage *entitiesImpl) NewEntity() EntityID {
 	if id, ok := entitiesStorage.holes.GetStored(0); ok {
 		entitiesStorage.holes.Remove(0)
+		entitiesStorage.entities.Add(id)
 		return id
 	}
 	entitiesStorage.counter += 1

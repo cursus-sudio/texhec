@@ -5,7 +5,6 @@ import (
 	"frontend/modules/collider"
 	"frontend/modules/groups"
 	"frontend/modules/relation"
-	"frontend/modules/relation/pkg"
 	"shared/services/datastructures"
 	"shared/services/ecs"
 	"shared/services/logger"
@@ -45,13 +44,13 @@ func Package(
 
 func (pkg pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.System) tile.System {
-		posIndexFactory := ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[tile.PosComponent]]](c)
+		tileToolFactory := ioc.Get[ecs.ToolFactory[tile.Tool]](c)
 		logger := ioc.Get[logger.Logger](c)
 		return ecs.NewSystemRegister(func(w ecs.World) error {
 			if err := s.Register(w); err != nil {
 				return err
 			}
-			posIndex := posIndexFactory.Build(w)
+			posIndex := tileToolFactory.Build(w).TilePos()
 			errs := ecs.RegisterSystems(w,
 				TileColliderSystem(
 					logger,
@@ -100,48 +99,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 		})
 	})
 
-	relationpkg.SpatialRelationPackage(
-		func(w ecs.World) ecs.LiveQuery {
-			return w.Query().
-				Require(ecs.GetComponentType(tile.PosComponent{})).
-				Build()
-		},
-		func(w ecs.World) func(entity ecs.EntityID) (tile.PosComponent, bool) {
-			tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w)
-			return func(entity ecs.EntityID) (tile.PosComponent, bool) {
-				comp, err := tilePosArray.GetComponent(entity)
-				return comp, err == nil
-			}
-		},
-		func(index tile.PosComponent) uint32 {
-			xMul := pkg.maxX - pkg.minX
-			yMul := xMul * (pkg.maxY - pkg.minY)
-			result := (index.X+pkg.minX)*xMul + (index.Y+pkg.minY)*yMul + (int32(index.Layer) + pkg.minZ)
-			return uint32(result)
-		},
-	).Register(b)
-	relationpkg.SpatialRelationPackage(
-		func(w ecs.World) ecs.LiveQuery {
-			return w.Query().
-				Require(ecs.GetComponentType(tile.PosComponent{})).
-				Build()
-		},
-		func(w ecs.World) func(entity ecs.EntityID) (tile.ColliderPos, bool) {
-			tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w)
-			return func(entity ecs.EntityID) (tile.ColliderPos, bool) {
-				tileComp, err := tilePosArray.GetComponent(entity)
-				if err != nil && tileComp.Layer != pkg.mainLayer {
-					return tile.ColliderPos{}, false
-				}
-				return tileComp.GetColliderPos(), true
-			}
-		},
-		func(pos tile.ColliderPos) uint32 {
-			xMul := pkg.maxX - pkg.minX
-			result := (pos.X+pkg.minX)*xMul + (pos.Y + pkg.minY)
-			return uint32(result)
-		},
-	).Register(b)
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, indices ecs.ToolFactory[relation.EntityToKeyTool[tile.ColliderPos]]) ecs.ToolFactory[relation.EntityToKeyTool[tile.ColliderPos]] {
 		posIndexFactory := ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[tile.PosComponent]]](c)
 		logger := ioc.Get[logger.Logger](c)

@@ -4,6 +4,7 @@ import (
 	gameassets "core/assets"
 	"core/modules/definition"
 	"core/modules/tile"
+	"core/modules/ui"
 	gamescenes "core/scenes"
 	"frontend/modules/camera"
 	"frontend/modules/collider"
@@ -40,6 +41,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			uiCamera := world.NewEntity()
 			ecs.SaveComponent(world, uiCamera, camera.NewOrtho(-100, +1000, 1))
 			ecs.SaveComponent(world, uiCamera, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
+			ecs.SaveComponent(world, uiCamera, ui.UiCameraComponent{})
 
 			gameCamera := world.NewEntity()
 			ecs.SaveComponent(world, gameCamera, camera.NewOrtho(-1000, +1000, 1))

@@ -214,12 +214,12 @@ func TestComponentsQuery(t *testing.T) {
 	}
 
 	component2.SaveComponent(entity, Component2{})
-	if ok := expectChange(); !ok {
+	if ok := expectNothing(); !ok {
 		return
 	}
 
 	component.SaveComponent(entity, Component{})
-	if ok := expectChange(); !ok {
+	if ok := expectNothing(); !ok {
 		return
 	}
 
@@ -229,7 +229,7 @@ func TestComponentsQuery(t *testing.T) {
 	}
 
 	trackedComponent.SaveComponent(entity, TrackedComponent{})
-	if ok := expectChange(); !ok {
+	if ok := expectNothing(); !ok {
 		return
 	}
 

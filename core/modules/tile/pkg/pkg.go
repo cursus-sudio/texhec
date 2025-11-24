@@ -4,7 +4,7 @@ import (
 	"core/modules/tile"
 	"core/modules/tile/internal/tilecollider"
 	"core/modules/tile/internal/tilerenderer"
-	"core/modules/tile/internal/tileui"
+	"core/modules/tile/internal/tiletool"
 	"frontend/modules/collider"
 	"frontend/modules/groups"
 	"shared/services/ecs"
@@ -27,6 +27,13 @@ func Package(
 ) ioc.Pkg {
 	return pkg{
 		[]ioc.Pkg{
+			tiletool.Package(
+				tileSize,
+				gridDepth,
+				mainLayer,
+				layers,
+				minX, maxX, minY, maxY, minZ,
+			),
 			tilecollider.Package(
 				tileSize,
 				gridDepth,
@@ -41,7 +48,6 @@ func Package(
 				gridDepth,
 				tileGroups,
 			),
-			tileui.Package(),
 		},
 	}
 }

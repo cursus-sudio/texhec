@@ -33,13 +33,13 @@ func newEntityTransform(
 	s := entityTransform{
 		transformTransaction: t,
 
-		pos:  t.posArray.GetEntityComponent(entity, t.posTransaction),
-		rot:  t.rotationArray.GetEntityComponent(entity, t.rotationTransaction),
-		size: t.sizeArray.GetEntityComponent(entity, t.sizeTransaction),
+		pos:  t.posTransaction.GetEntityComponent(entity),
+		rot:  t.rotationTransaction.GetEntityComponent(entity),
+		size: t.sizeTransaction.GetEntityComponent(entity),
 
-		pivotPoint:       t.pivotPointArray.GetEntityComponent(entity, t.pivotPointTransaction),
-		parent:           t.parentArray.GetEntityComponent(entity, t.parentTransaction),
-		parentPivotPoint: t.parentPivotPointArray.GetEntityComponent(entity, t.parentPivotPointTransaction),
+		pivotPoint:       t.pivotPointTransaction.GetEntityComponent(entity),
+		parent:           t.parentTransaction.GetEntityComponent(entity),
+		parentPivotPoint: t.parentPivotPointTransaction.GetEntityComponent(entity),
 		entity:           entity,
 	}
 	s.Init()

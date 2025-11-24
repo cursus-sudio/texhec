@@ -22,8 +22,6 @@ func NewDragged(camera ecs.EntityID) DraggedComponent {
 
 //
 
-//
-
 // keeps element selected even if user drags outside
 type KeepSelectedComponent struct{}
 

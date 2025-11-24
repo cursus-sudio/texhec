@@ -120,7 +120,7 @@ func (t *object) Init() {
 			}
 
 			rot.Rotation = rot.Rotation.
-				Add(t.GetRelativeParentRotation())
+				Mul(t.GetRelativeParentRotation())
 
 			return rot, nil
 		},
@@ -131,7 +131,7 @@ func (t *object) Init() {
 			}
 
 			rot.Rotation = absoluteRot.Rotation.
-				Sub(t.GetRelativeParentRotation())
+				Mul(t.GetRelativeParentRotation().Inverse())
 
 			t.rot.Set(rot)
 		},

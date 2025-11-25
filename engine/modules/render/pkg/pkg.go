@@ -18,13 +18,7 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[render.RenderTool] {
-		return ecs.NewToolFactory(func(w ecs.World) render.RenderTool {
-			return internal.NewTool()
-		})
-	})
-
-	ioc.RegisterSingleton(b, func(c ioc.Dic) render.RenderTool {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[render.Tool] {
 		return internal.NewTool()
 	})
 
@@ -34,7 +28,7 @@ func (pkg) Register(b ioc.Builder) {
 				internal.NewClearSystem(),
 				internal.NewErrorLogger(
 					ioc.Get[logger.Logger](c),
-					ioc.Get[ecs.ToolFactory[render.RenderTool]](c).Build(w),
+					ioc.Get[ecs.ToolFactory[render.Tool]](c).Build(w),
 				),
 				internal.NewRenderSystem(ioc.Get[window.Api](c)),
 			)

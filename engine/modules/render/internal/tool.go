@@ -16,7 +16,14 @@ type tool struct {
 }
 
 func NewTool() ecs.ToolFactory[render.Tool] {
-	return ecs.NewToolFactory(func(w ecs.World) render.Tool { return &tool{world: w} })
+	return ecs.NewToolFactory(func(w ecs.World) render.Tool {
+		return &tool{
+			w,
+			ecs.GetComponentsArray[render.ColorComponent](w),
+			ecs.GetComponentsArray[render.MeshComponent](w),
+			ecs.GetComponentsArray[render.TextureComponent](w),
+		}
+	})
 }
 
 type transaction struct {

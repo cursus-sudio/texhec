@@ -188,7 +188,7 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 		scale := mgl32.Scale3D(
 			float32(layout.Layout.FontSize),
 			float32(layout.Layout.FontSize),
-			float32(layout.Layout.FontSize),
+			size.Size.Z()/2,
 		)
 		entityMvp := translation.Mul4(rotation).Mul4(scale)
 

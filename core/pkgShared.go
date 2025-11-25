@@ -1,12 +1,11 @@
 package main
 
 import (
-	"shared/services/api/netconnection"
-	"shared/services/clock"
-	"shared/services/codec"
-	"shared/services/eventspkg"
-	"shared/services/runtime"
-	"shared/services/uuid"
+	"engine/services/clock"
+	"engine/services/codec"
+	"engine/services/eventspkg"
+	"engine/services/runtime"
+	"engine/services/uuid"
 	"time"
 
 	"github.com/ogiusek/ioc/v2"
@@ -19,7 +18,6 @@ type SharedPkg struct {
 func SharedPackage() SharedPkg {
 	return SharedPkg{
 		pkgs: []ioc.Pkg{
-			netconnection.Package(time.Second),
 			clock.Package(time.RFC3339Nano),
 			eventspkg.Package(),
 			codec.Package(),

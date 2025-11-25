@@ -1,6 +1,6 @@
 package ui
 
-import "shared/services/ecs"
+import "engine/services/ecs"
 
 type System ecs.SystemRegister
 

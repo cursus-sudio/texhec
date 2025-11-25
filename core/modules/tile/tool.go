@@ -1,7 +1,7 @@
 package tile
 
 import (
-	"frontend/modules/relation"
+	"engine/modules/relation"
 )
 
 type Tool interface {

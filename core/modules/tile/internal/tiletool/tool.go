@@ -2,7 +2,7 @@ package tiletool
 
 import (
 	"core/modules/tile"
-	"frontend/modules/relation"
+	"engine/modules/relation"
 )
 
 type tool struct {

@@ -1,11 +1,11 @@
 package internal
 
 import (
+	"engine/services/console"
+	"engine/services/ecs"
+	"engine/services/frames"
+	"engine/services/scenes"
 	"fmt"
-	"frontend/services/console"
-	"frontend/services/frames"
-	"frontend/services/scenes"
-	"shared/services/ecs"
 	"time"
 
 	"github.com/ogiusek/events"

@@ -2,9 +2,9 @@ package tiletool
 
 import (
 	"core/modules/tile"
-	"frontend/modules/relation"
-	relationpkg "frontend/modules/relation/pkg"
-	"shared/services/ecs"
+	"engine/modules/relation"
+	relationpkg "engine/modules/relation/pkg"
+	"engine/services/ecs"
 
 	"github.com/ogiusek/ioc/v2"
 )

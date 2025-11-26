@@ -9,7 +9,11 @@ import (
 
 func (t object) GetRelativeParentPos() mgl32.Vec3 {
 	parent, err := t.parent.Get()
-	if err != nil || parent.RelativeMask&transform.RelativePos == 0 {
+	if err != nil {
+		return mgl32.Vec3{}
+	}
+	parentMask, err := t.parentMask.Get()
+	if err != nil || parentMask.RelativeMask&transform.RelativePos == 0 {
 		return mgl32.Vec3{}
 	}
 	parentTransform := t.GetObject(parent.Parent)
@@ -54,7 +58,11 @@ func (t object) GetPivotPos() mgl32.Vec3 {
 
 func (t object) GetRelativeParentRotation() mgl32.Quat {
 	parent, err := t.parent.Get()
-	if err != nil || parent.RelativeMask&transform.RelativeRotation == 0 {
+	if err != nil {
+		return mgl32.QuatIdent()
+	}
+	parentMask, err := t.parentMask.Get()
+	if err != nil || parentMask.RelativeMask&transform.RelativeRotation == 0 {
 		return mgl32.QuatIdent()
 	}
 	parentTransform := t.GetObject(parent.Parent)
@@ -69,7 +77,11 @@ func (t object) GetRelativeParentRotation() mgl32.Quat {
 
 func (t object) GetRelativeParentSize() mgl32.Vec3 {
 	parent, err := t.parent.Get()
-	if err != nil || parent.RelativeMask&transform.RelativeSize == 0 {
+	if err != nil {
+		return mgl32.Vec3{1, 1, 1}
+	}
+	parentMask, err := t.parentMask.Get()
+	if err != nil || parentMask.RelativeMask&transform.RelativeSize == 0 {
 		return mgl32.Vec3{1, 1, 1}
 	}
 	parentTransform := t.GetObject(parent.Parent)

@@ -9,6 +9,7 @@ import (
 	"engine/modules/collider"
 	"engine/modules/genericrenderer"
 	"engine/modules/groups"
+	"engine/modules/hierarchy"
 	"engine/modules/inputs"
 	"engine/modules/render"
 	"engine/modules/text"
@@ -63,6 +64,7 @@ type uiSys struct {
 	tileTool      tile.Tool
 	textTool      text.Tool
 	renderTool    render.Tool
+	hierarchyTool hierarchy.Tool
 
 	animationArray    ecs.ComponentsArray[animation.AnimationComponent]
 	uiCameraArray     ecs.ComponentsArray[ui.UiCameraComponent]
@@ -76,6 +78,7 @@ type uiSys struct {
 	transformTransaction transform.Transaction
 	textTransaction      text.Transaction
 	renderTransaction    render.Transaction
+	hierarchyTransaction hierarchy.Transaction
 
 	animationTransaction    ecs.ComponentsArrayTransaction[animation.AnimationComponent]
 	uiCameraTransaction     ecs.ComponentsArrayTransaction[ui.UiCameraComponent]
@@ -99,6 +102,7 @@ func NewSystem(
 	tileToolFactory ecs.ToolFactory[tile.Tool],
 	textToolFactory ecs.ToolFactory[text.Tool],
 	renderToolFactory ecs.ToolFactory[render.Tool],
+	hierarchyToolFactory ecs.ToolFactory[hierarchy.Tool],
 	maxTileDepth tile.Layer,
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(world ecs.World) error {
@@ -110,6 +114,7 @@ func NewSystem(
 			tileTool:          tileToolFactory.Build(world),
 			textTool:          textToolFactory.Build(world),
 			renderTool:        renderToolFactory.Build(world),
+			hierarchyTool:     hierarchyToolFactory.Build(world),
 			animationArray:    ecs.GetComponentsArray[animation.AnimationComponent](world),
 			uiCameraArray:     ecs.GetComponentsArray[ui.UiCameraComponent](world),
 			groupsArray:       ecs.GetComponentsArray[groups.GroupsComponent](world),
@@ -164,12 +169,14 @@ func (s *uiSys) EnsureInit() {
 	menuText.TextAlign().Set(text.TextAlignComponent{Vertical: .5, Horizontal: .5})
 
 	childrenContainer := s.world.NewEntity()
+	s.hierarchyTransaction.GetObject(childrenContainer).Parent().Set(hierarchy.NewParent(menu))
 	childrenContainerTransform := s.transformTransaction.GetObject(childrenContainer)
-	childrenContainerTransform.Parent().Set(transform.NewParent(menu, transform.RelativePos|transform.RelativeSize))
+	childrenContainerTransform.Parent().Set(transform.NewParent(transform.RelativePos | transform.RelativeSize))
 
 	quit := s.world.NewEntity()
+	s.hierarchyTransaction.GetObject(quit).Parent().Set(hierarchy.NewParent(menu))
 	quitTransform := s.transformTransaction.GetObject(quit)
-	quitTransform.Parent().Set(transform.NewParent(menu, transform.RelativePos))
+	quitTransform.Parent().Set(transform.NewParent(transform.RelativePos))
 	quitTransform.ParentPivotPoint().Set(transform.NewParentPivotPoint(1, 1, .5))
 	quitTransform.Size().Set(transform.NewSize(25, 25, 2))
 	quitTransform.PivotPoint().Set(transform.NewPivotPoint(1, 1, .5))
@@ -207,6 +214,7 @@ func (s *uiSys) Flush() error {
 	transactions = append(transactions, s.transformTransaction.Transactions()...)
 	transactions = append(transactions, s.renderTransaction.Transactions()...)
 	transactions = append(transactions, s.textTransaction.Transactions()...)
+	transactions = append(transactions, s.hierarchyTransaction.Transactions()...)
 	if err := ecs.FlushMany(transactions...); err != nil {
 		return err
 	}
@@ -215,7 +223,7 @@ func (s *uiSys) Flush() error {
 
 func (s *uiSys) Render() error {
 	s.EnsureInit()
-	for _, entity := range s.transformTransaction.
+	for _, entity := range s.hierarchyTransaction.
 		GetObject(s.menu.childrenContainer).
 		FlatChildren().GetIndices() {
 		s.world.RemoveEntity(entity)
@@ -247,7 +255,8 @@ func (s *uiSys) Render() error {
 
 	menu := s.menu.menu
 	s.groupsTransaction.SaveComponent(menu, groups)
-	s.transformTransaction.GetObject(menu).Parent().Set(transform.NewParent(camera, transform.RelativePos|transform.RelativeSize))
+	s.hierarchyTransaction.GetObject(menu).Parent().Set(hierarchy.NewParent(camera))
+	s.transformTransaction.GetObject(menu).Parent().Set(transform.NewParent(transform.RelativePos | transform.RelativeSize))
 
 	menuText := s.textTransaction.GetObject(menu)
 	menuText.Text().Set(text.TextComponent{Text: fmt.Sprintf("pos is %v", state.Tile)})

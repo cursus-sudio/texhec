@@ -1,7 +1,7 @@
 package test
 
 import (
-	"engine/modules/transform"
+	"engine/modules/hierarchy"
 	"testing"
 )
 
@@ -15,8 +15,8 @@ func TestChildren(t *testing.T) {
 	childTransform := setup.Transaction.GetObject(child)
 	grandChildTransform := setup.Transaction.GetObject(grandChild)
 
-	childTransform.Parent().Set(transform.NewParent(parent, transform.RelativePos))
-	grandChildTransform.Parent().Set(transform.NewParent(child, transform.RelativePos))
+	childTransform.Parent().Set(hierarchy.NewParent(parent))
+	grandChildTransform.Parent().Set(hierarchy.NewParent(child))
 
 	if err := setup.Transaction.Flush(); err != nil {
 		t.Error(err)
@@ -32,5 +32,4 @@ func TestChildren(t *testing.T) {
 		t.Errorf("expected parent to have two flat children")
 		return
 	}
-
 }

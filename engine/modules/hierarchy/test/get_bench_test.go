@@ -1,7 +1,7 @@
 package test
 
 import (
-	"engine/modules/transform"
+	"engine/modules/hierarchy"
 	"testing"
 )
 
@@ -10,30 +10,31 @@ func BenchmarkChildren_1(b *testing.B) {
 	parent := setup.World.NewEntity()
 	child := setup.World.NewEntity()
 
-	parentTransform := setup.Transaction.GetObject(parent)
-	childTransform := setup.Transaction.GetObject(child)
+	parentObj := setup.Transaction.GetObject(parent)
+	childObj := setup.Transaction.GetObject(child)
 
-	childTransform.Parent().Set(transform.NewParent(parent, transform.RelativePos))
+	childObj.Parent().Set(hierarchy.NewParent(parent))
 
 	if err := setup.Transaction.Flush(); err != nil {
 		b.Error(err)
 		return
 	}
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		parentTransform.Children()
+		parentObj.Children()
 	}
 }
 
 func BenchmarkChildren_10(b *testing.B) {
 	setup := NewSetup()
 	parent := setup.World.NewEntity()
-	parentTransform := setup.Transaction.GetObject(parent)
+	parentObj := setup.Transaction.GetObject(parent)
 
 	for i := 0; i < 10; i++ {
 		child := setup.World.NewEntity()
-		childTransform := setup.Transaction.GetObject(child)
-		childTransform.Parent().Set(transform.NewParent(parent, transform.RelativePos))
+		object := setup.Transaction.GetObject(child)
+		object.Parent().Set(hierarchy.NewParent(parent))
 	}
 
 	if err := setup.Transaction.Flush(); err != nil {
@@ -41,20 +42,21 @@ func BenchmarkChildren_10(b *testing.B) {
 		return
 	}
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		parentTransform.Children()
+		parentObj.Children()
 	}
 }
 
 func BenchmarkChildren_100(b *testing.B) {
 	setup := NewSetup()
 	parent := setup.World.NewEntity()
-	parentTransform := setup.Transaction.GetObject(parent)
+	parentObj := setup.Transaction.GetObject(parent)
 
 	for i := 0; i < 100; i++ {
 		child := setup.World.NewEntity()
-		childTransform := setup.Transaction.GetObject(child)
-		childTransform.Parent().Set(transform.NewParent(parent, transform.RelativePos))
+		object := setup.Transaction.GetObject(child)
+		object.Parent().Set(hierarchy.NewParent(parent))
 	}
 
 	if err := setup.Transaction.Flush(); err != nil {
@@ -62,8 +64,9 @@ func BenchmarkChildren_100(b *testing.B) {
 		return
 	}
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		parentTransform.Children()
+		parentObj.Children()
 	}
 }
 
@@ -73,37 +76,38 @@ func BenchmarkFlatChildren_1_1(b *testing.B) {
 	child := setup.World.NewEntity()
 	grandChild := setup.World.NewEntity()
 
-	parentTransform := setup.Transaction.GetObject(parent)
-	childTransform := setup.Transaction.GetObject(child)
-	grandChildTransform := setup.Transaction.GetObject(grandChild)
+	parentObj := setup.Transaction.GetObject(parent)
+	childObj := setup.Transaction.GetObject(child)
+	grandChildObj := setup.Transaction.GetObject(grandChild)
 
-	childTransform.Parent().Set(transform.NewParent(parent, transform.RelativePos))
-	grandChildTransform.Parent().Set(transform.NewParent(child, transform.RelativePos))
+	childObj.Parent().Set(hierarchy.NewParent(parent))
+	grandChildObj.Parent().Set(hierarchy.NewParent(child))
 
 	if err := setup.Transaction.Flush(); err != nil {
 		b.Error(err)
 		return
 	}
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		parentTransform.FlatChildren()
+		parentObj.FlatChildren()
 	}
 }
 
 func BenchmarkFlatChildren_10_10(b *testing.B) {
 	setup := NewSetup()
 	parent := setup.World.NewEntity()
-	parentTransform := setup.Transaction.GetObject(parent)
+	parentObj := setup.Transaction.GetObject(parent)
 
 	for i := 0; i < 10; i++ {
 		child := setup.World.NewEntity()
-		childTransform := setup.Transaction.GetObject(child)
-		childTransform.Parent().Set(transform.NewParent(parent, transform.RelativePos))
+		childObj := setup.Transaction.GetObject(child)
+		childObj.Parent().Set(hierarchy.NewParent(parent))
 
 		for j := 0; j < 10; j++ {
 			grandChild := setup.World.NewEntity()
-			grandChildTransform := setup.Transaction.GetObject(grandChild)
-			grandChildTransform.Parent().Set(transform.NewParent(child, transform.RelativePos))
+			grandChildObj := setup.Transaction.GetObject(grandChild)
+			grandChildObj.Parent().Set(hierarchy.NewParent(child))
 		}
 	}
 
@@ -113,6 +117,6 @@ func BenchmarkFlatChildren_10_10(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		parentTransform.FlatChildren()
+		parentObj.FlatChildren()
 	}
 }

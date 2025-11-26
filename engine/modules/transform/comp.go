@@ -1,8 +1,6 @@
 package transform
 
 import (
-	"engine/services/ecs"
-
 	"github.com/go-gl/mathgl/mgl32"
 )
 
@@ -27,10 +25,7 @@ type SizeComponent struct{ Size mgl32.Vec3 }
 // example: to align to left use (0, .5, .5)
 type PivotPointComponent struct{ Point mgl32.Vec3 }
 
-type ParentComponent struct {
-	Parent       ecs.EntityID
-	RelativeMask ParentFlag
-}
+type ParentComponent struct{ RelativeMask ParentFlag }
 type ParentPivotPointComponent PivotPointComponent
 
 // ctors
@@ -41,7 +36,7 @@ func NewSize(x, y, z float32) SizeComponent             { return SizeComponent{m
 func NewPivotPoint(x, y, z float32) PivotPointComponent {
 	return PivotPointComponent{mgl32.Vec3{x, y, z}}
 }
-func NewParent(p ecs.EntityID, mask ParentFlag) ParentComponent { return ParentComponent{p, mask} }
+func NewParent(mask ParentFlag) ParentComponent { return ParentComponent{mask} }
 func NewParentPivotPoint(x, y, z float32) ParentPivotPointComponent {
 	return ParentPivotPointComponent{mgl32.Vec3{x, y, z}}
 }

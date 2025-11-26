@@ -1,6 +1,7 @@
 package transformtool
 
 import (
+	"engine/modules/hierarchy"
 	"engine/modules/transform"
 	"engine/services/ecs"
 )
@@ -8,11 +9,12 @@ import (
 type transaction struct {
 	tool
 
+	parentTransaction           ecs.ComponentsArrayTransaction[hierarchy.ParentComponent]
 	posTransaction              ecs.ComponentsArrayTransaction[transform.PosComponent]
 	rotationTransaction         ecs.ComponentsArrayTransaction[transform.RotationComponent]
 	sizeTransaction             ecs.ComponentsArrayTransaction[transform.SizeComponent]
 	pivotPointTransaction       ecs.ComponentsArrayTransaction[transform.PivotPointComponent]
-	parentTransaction           ecs.ComponentsArrayTransaction[transform.ParentComponent]
+	parentMaskTransaction       ecs.ComponentsArrayTransaction[transform.ParentComponent]
 	parentPivotPointTransaction ecs.ComponentsArrayTransaction[transform.ParentPivotPointComponent]
 }
 
@@ -21,11 +23,12 @@ func newTransformTransaction(
 ) transform.Transaction {
 	return transaction{
 		tool,
+		tool.parentArray.Transaction(),
 		tool.posArray.Transaction(),
 		tool.rotationArray.Transaction(),
 		tool.sizeArray.Transaction(),
 		tool.pivotPointArray.Transaction(),
-		tool.parentArray.Transaction(),
+		tool.parentMaskArray.Transaction(),
 		tool.parentPivotPointArray.Transaction(),
 	}
 }
@@ -40,7 +43,7 @@ func (t transaction) Transactions() []ecs.AnyComponentsArrayTransaction {
 		t.rotationTransaction,
 		t.sizeTransaction,
 		t.pivotPointTransaction,
-		t.parentTransaction,
+		t.parentMaskTransaction,
 		t.parentPivotPointTransaction,
 	}
 }

@@ -20,6 +20,7 @@ import (
 	"engine/modules/genericrenderer/pkg"
 	"engine/modules/groups"
 	"engine/modules/groups/pkg"
+	"engine/modules/hierarchy/pkg"
 	"engine/modules/inputs/pkg"
 	"engine/modules/render/pkg"
 	"engine/modules/scenes/pkg"
@@ -191,6 +192,7 @@ func frontendDic(
 			0.8, // arbitrary number works for some reason
 		),
 		transformpkg.Package(),
+		hierarchypkg.Package(),
 
 		// game packages
 		fpsloggerpkg.Package(),

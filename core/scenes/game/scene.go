@@ -10,6 +10,7 @@ import (
 	"engine/modules/collider"
 	"engine/modules/genericrenderer"
 	"engine/modules/groups"
+	"engine/modules/hierarchy"
 	"engine/modules/inputs"
 	"engine/modules/render"
 	"engine/modules/text"
@@ -55,7 +56,8 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world, signature, transform.NewPos(5, 5, 0))
 			ecs.SaveComponent(world, signature, transform.NewSize(100, 50, 1))
 			ecs.SaveComponent(world, signature, transform.NewPivotPoint(0, .5, .5))
-			ecs.SaveComponent(world, signature, transform.NewParent(uiCamera, transform.RelativePos))
+			ecs.SaveComponent(world, signature, hierarchy.NewParent(uiCamera))
+			ecs.SaveComponent(world, signature, transform.NewParent(transform.RelativePos))
 			ecs.SaveComponent(world, signature, transform.NewParentPivotPoint(0, 0, .5))
 			ecs.SaveComponent(world, signature, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
@@ -67,7 +69,8 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world, quit, transform.NewPos(10, -10, 0))
 			ecs.SaveComponent(world, quit, transform.NewSize(50, 50, 1))
 			ecs.SaveComponent(world, quit, transform.NewPivotPoint(0, 1, .5))
-			ecs.SaveComponent(world, quit, transform.NewParent(uiCamera, transform.RelativePos))
+			ecs.SaveComponent(world, quit, hierarchy.NewParent(uiCamera))
+			ecs.SaveComponent(world, quit, transform.NewParent(transform.RelativePos))
 			ecs.SaveComponent(world, quit, transform.NewParentPivotPoint(0, 1, .5))
 			ecs.SaveComponent(world, quit, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 

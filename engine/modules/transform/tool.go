@@ -1,7 +1,6 @@
 package transform
 
 import (
-	"engine/services/datastructures"
 	"engine/services/ecs"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -34,10 +33,6 @@ type Object interface {
 
 	Parent() ecs.EntityComponent[ParentComponent]
 	ParentPivotPoint() ecs.EntityComponent[ParentPivotPointComponent]
-
-	Children() datastructures.SparseSetReader[ecs.EntityID]
-	// includes children of children
-	FlatChildren() datastructures.SparseSetReader[ecs.EntityID]
 
 	Mat4() mgl32.Mat4
 }

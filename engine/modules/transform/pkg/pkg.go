@@ -2,8 +2,7 @@ package transformpkg
 
 import (
 	"engine/modules/animation"
-	"engine/modules/relation"
-	relationpkg "engine/modules/relation/pkg"
+	"engine/modules/hierarchy"
 	"engine/modules/transform"
 	"engine/modules/transform/internal/transformtool"
 	"engine/services/ecs"
@@ -32,18 +31,11 @@ func Package() ioc.Pkg {
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	for _, pkg := range []ioc.Pkg{
-		relationpkg.ParentPackage(
-			func(pc transform.ParentComponent) ecs.EntityID { return pc.Parent },
-		),
-	} {
-		pkg.Register(b)
-	}
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[transform.Tool] {
 		return transformtool.NewTransformTool(
 			ioc.Get[logger.Logger](c),
-			ioc.Get[ecs.ToolFactory[relation.ParentTool[transform.ParentComponent]]](c),
+			ioc.Get[ecs.ToolFactory[hierarchy.Tool]](c),
 			pkg.defaultPos,
 			pkg.defaultRot,
 			pkg.defaultSize,

@@ -7,6 +7,7 @@ import (
 	"engine/modules/camera"
 	"engine/modules/collider"
 	"engine/modules/genericrenderer"
+	"engine/modules/hierarchy"
 	"engine/modules/inputs"
 	"engine/modules/render"
 	scenessys "engine/modules/scenes"
@@ -36,7 +37,8 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world, signature, transform.NewPos(5, 5, 0))
 			ecs.SaveComponent(world, signature, transform.NewSize(100, 50, 1))
 			ecs.SaveComponent(world, signature, transform.NewPivotPoint(0, .5, .5))
-			ecs.SaveComponent(world, signature, transform.NewParent(cameraEntity, transform.RelativePos))
+			ecs.SaveComponent(world, signature, hierarchy.NewParent(cameraEntity))
+			ecs.SaveComponent(world, signature, transform.NewParent(transform.RelativePos))
 			ecs.SaveComponent(world, signature, transform.NewParentPivotPoint(0, 0, .5))
 
 			ecs.SaveComponent(world, signature, text.TextComponent{Text: "settings"})
@@ -44,14 +46,16 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world, signature, text.BreakComponent{Break: text.BreakNone})
 
 			background := world.NewEntity()
-			ecs.SaveComponent(world, background, transform.NewParent(cameraEntity, transform.RelativePos|transform.RelativeSize))
+			ecs.SaveComponent(world, background, hierarchy.NewParent(cameraEntity))
+			ecs.SaveComponent(world, background, transform.NewParent(transform.RelativePos|transform.RelativeSize))
 			ecs.SaveComponent(world, background, render.NewMesh(gameassets.SquareMesh))
 			ecs.SaveComponent(world, background, render.NewTexture(gameassets.GroundTileTextureID))
 			ecs.SaveComponent(world, background, genericrenderer.PipelineComponent{})
 
 			buttonArea := world.NewEntity()
 			ecs.SaveComponent(world, buttonArea, transform.NewSize(500, 200, 2))
-			ecs.SaveComponent(world, buttonArea, transform.NewParent(cameraEntity, transform.RelativePos))
+			ecs.SaveComponent(world, buttonArea, hierarchy.NewParent(cameraEntity))
+			ecs.SaveComponent(world, buttonArea, transform.NewParent(transform.RelativePos))
 
 			type Button struct {
 				Text    string
@@ -68,7 +72,8 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				btn := world.NewEntity()
 				normalizedIndex := float32(i) / (float32(len(buttons)) - 1)
 				ecs.SaveComponent(world, btn, transform.NewSize(500, 50, 2))
-				ecs.SaveComponent(world, btn, transform.NewParent(buttonArea, transform.RelativePos))
+				ecs.SaveComponent(world, btn, hierarchy.NewParent(buttonArea))
+				ecs.SaveComponent(world, btn, transform.NewParent(transform.RelativePos))
 				ecs.SaveComponent(world, btn, transform.NewParentPivotPoint(.5, normalizedIndex, .5))
 
 				ecs.SaveComponent(world, btn, render.NewMesh(gameassets.SquareMesh))

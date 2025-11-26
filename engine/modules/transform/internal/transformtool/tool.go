@@ -1,7 +1,7 @@
 package transformtool
 
 import (
-	"engine/modules/relation"
+	"engine/modules/hierarchy"
 	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/logger"
@@ -10,8 +10,8 @@ import (
 type tool struct {
 	logger logger.Logger
 
-	world      ecs.World
-	parentTool relation.ParentTool[transform.ParentComponent]
+	world                ecs.World
+	hierarchyTransaction hierarchy.Transaction
 
 	defaultPos         transform.PosComponent
 	defaultRot         transform.RotationComponent
@@ -19,17 +19,18 @@ type tool struct {
 	defaultPivot       transform.PivotPointComponent
 	defaultParentPivot transform.ParentPivotPointComponent
 
+	parentArray           ecs.ComponentsArray[hierarchy.ParentComponent]
 	posArray              ecs.ComponentsArray[transform.PosComponent]
 	rotationArray         ecs.ComponentsArray[transform.RotationComponent]
 	sizeArray             ecs.ComponentsArray[transform.SizeComponent]
 	pivotPointArray       ecs.ComponentsArray[transform.PivotPointComponent]
-	parentArray           ecs.ComponentsArray[transform.ParentComponent]
+	parentMaskArray       ecs.ComponentsArray[transform.ParentComponent]
 	parentPivotPointArray ecs.ComponentsArray[transform.ParentPivotPointComponent]
 }
 
 func NewTransformTool(
 	logger logger.Logger,
-	parentToolFactory ecs.ToolFactory[relation.ParentTool[transform.ParentComponent]],
+	hierarchyToolFactory ecs.ToolFactory[hierarchy.Tool],
 	defaultPos transform.PosComponent,
 	defaultRot transform.RotationComponent,
 	defaultSize transform.SizeComponent,
@@ -40,12 +41,13 @@ func NewTransformTool(
 		return tool{
 			logger,
 			w,
-			parentToolFactory.Build(w),
+			hierarchyToolFactory.Build(w).Transaction(),
 			defaultPos,
 			defaultRot,
 			defaultSize,
 			defaultPivot,
 			defaultParentPivot,
+			ecs.GetComponentsArray[hierarchy.ParentComponent](w),
 			ecs.GetComponentsArray[transform.PosComponent](w),
 			ecs.GetComponentsArray[transform.RotationComponent](w),
 			ecs.GetComponentsArray[transform.SizeComponent](w),

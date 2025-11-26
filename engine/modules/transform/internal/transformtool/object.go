@@ -1,8 +1,8 @@
 package transformtool
 
 import (
+	"engine/modules/hierarchy"
 	"engine/modules/transform"
-	"engine/services/datastructures"
 	"engine/services/ecs"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -10,6 +10,8 @@ import (
 
 type object struct {
 	transaction
+
+	parent ecs.EntityComponent[hierarchy.ParentComponent]
 
 	pos         ecs.EntityComponent[transform.PosComponent]
 	absolutePos ecs.EntityComponent[transform.PosComponent]
@@ -21,7 +23,7 @@ type object struct {
 	absoluteSize ecs.EntityComponent[transform.SizeComponent]
 
 	pivotPoint       ecs.EntityComponent[transform.PivotPointComponent]
-	parent           ecs.EntityComponent[transform.ParentComponent]
+	parentMask       ecs.EntityComponent[transform.ParentComponent]
 	parentPivotPoint ecs.EntityComponent[transform.ParentPivotPointComponent]
 	entity           ecs.EntityID
 }
@@ -33,12 +35,14 @@ func newEntityTransform(
 	s := object{
 		transaction: t,
 
+		parent: t.parentTransaction.GetEntityComponent(entity),
+
 		pos:  t.posTransaction.GetEntityComponent(entity),
 		rot:  t.rotationTransaction.GetEntityComponent(entity),
 		size: t.sizeTransaction.GetEntityComponent(entity),
 
 		pivotPoint:       t.pivotPointTransaction.GetEntityComponent(entity),
-		parent:           t.parentTransaction.GetEntityComponent(entity),
+		parentMask:       t.parentMaskTransaction.GetEntityComponent(entity),
 		parentPivotPoint: t.parentPivotPointTransaction.GetEntityComponent(entity),
 		entity:           entity,
 	}
@@ -65,30 +69,9 @@ func (t object) PivotPoint() ecs.EntityComponent[transform.PivotPointComponent] 
 	return t.pivotPoint
 }
 
-func (t object) Parent() ecs.EntityComponent[transform.ParentComponent] { return t.parent }
+func (t object) Parent() ecs.EntityComponent[transform.ParentComponent] { return t.parentMask }
 func (t object) ParentPivotPoint() ecs.EntityComponent[transform.ParentPivotPointComponent] {
 	return t.parentPivotPoint
-}
-
-func (t object) Children() datastructures.SparseSetReader[ecs.EntityID] {
-	return t.parentTool.GetChildren(t.entity)
-}
-
-func (t object) FlatChildren() datastructures.SparseSetReader[ecs.EntityID] {
-	flatChildren := datastructures.NewSparseSet[ecs.EntityID]()
-	leftParents := []ecs.EntityID{t.entity}
-	for len(leftParents) != 0 {
-		parent := leftParents[0]
-		leftParents = leftParents[1:]
-		parentTransform := t.GetObject(parent)
-		childrenSet := parentTransform.Children()
-		children := childrenSet.GetIndices()
-		for _, child := range children {
-			flatChildren.Add(child)
-		}
-		leftParents = append(leftParents, children...)
-	}
-	return flatChildren
 }
 
 func (t object) Mat4() mgl32.Mat4 {

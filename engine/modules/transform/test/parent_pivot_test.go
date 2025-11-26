@@ -15,7 +15,7 @@ func TestParentPivot(t *testing.T) {
 	entity := setup.World.NewEntity()
 	entityTransform := setup.Transaction.GetObject(entity)
 
-	entityTransform.Parent().Set(transform.NewParent(parent, transform.RelativePos))
+	entityTransform.Parent().Set(transform.NewParent(transform.RelativePos))
 	if err := setup.Transaction.Flush(); err != nil {
 		t.Error(err)
 		return

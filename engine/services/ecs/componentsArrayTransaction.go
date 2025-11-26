@@ -69,8 +69,7 @@ func newComponentsArrayTransaction[Component any](
 		operations: datastructures.NewSparseArray[EntityID, operation](),
 		saves:      datastructures.NewSparseArray[EntityID, save[Component]](),
 		removes:    datastructures.NewSparseSet[EntityID](),
-
-		prepared: false,
+		prepared:   false,
 	}
 }
 
@@ -88,14 +87,14 @@ func (t *componentsArrayTransaction[Component]) removeOperation(entity EntityID)
 	}
 }
 
-func (c *componentsArrayTransaction[Component]) GetEntityComponent(
+func (t *componentsArrayTransaction[Component]) GetEntityComponent(
 	entity EntityID,
 ) EntityComponent[Component] {
 	return newEntityComponent(
 		entity,
-		c.array.GetComponent,
-		c.SaveComponent,
-		c.RemoveComponent,
+		t.array.GetComponent,
+		t.SaveComponent,
+		t.RemoveComponent,
 	)
 }
 
@@ -150,6 +149,11 @@ func (t *componentsArrayTransaction[Component]) Flush() (func(), error) {
 		// unlock happens before listeners
 	}
 	t.prepared = false
+
+	if len(t.operations.GetIndices()) == 0 {
+		t.array.applyTransactionMutex.Unlock()
+		return func() {}, nil
+	}
 
 	if err := t.Error(); err != nil {
 		t.array.applyTransactionMutex.Unlock()
@@ -217,8 +221,9 @@ func (t *componentsArrayTransaction[Component]) Discard() {
 		t.array.applyTransactionMutex.Unlock()
 	}
 	t.prepared = false
-	t.saves = datastructures.NewSparseArray[EntityID, save[Component]]()
-	t.removes = datastructures.NewSparseSet[EntityID]()
+	t.operations = nil
+	t.saves = nil
+	t.removes = nil
 }
 
 var i int = 0

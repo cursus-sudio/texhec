@@ -10,6 +10,7 @@ import (
 	"engine/modules/collider"
 	"engine/modules/drag"
 	"engine/modules/genericrenderer"
+	"engine/modules/groups"
 	"engine/modules/inputs"
 	"engine/modules/relation"
 	"engine/modules/render"
@@ -126,6 +127,7 @@ func (pkg) Register(b ioc.Builder) {
 				ioc.Get[camera.System](c),
 				ioc.Get[collider.System](c),
 				ioc.Get[drag.System](c),
+				ioc.Get[groups.System](c),
 				temporaryInlineSystems,
 
 				ioc.Get[tile.System](c),

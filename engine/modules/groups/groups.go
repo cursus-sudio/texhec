@@ -47,3 +47,7 @@ func (g1 *GroupsComponent) GetSharedWith(g2 GroupsComponent) GroupsComponent {
 func (g1 *GroupsComponent) SharesAnyGroup(g2 GroupsComponent) bool {
 	return g1.GetSharedWith(g2).Mask != 0
 }
+
+//
+
+type InheritGroupsComponent struct{}

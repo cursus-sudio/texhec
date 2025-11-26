@@ -155,7 +155,7 @@ func (pkg) Register(b ioc.Builder) {
 			[]animation.Event{},
 			[]animation.Transition{
 				animation.NewTransition(
-					transform.NewPivotPoint(0, 0, .5),
+					transform.NewPivotPoint(0, 1, .5),
 					transform.NewPivotPoint(1, 1, .5),
 					LinearEasingFunction,
 				),
@@ -166,7 +166,7 @@ func (pkg) Register(b ioc.Builder) {
 			[]animation.Transition{
 				animation.NewTransition(
 					transform.NewPivotPoint(1, 1, .5),
-					transform.NewPivotPoint(0, 0, .5),
+					transform.NewPivotPoint(0, 1, .5),
 					LinearEasingFunction,
 				),
 			},

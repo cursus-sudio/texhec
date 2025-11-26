@@ -82,7 +82,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world, quit, inputs.KeepSelectedComponent{})
 			ecs.SaveComponent(world, quit, collider.NewCollider(gameassets.SquareColliderID))
 
-			ecs.SaveComponent(world, quit, text.TextComponent{Text: "X"})
+			ecs.SaveComponent(world, quit, text.TextComponent{Text: "S"})
 			ecs.SaveComponent(world, quit, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
 			ecs.SaveComponent(world, quit, text.FontSizeComponent{FontSize: 32})
 

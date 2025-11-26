@@ -6,6 +6,7 @@ import (
 	engineinputs "engine/modules/inputs"
 	"engine/modules/inputs/internal/mouse"
 	"engine/modules/inputs/internal/systems"
+	inputstool "engine/modules/inputs/internal/tool"
 	"engine/services/ecs"
 	"engine/services/frames"
 	"engine/services/logger"
@@ -25,6 +26,7 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) Register(b ioc.Builder) {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[engineinputs.Tool] { return inputstool.NewTool() })
 	ioc.RegisterSingleton(b, func(c ioc.Dic) engineinputs.System {
 		return ecs.NewSystemRegister(func(w ecs.World) error {
 			ecs.RegisterSystems(w,

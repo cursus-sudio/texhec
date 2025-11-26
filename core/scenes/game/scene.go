@@ -12,7 +12,6 @@ import (
 	"engine/modules/groups"
 	"engine/modules/inputs"
 	"engine/modules/render"
-	scenessys "engine/modules/scenes"
 	"engine/modules/text"
 	"engine/modules/transform"
 	"engine/services/ecs"
@@ -65,18 +64,18 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world, signature, text.BreakComponent{Break: text.BreakNone})
 
 			quit := world.NewEntity()
-			ecs.SaveComponent(world, quit, transform.NewPos(-10, -10, 0))
+			ecs.SaveComponent(world, quit, transform.NewPos(10, -10, 0))
 			ecs.SaveComponent(world, quit, transform.NewSize(50, 50, 1))
-			ecs.SaveComponent(world, quit, transform.NewPivotPoint(1, 1, .5))
+			ecs.SaveComponent(world, quit, transform.NewPivotPoint(0, 1, .5))
 			ecs.SaveComponent(world, quit, transform.NewParent(uiCamera, transform.RelativePos))
-			ecs.SaveComponent(world, quit, transform.NewParentPivotPoint(1, 1, .5))
+			ecs.SaveComponent(world, quit, transform.NewParentPivotPoint(0, 1, .5))
 			ecs.SaveComponent(world, quit, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
 			ecs.SaveComponent(world, quit, render.NewMesh(gameassets.SquareMesh))
 			ecs.SaveComponent(world, quit, render.NewTexture(gameassets.WaterTileTextureID))
 			ecs.SaveComponent(world, quit, genericrenderer.PipelineComponent{})
 
-			ecs.SaveComponent(world, quit, inputs.NewMouseLeftClick(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
+			ecs.SaveComponent(world, quit, inputs.NewMouseLeftClick(ui.SettingsEvent{}))
 			ecs.SaveComponent(world, quit, inputs.KeepSelectedComponent{})
 			ecs.SaveComponent(world, quit, collider.NewCollider(gameassets.SquareColliderID))
 

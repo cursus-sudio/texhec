@@ -5,6 +5,7 @@ import (
 	"core/modules/ui"
 	"core/modules/ui/internal/uimodule"
 	"engine/modules/camera"
+	"engine/modules/render"
 	"engine/modules/text"
 	"engine/modules/transform"
 	"engine/services/ecs"
@@ -35,6 +36,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 					ioc.Get[ecs.ToolFactory[transform.Tool]](c),
 					ioc.Get[ecs.ToolFactory[tile.Tool]](c),
 					ioc.Get[ecs.ToolFactory[text.Tool]](c),
+					ioc.Get[ecs.ToolFactory[render.Tool]](c),
 					pkg.maxLayer,
 				),
 				ecs.NewSystemRegister(func(w ecs.World) error {

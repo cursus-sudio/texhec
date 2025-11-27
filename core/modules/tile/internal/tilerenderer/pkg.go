@@ -2,14 +2,14 @@ package tilerenderer
 
 import (
 	"core/modules/tile"
-	"frontend/modules/camera"
-	"frontend/modules/groups"
-	"frontend/services/assets"
-	"frontend/services/graphics/texturearray"
-	"frontend/services/graphics/vao/vbo"
-	"frontend/services/media/window"
-	"shared/services/ecs"
-	"shared/services/logger"
+	"engine/modules/camera"
+	"engine/modules/groups"
+	"engine/services/assets"
+	"engine/services/ecs"
+	"engine/services/graphics/texturearray"
+	"engine/services/graphics/vao/vbo"
+	"engine/services/logger"
+	"engine/services/media/window"
 	"unsafe"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -44,7 +44,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			pkg.tileSize,
 			pkg.gridDepth,
 			pkg.gridGroups,
-			ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
+			ioc.Get[ecs.ToolFactory[camera.Tool]](c),
 		)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.TileAssets {

@@ -2,12 +2,12 @@ package tilecollider
 
 import (
 	"core/modules/tile"
-	"frontend/modules/collider"
-	"frontend/modules/groups"
-	"frontend/modules/inputs"
-	"frontend/modules/transform"
-	"shared/services/ecs"
-	"shared/services/logger"
+	"engine/modules/collider"
+	"engine/modules/groups"
+	"engine/modules/inputs"
+	"engine/modules/transform"
+	"engine/services/ecs"
+	"engine/services/logger"
 )
 
 func TileColliderSystem(

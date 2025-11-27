@@ -6,19 +6,19 @@ import (
 	"core/modules/tile"
 	"core/modules/ui"
 	gamescenes "core/scenes"
-	"frontend/modules/camera"
-	"frontend/modules/collider"
-	"frontend/modules/genericrenderer"
-	"frontend/modules/groups"
-	"frontend/modules/inputs"
-	"frontend/modules/render"
-	scenessys "frontend/modules/scenes"
-	"frontend/modules/text"
-	"frontend/modules/transform"
-	"frontend/services/scenes"
+	"engine/modules/camera"
+	"engine/modules/collider"
+	"engine/modules/genericrenderer"
+	"engine/modules/groups"
+	"engine/modules/hierarchy"
+	"engine/modules/inputs"
+	"engine/modules/render"
+	"engine/modules/text"
+	"engine/modules/transform"
+	"engine/services/ecs"
+	"engine/services/logger"
+	"engine/services/scenes"
 	"math/rand/v2"
-	"shared/services/ecs"
-	"shared/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
@@ -56,7 +56,8 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world, signature, transform.NewPos(5, 5, 0))
 			ecs.SaveComponent(world, signature, transform.NewSize(100, 50, 1))
 			ecs.SaveComponent(world, signature, transform.NewPivotPoint(0, .5, .5))
-			ecs.SaveComponent(world, signature, transform.NewParent(uiCamera, transform.RelativePos))
+			ecs.SaveComponent(world, signature, hierarchy.NewParent(uiCamera))
+			ecs.SaveComponent(world, signature, transform.NewParent(transform.RelativePos))
 			ecs.SaveComponent(world, signature, transform.NewParentPivotPoint(0, 0, .5))
 			ecs.SaveComponent(world, signature, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
@@ -65,22 +66,23 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world, signature, text.BreakComponent{Break: text.BreakNone})
 
 			quit := world.NewEntity()
-			ecs.SaveComponent(world, quit, transform.NewPos(-10, -10, 0))
+			ecs.SaveComponent(world, quit, transform.NewPos(10, -10, 0))
 			ecs.SaveComponent(world, quit, transform.NewSize(50, 50, 1))
-			ecs.SaveComponent(world, quit, transform.NewPivotPoint(1, 1, .5))
-			ecs.SaveComponent(world, quit, transform.NewParent(uiCamera, transform.RelativePos))
-			ecs.SaveComponent(world, quit, transform.NewParentPivotPoint(1, 1, .5))
+			ecs.SaveComponent(world, quit, transform.NewPivotPoint(0, 1, .5))
+			ecs.SaveComponent(world, quit, hierarchy.NewParent(uiCamera))
+			ecs.SaveComponent(world, quit, transform.NewParent(transform.RelativePos))
+			ecs.SaveComponent(world, quit, transform.NewParentPivotPoint(0, 1, .5))
 			ecs.SaveComponent(world, quit, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
 			ecs.SaveComponent(world, quit, render.NewMesh(gameassets.SquareMesh))
 			ecs.SaveComponent(world, quit, render.NewTexture(gameassets.WaterTileTextureID))
 			ecs.SaveComponent(world, quit, genericrenderer.PipelineComponent{})
 
-			ecs.SaveComponent(world, quit, inputs.NewMouseLeftClick(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
+			ecs.SaveComponent(world, quit, inputs.NewMouseLeftClick(ui.SettingsEvent{}))
 			ecs.SaveComponent(world, quit, inputs.KeepSelectedComponent{})
 			ecs.SaveComponent(world, quit, collider.NewCollider(gameassets.SquareColliderID))
 
-			ecs.SaveComponent(world, quit, text.TextComponent{Text: "X"})
+			ecs.SaveComponent(world, quit, text.TextComponent{Text: "S"})
 			ecs.SaveComponent(world, quit, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
 			ecs.SaveComponent(world, quit, text.FontSizeComponent{FontSize: 32})
 

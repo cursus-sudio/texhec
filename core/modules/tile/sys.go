@@ -1,6 +1,6 @@
 package tile
 
-import "shared/services/ecs"
+import "engine/services/ecs"
 
 type System ecs.SystemRegister
 type SystemRenderer ecs.SystemRegister

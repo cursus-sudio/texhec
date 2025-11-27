@@ -1,8 +1,6 @@
 package main
 
 import (
-	"backend/services/clients"
-	backendscopes "backend/services/scopes"
 	gameassets "core/assets"
 	"core/modules/fpslogger/pkg"
 	"core/modules/tile"
@@ -13,43 +11,35 @@ import (
 	gamescene "core/scenes/game"
 	menuscene "core/scenes/menu"
 	settingsscene "core/scenes/settings"
+	"engine/modules/animation/pkg"
+	"engine/modules/audio/pkg"
+	"engine/modules/camera/pkg"
+	"engine/modules/collider"
+	"engine/modules/collider/pkg"
+	"engine/modules/drag/pkg"
+	"engine/modules/genericrenderer/pkg"
+	"engine/modules/groups"
+	"engine/modules/groups/pkg"
+	"engine/modules/hierarchy/pkg"
+	"engine/modules/inputs/pkg"
+	"engine/modules/render/pkg"
+	"engine/modules/scenes/pkg"
+	"engine/modules/text"
+	"engine/modules/text/pkg"
+	"engine/modules/transform/pkg"
+	"engine/services/assets"
+	"engine/services/console"
+	"engine/services/datastructures"
+	"engine/services/frames"
+	"engine/services/graphics/texture"
+	"engine/services/graphics/texturearray"
+	"engine/services/logger"
+	"engine/services/media"
+	"engine/services/scenes"
 	"errors"
 	"fmt"
-	"frontend/modules/animation/pkg"
-	"frontend/modules/audio/pkg"
-	"frontend/modules/camera/pkg"
-	"frontend/modules/collider"
-	"frontend/modules/collider/pkg"
-	"frontend/modules/drag/pkg"
-	"frontend/modules/genericrenderer/pkg"
-	"frontend/modules/groups"
-	"frontend/modules/groups/pkg"
-	"frontend/modules/inputs/pkg"
-	"frontend/modules/render/pkg"
-	"frontend/modules/scenes/pkg"
-	"frontend/modules/text"
-	"frontend/modules/text/pkg"
-	"frontend/modules/transform/pkg"
-	frontendapi "frontend/services/api"
-	frontendtcp "frontend/services/api/tcp"
-	"frontend/services/assets"
-	"frontend/services/backendconnection"
-	"frontend/services/backendconnection/localconnector"
-	"frontend/services/console"
-	"frontend/services/dbpkg"
-	"frontend/services/frames"
-	"frontend/services/graphics/texture"
-	"frontend/services/graphics/texturearray"
-	"frontend/services/media"
-	"frontend/services/scenes"
-	frontendscopes "frontend/services/scopes"
 	"os"
 	"path/filepath"
-	"shared/services/api"
-	"shared/services/datastructures"
-	"shared/services/logger"
-	"shared/services/uuid"
-	"shared/utils/connection"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
@@ -61,7 +51,6 @@ import (
 )
 
 func frontendDic(
-	backendC ioc.Dic,
 	sharedPkg SharedPkg,
 ) ioc.Dic {
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
@@ -121,31 +110,12 @@ func frontendDic(
 	}
 	// parent of both /backend and /frontend directory
 	engineDir = filepath.Dir(engineDir)
-	storage := filepath.Join(engineDir, "user_storage", "frontend")
 
 	pkgs := []ioc.Pkg{
 		sharedPkg,
-		api.Package(func(c ioc.Dic) ioc.Dic { return c }),
 		assets.Package(),
 		logger.Package(true, func(c ioc.Dic, message string) {
 			ioc.Get[console.Console](c).PrintPermanent(message)
-		}),
-		dbpkg.Package(fmt.Sprintf("%s/db.sql", storage)),
-		frontendtcp.Package("tcp"),
-		frontendapi.Package(),
-		localconnector.Package(func(clientCon connection.Connection) connection.Connection {
-			backendC := backendC.Scope(backendscopes.UserSession)
-			client := clients.NewClient(
-				clients.ClientID(ioc.Get[uuid.Factory](backendC).NewUUID().String()),
-				clientCon,
-			)
-			sClient := ioc.Get[clients.SessionClient](backendC)
-			sClient.UseClient(client)
-
-			return ioc.Get[connection.Connection](backendC)
-		}),
-		backendconnection.Package(func(c ioc.Dic) connection.Connection {
-			return ioc.Get[localconnector.Connector](c).Connect()
 		}),
 		console.Package(),
 		media.Package(window, ctx),
@@ -153,7 +123,6 @@ func frontendDic(
 		frames.Package(60),
 		// frames.Package(10000),
 		scenes.Package(),
-		frontendscopes.Package(),
 
 		texture.Package(),
 		texturearray.Package(),
@@ -223,6 +192,7 @@ func frontendDic(
 			0.8, // arbitrary number works for some reason
 		),
 		transformpkg.Package(),
+		hierarchypkg.Package(),
 
 		// game packages
 		fpsloggerpkg.Package(),

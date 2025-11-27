@@ -2,8 +2,8 @@ package tile
 
 import (
 	"core/modules/definition"
-	"frontend/services/assets"
-	"shared/services/datastructures"
+	"engine/services/assets"
+	"engine/services/datastructures"
 )
 
 type TileAssets interface {

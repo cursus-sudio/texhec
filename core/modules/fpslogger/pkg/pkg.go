@@ -3,8 +3,8 @@ package fpsloggerpkg
 import (
 	"core/modules/fpslogger"
 	"core/modules/fpslogger/internal"
-	"frontend/services/console"
-	"frontend/services/scenes"
+	"engine/services/console"
+	"engine/services/scenes"
 
 	"github.com/ogiusek/ioc/v2"
 )

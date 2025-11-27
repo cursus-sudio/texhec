@@ -2,10 +2,9 @@ package main
 
 import (
 	_ "embed"
-	"os"
+	"engine/services/ecs"
+	appruntime "engine/services/runtime"
 	"runtime"
-	"shared/services/ecs"
-	appruntime "shared/services/runtime"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/ogiusek/ioc/v2"
@@ -16,25 +15,9 @@ func main() {
 
 	runtime.LockOSThread()
 
-	isServer := false
-	for _, arg := range os.Args {
-		if arg == "server" {
-			isServer = true
-			break
-		}
-	}
-
 	sharedPkg := SharedPackage()
 
-	backendC := backendDic(sharedPkg)
-	if isServer {
-		backendRuntime := ioc.Get[appruntime.Runtime](backendC)
-		backendRuntime.Run()
-		return
-	}
-
 	c := frontendDic(
-		backendC,
 		sharedPkg,
 	)
 

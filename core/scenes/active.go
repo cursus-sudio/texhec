@@ -4,22 +4,22 @@ import (
 	"core/modules/fpslogger"
 	"core/modules/tile"
 	"core/modules/ui"
-	"fmt"
-	"frontend/modules/animation"
-	"frontend/modules/audio"
-	"frontend/modules/camera"
-	"frontend/modules/collider"
-	"frontend/modules/drag"
-	"frontend/modules/genericrenderer"
-	"frontend/modules/inputs"
-	"frontend/modules/relation"
-	"frontend/modules/render"
-	scenesys "frontend/modules/scenes"
-	"frontend/modules/text"
-	"frontend/services/media/window"
-	"frontend/services/scenes"
-	"shared/services/ecs"
-	"shared/services/logger"
+	"engine/modules/animation"
+	"engine/modules/audio"
+	"engine/modules/camera"
+	"engine/modules/collider"
+	"engine/modules/drag"
+	"engine/modules/genericrenderer"
+	"engine/modules/groups"
+	"engine/modules/inputs"
+	"engine/modules/relation"
+	"engine/modules/render"
+	scenesys "engine/modules/scenes"
+	"engine/modules/text"
+	"engine/services/ecs"
+	"engine/services/logger"
+	"engine/services/media/window"
+	"engine/services/scenes"
 
 	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
@@ -111,11 +111,11 @@ func (pkg) Register(b ioc.Builder) {
 			})
 
 			// temporary system to say wich tile was pressed
-			events.Listen(ctx.EventsBuilder(), func(event tile.TileClickEvent) {
-				tileColliderArray := ecs.GetComponentsArray[tile.PosComponent](ctx)
-				tileCollider, _ := tileColliderArray.GetComponent(event.Tile)
-				logger.Info(fmt.Sprintf("collider: %v", tileCollider))
-			})
+			// events.Listen(ctx.EventsBuilder(), func(event tile.TileClickEvent) {
+			// 	tileColliderArray := ecs.GetComponentsArray[tile.PosComponent](ctx)
+			// 	tileCollider, _ := tileColliderArray.GetComponent(event.Tile)
+			// 	logger.Info(fmt.Sprintf("collider: %v", tileCollider))
+			// })
 
 			ecs.RegisterSystems(ctx,
 				// inputs
@@ -126,6 +126,7 @@ func (pkg) Register(b ioc.Builder) {
 				ioc.Get[camera.System](c),
 				ioc.Get[collider.System](c),
 				ioc.Get[drag.System](c),
+				ioc.Get[groups.System](c),
 				temporaryInlineSystems,
 
 				ioc.Get[tile.System](c),

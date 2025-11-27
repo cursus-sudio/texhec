@@ -5,9 +5,9 @@ import (
 	"core/modules/tile/internal/tilecollider"
 	"core/modules/tile/internal/tilerenderer"
 	"core/modules/tile/internal/tiletool"
-	"frontend/modules/collider"
-	"frontend/modules/groups"
-	"shared/services/ecs"
+	"engine/modules/collider"
+	"engine/modules/groups"
+	"engine/services/ecs"
 
 	"github.com/ogiusek/ioc/v2"
 )

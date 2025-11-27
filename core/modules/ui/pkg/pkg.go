@@ -4,11 +4,13 @@ import (
 	"core/modules/tile"
 	"core/modules/ui"
 	"core/modules/ui/internal/uimodule"
-	"frontend/modules/camera"
-	"frontend/modules/text"
-	"frontend/modules/transform"
-	"shared/services/ecs"
-	"shared/services/logger"
+	"engine/modules/camera"
+	"engine/modules/hierarchy"
+	"engine/modules/render"
+	"engine/modules/text"
+	"engine/modules/transform"
+	"engine/services/ecs"
+	"engine/services/logger"
 
 	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
@@ -31,10 +33,12 @@ func (pkg pkg) Register(b ioc.Builder) {
 			errs := ecs.RegisterSystems(w,
 				uimodule.NewSystem(
 					ioc.Get[logger.Logger](c),
-					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
-					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
+					ioc.Get[ecs.ToolFactory[camera.Tool]](c),
+					ioc.Get[ecs.ToolFactory[transform.Tool]](c),
 					ioc.Get[ecs.ToolFactory[tile.Tool]](c),
 					ioc.Get[ecs.ToolFactory[text.Tool]](c),
+					ioc.Get[ecs.ToolFactory[render.Tool]](c),
+					ioc.Get[ecs.ToolFactory[hierarchy.Tool]](c),
 					pkg.maxLayer,
 				),
 				ecs.NewSystemRegister(func(w ecs.World) error {

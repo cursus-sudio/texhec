@@ -5,22 +5,22 @@ import (
 	"core/modules/definition"
 	"core/modules/tile"
 	_ "embed"
-	"frontend/modules/animation"
-	"frontend/modules/audio"
-	"frontend/modules/collider"
-	"frontend/modules/genericrenderer"
-	"frontend/modules/render"
-	"frontend/modules/text"
-	"frontend/modules/transform"
-	"frontend/services/assets"
-	gtexture "frontend/services/graphics/texture"
-	"frontend/services/graphics/vao/ebo"
-	"frontend/services/scenes"
+	"engine/modules/animation"
+	"engine/modules/audio"
+	"engine/modules/collider"
+	"engine/modules/genericrenderer"
+	"engine/modules/render"
+	"engine/modules/text"
+	"engine/modules/transform"
+	"engine/services/assets"
+	"engine/services/datastructures"
+	gtexture "engine/services/graphics/texture"
+	"engine/services/graphics/vao/ebo"
+	appruntime "engine/services/runtime"
+	"engine/services/scenes"
 	"image"
 	_ "image/png"
 	"math"
-	"shared/services/datastructures"
-	appruntime "shared/services/runtime"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
@@ -68,7 +68,10 @@ const (
 const (
 	ChangeColorsAnimation animation.AnimationID = iota
 	ButtonAnimation
+
+	// game scene events
 	ShowMenuAnimation
+	HideMenuAnimation
 )
 const (
 	MyEasingFunction animation.EasingFunctionID = iota
@@ -152,9 +155,19 @@ func (pkg) Register(b ioc.Builder) {
 			[]animation.Event{},
 			[]animation.Transition{
 				animation.NewTransition(
-					transform.NewSize(0, 0, 1),
-					transform.NewSize(1, 1, 1),
-					EaseOutElastic,
+					transform.NewPivotPoint(0, 1, .5),
+					transform.NewPivotPoint(1, 1, .5),
+					LinearEasingFunction,
+				),
+			},
+		))
+		b.AddAnimation(HideMenuAnimation, animation.NewAnimation(
+			[]animation.Event{},
+			[]animation.Transition{
+				animation.NewTransition(
+					transform.NewPivotPoint(1, 1, .5),
+					transform.NewPivotPoint(0, 1, .5),
+					LinearEasingFunction,
 				),
 			},
 		))

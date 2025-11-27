@@ -2,12 +2,12 @@ package tilecollider
 
 import (
 	"core/modules/tile"
-	"frontend/modules/collider"
-	"frontend/modules/groups"
-	"frontend/modules/relation"
-	"shared/services/datastructures"
-	"shared/services/ecs"
-	"shared/services/logger"
+	"engine/modules/collider"
+	"engine/modules/groups"
+	"engine/modules/relation"
+	"engine/services/datastructures"
+	"engine/services/ecs"
+	"engine/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
 )

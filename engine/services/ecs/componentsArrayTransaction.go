@@ -239,24 +239,6 @@ func (t *componentsArrayTransaction[Component]) Flush() (func(), error) {
 				removeComponentsI++
 			}
 		}
-		// if len(onAdd) != 0 {
-		// 	for _, listener := range t.array.onAdd {
-		// 		listener(onAdd)
-		// 	}
-		// }
-		// if len(onChange) != 0 {
-		// 	for _, listener := range t.array.onChange {
-		// 		listener(onChange)
-		// 	}
-		// }
-		// if len(onRemove) != 0 {
-		// 	for _, listener := range t.array.onRemove {
-		// 		listener(onRemove)
-		// 	}
-		// 	for _, listener := range t.array.onRemoveComponents {
-		// 		listener(onRemove, onRemoveComponents)
-		// 	}
-		// }
 	}, nil
 }
 

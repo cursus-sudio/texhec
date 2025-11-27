@@ -163,6 +163,25 @@ func (c *componentsArray[Component]) RemoveComponent(entity EntityID) {
 	for _, listener := range c.onRemoveComponents {
 		listener(entities, components)
 	}
+
+	removeI := 0
+	removeComponentsI := 0
+	for _, listener := range c.listenersOrder {
+		switch listener {
+		case addListener:
+		case changeListener:
+		case removeListener:
+			if len(entities) != 0 {
+				c.onRemove[removeI](entities)
+			}
+			removeI++
+		case removeComponentsListener:
+			if len(entities) != 0 {
+				c.onRemoveComponents[removeComponentsI](entities, components)
+			}
+			removeComponentsI++
+		}
+	}
 }
 
 type entityComponent[Component any] struct {

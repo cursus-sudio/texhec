@@ -156,13 +156,7 @@ func (c *componentsArray[Component]) RemoveComponent(entity EntityID) {
 		return
 	}
 	entities := []EntityID{entity}
-	for _, listener := range c.onRemove {
-		listener(entities)
-	}
 	components := []Component{component}
-	for _, listener := range c.onRemoveComponents {
-		listener(entities, components)
-	}
 
 	removeI := 0
 	removeComponentsI := 0

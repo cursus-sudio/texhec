@@ -63,6 +63,15 @@ type ComponentsArray[Component any] interface {
 
 // impl
 
+type listener uint8
+
+const (
+	addListener listener = iota
+	changeListener
+	removeListener
+	removeComponentsListener
+)
+
 type componentsArray[Component any] struct {
 	equal      func(Component, Component) bool
 	entities   datastructures.SparseSet[EntityID]
@@ -71,7 +80,9 @@ type componentsArray[Component any] struct {
 	applyTransactionMutex sync.Mutex
 
 	// queries are used for change and remove listeners
-	queries            []*liveQuery
+	queries []*liveQuery
+
+	listenersOrder     []listener
 	onAdd              []func([]EntityID)
 	onChange           []func([]EntityID)
 	onRemove           []func([]EntityID)
@@ -88,6 +99,7 @@ func NewComponentsArray[Component any](entities datastructures.SparseSet[EntityI
 		entities:   entities,
 		components: datastructures.NewSparseArray[EntityID, Component](),
 
+		listenersOrder:     make([]listener, 0),
 		onAdd:              make([]func([]EntityID), 0),
 		onChange:           make([]func([]EntityID), 0),
 		onRemove:           make([]func([]EntityID), 0),
@@ -210,17 +222,21 @@ func (c *componentsArray[Component]) GetAnyComponent(entity EntityID) (any, erro
 
 func (c *componentsArray[Component]) OnAdd(listener func([]EntityID)) {
 	listener(c.GetEntities())
+	c.listenersOrder = append(c.listenersOrder, addListener)
 	c.onAdd = append(c.onAdd, listener)
 }
 
 func (c *componentsArray[Component]) OnChange(listener func([]EntityID)) {
+	c.listenersOrder = append(c.listenersOrder, changeListener)
 	c.onChange = append(c.onChange, listener)
 }
 
 func (c *componentsArray[Component]) OnRemove(listener func([]EntityID)) {
+	c.listenersOrder = append(c.listenersOrder, removeListener)
 	c.onRemove = append(c.onRemove, listener)
 }
 
 func (c *componentsArray[Component]) OnRemoveComponents(listener func([]EntityID, []Component)) {
+	c.listenersOrder = append(c.listenersOrder, removeComponentsListener)
 	c.onRemoveComponents = append(c.onRemoveComponents, listener)
 }

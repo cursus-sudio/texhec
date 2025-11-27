@@ -17,6 +17,7 @@ type ComponentsArrayTransaction[Component any] interface {
 }
 
 type AnyComponentsArrayTransaction interface {
+	TriggerChangeListener(EntityID)
 	SaveAnyComponent(EntityID, any) error // upsert
 
 	RemoveComponent(EntityID)
@@ -45,6 +46,7 @@ type operation uint8
 const (
 	operationSave operation = iota
 	operationRemove
+	operationChanged
 )
 
 type componentsArrayTransaction[Component any] struct {
@@ -53,6 +55,7 @@ type componentsArrayTransaction[Component any] struct {
 
 	// changes
 	operations datastructures.SparseArray[EntityID, operation]
+	changes    datastructures.SparseSet[EntityID]
 	saves      datastructures.SparseArray[EntityID, save[Component]]
 	removes    datastructures.SparseSet[EntityID]
 
@@ -67,6 +70,7 @@ func newComponentsArrayTransaction[Component any](
 		array: array,
 
 		operations: datastructures.NewSparseArray[EntityID, operation](),
+		changes:    datastructures.NewSparseSet[EntityID](),
 		saves:      datastructures.NewSparseArray[EntityID, save[Component]](),
 		removes:    datastructures.NewSparseSet[EntityID](),
 		prepared:   false,
@@ -79,10 +83,10 @@ func (t *componentsArrayTransaction[Component]) removeOperation(entity EntityID)
 		switch operation {
 		case operationSave:
 			t.saves.Remove(entity)
-			break
 		case operationRemove:
 			t.removes.Remove(entity)
-			break
+		case operationChanged:
+			t.changes.Remove(entity)
 		}
 	}
 }
@@ -99,9 +103,20 @@ func (t *componentsArrayTransaction[Component]) GetEntityComponent(
 }
 
 func (t *componentsArrayTransaction[Component]) SaveComponent(entity EntityID, component Component) {
+	comp, err := t.array.GetComponent(entity)
+	if err == nil && t.array.equal(comp, component) {
+		return
+	}
 	t.removeOperation(entity)
 	t.saves.Set(entity, save[Component]{entity, component})
 	t.operations.Set(entity, operationSave)
+}
+
+func (t *componentsArrayTransaction[Component]) TriggerChangeListener(entity EntityID) {
+	if _, ok := t.operations.Get(entity); !ok {
+		t.operations.Set(entity, operationChanged)
+		t.changes.Add(entity)
+	}
 }
 
 func (t *componentsArrayTransaction[Component]) SaveAnyComponent(entity EntityID, anyComponent any) error {
@@ -169,10 +184,6 @@ func (t *componentsArrayTransaction[Component]) Flush() (func(), error) {
 	// apply
 	t.operations = datastructures.NewSparseArray[EntityID, operation]()
 	for _, save := range t.saves.GetValues() {
-		value, ok := t.array.components.Get(save.entity)
-		if ok && t.array.equal(value, save.component) {
-			continue
-		}
 		added := t.array.components.Set(save.entity, save.component)
 		if added {
 			onAdd = append(onAdd, save.entity)
@@ -191,28 +202,61 @@ func (t *componentsArrayTransaction[Component]) Flush() (func(), error) {
 	}
 	t.removes = datastructures.NewSparseSet[EntityID]()
 
+	for _, entity := range t.changes.GetIndices() {
+		onChange = append(onChange, entity)
+	}
+	t.changes = datastructures.NewSparseSet[EntityID]()
+
 	t.array.applyTransactionMutex.Unlock()
 
 	// notify listeners
 	return func() {
-		if len(onAdd) != 0 {
-			for _, listener := range t.array.onAdd {
-				listener(onAdd)
+		addI := 0
+		changeI := 0
+		removeI := 0
+		removeComponentsI := 0
+		for _, listener := range t.array.listenersOrder {
+			switch listener {
+			case addListener:
+				if len(onAdd) != 0 {
+					t.array.onAdd[addI](onAdd)
+				}
+				addI++
+			case changeListener:
+				if len(onChange) != 0 {
+					t.array.onChange[changeI](onChange)
+				}
+				changeI++
+			case removeListener:
+				if len(onRemove) != 0 {
+					t.array.onRemove[removeI](onRemove)
+				}
+				removeI++
+			case removeComponentsListener:
+				if len(onRemoveComponents) != 0 {
+					t.array.onRemoveComponents[removeComponentsI](onRemove, onRemoveComponents)
+				}
+				removeComponentsI++
 			}
 		}
-		if len(onChange) != 0 {
-			for _, listener := range t.array.onChange {
-				listener(onChange)
-			}
-		}
-		if len(onRemove) != 0 {
-			for _, listener := range t.array.onRemove {
-				listener(onRemove)
-			}
-			for _, listener := range t.array.onRemoveComponents {
-				listener(onRemove, onRemoveComponents)
-			}
-		}
+		// if len(onAdd) != 0 {
+		// 	for _, listener := range t.array.onAdd {
+		// 		listener(onAdd)
+		// 	}
+		// }
+		// if len(onChange) != 0 {
+		// 	for _, listener := range t.array.onChange {
+		// 		listener(onChange)
+		// 	}
+		// }
+		// if len(onRemove) != 0 {
+		// 	for _, listener := range t.array.onRemove {
+		// 		listener(onRemove)
+		// 	}
+		// 	for _, listener := range t.array.onRemoveComponents {
+		// 		listener(onRemove, onRemoveComponents)
+		// 	}
+		// }
 	}, nil
 }
 
@@ -221,15 +265,13 @@ func (t *componentsArrayTransaction[Component]) Discard() {
 		t.array.applyTransactionMutex.Unlock()
 	}
 	t.prepared = false
-	t.operations = nil
-	t.saves = nil
-	t.removes = nil
+	t.operations = datastructures.NewSparseArray[EntityID, operation]()
+	t.saves = datastructures.NewSparseArray[EntityID, save[Component]]()
+	t.changes = datastructures.NewSparseSet[EntityID]()
+	t.removes = datastructures.NewSparseSet[EntityID]()
 }
 
-var i int = 0
-
 func FlushMany(transactions ...AnyComponentsArrayTransaction) error {
-	i += 1
 	var err error
 	for _, transaction := range transactions {
 		transaction.PrepareFlush()

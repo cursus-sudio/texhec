@@ -5,6 +5,7 @@ import (
 	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/logger"
+	"sync"
 )
 
 type tool struct {
@@ -37,8 +38,15 @@ func NewTransformTool(
 	defaultPivot transform.PivotPointComponent,
 	defaultParentPivot transform.ParentPivotPointComponent,
 ) ecs.ToolFactory[transform.Tool] {
+	mutex := &sync.Mutex{}
 	return ecs.NewToolFactory(func(w ecs.World) transform.Tool {
-		return tool{
+		mutex.Lock()
+		defer mutex.Unlock()
+
+		if tool, err := ecs.GetGlobal[tool](w); err == nil {
+			return tool
+		}
+		tool := tool{
 			logger,
 			w,
 			hierarchyToolFactory.Build(w).Transaction(),
@@ -54,11 +62,10 @@ func NewTransformTool(
 			ecs.GetComponentsArray[transform.PivotPointComponent](w),
 			ecs.GetComponentsArray[transform.ParentComponent](w),
 			ecs.GetComponentsArray[transform.ParentPivotPointComponent](w),
-			// ecs.GetComponentsArray[AbsolutePos](w),
-			// ecs.GetComponentsArray[AbsoluteRot](w),
-			// ecs.GetComponentsArray[AbsoluteSize](w),
-			// ecs.GetComponentsArray[FlatChildren](w),
 		}
+		w.SaveGlobal(tool)
+		tool.Init()
+		return tool
 	})
 }
 
@@ -74,9 +81,5 @@ func (tool tool) Query(b ecs.LiveQueryBuilder) ecs.LiveQueryBuilder {
 		ecs.GetComponentType(transform.PivotPointComponent{}),
 		ecs.GetComponentType(transform.ParentComponent{}),
 		ecs.GetComponentType(transform.ParentPivotPointComponent{}),
-		// ecs.GetComponentType(AbsolutePos{}),
-		// ecs.GetComponentType(AbsoluteRot{}),
-		// ecs.GetComponentType(AbsoluteSize{}),
-		// ecs.GetComponentType(FlatChildren{}),
 	)
 }

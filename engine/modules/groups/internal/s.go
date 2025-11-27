@@ -39,22 +39,7 @@ func NewSystem(
 }
 
 func (s s) Init() error {
-	s.inheritArray.OnAdd(func(ei []ecs.EntityID) {
-		for _, entity := range ei {
-			parentObject := s.hierarchy.GetObject(entity)
-			parent, err := parentObject.Parent().Get()
-			if err != nil {
-				continue
-			}
-			parentGroup, err := s.groupsArray.GetComponent(parent.Parent)
-			if err != nil {
-				continue
-			}
-			s.groupsTransaction.SaveComponent(entity, parentGroup)
-		}
-		ecs.FlushMany(s.groupsTransaction)
-	})
-	onUpsert := func(ei []ecs.EntityID) {
+	onParentUpsert := func(ei []ecs.EntityID) {
 		for _, entity := range ei {
 			groups, err := s.groupsArray.GetComponent(entity)
 			if err != nil {
@@ -72,7 +57,30 @@ func (s s) Init() error {
 		}
 		s.logger.Warn(ecs.FlushMany(s.groupsTransaction))
 	}
-	s.groupsArray.OnAdd(onUpsert)
-	s.groupsArray.OnChange(onUpsert)
+	s.groupsArray.OnAdd(onParentUpsert)
+	s.groupsArray.OnChange(onParentUpsert)
+
+	onChildUpsert := func(ei []ecs.EntityID) {
+		for _, entity := range ei {
+			parentObject := s.hierarchy.GetObject(entity)
+			parent, err := parentObject.Parent().Get()
+			if err != nil {
+				continue
+			}
+			parentGroup, err := s.groupsArray.GetComponent(parent.Parent)
+			if err != nil {
+				continue
+			}
+			s.groupsTransaction.SaveComponent(entity, parentGroup)
+		}
+		ecs.FlushMany(s.groupsTransaction)
+	}
+	childQuery := s.world.Query().
+		Track(ecs.GetComponentType(hierarchy.ParentComponent{})).
+		Require(ecs.GetComponentType(groups.InheritGroupsComponent{})).
+		Build()
+	childQuery.OnAdd(onChildUpsert)
+	childQuery.OnChange(onChildUpsert)
+
 	return nil
 }

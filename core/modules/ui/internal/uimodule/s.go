@@ -46,6 +46,7 @@ type SelectOptionEvent struct {
 
 type menuData struct {
 	menu              ecs.EntityID
+	quit              ecs.EntityID
 	childrenContainer ecs.EntityID
 	visible           bool
 }
@@ -64,6 +65,7 @@ type uiSys struct {
 
 	animationArray    ecs.ComponentsArray[animation.AnimationComponent]
 	uiCameraArray     ecs.ComponentsArray[ui.UiCameraComponent]
+	groupArray        ecs.ComponentsArray[groups.GroupsComponent]
 	groupInheritArray ecs.ComponentsArray[groups.InheritGroupsComponent]
 	tilePosArray      ecs.ComponentsArray[tile.PosComponent]
 	pipelineArray     ecs.ComponentsArray[genericrenderer.PipelineComponent]
@@ -113,6 +115,7 @@ func NewSystem(
 			hierarchyTool:     hierarchyToolFactory.Build(world),
 			animationArray:    ecs.GetComponentsArray[animation.AnimationComponent](world),
 			uiCameraArray:     ecs.GetComponentsArray[ui.UiCameraComponent](world),
+			groupArray:        ecs.GetComponentsArray[groups.GroupsComponent](world),
 			groupInheritArray: ecs.GetComponentsArray[groups.InheritGroupsComponent](world),
 			tilePosArray:      ecs.GetComponentsArray[tile.PosComponent](world),
 			pipelineArray:     ecs.GetComponentsArray[genericrenderer.PipelineComponent](world),
@@ -131,14 +134,15 @@ func NewSystem(
 }
 
 func (s *uiSys) Flush() error {
-	transactions := []ecs.AnyComponentsArrayTransaction{
+	transactions := []ecs.AnyComponentsArrayTransaction{}
+	transactions = append(transactions,
 		s.animationTransaction,
 		s.groupInheritTransaction,
 		s.pipelineTransaction,
 		s.leftClickTransaction,
 		s.keepSelectedTransaction,
 		s.colliderTransaction,
-	}
+	)
 	transactions = append(transactions, s.transformTransaction.Transactions()...)
 	transactions = append(transactions, s.renderTransaction.Transactions()...)
 	transactions = append(transactions, s.textTransaction.Transactions()...)

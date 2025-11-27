@@ -20,7 +20,6 @@ import (
 	"engine/services/logger"
 	"engine/services/media/window"
 	"engine/services/scenes"
-	"fmt"
 
 	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
@@ -112,11 +111,11 @@ func (pkg) Register(b ioc.Builder) {
 			})
 
 			// temporary system to say wich tile was pressed
-			events.Listen(ctx.EventsBuilder(), func(event tile.TileClickEvent) {
-				tileColliderArray := ecs.GetComponentsArray[tile.PosComponent](ctx)
-				tileCollider, _ := tileColliderArray.GetComponent(event.Tile)
-				logger.Info(fmt.Sprintf("collider: %v", tileCollider))
-			})
+			// events.Listen(ctx.EventsBuilder(), func(event tile.TileClickEvent) {
+			// 	tileColliderArray := ecs.GetComponentsArray[tile.PosComponent](ctx)
+			// 	tileCollider, _ := tileColliderArray.GetComponent(event.Tile)
+			// 	logger.Info(fmt.Sprintf("collider: %v", tileCollider))
+			// })
 
 			ecs.RegisterSystems(ctx,
 				// inputs

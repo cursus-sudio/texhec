@@ -61,6 +61,7 @@ func (s *uiSys) EnsureInit() {
 	childrenContainerTransform.Parent().Set(transform.NewParent(transform.RelativePos | transform.RelativeSize))
 
 	quit := s.world.NewEntity()
+
 	s.hierarchyTransaction.GetObject(quit).Parent().Set(hierarchy.NewParent(menu))
 	quitTransform := s.transformTransaction.GetObject(quit)
 	quitTransform.Parent().Set(transform.NewParent(transform.RelativePos))
@@ -86,6 +87,7 @@ func (s *uiSys) EnsureInit() {
 
 	s.menu = &menuData{
 		menu:              menu,
+		quit:              quit,
 		childrenContainer: childrenContainer,
 		visible:           false,
 	}
@@ -93,6 +95,7 @@ func (s *uiSys) EnsureInit() {
 
 func (s *uiSys) Render() error {
 	s.EnsureInit()
+
 	for _, entity := range s.hierarchyTransaction.
 		GetObject(s.menu.childrenContainer).
 		FlatChildren().GetIndices() {

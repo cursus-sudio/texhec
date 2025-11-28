@@ -40,6 +40,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
@@ -138,7 +139,12 @@ func frontendDic(
 			0, 1000, // min-max y
 			0, 3, // min-max z
 		),
-		uipkg.Package(3),
+		uipkg.Package(
+			3,
+			time.Millisecond*300,
+			gameassets.ShowMenuAnimation,
+			gameassets.HideMenuAnimation,
+		),
 
 		//
 

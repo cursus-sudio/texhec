@@ -14,7 +14,9 @@ import (
 	"engine/services/logger"
 	"time"
 
+	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 type pkg struct {
@@ -56,38 +58,15 @@ func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ui.System {
 		factory := ioc.Get[ecs.ToolFactory[ui.Tool]](c)
 		return ecs.NewSystemRegister(func(w ecs.World) error {
+			events.Listen(w.EventsBuilder(), func(e sdl.MouseButtonEvent) {
+				if e.Button != sdl.BUTTON_RIGHT || e.State != sdl.RELEASED {
+					return
+				}
+				events.Emit(w.Events(), ui.HideUiEvent{})
+			})
 			factory.Build(w)
 			return nil
 
 		})
 	})
-	// ioc.RegisterSingleton(b, func(c ioc.Dic) ui.System {
-	// 	return ecs.NewSystemRegister(func(w ecs.World) error {
-	// 		errs := ecs.RegisterSystems(w,
-	// 			uimodule.NewSystem(
-	// 				ioc.Get[logger.Logger](c),
-	// 				ioc.Get[ecs.ToolFactory[camera.Tool]](c),
-	// 				ioc.Get[ecs.ToolFactory[transform.Tool]](c),
-	// 				ioc.Get[ecs.ToolFactory[tile.Tool]](c),
-	// 				ioc.Get[ecs.ToolFactory[text.Tool]](c),
-	// 				ioc.Get[ecs.ToolFactory[render.Tool]](c),
-	// 				ioc.Get[ecs.ToolFactory[hierarchy.Tool]](c),
-	// 				pkg.maxLayer,
-	// 			),
-	// 			ecs.NewSystemRegister(func(w ecs.World) error {
-	// 				events.Listen(w.EventsBuilder(), func(e sdl.MouseButtonEvent) {
-	// 					if e.Button != sdl.BUTTON_RIGHT {
-	// 						return
-	// 					}
-	// 					events.Emit(w.Events(), ui.HideUiEvent{})
-	// 				})
-	// 				return nil
-	// 			}),
-	// 		)
-	// 		if len(errs) == 0 {
-	// 			return nil
-	// 		}
-	// 		return errs[0]
-	// 	})
-	// })
 }

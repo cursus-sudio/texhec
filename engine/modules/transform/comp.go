@@ -8,11 +8,31 @@ import (
 
 type ParentFlag uint8
 
+// const (
+//
+//	RelativePosX ParentFlag = 1 << iota
+//	RelativePosY
+//	RelativePosZ
+//	RelativeRotation
+//	RelativeSizeX
+//	RelativeSizeY
+//	RelativeSizeZ
+//
+//	RelativePos  = RelativePosX | RelativePosY | RelativePosZ
+//	RelativeSize = RelativeSizeX | RelativeSizeY | RelativeSizeZ
+//
+// )
 const (
 	RelativePos ParentFlag = 1 << iota
 	RelativeRotation
 	RelativeSize
 )
+
+// const (
+// 	RelativePos ParentFlag = 1 << iota
+// 	RelativeRotation
+// 	RelativeSize
+// )
 
 type PosComponent struct{ Pos mgl32.Vec3 }
 type RotationComponent struct{ Rotation mgl32.Quat }

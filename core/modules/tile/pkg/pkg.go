@@ -5,10 +5,13 @@ import (
 	"core/modules/tile/internal/tilecollider"
 	"core/modules/tile/internal/tilerenderer"
 	"core/modules/tile/internal/tiletool"
+	"core/modules/tile/internal/tileui"
+	"core/modules/ui"
 	"engine/modules/collider"
 	"engine/modules/groups"
+	"engine/modules/text"
 	"engine/services/ecs"
-
+	"engine/services/logger"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -54,7 +57,17 @@ func Package(
 
 func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.System {
-		return ecs.NewSystemRegister(func(w ecs.World) error {
+		systems := []ecs.SystemRegister{
+			tileui.NewSystem(
+				ioc.Get[logger.Logger](c),
+				ioc.Get[ecs.ToolFactory[ui.Tool]](c),
+				ioc.Get[ecs.ToolFactory[text.Tool]](c),
+			),
+		}
+		return ecs.NewSystemRegister(func(world ecs.World) error {
+			for _, system := range systems {
+				system.Register(world)
+			}
 			return nil
 		})
 	})

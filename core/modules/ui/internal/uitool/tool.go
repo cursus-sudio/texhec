@@ -17,12 +17,10 @@ import (
 	"engine/services/ecs"
 	"engine/services/logger"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/events"
-	"github.com/veandco/go-sdl2/sdl"
 )
 
 type changing struct {
@@ -104,7 +102,6 @@ func NewTool(
 func (t tool) Init() error {
 	cameras := t.uiCameraArray.GetEntities()
 	if len(cameras) == 0 {
-		t.logger.Info("hihi fm")
 		return nil
 	}
 	if len(cameras) != 1 {
@@ -162,7 +159,10 @@ func (t tool) Init() error {
 
 	// quit btn
 	quit := t.world.NewEntity()
+
 	hierarchyTransaction.GetObject(quit).Parent().Set(hierarchy.NewParent(menu))
+	groupInheritTransaction.SaveComponent(quit, groups.InheritGroupsComponent{})
+
 	quitTransform := transformTransaction.GetObject(quit)
 	quitTransform.Parent().Set(transform.NewParent(transform.RelativePos))
 	quitTransform.ParentPivotPoint().Set(transform.NewParentPivotPoint(1, 1, .5))
@@ -179,7 +179,6 @@ func (t tool) Init() error {
 	quitRender.Mesh().Set(render.NewMesh(gameassets.SquareMesh))
 	quitRender.Texture().Set(render.NewTexture(gameassets.WaterTileTextureID))
 	pipelineTransaction.SaveComponent(quit, genericrenderer.PipelineComponent{})
-	groupInheritTransaction.SaveComponent(quit, groups.InheritGroupsComponent{})
 
 	leftClickTransaction.SaveComponent(quit, inputs.NewMouseLeftClick(ui.HideUiEvent{}))
 	keepSelectedTransaction.SaveComponent(quit, inputs.KeepSelectedComponent{})
@@ -196,37 +195,6 @@ func (t tool) Init() error {
 
 	events.Listen(t.world.EventsBuilder(), func(e ui.HideUiEvent) {
 		t.Hide()
-	})
-	events.Listen(t.world.EventsBuilder(), func(e ui.SettingsEvent) {
-		t.logger.Info("settings")
-		p := t.Show()
-		textTransaction := t.textTool.Transaction()
-		quitText := textTransaction.GetObject(p)
-		quitText.Text().Set(text.TextComponent{Text: "SETTINGS"})
-		quitText.FontSize().Set(text.FontSizeComponent{FontSize: 25})
-		quitText.TextAlign().Set(text.TextAlignComponent{Vertical: .5, Horizontal: .5})
-		textTransaction.Flush()
-	})
-	tilePosArray := ecs.GetComponentsArray[tile.PosComponent](t.world)
-	events.Listen(t.world.EventsBuilder(), func(e tile.TileClickEvent) {
-		t.logger.Info("tile click")
-		pos, err := tilePosArray.GetComponent(e.Tile)
-		if err != nil {
-			t.logger.Warn(err)
-		}
-		p := t.Show()
-		textTransaction := t.textTool.Transaction()
-		quitText := textTransaction.GetObject(p)
-		quitText.Text().Set(text.TextComponent{Text: fmt.Sprintf("TILE: %v", pos)})
-		quitText.FontSize().Set(text.FontSizeComponent{FontSize: 25})
-		quitText.TextAlign().Set(text.TextAlignComponent{Vertical: .5, Horizontal: .5})
-		textTransaction.Flush()
-	})
-	events.Listen(t.world.EventsBuilder(), func(e sdl.MouseButtonEvent) {
-		if e.Button != sdl.BUTTON_RIGHT || e.State != sdl.RELEASED {
-			return
-		}
-		events.Emit(t.world.Events(), ui.HideUiEvent{})
 	})
 	return ecs.FlushMany(transactions...)
 }

@@ -3,6 +3,7 @@ package main
 import (
 	gameassets "core/assets"
 	"core/modules/fpslogger/pkg"
+	settingspkg "core/modules/settings/pkg"
 	"core/modules/tile"
 	tilepkg "core/modules/tile/pkg"
 	uipkg "core/modules/ui/pkg"
@@ -145,6 +146,7 @@ func frontendDic(
 			gameassets.ShowMenuAnimation,
 			gameassets.HideMenuAnimation,
 		),
+		settingspkg.Package(),
 
 		//
 

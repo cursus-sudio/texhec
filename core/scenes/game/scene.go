@@ -3,6 +3,7 @@ package gamescene
 import (
 	gameassets "core/assets"
 	"core/modules/definition"
+	"core/modules/settings"
 	"core/modules/tile"
 	"core/modules/ui"
 	gamescenes "core/scenes"
@@ -78,7 +79,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world, quit, render.NewTexture(gameassets.WaterTileTextureID))
 			ecs.SaveComponent(world, quit, genericrenderer.PipelineComponent{})
 
-			ecs.SaveComponent(world, quit, inputs.NewMouseLeftClick(ui.SettingsEvent{}))
+			ecs.SaveComponent(world, quit, inputs.NewMouseLeftClick(settings.EnterSettingsEvent{}))
 			ecs.SaveComponent(world, quit, inputs.KeepSelectedComponent{})
 			ecs.SaveComponent(world, quit, collider.NewCollider(gameassets.SquareColliderID))
 

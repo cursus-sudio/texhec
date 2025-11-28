@@ -1,0 +1,40 @@
+package tileui
+
+import (
+	"core/modules/tile"
+	"core/modules/ui"
+	"engine/modules/text"
+	"engine/services/ecs"
+	"engine/services/logger"
+	"fmt"
+
+	"github.com/ogiusek/events"
+)
+
+func NewSystem(
+	logger logger.Logger,
+	uiToolFactory ecs.ToolFactory[ui.Tool],
+	textToolFactory ecs.ToolFactory[text.Tool],
+) ecs.SystemRegister {
+	return ecs.NewSystemRegister(func(world ecs.World) error {
+		tilePosArray := ecs.GetComponentsArray[tile.PosComponent](world)
+		uiTool := uiToolFactory.Build(world)
+		textTool := textToolFactory.Build(world)
+
+		events.Listen(world.EventsBuilder(), func(e tile.TileClickEvent) {
+			pos, err := tilePosArray.GetComponent(e.Tile)
+			if err != nil {
+				logger.Warn(err)
+				return
+			}
+			p := uiTool.Show()
+			textTransaction := textTool.Transaction()
+			quitText := textTransaction.GetObject(p)
+			quitText.Text().Set(text.TextComponent{Text: fmt.Sprintf("TILE: %v", pos)})
+			quitText.FontSize().Set(text.FontSizeComponent{FontSize: 25})
+			quitText.TextAlign().Set(text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+			textTransaction.Flush()
+		})
+		return nil
+	})
+}

@@ -14,7 +14,7 @@ type HideUiEvent struct{}
 type Tool interface {
 	// returns parent to attach ui elements
 	// potentially with enter animation
-	Show() ecs.EntityID
+	Show() (parent ecs.EntityID)
 	// removes all children
 	Hide()
 }

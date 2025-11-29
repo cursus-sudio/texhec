@@ -6,7 +6,6 @@ import (
 	"engine/services/assets"
 	"engine/services/ecs"
 	"engine/services/logger"
-	"sync"
 )
 
 type CollisionService interface {
@@ -17,7 +16,6 @@ type CollisionService interface {
 type global struct {
 	staticWorldCollider  worldCollider
 	dynamicWorldCollider worldCollider
-	mutex                sync.Locker
 }
 
 func newRegister(
@@ -28,7 +26,6 @@ func newRegister(
 	r := global{
 		newWorldCollider(logger, world, transformTransaction, 100),
 		newWorldCollider(logger, world, transformTransaction, 100),
-		&sync.Mutex{},
 	}
 	world.SaveGlobal(r)
 	return r
@@ -72,8 +69,6 @@ func (s *collisionsService) ShootRay(ray collider.Ray) (collider.ObjectRayCollis
 	if err != nil {
 		r = newRegister(s.logger, s.transformTransaction, s.world)
 	}
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
 	c1, err := newCollisionDetectionService(s.world, s.transformTransaction, s.assets, r.staticWorldCollider, s.logger).ShootRay(ray)
 	if err != nil {
 		return nil, err
@@ -98,8 +93,6 @@ func (s *collisionsService) NarrowCollisions(entity ecs.EntityID) ([]ecs.EntityI
 	if err != nil {
 		r = newRegister(s.logger, s.transformTransaction, s.world)
 	}
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
 	c1, err := newCollisionDetectionService(s.world, s.transformTransaction, s.assets, r.staticWorldCollider, s.logger).NarrowCollisions(entity)
 	if err != nil {
 		return nil, err
@@ -117,8 +110,6 @@ func (s *collisionsService) Add(entities ...ecs.EntityID) {
 	if err != nil {
 		r = newRegister(s.logger, s.transformTransaction, s.world)
 	}
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
 	static := make([]ecs.EntityID, 0, len(entities))
 	dynamic := make([]ecs.EntityID, 0, len(entities))
 	for _, entity := range entities {
@@ -140,8 +131,6 @@ func (s *collisionsService) Update(entities ...ecs.EntityID) {
 	if err != nil {
 		r = newRegister(s.logger, s.transformTransaction, s.world)
 	}
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
 	r.dynamicWorldCollider.Update(entities...)
 }
 func (s *collisionsService) Remove(entities ...ecs.EntityID) {
@@ -149,7 +138,5 @@ func (s *collisionsService) Remove(entities ...ecs.EntityID) {
 	if err != nil {
 		r = newRegister(s.logger, s.transformTransaction, s.world)
 	}
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
 	r.dynamicWorldCollider.Remove(entities...)
 }

@@ -4,7 +4,6 @@ import (
 	"engine/services/datastructures"
 	"errors"
 	"reflect"
-	"sync"
 )
 
 // interface
@@ -54,22 +53,15 @@ type componentsInterface interface {
 	Query() LiveQueryBuilder
 
 	GetAnyComponent(EntityID, ComponentType) (any, error)
-
-	LockComponents()
-	UnlockComponents()
 }
 
 // impl
 
 type componentsImpl struct {
-	mutex sync.Locker
-
 	storage *componentsStorage
 }
 
 func (components *componentsImpl) Components() ComponentsStorage { return components.storage }
-func (components *componentsImpl) LockComponents()               { components.mutex.Lock() }
-func (components *componentsImpl) UnlockComponents()             { components.mutex.Unlock() }
 
 func (components *componentsImpl) RemoveEntity(entity EntityID) {
 	for _, arr := range components.storage.arrays {
@@ -79,7 +71,6 @@ func (components *componentsImpl) RemoveEntity(entity EntityID) {
 
 func newComponents(entities datastructures.SparseSet[EntityID]) *componentsImpl {
 	return &componentsImpl{
-		mutex:   &sync.Mutex{},
 		storage: newComponentsStorage(entities),
 	}
 }

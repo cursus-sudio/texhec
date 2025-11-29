@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"sync"
 )
 
 // interface
@@ -35,9 +34,6 @@ type globalsInterface interface {
 	GetGlobal(GlobalType) (Global, error)
 
 	Release()
-
-	LockGlobals()
-	UnlockGlobals()
 }
 
 type Cleanable interface {
@@ -60,7 +56,6 @@ type globalsImpl struct {
 	cleanableTypes datastructures.Set[GlobalType]
 	cleanables     datastructures.Array[Cleanable]
 	registry       map[GlobalType]Global
-	mutex          sync.Locker
 }
 
 func newGlobals() *globalsImpl {
@@ -68,7 +63,6 @@ func newGlobals() *globalsImpl {
 		cleanableTypes: datastructures.NewSet[GlobalType](),
 		cleanables:     datastructures.NewArray[Cleanable](),
 		registry:       map[GlobalType]Global{},
-		mutex:          &sync.Mutex{},
 	}
 }
 
@@ -105,6 +99,3 @@ func (r *globalsImpl) Release() {
 	}
 	*r = *newGlobals()
 }
-
-func (r *globalsImpl) LockGlobals()   { r.mutex.Lock() }
-func (r *globalsImpl) UnlockGlobals() { r.mutex.Unlock() }

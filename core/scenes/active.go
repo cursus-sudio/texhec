@@ -2,6 +2,7 @@ package gamescenes
 
 import (
 	"core/modules/fpslogger"
+	"core/modules/settings"
 	"core/modules/tile"
 	"core/modules/ui"
 	"engine/modules/animation"
@@ -130,7 +131,10 @@ func (pkg) Register(b ioc.Builder) {
 				temporaryInlineSystems,
 
 				ioc.Get[tile.System](c),
+
+				// ui update
 				ioc.Get[ui.System](c),
+				ioc.Get[settings.System](c),
 
 				// audio
 				ioc.Get[audio.System](c),

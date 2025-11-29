@@ -11,7 +11,15 @@ type ParentFlag uint8
 const (
 	RelativePos ParentFlag = 1 << iota
 	RelativeRotation
-	RelativeSize
+	RelativeSizeX
+	RelativeSizeY
+	RelativeSizeZ
+)
+const (
+	RelativeSizeXY  = RelativeSizeX | RelativeSizeY
+	RelativeSizeXZ  = RelativeSizeX | RelativeSizeZ
+	RelativeSizeXYZ = RelativeSizeX | RelativeSizeY | RelativeSizeZ
+	RelativeSizeYZ  = RelativeSizeY | RelativeSizeZ
 )
 
 type PosComponent struct{ Pos mgl32.Vec3 }

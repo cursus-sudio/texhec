@@ -13,7 +13,6 @@ type tool struct {
 
 	world       ecs.World
 	parentArray ecs.ComponentsArray[hierarchy.ParentComponent]
-	mutex       *sync.Mutex
 
 	parentChildren     datastructures.SparseArray[ecs.EntityID, datastructures.SparseSet[ecs.EntityID]]
 	parentFlatChildren datastructures.SparseArray[ecs.EntityID, datastructures.SparseSet[ecs.EntityID]]
@@ -32,7 +31,6 @@ func NewTool(logger logger.Logger) ecs.ToolFactory[hierarchy.Tool] {
 			logger,
 			w,
 			ecs.GetComponentsArray[hierarchy.ParentComponent](w),
-			mutex,
 			datastructures.NewSparseArray[ecs.EntityID, datastructures.SparseSet[ecs.EntityID]](),
 			datastructures.NewSparseArray[ecs.EntityID, datastructures.SparseSet[ecs.EntityID]](),
 		}
@@ -65,8 +63,6 @@ func (t tool) GetOrderedParents(comp hierarchy.ParentComponent) []ecs.EntityID {
 }
 
 func (t tool) Upsert(ei []ecs.EntityID) {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
 	for _, child := range ei {
 		comp, err := t.parentArray.GetComponent(child)
 		if err != nil {
@@ -95,9 +91,6 @@ func (t tool) Upsert(ei []ecs.EntityID) {
 }
 
 func (t tool) Remove(ei []ecs.EntityID, components []hierarchy.ParentComponent) {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
-
 	for i, child := range ei {
 		// handle orphaned children
 		if children, ok := t.parentChildren.Get(child); ok {

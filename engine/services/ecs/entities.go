@@ -2,7 +2,6 @@ package ecs
 
 import (
 	"engine/services/datastructures"
-	"sync"
 )
 
 // interface
@@ -22,9 +21,6 @@ type entitiesInterface interface {
 
 	GetEntities() []EntityID
 	EntityExists(EntityID) bool
-
-	LockEntities()
-	UnlockEntities()
 }
 
 // impl
@@ -32,7 +28,6 @@ type entitiesInterface interface {
 type entitiesImpl struct {
 	counter uint64
 	holes   datastructures.Set[EntityID]
-	mutex   sync.Locker
 
 	entities datastructures.SparseSet[EntityID]
 }
@@ -41,7 +36,6 @@ func newEntities() *entitiesImpl {
 	return &entitiesImpl{
 		counter:  0,
 		holes:    datastructures.NewSet[EntityID](),
-		mutex:    &sync.Mutex{},
 		entities: datastructures.NewSparseSet[EntityID](),
 	}
 }
@@ -85,6 +79,3 @@ func (entitiesStorage *entitiesImpl) GetEntities() []EntityID {
 func (entitiesStorage *entitiesImpl) EntityExists(entity EntityID) bool {
 	return entitiesStorage.entities.Get(entity)
 }
-
-func (entitiesStorage *entitiesImpl) LockEntities()   { entitiesStorage.mutex.Lock() }
-func (entitiesStorage *entitiesImpl) UnlockEntities() { entitiesStorage.mutex.Unlock() }

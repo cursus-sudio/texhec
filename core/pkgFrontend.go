@@ -3,6 +3,7 @@ package main
 import (
 	gameassets "core/assets"
 	"core/modules/fpslogger/pkg"
+	settingspkg "core/modules/settings/pkg"
 	"core/modules/tile"
 	tilepkg "core/modules/tile/pkg"
 	uipkg "core/modules/ui/pkg"
@@ -40,6 +41,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
@@ -128,7 +130,7 @@ func frontendDic(
 		texturearray.Package(),
 		tilepkg.Package(
 			100,
-			-1,
+			0,
 			groups.EmptyGroups().Ptr().Enable(gamescene.GameGroup).Val(),
 			collider.NewCollider(gameassets.SquareColliderID),
 
@@ -138,7 +140,13 @@ func frontendDic(
 			0, 1000, // min-max y
 			0, 3, // min-max z
 		),
-		uipkg.Package(3),
+		uipkg.Package(
+			3,
+			time.Millisecond*300,
+			gameassets.ShowMenuAnimation,
+			gameassets.HideMenuAnimation,
+		),
+		settingspkg.Package(),
 
 		//
 

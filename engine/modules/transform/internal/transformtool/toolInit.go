@@ -41,8 +41,7 @@ func (t tool) Init() {
 				}
 			}
 		}
-		// t.logger.Warn(ecs.FlushMany(posTransaction))
-		// t.logger.Warn(ecs.FlushMany(rotTransaction))
+		t.logger.Warn(ecs.FlushMany(posTransaction, rotTransaction))
 	}
 
 	onSizeUpsert := func(ei []ecs.EntityID) {
@@ -58,7 +57,7 @@ func (t tool) Init() {
 				if mask.RelativeMask&transform.RelativePos != 0 {
 					posTransaction.TriggerChangeListener(child)
 				}
-				if mask.RelativeMask&transform.RelativeSize != 0 {
+				if mask.RelativeMask&transform.RelativeSizeXYZ != 0 {
 					sizeTransaction.TriggerChangeListener(child)
 				}
 			}

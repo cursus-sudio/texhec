@@ -4,7 +4,6 @@ import (
 	"engine/services/datastructures"
 	"errors"
 	"reflect"
-	"sync"
 )
 
 var ErrInvalidType error = errors.New("expected an error component")
@@ -76,8 +75,6 @@ type componentsArray[Component any] struct {
 	equal      func(Component, Component) bool
 	entities   datastructures.SparseSet[EntityID]
 	components datastructures.SparseArray[EntityID, Component]
-
-	applyTransactionMutex sync.Mutex
 
 	// queries are used for change and remove listeners
 	queries []*liveQuery

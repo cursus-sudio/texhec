@@ -22,10 +22,6 @@ type AnyComponentsArrayTransaction interface {
 
 	RemoveComponent(EntityID)
 
-	// this prematurely locks mutex until we flush (it is optional).
-	// it is useful if we want to check error on many arrays.
-	PrepareFlush()
-
 	Error() error
 
 	// runs Error() and if it doesn't return an error it applies it.
@@ -134,14 +130,6 @@ func (t *componentsArrayTransaction[Component]) RemoveComponent(entity EntityID)
 	t.operations.Set(entity, operationRemove)
 }
 
-func (t *componentsArrayTransaction[Component]) PrepareFlush() {
-	if t.prepared {
-		return
-	}
-	t.prepared = true
-	t.array.applyTransactionMutex.Lock()
-}
-
 func (t *componentsArrayTransaction[Component]) Error() error {
 	requiredEntities := make([]EntityID, 0, len(t.saves.GetValues()))
 	for _, saved := range t.saves.GetValues() {
@@ -159,19 +147,11 @@ func (t *componentsArrayTransaction[Component]) Error() error {
 }
 
 func (t *componentsArrayTransaction[Component]) Flush() (func(), error) {
-	if !t.prepared {
-		t.array.applyTransactionMutex.Lock()
-		// unlock happens before listeners
-	}
-	t.prepared = false
-
 	if len(t.operations.GetIndices()) == 0 {
-		t.array.applyTransactionMutex.Unlock()
 		return func() {}, nil
 	}
 
 	if err := t.Error(); err != nil {
-		t.array.applyTransactionMutex.Unlock()
 		return nil, err
 	}
 
@@ -182,7 +162,6 @@ func (t *componentsArrayTransaction[Component]) Flush() (func(), error) {
 	onRemoveComponents := []Component{}
 
 	// apply
-	t.operations = datastructures.NewSparseArray[EntityID, operation]()
 	for _, save := range t.saves.GetValues() {
 		added := t.array.components.Set(save.entity, save.component)
 		if added {
@@ -191,7 +170,6 @@ func (t *componentsArrayTransaction[Component]) Flush() (func(), error) {
 			onChange = append(onChange, save.entity)
 		}
 	}
-	t.saves = datastructures.NewSparseArray[EntityID, save[Component]]()
 
 	for _, removedEntity := range t.removes.GetIndices() {
 		component, _ := t.array.components.Get(removedEntity)
@@ -200,14 +178,18 @@ func (t *componentsArrayTransaction[Component]) Flush() (func(), error) {
 			onRemoveComponents = append(onRemoveComponents, component)
 		}
 	}
-	t.removes = datastructures.NewSparseSet[EntityID]()
 
 	for _, entity := range t.changes.GetIndices() {
 		onChange = append(onChange, entity)
 	}
-	t.changes = datastructures.NewSparseSet[EntityID]()
 
-	t.array.applyTransactionMutex.Unlock()
+	t.operations = datastructures.NewSparseArray[EntityID, operation]()
+	t.changes = datastructures.NewSparseSet[EntityID]()
+	t.saves = datastructures.NewSparseArray[EntityID, save[Component]]()
+	t.removes = datastructures.NewSparseSet[EntityID]()
+	t.prepared = false
+
+	// t.array.applyTransactionMutex.Unlock()
 
 	// notify listeners
 	return func() {
@@ -243,9 +225,6 @@ func (t *componentsArrayTransaction[Component]) Flush() (func(), error) {
 }
 
 func (t *componentsArrayTransaction[Component]) Discard() {
-	if t.prepared {
-		t.array.applyTransactionMutex.Unlock()
-	}
 	t.prepared = false
 	t.operations = datastructures.NewSparseArray[EntityID, operation]()
 	t.saves = datastructures.NewSparseArray[EntityID, save[Component]]()
@@ -256,7 +235,6 @@ func (t *componentsArrayTransaction[Component]) Discard() {
 func FlushMany(transactions ...AnyComponentsArrayTransaction) error {
 	var err error
 	for _, transaction := range transactions {
-		transaction.PrepareFlush()
 		if err = transaction.Error(); err != nil {
 			break
 		}

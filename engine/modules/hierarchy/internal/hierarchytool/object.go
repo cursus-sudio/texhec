@@ -60,8 +60,6 @@ func (t object) GetOrderedParents() []ecs.EntityID {
 }
 
 func (t object) Children() datastructures.SparseSetReader[ecs.EntityID] {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
 	children, ok := t.parentChildren.Get(t.entity)
 	if !ok {
 		return datastructures.NewSparseSet[ecs.EntityID]()
@@ -70,8 +68,6 @@ func (t object) Children() datastructures.SparseSetReader[ecs.EntityID] {
 }
 
 func (t object) FlatChildren() datastructures.SparseSetReader[ecs.EntityID] {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
 	flatChildren, ok := t.tool.parentFlatChildren.Get(t.entity)
 	if !ok {
 		return datastructures.NewSparseSet[ecs.EntityID]()

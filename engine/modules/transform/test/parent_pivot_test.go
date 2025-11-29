@@ -1,6 +1,7 @@
 package test
 
 import (
+	"engine/modules/hierarchy"
 	"engine/modules/transform"
 	"testing"
 )
@@ -14,12 +15,7 @@ func TestParentPivot(t *testing.T) {
 
 	entity := setup.World.NewEntity()
 	entityTransform := setup.Transaction.GetObject(entity)
-
-	entityTransform.Parent().Set(transform.NewParent(transform.RelativePos))
-	if err := setup.Transaction.Flush(); err != nil {
-		t.Error(err)
-		return
-	}
+	setup.HierarchyArray.SaveComponent(entity, hierarchy.NewParent(parent))
 
 	expectPos := func(expectedPos transform.PosComponent) {
 		pos, err := entityTransform.AbsolutePos().Get()
@@ -32,6 +28,11 @@ func TestParentPivot(t *testing.T) {
 		}
 	}
 
+	entityTransform.Parent().Set(transform.NewParent(transform.RelativePos))
+	if err := setup.Transaction.Flush(); err != nil {
+		t.Error(err)
+		return
+	}
 	expectPos(transform.NewPos(10, 10, 10))
 
 	entityTransform.ParentPivotPoint().Set(transform.NewParentPivotPoint(0, 0, 0))

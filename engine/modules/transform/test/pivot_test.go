@@ -10,12 +10,6 @@ func TestPivot(t *testing.T) {
 	entity := setup.World.NewEntity()
 	entityTransform := setup.Transaction.GetObject(entity)
 
-	entityTransform.Size().Set(transform.NewSize(10, 10, 10))
-	if err := setup.Transaction.Flush(); err != nil {
-		t.Error(err)
-		return
-	}
-
 	expectPos := func(expectedPos transform.PosComponent) {
 		pos, err := entityTransform.AbsolutePos().Get()
 		if err != nil {
@@ -27,6 +21,11 @@ func TestPivot(t *testing.T) {
 		}
 	}
 
+	entityTransform.Size().Set(transform.NewSize(10, 10, 10))
+	if err := setup.Transaction.Flush(); err != nil {
+		t.Error(err)
+		return
+	}
 	expectPos(transform.NewPos(0, 0, 0))
 
 	entityTransform.PivotPoint().Set(transform.NewPivotPoint(0, 0, 0))

@@ -152,18 +152,6 @@ func BenchmarkEmptyTransaction(b *testing.B) {
 	}
 }
 
-func BenchmarkEmptyPreparedTransaction(b *testing.B) {
-	entities := datastructures.NewSparseSet[ecs.EntityID]()
-	arr := ecs.NewComponentsArray[Component](entities)
-	t := arr.Transaction()
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		t.PrepareFlush()
-		t.Flush()
-	}
-}
-
 func BenchmarkTransactionUpdateComponentsInArray(b *testing.B) {
 	entities := datastructures.NewSparseSet[ecs.EntityID]()
 	arr := ecs.NewComponentsArray[Component](entities)

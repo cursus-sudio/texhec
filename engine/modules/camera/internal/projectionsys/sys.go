@@ -84,13 +84,8 @@ func (s *updateProjetionsSystem) UpsertOrtho(ei []ecs.EntityID) {
 			s.logger.Warn(err)
 			continue
 		}
-		transform := transformTransaction.GetObject(entity)
+		transformObj := transformTransaction.GetObject(entity)
 		s.cameraTool.GetObject(entity)
-		size, err := transform.AbsoluteSize().Get()
-		if err != nil {
-			s.logger.Warn(err)
-			continue
-		}
 		resizeOrtho, err := s.orthoArray.GetComponent(entity)
 		if err != nil {
 			continue
@@ -98,10 +93,12 @@ func (s *updateProjetionsSystem) UpsertOrtho(ei []ecs.EntityID) {
 
 		x, y, w, h := camera.Viewport()
 
-		size.Size = mgl32.Vec3{
-			float32(w-x) / resizeOrtho.Zoom, float32(h-y) / resizeOrtho.Zoom, size.Size.Z(),
-		}
-		transform.AbsoluteSize().Set(size)
+		size := transform.NewSize(
+			float32(w-x)/resizeOrtho.Zoom,
+			float32(h-y)/resizeOrtho.Zoom,
+			mgl32.Abs(resizeOrtho.Far-resizeOrtho.Near),
+		)
+		transformObj.AbsoluteSize().Set(size)
 	}
 
 	s.logger.Warn(transformTransaction.Flush())

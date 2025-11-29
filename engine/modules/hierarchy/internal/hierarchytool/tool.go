@@ -95,9 +95,6 @@ func (t tool) Upsert(ei []ecs.EntityID) {
 }
 
 func (t tool) Remove(ei []ecs.EntityID, components []hierarchy.ParentComponent) {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
-
 	for i, child := range ei {
 		// handle orphaned children
 		if children, ok := t.parentChildren.Get(child); ok {

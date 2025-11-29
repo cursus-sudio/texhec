@@ -87,9 +87,11 @@ func NewSystem(
 			inheritGroupsTransaction.SaveComponent(textEntity, groups.InheritGroupsComponent{})
 
 			labelTransform := transformTransaction.GetObject(textEntity)
-			labelTransform.Parent().Set(transform.NewParent(transform.RelativePos))
+			labelTransform.Parent().Set(transform.NewParent(transform.RelativePos | transform.RelativeSizeX))
+			labelTransform.ParentPivotPoint().Set(transform.NewParentPivotPoint(.5, .5, 1))
+			labelTransform.PivotPoint().Set(transform.NewPivotPoint(.5, .5, 0))
 			labelTransform.Pos().Set(transform.NewPos(0, -25, 0))
-			labelTransform.Size().Set(transform.NewSize(160, 50, 1))
+			labelTransform.Size().Set(transform.NewSize(1, 50, 1))
 
 			labelText := textTransaction.GetObject(textEntity)
 			labelText.Text().Set(text.TextComponent{Text: "SETTINGS"})
@@ -103,9 +105,11 @@ func NewSystem(
 			inheritGroupsTransaction.SaveComponent(btnEntity, groups.InheritGroupsComponent{})
 
 			btnTransform := transformTransaction.GetObject(btnEntity)
-			btnTransform.Parent().Set(transform.NewParent(transform.RelativePos))
+			btnTransform.Parent().Set(transform.NewParent(transform.RelativePos | transform.RelativeSizeX))
+			btnTransform.ParentPivotPoint().Set(transform.NewParentPivotPoint(.5, .5, 1))
+			btnTransform.PivotPoint().Set(transform.NewPivotPoint(.5, .5, 0))
 			btnTransform.Pos().Set(transform.NewPos(0, 25, 0))
-			btnTransform.Size().Set(transform.NewSize(160, 50, 1))
+			btnTransform.Size().Set(transform.NewSize(1, 50, 1))
 
 			btnRender := renderTransaction.GetObject(btnEntity)
 			btnRender.Mesh().Set(render.NewMesh(gameassets.SquareMesh))

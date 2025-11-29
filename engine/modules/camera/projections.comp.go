@@ -9,11 +9,11 @@ type OrthoComponent struct {
 	Zoom      float32
 }
 
-func NewOrtho(near, far float32, zoom float32) OrthoComponent {
+func NewOrtho(near, far float32) OrthoComponent {
 	return OrthoComponent{
-		Near: min(near, far),
-		Far:  max(near, far),
-		Zoom: zoom,
+		Near: near,
+		Far:  far,
+		Zoom: 1,
 	}
 }
 

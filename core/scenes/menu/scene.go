@@ -32,7 +32,8 @@ func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.MenuBuilder) gamescenes.MenuBuilder {
 		b.OnLoad(func(world scenes.SceneCtx) {
 			cameraEntity := world.NewEntity()
-			ecs.SaveComponent(world, cameraEntity, camera.NewOrtho(-1000, +1000, 1))
+			ecs.SaveComponent(world, cameraEntity, camera.NewOrtho(-1000, 1000))
+			ecs.SaveComponent(world, cameraEntity, transform.NewPos(0, 0, 1000))
 
 			signature := world.NewEntity()
 			ecs.SaveComponent(world, signature, transform.NewPos(5, 5, 0))
@@ -48,7 +49,10 @@ func (pkg) LoadObjects(b ioc.Builder) {
 
 			background := world.NewEntity()
 			ecs.SaveComponent(world, background, hierarchy.NewParent(cameraEntity))
-			ecs.SaveComponent(world, background, transform.NewParent(transform.RelativePos|transform.RelativeSize))
+			ecs.SaveComponent(world, background, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
+			ecs.SaveComponent(world, background, transform.NewPos(0, 0, 1))
+			ecs.SaveComponent(world, background, transform.NewPivotPoint(.5, .5, 0))
+			ecs.SaveComponent(world, background, transform.NewParentPivotPoint(.5, .5, 0))
 			ecs.SaveComponent(world, background, render.NewMesh(gameassets.SquareMesh))
 			ecs.SaveComponent(world, background, render.NewTexture(gameassets.ForestTileTextureID))
 			ecs.SaveComponent(world, background, genericrenderer.PipelineComponent{})

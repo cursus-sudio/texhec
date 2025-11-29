@@ -130,7 +130,7 @@ func frontendDic(
 		texturearray.Package(),
 		tilepkg.Package(
 			100,
-			-1,
+			0,
 			groups.EmptyGroups().Ptr().Enable(gamescene.GameGroup).Val(),
 			collider.NewCollider(gameassets.SquareColliderID),
 

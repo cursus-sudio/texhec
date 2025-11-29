@@ -143,8 +143,9 @@ func (t tool) Init() error {
 	menu := t.world.NewEntity()
 	hierarchyTransaction.GetObject(menu).Parent().Set(hierarchy.NewParent(camera))
 	menuTransform := transformTransaction.GetObject(menu)
-	menuTransform.Parent().Set(transform.NewParent(transform.RelativePos | transform.RelativeSize))
+	menuTransform.Parent().Set(transform.NewParent(transform.RelativePos | transform.RelativeSizeXY))
 	menuTransform.ParentPivotPoint().Set(transform.NewParentPivotPoint(1, 1, .5))
+	menuTransform.Pos().Set(transform.NewPos(0, 0, 1))
 	menuTransform.Size().Set(transform.NewSize(.2, 1, 1))
 	menuTransform.PivotPoint().Set(transform.NewPivotPoint(0, 1, .5))
 
@@ -156,6 +157,7 @@ func (t tool) Init() error {
 
 	groupInheritTransaction.SaveComponent(menu, groups.InheritGroupsComponent{})
 	colliderTransaction.SaveComponent(menu, collider.NewCollider(gameassets.SquareColliderID))
+	keepSelectedTransaction.SaveComponent(menu, inputs.KeepSelectedComponent{})
 
 	// quit btn
 	quit := t.world.NewEntity()
@@ -165,9 +167,9 @@ func (t tool) Init() error {
 
 	quitTransform := transformTransaction.GetObject(quit)
 	quitTransform.Parent().Set(transform.NewParent(transform.RelativePos))
-	quitTransform.ParentPivotPoint().Set(transform.NewParentPivotPoint(1, 1, .5))
-	quitTransform.Size().Set(transform.NewSize(25, 25, 2))
-	quitTransform.PivotPoint().Set(transform.NewPivotPoint(1, 1, .5))
+	quitTransform.ParentPivotPoint().Set(transform.NewParentPivotPoint(1, 1, 1))
+	quitTransform.Size().Set(transform.NewSize(25, 25, 1))
+	quitTransform.PivotPoint().Set(transform.NewPivotPoint(1, 1, 0))
 
 	quitText := textTransaction.GetObject(quit)
 	quitText.Text().Set(text.TextComponent{Text: "X"})
@@ -188,7 +190,7 @@ func (t tool) Init() error {
 	childWrapper := t.world.NewEntity()
 	hierarchyTransaction.GetObject(childWrapper).Parent().Set(hierarchy.NewParent(menu))
 	childrenContainerTransform := transformTransaction.GetObject(childWrapper)
-	childrenContainerTransform.Parent().Set(transform.NewParent(transform.RelativePos | transform.RelativeSize))
+	childrenContainerTransform.Parent().Set(transform.NewParent(transform.RelativePos | transform.RelativeSizeXY))
 
 	t.menu = menu
 	t.childWrapper = childWrapper
@@ -214,7 +216,7 @@ func (t tool) ResetChildWrapper() error {
 	childrenContainer := t.world.NewEntity()
 	hierarchyTransaction.GetObject(childrenContainer).Parent().Set(hierarchy.NewParent(t.menu))
 	childrenContainerTransform := transformTransaction.GetObject(childrenContainer)
-	childrenContainerTransform.Parent().Set(transform.NewParent(transform.RelativePos | transform.RelativeSize))
+	childrenContainerTransform.Parent().Set(transform.NewParent(transform.RelativePos | transform.RelativeSizeXY))
 	groupsInheritTransaction.SaveComponent(childrenContainer, groups.InheritGroupsComponent{})
 
 	t.childWrapper = childrenContainer

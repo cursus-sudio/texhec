@@ -76,20 +76,30 @@ func (t object) GetRelativeParentRotation() mgl32.Quat {
 //
 
 func (t object) GetRelativeParentSize() mgl32.Vec3 {
+	size := mgl32.Vec3{1, 1, 1}
 	parent, err := t.parent.Get()
 	if err != nil {
-		return mgl32.Vec3{1, 1, 1}
+		return size
 	}
 	parentMask, err := t.parentMask.Get()
-	if err != nil || parentMask.RelativeMask&transform.RelativeSize == 0 {
-		return mgl32.Vec3{1, 1, 1}
+	if err != nil {
+		return size
 	}
 	parentTransform := t.GetObject(parent.Parent)
 	parentSize, err := parentTransform.AbsoluteSize().Get()
 	if err != nil {
-		return mgl32.Vec3{1, 1, 1}
+		return size
 	}
-	return parentSize.Size
+	if parentMask.RelativeMask&transform.RelativeSizeX != 0 {
+		size[0] = parentSize.Size[0]
+	}
+	if parentMask.RelativeMask&transform.RelativeSizeY != 0 {
+		size[1] = parentSize.Size[1]
+	}
+	if parentMask.RelativeMask&transform.RelativeSizeZ != 0 {
+		size[2] = parentSize.Size[2]
+	}
+	return size
 }
 
 //

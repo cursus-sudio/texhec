@@ -90,7 +90,7 @@ func NewSystem(
 			labelTransform.Parent().Set(transform.NewParent(transform.RelativePos | transform.RelativeSizeX))
 			labelTransform.ParentPivotPoint().Set(transform.NewParentPivotPoint(.5, .5, 1))
 			labelTransform.PivotPoint().Set(transform.NewPivotPoint(.5, .5, 0))
-			labelTransform.Pos().Set(transform.NewPos(0, -25, 0))
+			labelTransform.Pos().Set(transform.NewPos(0, 25, 0))
 			labelTransform.Size().Set(transform.NewSize(1, 50, 1))
 
 			labelText := textTransaction.GetObject(textEntity)
@@ -108,7 +108,7 @@ func NewSystem(
 			btnTransform.Parent().Set(transform.NewParent(transform.RelativePos | transform.RelativeSizeX))
 			btnTransform.ParentPivotPoint().Set(transform.NewParentPivotPoint(.5, .5, 1))
 			btnTransform.PivotPoint().Set(transform.NewPivotPoint(.5, .5, 0))
-			btnTransform.Pos().Set(transform.NewPos(0, 25, 0))
+			btnTransform.Pos().Set(transform.NewPos(0, -25, 0))
 			btnTransform.Size().Set(transform.NewSize(1, 50, 1))
 
 			btnRender := renderTransaction.GetObject(btnEntity)

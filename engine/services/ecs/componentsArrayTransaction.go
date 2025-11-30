@@ -189,8 +189,6 @@ func (t *componentsArrayTransaction[Component]) Flush() (func(), error) {
 	t.removes = datastructures.NewSparseSet[EntityID]()
 	t.prepared = false
 
-	// t.array.applyTransactionMutex.Unlock()
-
 	// notify listeners
 	return func() {
 		addI := 0

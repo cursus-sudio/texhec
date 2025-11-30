@@ -18,8 +18,10 @@ jobs:
     - name: Install SDL2 and OpenGL Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libsdl2-dev
-        sudo apt-get install -y libgl1-mesa-dev xorg-dev
+        # SDL2
+        sudo apt-get install -y libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libsdl2-net-dev
+        # OpenGL
+        sudo apt-get install -y mesa-utils libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
 
     - name: Set up Go
       uses: actions/setup-go@v5

@@ -19,13 +19,13 @@ jobs:
       with:
         go-version: '1.22'
 
-    - name: Download core Go Modules
-      run: go mod download
-      working-directory: core
-
-    - name: Download engine Go Modules
-      run: go mod download
-      working-directory: engine
+    # - name: Download core Go Modules
+    #   run: go mod download
+    #   working-directory: core
+    #
+    # - name: Download engine Go Modules
+    #   run: go mod download
+    #   working-directory: engine
 
     - name: run engine tests
       run: go test ./...

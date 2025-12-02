@@ -62,10 +62,15 @@ func (pkg pkg) Register(b ioc.Builder) {
 				ecs.NewSystemRegister(func(w ecs.World) error {
 					posArray := ecs.GetComponentsArray[tile.PosComponent](w)
 					colliderArray := ecs.GetComponentsArray[ColliderComponent](w)
-					posArray.OnRemoveComponents(func(ei []ecs.EntityID, components []tile.PosComponent) {
+					posArray.BeforeRemove(func(ei []ecs.EntityID) {
 						colliderTransaction := colliderArray.Transaction()
 						set := datastructures.NewSparseSet[ecs.EntityID]()
-						for _, component := range components {
+						for _, entity := range ei {
+							component, err := posArray.GetComponent(entity)
+							if err != nil {
+								logger.Warn(err)
+								continue
+							}
 							component.Layer = pkg.mainLayer
 							entity, ok := posIndex.Get(component)
 							if ok {

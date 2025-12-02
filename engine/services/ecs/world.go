@@ -40,8 +40,8 @@ func (world world) NewEntity() EntityID {
 }
 
 func (world world) RemoveEntity(entity EntityID) {
-	world.entitiesInterface.RemoveEntity(entity)
 	world.componentsImpl.RemoveEntity(entity)
+	world.entitiesInterface.RemoveEntity(entity)
 }
 
 func (world world) GetEntities() []EntityID {
@@ -51,5 +51,3 @@ func (world world) GetEntities() []EntityID {
 func (world world) EntityExists(entity EntityID) bool {
 	return world.entitiesInterface.EntityExists(entity)
 }
-
-//

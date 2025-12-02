@@ -161,19 +161,16 @@ func (t *componentsArrayTransaction[Component]) Flush() (func(), error) {
 	onRemove := []EntityID{}
 	onRemoveComponents := []Component{}
 
-	// apply
 	for _, save := range t.saves.GetValues() {
-		added := t.array.components.Set(save.entity, save.component)
-		if added {
-			onAdd = append(onAdd, save.entity)
-		} else {
+		if _, ok := t.array.components.Get(save.entity); ok {
 			onChange = append(onChange, save.entity)
+		} else {
+			onAdd = append(onAdd, save.entity)
 		}
 	}
 
 	for _, removedEntity := range t.removes.GetIndices() {
-		component, _ := t.array.components.Get(removedEntity)
-		if removed := t.array.components.Remove(removedEntity); removed {
+		if component, ok := t.array.components.Get(removedEntity); ok {
 			onRemove = append(onRemove, removedEntity)
 			onRemoveComponents = append(onRemoveComponents, component)
 		}
@@ -181,6 +178,37 @@ func (t *componentsArrayTransaction[Component]) Flush() (func(), error) {
 
 	for _, entity := range t.changes.GetIndices() {
 		onChange = append(onChange, entity)
+	}
+
+	{ // trigger before listeners
+		addI, changeI, removeI := 0, 0, 0
+		for _, listener := range t.array.beforeListenersOrder {
+			switch listener {
+			case addListener:
+				if len(onAdd) != 0 {
+					t.array.beforeAdd[addI](onAdd)
+				}
+				addI++
+			case changeListener:
+				if len(onChange) != 0 {
+					t.array.beforeChange[changeI](onChange)
+				}
+				changeI++
+			case removeListener:
+				if len(onRemove) != 0 {
+					t.array.beforeRemove[removeI](onRemove)
+				}
+				removeI++
+			}
+		}
+	}
+
+	// apply
+	for _, save := range t.saves.GetValues() {
+		t.array.components.Set(save.entity, save.component)
+	}
+	for _, removedEntity := range t.removes.GetIndices() {
+		t.array.components.Remove(removedEntity)
 	}
 
 	t.operations = datastructures.NewSparseArray[EntityID, operation]()
@@ -191,10 +219,7 @@ func (t *componentsArrayTransaction[Component]) Flush() (func(), error) {
 
 	// notify listeners
 	return func() {
-		addI := 0
-		changeI := 0
-		removeI := 0
-		removeComponentsI := 0
+		addI, changeI, removeI := 0, 0, 0
 		for _, listener := range t.array.listenersOrder {
 			switch listener {
 			case addListener:
@@ -212,11 +237,6 @@ func (t *componentsArrayTransaction[Component]) Flush() (func(), error) {
 					t.array.onRemove[removeI](onRemove)
 				}
 				removeI++
-			case removeComponentsListener:
-				if len(onRemoveComponents) != 0 {
-					t.array.onRemoveComponents[removeComponentsI](onRemove, onRemoveComponents)
-				}
-				removeComponentsI++
 			}
 		}
 	}, nil

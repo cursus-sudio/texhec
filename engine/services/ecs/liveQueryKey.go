@@ -24,5 +24,3 @@ func typesArrayTostring(components []ComponentType) string {
 	}
 	return builder.String()
 }
-
-//

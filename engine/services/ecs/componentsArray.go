@@ -10,54 +10,51 @@ var ErrInvalidType error = errors.New("expected an error component")
 
 // interface
 
-type AnyComponentArray interface {
-	AnyTransaction() AnyComponentsArrayTransaction
-
-	// can return:
-	// - ErrEntityDoNotExists
-	SaveAnyComponent(EntityID, any) error // upsert
-	// differs from save component by not triggering events
-	RemoveComponent(EntityID)
-
-	// can return:
-	// - ErrComponentDoNotExists
-	// - ErrEntityDoNotExists
-	GetAnyComponent(entity EntityID) (any, error)
-	GetEntities() []EntityID
-
-	OnAdd(func([]EntityID))
-	OnChange(func([]EntityID))
-	OnRemove(func([]EntityID))
-}
-
 type EntityComponent[Component any] interface {
 	Get() (Component, error)
 	Set(Component)
 	Remove()
 }
 
-type ComponentsArray[Component any] interface {
-	Transaction() ComponentsArrayTransaction[Component]
+type AnyComponentArray interface {
 	AnyTransaction() AnyComponentsArrayTransaction
+
+	// any component array operations
+	// can return:
+	// - ErrEntityDoNotExists
+	SaveAnyComponent(EntityID, any) error // upsert
+	// differs from save component by not triggering events
+	RemoveComponent(EntityID)
+
+	// any component array getters
+	// can return:
+	// - ErrComponentDoNotExists
+	// - ErrEntityDoNotExists
+	GetAnyComponent(entity EntityID) (any, error)
+	GetEntities() []EntityID
+
+	// any component array listeners
+	BeforeAdd(func([]EntityID))
+	BeforeChange(func([]EntityID))
+	BeforeRemove(func([]EntityID))
+
+	OnAdd(func([]EntityID))
+	OnChange(func([]EntityID))
+	OnRemove(func([]EntityID))
+}
+
+type ComponentsArray[Component any] interface {
+	AnyComponentArray
+	Transaction() ComponentsArrayTransaction[Component]
 
 	// can return:
 	// - ErrEntityDoNotExists
 	SaveComponent(EntityID, Component) error // upsert
-	SaveAnyComponent(EntityID, any) error    // upsert
-
-	RemoveComponent(EntityID)
 
 	// can return:
 	// - ErrComponentDoNotExists
 	// - ErrEntityDoNotExists
 	GetComponent(entity EntityID) (Component, error)
-	GetAnyComponent(entity EntityID) (any, error)
-	GetEntities() []EntityID
-
-	OnAdd(func([]EntityID))
-	OnChange(func([]EntityID))
-	OnRemove(func([]EntityID))
-	OnRemoveComponents(func([]EntityID, []Component))
 }
 
 // impl
@@ -68,7 +65,6 @@ const (
 	addListener listener = iota
 	changeListener
 	removeListener
-	removeComponentsListener
 )
 
 type componentsArray[Component any] struct {
@@ -79,11 +75,15 @@ type componentsArray[Component any] struct {
 	// queries are used for change and remove listeners
 	queries []*liveQuery
 
-	listenersOrder     []listener
-	onAdd              []func([]EntityID)
-	onChange           []func([]EntityID)
-	onRemove           []func([]EntityID)
-	onRemoveComponents []func([]EntityID, []Component)
+	beforeListenersOrder []listener
+	beforeAdd            []func([]EntityID)
+	beforeChange         []func([]EntityID)
+	beforeRemove         []func([]EntityID)
+
+	listenersOrder []listener
+	onAdd          []func([]EntityID)
+	onChange       []func([]EntityID)
+	onRemove       []func([]EntityID)
 }
 
 func NewComponentsArray[Component any](entities datastructures.SparseSet[EntityID]) *componentsArray[Component] {
@@ -96,11 +96,15 @@ func NewComponentsArray[Component any](entities datastructures.SparseSet[EntityI
 		entities:   entities,
 		components: datastructures.NewSparseArray[EntityID, Component](),
 
-		listenersOrder:     make([]listener, 0),
-		onAdd:              make([]func([]EntityID), 0),
-		onChange:           make([]func([]EntityID), 0),
-		onRemove:           make([]func([]EntityID), 0),
-		onRemoveComponents: make([]func([]EntityID, []Component), 0),
+		beforeListenersOrder: make([]listener, 0),
+		beforeAdd:            make([]func([]EntityID), 0),
+		beforeChange:         make([]func([]EntityID), 0),
+		beforeRemove:         make([]func([]EntityID), 0),
+
+		listenersOrder: make([]listener, 0),
+		onAdd:          make([]func([]EntityID), 0),
+		onChange:       make([]func([]EntityID), 0),
+		onRemove:       make([]func([]EntityID), 0),
 	}
 	return array
 }
@@ -125,16 +129,26 @@ func (c *componentsArray[Component]) SaveComponent(entity EntityID, component Co
 	if ok && c.equal(value, component) {
 		return nil
 	}
-	added := c.components.Set(entity, component)
+	added := !ok
 	entities := []EntityID{entity}
+	if added {
+		for _, listener := range c.beforeAdd {
+			listener(entities)
+		}
+	} else {
+		for _, listener := range c.beforeChange {
+			listener(entities)
+		}
+	}
+	c.components.Set(entity, component)
 	if added {
 		for _, listener := range c.onAdd {
 			listener(entities)
 		}
-		return nil
-	}
-	for _, listener := range c.onChange {
-		listener(entities)
+	} else {
+		for _, listener := range c.onChange {
+			listener(entities)
+		}
 	}
 	return nil
 }
@@ -148,30 +162,17 @@ func (c *componentsArray[Component]) SaveAnyComponent(entity EntityID, anyCompon
 }
 
 func (c *componentsArray[Component]) RemoveComponent(entity EntityID) {
-	component, _ := c.components.Get(entity)
-	if removed := c.components.Remove(entity); !removed {
+	entities := []EntityID{entity}
+	if _, ok := c.components.Get(entity); !ok {
 		return
 	}
-	entities := []EntityID{entity}
-	components := []Component{component}
+	for _, listener := range c.beforeRemove {
+		listener(entities)
+	}
+	c.components.Remove(entity)
 
-	removeI := 0
-	removeComponentsI := 0
-	for _, listener := range c.listenersOrder {
-		switch listener {
-		case addListener:
-		case changeListener:
-		case removeListener:
-			if len(entities) != 0 {
-				c.onRemove[removeI](entities)
-			}
-			removeI++
-		case removeComponentsListener:
-			if len(entities) != 0 {
-				c.onRemoveComponents[removeComponentsI](entities, components)
-			}
-			removeComponentsI++
-		}
+	for _, listener := range c.onRemove {
+		listener(entities)
 	}
 }
 
@@ -230,6 +231,19 @@ func (c *componentsArray[Component]) GetAnyComponent(entity EntityID) (any, erro
 	return c.GetComponent(entity)
 }
 
+func (c *componentsArray[Component]) BeforeAdd(listener func([]EntityID)) {
+	c.beforeListenersOrder = append(c.beforeListenersOrder, addListener)
+	c.beforeAdd = append(c.beforeAdd, listener)
+}
+func (c *componentsArray[Component]) BeforeChange(listener func([]EntityID)) {
+	c.beforeListenersOrder = append(c.beforeListenersOrder, changeListener)
+	c.beforeChange = append(c.beforeChange, listener)
+}
+func (c *componentsArray[Component]) BeforeRemove(listener func([]EntityID)) {
+	c.beforeListenersOrder = append(c.beforeListenersOrder, removeListener)
+	c.beforeRemove = append(c.beforeRemove, listener)
+}
+
 func (c *componentsArray[Component]) OnAdd(listener func([]EntityID)) {
 	listener(c.GetEntities())
 	c.listenersOrder = append(c.listenersOrder, addListener)
@@ -244,9 +258,4 @@ func (c *componentsArray[Component]) OnChange(listener func([]EntityID)) {
 func (c *componentsArray[Component]) OnRemove(listener func([]EntityID)) {
 	c.listenersOrder = append(c.listenersOrder, removeListener)
 	c.onRemove = append(c.onRemove, listener)
-}
-
-func (c *componentsArray[Component]) OnRemoveComponents(listener func([]EntityID, []Component)) {
-	c.listenersOrder = append(c.listenersOrder, removeComponentsListener)
-	c.onRemoveComponents = append(c.onRemoveComponents, listener)
 }

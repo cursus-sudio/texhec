@@ -39,7 +39,7 @@ func NewTool(logger logger.Logger) ecs.ToolFactory[hierarchy.Tool] {
 
 		tool.parentArray.OnAdd(tool.Upsert)
 		tool.parentArray.OnChange(tool.Upsert)
-		tool.parentArray.OnRemoveComponents(tool.Remove)
+		tool.parentArray.BeforeRemove(tool.Remove)
 
 		return tool
 	})
@@ -90,8 +90,13 @@ func (t tool) Upsert(ei []ecs.EntityID) {
 	}
 }
 
-func (t tool) Remove(ei []ecs.EntityID, components []hierarchy.ParentComponent) {
-	for i, child := range ei {
+func (t tool) Remove(ei []ecs.EntityID) {
+	for _, child := range ei {
+		parentComponent, err := t.parentArray.GetComponent(child)
+		if err != nil {
+			t.logger.Warn(err)
+			continue
+		}
 		// handle orphaned children
 		if children, ok := t.parentChildren.Get(child); ok {
 			for _, child := range children.GetIndices() {
@@ -102,7 +107,7 @@ func (t tool) Remove(ei []ecs.EntityID, components []hierarchy.ParentComponent) 
 		}
 
 		// remove from flat parents array
-		for _, parent := range t.GetOrderedParents(components[i]) {
+		for _, parent := range t.GetOrderedParents(parentComponent) {
 			children, ok := t.parentFlatChildren.Get(parent)
 			if !ok {
 				continue
@@ -116,7 +121,6 @@ func (t tool) Remove(ei []ecs.EntityID, components []hierarchy.ParentComponent) 
 		}
 
 		// remove from parent array
-		parentComponent := components[i]
 		parent := parentComponent.Parent
 
 		if children, ok := t.parentChildren.Get(parent); ok {

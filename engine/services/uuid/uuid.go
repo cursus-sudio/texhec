@@ -7,16 +7,14 @@ import (
 
 // interface
 
-type UUID struct {
-	val uuid.UUID
-}
+type UUID uuid.UUID
 
 func newUUID(val uuid.UUID) UUID {
-	return UUID{val: val}
+	return UUID(val)
 }
 
-func (uuid UUID) String() string { return uuid.val.String() }
-func (uuid UUID) Bytes() []byte  { return uuid.val[:] }
+func (uuid UUID) String() string { return uuid.String() }
+func (uuid UUID) Bytes() []byte  { return uuid[:] }
 
 type Factory interface {
 	NewUUID() UUID

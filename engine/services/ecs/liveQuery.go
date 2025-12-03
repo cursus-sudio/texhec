@@ -111,14 +111,14 @@ func newLiveQuery(
 			requiredArrays = append(requiredArrays, arr)
 			arr.OnAdd(tryAddEntities)
 			arr.OnChange(changeEntities)
-			arr.OnRemove(removeEntities)
+			arr.BeforeRemove(removeEntities)
 		})
 	}
 	for _, tracked := range tracked {
 		componentsImpl.storage.whenArrExists(tracked, func(arr arraysSharedInterface) {
 			arr.OnAdd(changeEntities)
 			arr.OnChange(changeEntities)
-			arr.OnRemove(changeEntities)
+			arr.BeforeRemove(changeEntities)
 		})
 	}
 	for _, forbid := range forbidden {
@@ -126,7 +126,7 @@ func newLiveQuery(
 			forbiddenArrays = append(forbiddenArrays, arr)
 			arr.OnAdd(removeEntities)
 			arr.OnChange(changeEntities)
-			arr.OnRemove(tryAddEntities)
+			arr.BeforeRemove(tryAddEntities)
 		})
 	}
 	return liveQuery

@@ -111,7 +111,7 @@ func newLiveQuery(
 			requiredArrays = append(requiredArrays, arr)
 			arr.OnAdd(tryAddEntities)
 			arr.OnChange(changeEntities)
-			arr.OnRemove(removeEntities)
+			arr.BeforeRemove(removeEntities)
 		})
 	}
 	for _, tracked := range tracked {

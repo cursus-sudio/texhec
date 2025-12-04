@@ -5,11 +5,12 @@ import (
 	"engine/services/ecs"
 	"errors"
 	"fmt"
+	"reflect"
 )
 
 type cameraResolver struct {
 	cameraArray  ecs.ComponentsArray[camera.CameraComponent]
-	constructors map[ecs.ComponentType]func(ecs.EntityID) (camera.Object, error)
+	constructors map[reflect.Type]func(ecs.EntityID) (camera.Object, error)
 }
 
 func (c *cameraResolver) GetObject(entity ecs.EntityID) (camera.Object, error) {

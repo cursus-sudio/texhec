@@ -10,8 +10,10 @@ import (
 	"engine/modules/collider"
 	"engine/modules/groups"
 	"engine/modules/text"
+	"engine/services/codec"
 	"engine/services/ecs"
 	"engine/services/logger"
+
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -56,6 +58,17 @@ func Package(
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
+		return b.
+			// types
+			Register(tile.Layer(0)).
+			Register(tile.ColliderPos{}).
+			// events
+			Register(tile.TileClickEvent{}).
+			// components
+			Register(tile.PosComponent{})
+	})
+
 	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.System {
 		systems := []ecs.SystemRegister{
 			tileui.NewSystem(

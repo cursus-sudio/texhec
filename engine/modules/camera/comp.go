@@ -1,17 +1,17 @@
 package camera
 
 import (
-	"engine/services/ecs"
+	"reflect"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
 
 type CameraComponent struct {
-	Projection ecs.ComponentType
+	Projection reflect.Type
 }
 
-func NewCamera(projection ecs.ComponentType) CameraComponent {
-	return CameraComponent{projection}
+func NewCamera[Projection any]() CameraComponent {
+	return CameraComponent{reflect.TypeFor[Projection]()}
 }
 
 //

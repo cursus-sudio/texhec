@@ -37,8 +37,8 @@ func NewWasdSystem(
 			transformTool: transformTool,
 			orthoArray:    ecs.GetComponentsArray[camera.OrthoComponent](w),
 			query: transformTool.Query(w.Query()).Require(
-				ecs.GetComponentType(camera.OrthoComponent{}),
-				ecs.GetComponentType(camera.MobileCameraComponent{}),
+				camera.OrthoComponent{},
+				camera.MobileCameraComponent{},
 			).Build(),
 
 			cameraCtors: cameraCtors.Build(w),

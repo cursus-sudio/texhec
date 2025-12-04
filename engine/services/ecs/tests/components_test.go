@@ -119,10 +119,10 @@ func TestComponentsQuery(t *testing.T) {
 	expectedRemoves := 0
 
 	query := world.Query().
-		Require(ecs.GetComponentType(Component{})).
-		Require(ecs.GetComponentType(Component2{})).
-		Forbid(ecs.GetComponentType(ForbiddenComponent{})).
-		Track(ecs.GetComponentType(TrackedComponent{})).
+		Require(Component{}).
+		Require(Component2{}).
+		Forbid(ForbiddenComponent{}).
+		Track(TrackedComponent{}).
 		Build()
 
 	query.OnAdd(func(ei []ecs.EntityID) { adds += 1 })

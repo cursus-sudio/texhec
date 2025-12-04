@@ -76,8 +76,8 @@ func (s s) Init() error {
 		ecs.FlushMany(s.groupsTransaction)
 	}
 	childQuery := s.world.Query().
-		Track(ecs.GetComponentType(hierarchy.ParentComponent{})).
-		Require(ecs.GetComponentType(groups.InheritGroupsComponent{})).
+		Track(hierarchy.ParentComponent{}).
+		Require(groups.InheritGroupsComponent{}).
 		Build()
 	childQuery.OnAdd(onChildUpsert)
 	childQuery.OnChange(onChildUpsert)

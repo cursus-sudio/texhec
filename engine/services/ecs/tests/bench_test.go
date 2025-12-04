@@ -6,18 +6,6 @@ import (
 	"testing"
 )
 
-func BenchmarkGetComponentType(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		ecs.GetComponentType(Component{})
-	}
-}
-
-func BenchmarkGetComponentPointerType(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		ecs.GetComponentPointerType((*Component)(nil))
-	}
-}
-
 func BenchmarkSaveComponentInWorld(b *testing.B) {
 	world := ecs.NewWorld()
 

@@ -39,7 +39,7 @@ func Package(
 			relationpkg.SpatialRelationPackage(
 				func(w ecs.World) ecs.LiveQuery {
 					return w.Query().
-						Require(ecs.GetComponentType(tile.PosComponent{})).
+						Require(tile.PosComponent{}).
 						Build()
 				},
 				func(w ecs.World) func(entity ecs.EntityID) (tile.PosComponent, bool) {
@@ -59,7 +59,7 @@ func Package(
 			relationpkg.SpatialRelationPackage(
 				func(w ecs.World) ecs.LiveQuery {
 					return w.Query().
-						Require(ecs.GetComponentType(tile.PosComponent{})).
+						Require(tile.PosComponent{}).
 						Build()
 				},
 				func(w ecs.World) func(entity ecs.EntityID) (tile.ColliderPos, bool) {

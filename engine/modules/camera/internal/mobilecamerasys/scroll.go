@@ -42,9 +42,9 @@ func NewScrollSystem(
 			world:         w,
 			orthoArray:    ecs.GetComponentsArray[camera.OrthoComponent](w),
 			transformTool: transformTool.Build(w),
-			query: w.Query().Require(
-				ecs.GetComponentType(camera.MobileCameraComponent{}),
-			).Build(),
+			query: w.Query().
+				Require(camera.MobileCameraComponent{}).
+				Build(),
 
 			minZoom: minZoom, // e.g. 0.1
 			maxZoom: maxZoom, // e.g. 5

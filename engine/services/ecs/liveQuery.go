@@ -26,9 +26,9 @@ type liveQuery struct {
 
 func newLiveQuery(
 	componentsImpl *componentsImpl,
-	required []ComponentType,
-	tracked []ComponentType,
-	forbidden []ComponentType,
+	required []componentType,
+	tracked []componentType,
+	forbidden []componentType,
 ) *liveQuery {
 	liveQuery := &liveQuery{
 		entities: datastructures.NewSparseSet[EntityID](),

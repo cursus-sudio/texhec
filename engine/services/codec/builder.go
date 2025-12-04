@@ -3,8 +3,8 @@ package codec
 import "reflect"
 
 type Builder interface {
-	Register(reflect.Type) Builder
-	TryRegister(reflect.Type) error
+	Register(any) Builder
+	TryRegister(any) error
 	Build() Codec
 }
 
@@ -16,14 +16,15 @@ func NewBuilder() Builder {
 	return &builder{types: make(map[reflect.Type]struct{})}
 }
 
-func (b *builder) Register(codecType reflect.Type) Builder {
-	if err := b.TryRegister(codecType); err != nil {
+func (b *builder) Register(codecExample any) Builder {
+	if err := b.TryRegister(codecExample); err != nil {
 		panic(err)
 	}
 	return b
 }
 
-func (b *builder) TryRegister(codecType reflect.Type) error {
+func (b *builder) TryRegister(codecExample any) error {
+	codecType := reflect.TypeOf(codecExample)
 	_, ok := b.types[codecType]
 	if ok {
 		return ErrTypeIsAlreadyRegistered

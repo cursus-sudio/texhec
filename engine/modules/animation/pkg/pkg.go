@@ -3,6 +3,7 @@ package animationpkg
 import (
 	"engine/modules/animation"
 	"engine/modules/animation/internal"
+	"engine/services/codec"
 	"engine/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
@@ -15,6 +16,19 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) Register(b ioc.Builder) {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
+		return b.
+			// types
+			Register(animation.AnimationState(0)).
+			Register(animation.EasingFunctionID(0)).
+			Register(animation.Transition{}).
+			Register(animation.Event{}).
+			Register(animation.AnimationID(0)).
+			Register(animation.Animation{}).
+			// components
+			Register(animation.AnimationComponent{})
+	})
+
 	ioc.RegisterSingleton(b, func(c ioc.Dic) internal.AnimationSystemBuilder {
 		return internal.NewBuilder(ioc.Get[logger.Logger](c))
 	})

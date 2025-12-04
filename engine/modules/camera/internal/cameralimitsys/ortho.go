@@ -31,10 +31,10 @@ func NewOrthoSys(
 		s := &orthoSys{
 			world: w,
 			query: transformTool.Query(w.Query()).
-				Require(ecs.GetComponentType(camera.CameraLimitsComponent{})).
-				Require(ecs.GetComponentType(camera.OrthoComponent{})).
-				Track(ecs.GetComponentType(camera.ViewportComponent{})).
-				Track(ecs.GetComponentType(camera.NormalizedViewportComponent{})).
+				Require(camera.CameraLimitsComponent{}).
+				Require(camera.OrthoComponent{}).
+				Track(camera.ViewportComponent{}).
+				Track(camera.NormalizedViewportComponent{}).
 				Build(),
 			limitsArray:   ecs.GetComponentsArray[camera.CameraLimitsComponent](w),
 			orthoArray:    ecs.GetComponentsArray[camera.OrthoComponent](w),

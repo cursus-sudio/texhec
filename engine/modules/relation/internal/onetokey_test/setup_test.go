@@ -24,7 +24,7 @@ func NewSetup() Setup {
 		relationpkg.SpatialRelationPackage(
 			func(w ecs.World) ecs.LiveQuery {
 				return w.Query().
-					Require(ecs.GetComponentType(Component{})).
+					Require(Component{}).
 					Build()
 			},
 			func(w ecs.World) func(entity ecs.EntityID) (uint32, bool) {

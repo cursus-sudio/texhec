@@ -41,11 +41,11 @@ func (tool tool) Transaction() text.Transaction {
 }
 
 func (tool tool) Query(b ecs.LiveQueryBuilder) ecs.LiveQueryBuilder {
-	return b.Require(ecs.GetComponentType(text.TextComponent{})).Track(
-		ecs.GetComponentType(text.BreakComponent{}),
-		ecs.GetComponentType(text.TextAlignComponent{}),
-		ecs.GetComponentType(text.TextColorComponent{}),
-		ecs.GetComponentType(text.FontFamilyComponent{}),
-		ecs.GetComponentType(text.FontSizeComponent{}),
+	return b.Require(text.TextComponent{}).Track(
+		text.BreakComponent{},
+		text.TextAlignComponent{},
+		text.TextColorComponent{},
+		text.FontFamilyComponent{},
+		text.FontSizeComponent{},
 	)
 }

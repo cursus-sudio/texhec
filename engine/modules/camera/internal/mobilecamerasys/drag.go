@@ -40,7 +40,7 @@ func NewDragSystem(
 			world:         w,
 			transformTool: transformTool.Build(w),
 			query: w.Query().Require(
-				ecs.GetComponentType(camera.MobileCameraComponent{}),
+				camera.MobileCameraComponent{},
 			).Build(),
 
 			cameraCtors: cameraCtors.Build(w),

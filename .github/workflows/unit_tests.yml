@@ -23,6 +23,15 @@ jobs:
         # OpenGL
         sudo apt-get install -y mesa-utils libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
 
+    - name: Cache Dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          /var/cache/apt/archives
+        key: ${{ runner.os }}-deps-${{ hashFiles('**/go.mod') }}
+        restore-keys: |
+          ${{ runner.os }}-deps-
+
     - name: Set up Go
       uses: actions/setup-go@v5
       with:

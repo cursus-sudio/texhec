@@ -28,6 +28,7 @@ import (
 	"engine/modules/text"
 	"engine/modules/text/pkg"
 	"engine/modules/transform/pkg"
+	"engine/modules/uuid/pkg"
 	"engine/services/assets"
 	"engine/services/console"
 	"engine/services/datastructures"
@@ -201,6 +202,7 @@ func frontendDic(
 		),
 		transformpkg.Package(),
 		hierarchypkg.Package(),
+		uuidpkg.Package(),
 
 		// game packages
 		fpsloggerpkg.Package(),

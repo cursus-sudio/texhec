@@ -5,7 +5,6 @@ import (
 	"engine/services/codec"
 	"engine/services/eventspkg"
 	"engine/services/runtime"
-	"engine/services/uuid"
 	"time"
 
 	"github.com/ogiusek/ioc/v2"
@@ -22,7 +21,6 @@ func SharedPackage() SharedPkg {
 			eventspkg.Package(),
 			codec.Package(),
 			runtime.Package(),
-			uuid.Package(),
 		},
 	}
 }

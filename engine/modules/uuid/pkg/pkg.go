@@ -1,4 +1,4 @@
-package uniquepkg
+package uuidpkg
 
 import (
 	relationpkg "engine/modules/relation/pkg"

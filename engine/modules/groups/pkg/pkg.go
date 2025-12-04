@@ -4,6 +4,7 @@ import (
 	"engine/modules/groups"
 	"engine/modules/groups/internal"
 	"engine/modules/hierarchy"
+	"engine/services/codec"
 	"engine/services/ecs"
 	"engine/services/logger"
 
@@ -18,6 +19,12 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) Register(b ioc.Builder) {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
+		return b.
+			// components
+			Register(groups.GroupsComponent{})
+	})
+
 	ioc.RegisterSingleton(b, func(c ioc.Dic) groups.System {
 		return internal.NewSystem(
 			ioc.Get[logger.Logger](c),

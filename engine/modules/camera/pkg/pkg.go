@@ -9,6 +9,7 @@ import (
 	"engine/modules/collider"
 	"engine/modules/groups"
 	"engine/modules/transform"
+	"engine/services/codec"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"engine/services/media/window"
@@ -31,6 +32,22 @@ func Package(minZoom, maxZoom float32) ioc.Pkg {
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
+		return b.
+			// camera components
+			Register(camera.CameraComponent{}).
+			Register(camera.MobileCameraComponent{}).
+			Register(camera.CameraLimitsComponent{}).
+			Register(camera.ViewportComponent{}).
+			Register(camera.NormalizedViewportComponent{}).
+			// projections components
+			Register(camera.OrthoComponent{}).
+			Register(camera.OrthoResolutionComponent{}).
+			Register(camera.Perspective{}).
+			Register(camera.DynamicPerspective{}).
+			// events
+			Register(camera.ChangedResolutionEvent{})
+	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) cameratool.CameraResolverFactory {
 		return cameratool.NewCameraResolverFactory()
 	})

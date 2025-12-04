@@ -3,6 +3,7 @@ package scenespkg
 import (
 	scenesys "engine/modules/scenes"
 	"engine/modules/scenes/internal"
+	"engine/services/codec"
 	"engine/services/ecs"
 	"engine/services/scenes"
 
@@ -16,6 +17,12 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) Register(b ioc.Builder) {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
+		return b.
+			// events
+			Register(scenesys.ChangeSceneEvent{})
+	})
+
 	ioc.RegisterSingleton(b, func(c ioc.Dic) scenesys.System {
 		return ecs.NewSystemRegister(func(w ecs.World) error {
 			ecs.RegisterSystems(w,

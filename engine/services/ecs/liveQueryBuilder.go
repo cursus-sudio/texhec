@@ -5,20 +5,20 @@ import (
 )
 
 type LiveQueryBuilder interface {
-	Require(...ComponentType) LiveQueryBuilder
+	Require(...any) LiveQueryBuilder
 
 	// is used to call onChange on liveQuery on componentType add, change or remove
-	Track(...ComponentType) LiveQueryBuilder
-	Forbid(...ComponentType) LiveQueryBuilder
+	Track(...any) LiveQueryBuilder
+	Forbid(...any) LiveQueryBuilder
 	Build() LiveQuery
 }
 
 type liveQueryFactory struct {
 	components *componentsImpl
 
-	required  []ComponentType
-	tracked   []ComponentType
-	forbidden []ComponentType
+	required  []componentType
+	tracked   []componentType
+	forbidden []componentType
 }
 
 func newLiveQueryFactory(components *componentsImpl) LiveQueryBuilder {
@@ -27,18 +27,24 @@ func newLiveQueryFactory(components *componentsImpl) LiveQueryBuilder {
 	}
 }
 
-func (f *liveQueryFactory) Require(components ...ComponentType) LiveQueryBuilder {
-	f.required = append(f.required, components...)
+func (f *liveQueryFactory) Require(components ...any) LiveQueryBuilder {
+	for _, component := range components {
+		f.required = append(f.required, getComponentType(component))
+	}
 	return f
 }
 
-func (f *liveQueryFactory) Track(components ...ComponentType) LiveQueryBuilder {
-	f.tracked = append(f.tracked, components...)
+func (f *liveQueryFactory) Track(components ...any) LiveQueryBuilder {
+	for _, component := range components {
+		f.tracked = append(f.tracked, getComponentType(component))
+	}
 	return f
 }
 
-func (f *liveQueryFactory) Forbid(components ...ComponentType) LiveQueryBuilder {
-	f.forbidden = append(f.forbidden, components...)
+func (f *liveQueryFactory) Forbid(components ...any) LiveQueryBuilder {
+	for _, component := range components {
+		f.forbidden = append(f.forbidden, getComponentType(component))
+	}
 	return f
 }
 

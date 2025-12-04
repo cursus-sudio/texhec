@@ -5,10 +5,10 @@ import (
 	"testing"
 )
 
-func addQueries(world ecs.World, others ...ecs.ComponentType) {
+func addQueries(world ecs.World, others ...any) {
 	for _, other := range others {
 		query := world.Query().Require(
-			ecs.GetComponentType(Component{}),
+			Component{},
 			other,
 		).Build()
 		query.OnAdd(func(ei []ecs.EntityID) {})
@@ -33,9 +33,8 @@ func BenchmarkQueryEntitiesWithComponents(b *testing.B) {
 
 	b.ResetTimer()
 
-	componentType := ecs.GetComponentType(Component{})
 	for i := 0; i < b.N; i++ {
-		world.Query().Require(componentType).Build()
+		world.Query().Require(Component{}).Build()
 	}
 }
 
@@ -46,7 +45,7 @@ func BenchmarkSaveWithLiveQuery(b *testing.B) {
 
 	addQueries(
 		world,
-		ecs.GetComponentType(c1{}),
+		c1{},
 	)
 	entity := world.NewEntity()
 	ecs.SaveComponent(world, entity, c1{})
@@ -70,10 +69,10 @@ func BenchmarkSaveWith4LiveQueries(b *testing.B) {
 
 	addQueries(
 		world,
-		ecs.GetComponentType(c1{}),
-		ecs.GetComponentType(c2{}),
-		ecs.GetComponentType(c3{}),
-		ecs.GetComponentType(c4{}),
+		c1{},
+		c2{},
+		c3{},
+		c4{},
 	)
 	entity := world.NewEntity()
 	ecs.SaveComponent(world, entity, c1{})
@@ -101,13 +100,13 @@ func add7LiveQueriesAndAddComponenets(world ecs.World, entity ecs.EntityID) {
 
 	addQueries(
 		world,
-		ecs.GetComponentType(c1{}),
-		ecs.GetComponentType(c2{}),
-		ecs.GetComponentType(c3{}),
-		ecs.GetComponentType(c4{}),
-		ecs.GetComponentType(c5{}),
-		ecs.GetComponentType(c6{}),
-		ecs.GetComponentType(c7{}),
+		c1{},
+		c2{},
+		c3{},
+		c4{},
+		c5{},
+		c6{},
+		c7{},
 	)
 	ecs.SaveComponent(world, entity, c1{})
 	ecs.SaveComponent(world, entity, c2{})

@@ -13,6 +13,7 @@ import (
 	"engine/services/ecs"
 	"engine/services/logger"
 	"engine/services/media/window"
+	"reflect"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/events"
@@ -79,7 +80,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 				}
 			}
 		}
-		s.Register(ecs.GetComponentType(camera.OrthoComponent{}), func(world ecs.World) func(entity ecs.EntityID) (camera.Object, error) {
+		s.Register(reflect.TypeFor[camera.OrthoComponent](), func(world ecs.World) func(entity ecs.EntityID) (camera.Object, error) {
 			logger := ioc.Get[logger.Logger](c)
 			transformTransaction := ioc.Get[ecs.ToolFactory[transform.Tool]](c).Build(world).Transaction()
 			orthoArray := ecs.GetComponentsArray[camera.OrthoComponent](world)
@@ -148,7 +149,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 
 		//
 
-		s.Register(ecs.GetComponentType(camera.Perspective{}), func(world ecs.World) func(entity ecs.EntityID) (camera.Object, error) {
+		s.Register(reflect.TypeFor[camera.Perspective](), func(world ecs.World) func(entity ecs.EntityID) (camera.Object, error) {
 			logger := ioc.Get[logger.Logger](c)
 			transformTransaction := ioc.Get[ecs.ToolFactory[transform.Tool]](c).Build(world).Transaction()
 			perspectiveArray := ecs.GetComponentsArray[camera.Perspective](world)
@@ -232,7 +233,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 					orthoArray.OnAdd(func(ei []ecs.EntityID) {
 						t := cameraArray.Transaction()
 						for _, e := range ei {
-							t.SaveComponent(e, camera.NewCamera(ecs.GetComponentType(camera.OrthoComponent{})))
+							t.SaveComponent(e, camera.NewCamera[camera.OrthoComponent]())
 						}
 						logger.Warn(ecs.FlushMany(t))
 					})
@@ -241,7 +242,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 					perspectiveArray.OnAdd(func(ei []ecs.EntityID) {
 						t := cameraArray.Transaction()
 						for _, e := range ei {
-							t.SaveComponent(e, camera.NewCamera(ecs.GetComponentType(camera.Perspective{})))
+							t.SaveComponent(e, camera.NewCamera[camera.Perspective]())
 						}
 						logger.Warn(ecs.FlushMany(t))
 					})

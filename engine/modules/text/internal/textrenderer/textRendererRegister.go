@@ -116,7 +116,7 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 		colorArray:           ecs.GetComponentsArray[text.TextColorComponent](w),
 		groupsArray:          ecs.GetComponentsArray[groups.GroupsComponent](w),
 		transformTransaction: transformTool.Transaction(),
-		cameraQuery:          w.Query().Require(ecs.GetComponentType(camera.OrthoComponent{})).Build(),
+		cameraQuery:          w.Query().Require(camera.OrthoComponent{}).Build(),
 
 		logger:      f.logger,
 		cameraCtors: f.cameraCtorsFactory.Build(w),
@@ -136,7 +136,7 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 	}
 
 	query := transformTool.Query(w.Query()).
-		Require(ecs.GetComponentType(text.TextComponent{})).
+		Require(text.TextComponent{}).
 		Build()
 
 	addOrChangeListener := func(ei []ecs.EntityID) {

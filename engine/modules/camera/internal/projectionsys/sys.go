@@ -53,10 +53,10 @@ func NewUpdateProjectionsSystem(
 		s.dynamicPerspectivesArray.OnChange(s.UpsertPerspective)
 
 		orthoQuery := w.Query().
-			Require(ecs.GetComponentType(camera.OrthoComponent{})).
-			Track(ecs.GetComponentType(camera.OrthoResolutionComponent{})).
-			Track(ecs.GetComponentType(camera.ViewportComponent{})).
-			Track(ecs.GetComponentType(camera.NormalizedViewportComponent{})).
+			Require(camera.OrthoComponent{}).
+			Track(camera.OrthoResolutionComponent{}).
+			Track(camera.ViewportComponent{}).
+			Track(camera.NormalizedViewportComponent{}).
 			Build()
 		orthoQuery.OnAdd(s.UpsertOrtho)
 		orthoQuery.OnChange(s.UpsertOrtho)

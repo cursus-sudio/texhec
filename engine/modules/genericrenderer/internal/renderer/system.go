@@ -152,13 +152,13 @@ func NewSystem(
 
 			query: transformTool.Query(w.Query()).
 				Require(
-					ecs.GetComponentType(genericrenderer.PipelineComponent{}),
-					ecs.GetComponentType(render.MeshComponent{}),
-					ecs.GetComponentType(render.TextureComponent{}),
+					genericrenderer.PipelineComponent{},
+					render.MeshComponent{},
+					render.TextureComponent{},
 				).
 				Track(
-					ecs.GetComponentType(render.ColorComponent{}),
-					ecs.GetComponentType(render.TextureFrameComponent{}),
+					render.ColorComponent{},
+					render.TextureFrameComponent{},
 				).
 				Build(),
 

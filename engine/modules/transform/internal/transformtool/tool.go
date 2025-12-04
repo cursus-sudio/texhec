@@ -75,11 +75,11 @@ func (tool tool) Transaction() transform.Transaction {
 
 func (tool tool) Query(b ecs.LiveQueryBuilder) ecs.LiveQueryBuilder {
 	return b.Track(
-		ecs.GetComponentType(transform.PosComponent{}),
-		ecs.GetComponentType(transform.RotationComponent{}),
-		ecs.GetComponentType(transform.SizeComponent{}),
-		ecs.GetComponentType(transform.PivotPointComponent{}),
-		ecs.GetComponentType(transform.ParentComponent{}),
-		ecs.GetComponentType(transform.ParentPivotPointComponent{}),
+		transform.PosComponent{},
+		transform.RotationComponent{},
+		transform.SizeComponent{},
+		transform.PivotPointComponent{},
+		transform.ParentComponent{},
+		transform.ParentPivotPointComponent{},
 	)
 }

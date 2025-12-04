@@ -7,7 +7,7 @@ import (
 
 type queryKey string
 
-func typesArrayTostring(components []ComponentType) string {
+func typesArrayTostring(components []componentType) string {
 	resultLen := 0
 	elements := make([]string, len(components))
 	for i, component := range components {

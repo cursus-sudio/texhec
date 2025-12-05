@@ -17,6 +17,7 @@ import (
 	"engine/modules/camera/pkg"
 	"engine/modules/collider"
 	"engine/modules/collider/pkg"
+	"engine/modules/connection/pkg"
 	"engine/modules/drag/pkg"
 	"engine/modules/genericrenderer/pkg"
 	"engine/modules/groups"
@@ -203,6 +204,7 @@ func frontendDic(
 		transformpkg.Package(),
 		hierarchypkg.Package(),
 		uuidpkg.Package(),
+		connectionpkg.Package(),
 
 		// game packages
 		fpsloggerpkg.Package(),

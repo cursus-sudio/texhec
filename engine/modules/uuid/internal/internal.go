@@ -9,10 +9,12 @@ import (
 
 type tool struct {
 	relation.EntityToKeyTool[uuid.UUID]
+	uuid.Factory
 }
 
 func NewToolFactory(
 	toolFactory ecs.ToolFactory[relation.EntityToKeyTool[uuid.UUID]],
+	uuidFactory uuid.Factory,
 ) ecs.ToolFactory[uuid.Tool] {
 	mutex := &sync.Mutex{}
 	return ecs.NewToolFactory(func(w ecs.World) uuid.Tool {
@@ -26,6 +28,7 @@ func NewToolFactory(
 		}
 		t := tool{
 			toolFactory.Build(w),
+			uuidFactory,
 		}
 		w.SaveGlobal(t)
 		return t

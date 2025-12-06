@@ -14,5 +14,6 @@ func New(id UUID) Component {
 
 // add unique id to domain components
 type Tool interface {
+	Factory
 	Entity(UUID) (ecs.EntityID, bool)
 }

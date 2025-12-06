@@ -1,6 +1,7 @@
 package uuidpkg
 
 import (
+	"engine/modules/relation"
 	relationpkg "engine/modules/relation/pkg"
 	uuid "engine/modules/uuid"
 	"engine/modules/uuid/internal"
@@ -35,4 +36,11 @@ func (pkg) Register(b ioc.Builder) {
 			}
 		},
 	)
+
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[uuid.Tool] {
+		return internal.NewToolFactory(
+			ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[uuid.UUID]]](c),
+			ioc.Get[uuid.Factory](c),
+		)
+	})
 }

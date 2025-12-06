@@ -35,7 +35,7 @@ func (pkg) Register(b ioc.Builder) {
 				return component.ID, true
 			}
 		},
-	)
+	).Register(b)
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[uuid.Tool] {
 		return internal.NewToolFactory(

@@ -41,7 +41,8 @@ func NewToolFactory(
 					continue
 				}
 				if comp.Conn() != nil {
-					logger.Warn(comp.Conn().Close())
+					// if already closed we ignore error
+					comp.Conn().Close()
 				}
 			}
 		})

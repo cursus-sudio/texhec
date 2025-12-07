@@ -19,7 +19,7 @@ type codec struct{}
 
 func NewCodec(types []reflect.Type) Codec {
 	for _, codecType := range types {
-		gob.Register(reflect.New(codecType).Interface())
+		gob.Register(reflect.New(codecType).Elem().Interface())
 	}
 	return &codec{}
 }

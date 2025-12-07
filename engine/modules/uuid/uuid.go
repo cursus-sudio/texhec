@@ -8,8 +8,8 @@ import (
 
 type UUID uuid.UUID
 
-func (uuid UUID) String() string { return uuid.String() }
-func (uuid UUID) Bytes() []byte  { return uuid[:] }
+func (id UUID) String() string  { return uuid.UUID(id).String() }
+func (uuid UUID) Bytes() []byte { return uuid[:] }
 
 type Factory interface {
 	NewUUID() UUID

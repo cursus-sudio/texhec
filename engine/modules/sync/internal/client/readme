@@ -1,0 +1,45 @@
+1. ```
+what is needed:
+- components recorded in prediction recording
+- events predicted, sent from and to server
+
+prediction recording:
+- if there is latest prediction
+- add components added, changed or removed to latest prediction
+
+on client event:
+- start new prediction recording
+- send event to server
+- predict
+- if there is to many predictions remove them all and wait for real state
+- stop prediction recording in wrap system
+
+on event from server:
+- pause prediction recording
+- if matches first prediction then remove first prediction
+- if doesn't match first prediction then
+    revert all predictions
+    apply this change
+    apply all predictions again (removing all predictions and re-emitting events again to be recorded)
+```
+
+2. ```
+on connection start load state and listen to changes.
+on connection end notify user and remove predicting.
+
+where there fits connection ?
+
+type Stage uint8
+const (
+  _ Stage = iota
+  Connected
+  Verified
+)
+
+type ConnectionComponent struct {
+  Conn *net.TCPCon
+  Stage Stage // other permissions are in other components
+}
+
+```
+

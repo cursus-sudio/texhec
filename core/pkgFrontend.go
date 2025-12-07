@@ -14,20 +14,25 @@ import (
 	settingsscene "core/scenes/settings"
 	"engine/modules/animation/pkg"
 	"engine/modules/audio/pkg"
+	"engine/modules/camera"
 	"engine/modules/camera/pkg"
 	"engine/modules/collider"
 	"engine/modules/collider/pkg"
 	"engine/modules/connection/pkg"
+	"engine/modules/drag"
 	"engine/modules/drag/pkg"
 	"engine/modules/genericrenderer/pkg"
 	"engine/modules/groups"
 	"engine/modules/groups/pkg"
 	"engine/modules/hierarchy/pkg"
+	"engine/modules/inputs"
 	"engine/modules/inputs/pkg"
 	"engine/modules/render/pkg"
 	"engine/modules/scenes/pkg"
+	"engine/modules/sync/pkg"
 	"engine/modules/text"
 	"engine/modules/text/pkg"
+	"engine/modules/transform"
 	"engine/modules/transform/pkg"
 	"engine/modules/uuid/pkg"
 	"engine/services/assets"
@@ -205,6 +210,16 @@ func frontendDic(
 		hierarchypkg.Package(),
 		uuidpkg.Package(),
 		connectionpkg.Package(),
+		syncpkg.Package(func() syncpkg.Config {
+			config := syncpkg.NewConfig(!gameassets.IsServer)
+			syncpkg.AddComponent[transform.PosComponent](config)
+			syncpkg.AddComponent[camera.OrthoComponent](config)
+			// syncpkg.AddEvent[scenessys.ChangeSceneEvent](config)
+			syncpkg.AddEvent[drag.DraggableEvent](config)
+			syncpkg.AddEvent[inputs.DragEvent](config)
+			// syncpkg.AddEvent[frames.FrameEvent](config)
+			return config
+		}()),
 
 		// game packages
 		fpsloggerpkg.Package(),

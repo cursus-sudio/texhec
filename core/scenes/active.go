@@ -17,6 +17,7 @@ import (
 	"engine/modules/relation"
 	"engine/modules/render"
 	scenesys "engine/modules/scenes"
+	"engine/modules/sync"
 	"engine/modules/text"
 	"engine/services/ecs"
 	"engine/services/logger"
@@ -120,6 +121,8 @@ func (pkg) Register(b ioc.Builder) {
 			// })
 
 			ecs.RegisterSystems(ctx,
+				ioc.Get[sync.StartSystem](c),
+
 				// inputs
 				ioc.Get[inputs.System](c),
 
@@ -137,6 +140,8 @@ func (pkg) Register(b ioc.Builder) {
 				// ui update
 				ioc.Get[ui.System](c),
 				ioc.Get[settings.System](c),
+
+				ioc.Get[sync.StopSystem](c),
 
 				// audio
 				ioc.Get[audio.System](c),

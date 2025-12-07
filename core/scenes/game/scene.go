@@ -9,13 +9,16 @@ import (
 	gamescenes "core/scenes"
 	"engine/modules/camera"
 	"engine/modules/collider"
+	"engine/modules/connection"
 	"engine/modules/genericrenderer"
 	"engine/modules/groups"
 	"engine/modules/hierarchy"
 	"engine/modules/inputs"
 	"engine/modules/render"
+	"engine/modules/sync"
 	"engine/modules/text"
 	"engine/modules/transform"
+	"engine/modules/uuid"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"engine/services/scenes"
@@ -39,12 +42,31 @@ const (
 func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.GameBuilder) gamescenes.GameBuilder {
 		b.OnLoad(func(world scenes.SceneCtx) {
+			connectionToolFactory := ioc.Get[ecs.ToolFactory[connection.Tool]](c)
+			connectionTool := connectionToolFactory.Build(world)
+			if gameassets.IsServer {
+				connectionTool.Host(":8080", func(cc connection.ConnectionComponent) {
+					entity := world.NewEntity()
+					ecs.SaveComponent(world, entity, sync.ClientComponent{})
+					ecs.SaveComponent(world, entity, cc)
+				})
+			} else {
+				comp, err := connectionTool.Connect(":8080")
+				if err != nil {
+					panic("nie ma serwera")
+				}
+				entity := world.NewEntity()
+				ecs.SaveComponent(world, entity, sync.ServerComponent{})
+				ecs.SaveComponent(world, entity, comp)
+			}
+
 			uiCamera := world.NewEntity()
 			ecs.SaveComponent(world, uiCamera, camera.NewOrtho(-1000, +1000))
 			ecs.SaveComponent(world, uiCamera, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 			ecs.SaveComponent(world, uiCamera, ui.UiCameraComponent{})
 
 			gameCamera := world.NewEntity()
+			ecs.SaveComponent(world, gameCamera, uuid.New([16]byte{48}))
 			ecs.SaveComponent(world, gameCamera, camera.NewOrtho(-1000, +1000))
 			ecs.SaveComponent(world, gameCamera, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 			ecs.SaveComponent(world, gameCamera, camera.NewMobileCamera())

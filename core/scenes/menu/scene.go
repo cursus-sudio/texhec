@@ -30,8 +30,6 @@ func Package() ioc.Pkg {
 
 func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.MenuBuilder) gamescenes.MenuBuilder {
-		// connToolFactory := ioc.Get[ecs.ToolFactory[connection.Tool]](c)
-		// logger := ioc.Get[logger.Logger](c)
 		b.OnLoad(func(world scenes.SceneCtx) {
 			cameraEntity := world.NewEntity()
 			ecs.SaveComponent(world, cameraEntity, camera.NewOrtho(-1000, 1000))
@@ -107,44 +105,6 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				ecs.SaveComponent(world, btn, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
 				ecs.SaveComponent(world, btn, text.FontSizeComponent{FontSize: 32})
 			}
-
-			// connTool := connToolFactory.Build(world)
-			// server := true
-			// server = false
-			// if server {
-			// 	if err := connTool.Host(":8080", func(comp connection.ConnectionComponent) {
-			// 		conn := comp.Conn()
-			// 		go func() {
-			// 			for {
-			// 				message, ok := <-conn.Messages()
-			// 				if !ok {
-			// 					break
-			// 				}
-			// 				logger.Info(fmt.Sprintf("server got: %v", message))
-			// 			}
-			// 		}()
-			// 		conn.Send(hierarchy.ParentComponent{Parent: 8})
-			// 	}); err != nil {
-			// 		logger.Warn(err)
-			// 	}
-			// } else {
-			// 	comp, err := connTool.Connect(":8080")
-			// 	if err != nil {
-			// 		logger.Warn(err)
-			// 	} else {
-			// 		conn := comp.Conn()
-			// 		go func() {
-			// 			for {
-			// 				message, ok := <-conn.Messages()
-			// 				if !ok {
-			// 					break
-			// 				}
-			// 				logger.Info(fmt.Sprintf("client got: %v", message))
-			// 			}
-			// 		}()
-			// 		conn.Send(hierarchy.ParentComponent{Parent: 48})
-			// 	}
-			// }
 		})
 
 		return b

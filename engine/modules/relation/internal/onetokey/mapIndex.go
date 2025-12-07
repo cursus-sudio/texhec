@@ -22,9 +22,10 @@ func newMapIndex[IndexType comparable](
 	query ecs.LiveQuery,
 	componentIndex func(ecs.EntityID) (IndexType, bool),
 ) relation.EntityToKeyTool[IndexType] {
-	indexGlobal := spatialRelation[IndexType]{
-		world: w,
-		mutex: &sync.Mutex{},
+	indexGlobal := mapRelation[IndexType]{
+		world:   w,
+		mutex:   &sync.Mutex{},
+		indices: make(map[IndexType]ecs.EntityID),
 
 		upsertListeners: make([]func([]ecs.EntityID), 0),
 		removeListeners: make([]func([]ecs.EntityID), 0),

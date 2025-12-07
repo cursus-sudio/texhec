@@ -5,6 +5,7 @@ import (
 	"engine/modules/hierarchy"
 	"engine/modules/transform"
 	"engine/modules/transform/internal/transformtool"
+	"engine/services/codec"
 	"engine/services/ecs"
 	"engine/services/logger"
 
@@ -31,6 +32,16 @@ func Package() ioc.Pkg {
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
+		return b.
+			// components
+			Register(transform.PosComponent{}).
+			Register(transform.RotationComponent{}).
+			Register(transform.SizeComponent{}).
+			Register(transform.PivotPointComponent{}).
+			Register(transform.ParentPivotPointComponent{}).
+			Register(transform.ParentComponent{})
+	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[transform.Tool] {
 		return transformtool.NewTransformTool(

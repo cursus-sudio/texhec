@@ -3,14 +3,16 @@ package inputspkg
 import (
 	"engine/modules/camera"
 	"engine/modules/collider"
+	"engine/modules/inputs"
 	engineinputs "engine/modules/inputs"
 	"engine/modules/inputs/internal/mouse"
 	"engine/modules/inputs/internal/systems"
 	inputstool "engine/modules/inputs/internal/tool"
+	"engine/services/codec"
 	"engine/services/ecs"
 	"engine/services/frames"
 	"engine/services/logger"
-	"engine/services/media/inputs"
+	inputsapi "engine/services/media/inputs"
 	"engine/services/media/window"
 	"engine/services/runtime"
 
@@ -26,11 +28,31 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) Register(b ioc.Builder) {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
+		return b.
+			// components
+			Register(inputs.HoveredComponent{}).
+			Register(inputs.DraggedComponent{}).
+			Register(inputs.KeepSelectedComponent{}).
+			Register(inputs.MouseLeftClickComponent{}).
+			Register(inputs.MouseDoubleLeftClickComponent{}).
+			Register(inputs.MouseRightClickComponent{}).
+			Register(inputs.MouseDoubleRightClickComponent{}).
+			Register(inputs.MouseEnterComponent{}).
+			Register(inputs.MouseLeaveComponent{}).
+			Register(inputs.MouseHoverComponent{}).
+			Register(inputs.MouseDragComponent{}).
+			// events
+			Register(inputs.QuitEvent{}).
+			Register(inputs.DragEvent{}).
+			Register(inputs.SynchronizePositionEvent{})
+	})
+
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[engineinputs.Tool] { return inputstool.NewTool() })
 	ioc.RegisterSingleton(b, func(c ioc.Dic) engineinputs.System {
 		return ecs.NewSystemRegister(func(w ecs.World) error {
 			ecs.RegisterSystems(w,
-				systems.NewInputsSystem(ioc.Get[inputs.Api](c)),
+				systems.NewInputsSystem(ioc.Get[inputsapi.Api](c)),
 				systems.NewResizeSystem(),
 				systems.NewQuitSystem(ioc.Get[runtime.Runtime](c)),
 

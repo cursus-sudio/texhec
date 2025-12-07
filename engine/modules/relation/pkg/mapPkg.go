@@ -17,7 +17,7 @@ func MapRelationPackage[IndexType comparable](
 	queryFactory func(ecs.World) ecs.LiveQuery,
 	componentIndex func(ecs.World) func(entity ecs.EntityID) (indexType IndexType, ok bool),
 ) ioc.Pkg {
-	return spatialRelationPkg[IndexType]{
+	return mapRelationPkg[IndexType]{
 		queryFactory:   queryFactory,
 		componentIndex: componentIndex,
 	}

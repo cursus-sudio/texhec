@@ -76,16 +76,12 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world, settingsEntity, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
 			ecs.SaveComponent(world, settingsEntity, render.NewMesh(gameassets.SquareMesh))
-			ecs.SaveComponent(world, settingsEntity, render.NewTexture(gameassets.WaterTileTextureID))
+			ecs.SaveComponent(world, settingsEntity, render.NewTexture(gameassets.SettingsTextureID))
 			ecs.SaveComponent(world, settingsEntity, genericrenderer.PipelineComponent{})
 
 			ecs.SaveComponent(world, settingsEntity, inputs.NewMouseLeftClick(settings.EnterSettingsEvent{}))
 			ecs.SaveComponent(world, settingsEntity, inputs.KeepSelectedComponent{})
 			ecs.SaveComponent(world, settingsEntity, collider.NewCollider(gameassets.SquareColliderID))
-
-			ecs.SaveComponent(world, settingsEntity, text.TextComponent{Text: "S"})
-			ecs.SaveComponent(world, settingsEntity, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
-			ecs.SaveComponent(world, settingsEntity, text.FontSizeComponent{FontSize: 32})
 
 			rand := rand.New(rand.NewPCG(2077, 7137))
 

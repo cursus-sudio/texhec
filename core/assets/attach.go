@@ -44,6 +44,9 @@ var waterSource []byte
 //go:embed files/u1.png
 var u1Source []byte
 
+//go:embed files/settings.png
+var settingsSource []byte
+
 //go:embed files/audio.wav
 var audioSource []byte
 
@@ -58,6 +61,8 @@ const (
 	WaterTileTextureID    assets.AssetID = "water tile texture"
 
 	U1TextureID assets.AssetID = "u1 texture"
+
+	SettingsTextureID assets.AssetID = "settings texture"
 
 	SquareColliderID assets.AssetID = "square collider"
 	FontAssetID      assets.AssetID = "font_asset"
@@ -267,6 +272,17 @@ func (pkg) Register(b ioc.Builder) {
 
 		b.RegisterAsset(U1TextureID, func() (any, error) {
 			imgFile := bytes.NewBuffer(u1Source)
+			img, _, err := image.Decode(imgFile)
+			if err != nil {
+				return nil, err
+			}
+			img = gtexture.FlipImage(img)
+			asset := render.NewTextureStorageAsset(img)
+			return asset, nil
+		})
+
+		b.RegisterAsset(SettingsTextureID, func() (any, error) {
+			imgFile := bytes.NewBuffer(settingsSource)
 			img, _, err := image.Decode(imgFile)
 			if err != nil {
 				return nil, err

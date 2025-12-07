@@ -245,7 +245,9 @@ func (c *componentsArray[Component]) BeforeRemove(listener func([]EntityID)) {
 }
 
 func (c *componentsArray[Component]) OnAdd(listener func([]EntityID)) {
-	listener(c.GetEntities())
+	if entities := c.GetEntities(); len(entities) != 0 {
+		listener(entities)
+	}
 	c.listenersOrder = append(c.listenersOrder, addListener)
 	c.onAdd = append(c.onAdd, listener)
 }

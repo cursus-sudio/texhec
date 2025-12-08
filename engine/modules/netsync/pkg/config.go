@@ -1,7 +1,7 @@
-package syncpkg
+package netsyncpkg
 
 import (
-	"engine/modules/sync/internal/config"
+	"engine/modules/netsync/internal/config"
 	"engine/services/ecs"
 	"reflect"
 

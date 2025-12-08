@@ -2,11 +2,11 @@ package client
 
 import (
 	"engine/modules/connection"
-	"engine/modules/sync"
-	"engine/modules/sync/internal/clienttypes"
-	"engine/modules/sync/internal/config"
-	"engine/modules/sync/internal/servertypes"
-	"engine/modules/sync/internal/state"
+	"engine/modules/netsync"
+	"engine/modules/netsync/internal/clienttypes"
+	"engine/modules/netsync/internal/config"
+	"engine/modules/netsync/internal/servertypes"
+	"engine/modules/netsync/internal/state"
 	"engine/modules/uuid"
 	"engine/services/ecs"
 	"engine/services/logger"
@@ -33,7 +33,7 @@ type toolState struct {
 	recievingTransparentEvent bool
 
 	world           ecs.World
-	serverArray     ecs.ComponentsArray[sync.ServerComponent]
+	serverArray     ecs.ComponentsArray[netsync.ServerComponent]
 	connectionArray ecs.ComponentsArray[connection.ConnectionComponent]
 	uuidArray       ecs.ComponentsArray[uuid.Component]
 	stateTool       state.Tool
@@ -65,7 +65,7 @@ func NewTool(
 			false,
 
 			world,
-			ecs.GetComponentsArray[sync.ServerComponent](world),
+			ecs.GetComponentsArray[netsync.ServerComponent](world),
 			ecs.GetComponentsArray[connection.ConnectionComponent](world),
 			ecs.GetComponentsArray[uuid.Component](world),
 			stateToolFactory.Build(world),
@@ -76,7 +76,7 @@ func NewTool(
 
 	// listen to server messages
 	t.world.Query().
-		Require(sync.ServerComponent{}).
+		Require(netsync.ServerComponent{}).
 		Require(connection.ConnectionComponent{}).
 		Build().OnAdd(func(ei []ecs.EntityID) {
 		for _, entity := range ei {

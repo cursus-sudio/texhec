@@ -1,7 +1,7 @@
 package state
 
 import (
-	"engine/modules/sync/internal/config"
+	"engine/modules/netsync/internal/config"
 	"engine/modules/uuid"
 	"engine/services/ecs"
 	"engine/services/logger"

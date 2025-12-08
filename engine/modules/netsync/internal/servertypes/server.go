@@ -1,7 +1,7 @@
 package servertypes
 
 import (
-	"engine/modules/sync/internal/state"
+	"engine/modules/netsync/internal/state"
 	"engine/modules/uuid"
 )
 

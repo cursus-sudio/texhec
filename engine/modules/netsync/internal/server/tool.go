@@ -2,11 +2,11 @@ package server
 
 import (
 	"engine/modules/connection"
-	"engine/modules/sync"
-	"engine/modules/sync/internal/clienttypes"
-	"engine/modules/sync/internal/config"
-	"engine/modules/sync/internal/servertypes"
-	"engine/modules/sync/internal/state"
+	"engine/modules/netsync"
+	"engine/modules/netsync/internal/clienttypes"
+	"engine/modules/netsync/internal/config"
+	"engine/modules/netsync/internal/servertypes"
+	"engine/modules/netsync/internal/state"
 	"engine/modules/uuid"
 	"engine/services/ecs"
 	"engine/services/logger"
@@ -21,7 +21,7 @@ type toolState struct {
 	recordedEventUUID *uuid.UUID
 
 	world           ecs.World
-	clientArray     ecs.ComponentsArray[sync.ClientComponent]
+	clientArray     ecs.ComponentsArray[netsync.ClientComponent]
 	connectionArray ecs.ComponentsArray[connection.ConnectionComponent]
 	uuidArray       ecs.ComponentsArray[uuid.Component]
 	stateTool       state.Tool
@@ -47,7 +47,7 @@ func NewTool(
 			nil,
 
 			world,
-			ecs.GetComponentsArray[sync.ClientComponent](world),
+			ecs.GetComponentsArray[netsync.ClientComponent](world),
 			ecs.GetComponentsArray[connection.ConnectionComponent](world),
 			ecs.GetComponentsArray[uuid.Component](world),
 			stateToolFactory.Build(world),
@@ -64,7 +64,7 @@ func NewTool(
 		t.logger.Info(fmt.Sprintf("removing %v clients", len(ei)))
 	})
 	t.world.Query().
-		Require(sync.ClientComponent{}).
+		Require(netsync.ClientComponent{}).
 		Require(connection.ConnectionComponent{}).
 		Build().OnAdd(func(ei []ecs.EntityID) {
 		for _, entity := range ei {

@@ -14,8 +14,8 @@ import (
 	"engine/modules/groups"
 	"engine/modules/hierarchy"
 	"engine/modules/inputs"
+	"engine/modules/netsync"
 	"engine/modules/render"
-	"engine/modules/sync"
 	"engine/modules/text"
 	"engine/modules/transform"
 	"engine/modules/uuid"
@@ -47,7 +47,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			if gameassets.IsServer {
 				connectionTool.Host(":8080", func(cc connection.ConnectionComponent) {
 					entity := world.NewEntity()
-					ecs.SaveComponent(world, entity, sync.ClientComponent{})
+					ecs.SaveComponent(world, entity, netsync.ClientComponent{})
 					ecs.SaveComponent(world, entity, cc)
 				})
 			} else {
@@ -56,7 +56,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 					panic("nie ma serwera")
 				}
 				entity := world.NewEntity()
-				ecs.SaveComponent(world, entity, sync.ServerComponent{})
+				ecs.SaveComponent(world, entity, netsync.ServerComponent{})
 				ecs.SaveComponent(world, entity, comp)
 			}
 

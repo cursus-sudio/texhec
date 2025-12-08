@@ -1,8 +1,8 @@
-package client
+package server
 
 import (
-	"engine/modules/sync/internal/config"
-	"engine/modules/sync/internal/state"
+	"engine/modules/netsync/internal/config"
+	"engine/modules/netsync/internal/state"
 	"engine/modules/uuid"
 	"engine/services/ecs"
 	"engine/services/logger"

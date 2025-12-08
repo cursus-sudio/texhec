@@ -29,9 +29,9 @@ import (
 	"engine/modules/hierarchy/pkg"
 	"engine/modules/inputs"
 	"engine/modules/inputs/pkg"
+	"engine/modules/netsync/pkg"
 	"engine/modules/render/pkg"
 	"engine/modules/scenes/pkg"
-	"engine/modules/sync/pkg"
 	"engine/modules/text"
 	"engine/modules/text/pkg"
 	"engine/modules/transform"
@@ -212,17 +212,17 @@ func frontendDic(
 		hierarchypkg.Package(),
 		uuidpkg.Package(),
 		connectionpkg.Package(),
-		syncpkg.Package(func() syncpkg.Config {
-			config := syncpkg.NewConfig(!gameassets.IsServer)
-			syncpkg.AddComponent[transform.PosComponent](config)
-			syncpkg.AddComponent[camera.OrthoComponent](config)
+		netsyncpkg.Package(func() netsyncpkg.Config {
+			config := netsyncpkg.NewConfig(!gameassets.IsServer)
+			netsyncpkg.AddComponent[transform.PosComponent](config)
+			netsyncpkg.AddComponent[camera.OrthoComponent](config)
 			// syncpkg.AddEvent[scenessys.ChangeSceneEvent](config)
-			syncpkg.AddEvent[drag.DraggableEvent](config)
-			syncpkg.AddEvent[inputs.DragEvent](config)
+			netsyncpkg.AddEvent[drag.DraggableEvent](config)
+			netsyncpkg.AddEvent[inputs.DragEvent](config)
 
-			syncpkg.AddTransparentEvent[settings.EnterSettingsEvent](config)
-			syncpkg.AddTransparentEvent[tile.TileClickEvent](config)
-			syncpkg.AddTransparentEvent[ui.HideUiEvent](config)
+			netsyncpkg.AddTransparentEvent[settings.EnterSettingsEvent](config)
+			netsyncpkg.AddTransparentEvent[tile.TileClickEvent](config)
+			netsyncpkg.AddTransparentEvent[ui.HideUiEvent](config)
 			// syncpkg.AddEvent[frames.FrameEvent](config)
 			return config
 		}()),

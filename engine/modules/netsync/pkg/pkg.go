@@ -1,12 +1,12 @@
-package syncpkg
+package netsyncpkg
 
 import (
-	"engine/modules/sync"
-	"engine/modules/sync/internal/client"
-	"engine/modules/sync/internal/clienttypes"
-	"engine/modules/sync/internal/server"
-	"engine/modules/sync/internal/servertypes"
-	"engine/modules/sync/internal/state"
+	"engine/modules/netsync"
+	"engine/modules/netsync/internal/client"
+	"engine/modules/netsync/internal/clienttypes"
+	"engine/modules/netsync/internal/server"
+	"engine/modules/netsync/internal/servertypes"
+	"engine/modules/netsync/internal/state"
 	"engine/modules/uuid"
 	"engine/services/codec"
 	"engine/services/ecs"
@@ -62,7 +62,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			ioc.Get[logger.Logger](c),
 		)
 	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) sync.StartSystem {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) netsync.StartSystem {
 		clientToolFactory := ioc.Get[ecs.ToolFactory[client.Tool]](c)
 		serverToolFactory := ioc.Get[ecs.ToolFactory[server.Tool]](c)
 		return ecs.NewSystemRegister(func(w ecs.World) error {
@@ -86,7 +86,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			return nil
 		})
 	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) sync.StopSystem {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) netsync.StopSystem {
 		clientToolFactory := ioc.Get[ecs.ToolFactory[client.Tool]](c)
 		serverToolFactory := ioc.Get[ecs.ToolFactory[server.Tool]](c)
 		return ecs.NewSystemRegister(func(w ecs.World) error {

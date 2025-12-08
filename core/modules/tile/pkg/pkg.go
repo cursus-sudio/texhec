@@ -75,6 +75,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 				ioc.Get[logger.Logger](c),
 				ioc.Get[ecs.ToolFactory[ui.Tool]](c),
 				ioc.Get[ecs.ToolFactory[text.Tool]](c),
+				ioc.Get[ecs.ToolFactory[tile.Tool]](c),
 			),
 		}
 		return ecs.NewSystemRegister(func(world ecs.World) error {

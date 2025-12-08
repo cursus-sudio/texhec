@@ -25,11 +25,11 @@ func (f *factory) NewConnection(rawConn net.Conn) connection.Connection {
 		defer close(messages)
 
 		for {
-			messageLengthInBytes := make([]byte, 2)
+			messageLengthInBytes := make([]byte, 4)
 			if _, err := io.ReadFull(rawConn, messageLengthInBytes); err != nil {
 				break
 			}
-			messageLength := binary.BigEndian.Uint16(messageLengthInBytes)
+			messageLength := binary.BigEndian.Uint32(messageLengthInBytes)
 			messageBytes := make([]byte, messageLength)
 			if _, err := io.ReadFull(rawConn, messageBytes); err != nil {
 				break

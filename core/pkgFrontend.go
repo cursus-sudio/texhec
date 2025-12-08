@@ -2,6 +2,8 @@ package main
 
 import (
 	gameassets "core/assets"
+	"core/modules/definition"
+	definitionpkg "core/modules/definition/pkg"
 	"core/modules/fpslogger/pkg"
 	"core/modules/settings"
 	settingspkg "core/modules/settings/pkg"
@@ -16,7 +18,6 @@ import (
 	settingsscene "core/scenes/settings"
 	"engine/modules/animation/pkg"
 	"engine/modules/audio/pkg"
-	"engine/modules/camera"
 	"engine/modules/camera/pkg"
 	"engine/modules/collider"
 	"engine/modules/collider/pkg"
@@ -34,7 +35,6 @@ import (
 	"engine/modules/scenes/pkg"
 	"engine/modules/text"
 	"engine/modules/text/pkg"
-	"engine/modules/transform"
 	"engine/modules/transform/pkg"
 	"engine/modules/uuid/pkg"
 	"engine/services/assets"
@@ -149,6 +149,7 @@ func frontendDic(
 			0, 1000, // min-max y
 			0, 3, // min-max z
 		),
+		definitionpkg.Package(),
 		uipkg.Package(
 			3,
 			time.Millisecond*300,
@@ -214,8 +215,11 @@ func frontendDic(
 		connectionpkg.Package(),
 		netsyncpkg.Package(func() netsyncpkg.Config {
 			config := netsyncpkg.NewConfig(!gameassets.IsServer)
-			netsyncpkg.AddComponent[transform.PosComponent](config)
-			netsyncpkg.AddComponent[camera.OrthoComponent](config)
+			// netsyncpkg.AddComponent[transform.PosComponent](config)
+			// netsyncpkg.AddComponent[camera.OrthoComponent](config)
+			netsyncpkg.AddComponent[definition.DefinitionLinkComponent](config)
+			netsyncpkg.AddComponent[tile.PosComponent](config)
+
 			// syncpkg.AddEvent[scenessys.ChangeSceneEvent](config)
 			netsyncpkg.AddEvent[drag.DraggableEvent](config)
 			netsyncpkg.AddEvent[inputs.DragEvent](config)

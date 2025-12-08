@@ -15,14 +15,21 @@ func NewSystem(
 	logger logger.Logger,
 	uiToolFactory ecs.ToolFactory[ui.Tool],
 	textToolFactory ecs.ToolFactory[text.Tool],
+	tileToolFactory ecs.ToolFactory[tile.Tool],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(world ecs.World) error {
 		tilePosArray := ecs.GetComponentsArray[tile.PosComponent](world)
 		uiTool := uiToolFactory.Build(world)
 		textTool := textToolFactory.Build(world)
+		tileTool := tileToolFactory.Build(world)
 
 		events.Listen(world.EventsBuilder(), func(e tile.TileClickEvent) {
-			pos, err := tilePosArray.GetComponent(e.Tile)
+			entity, ok := tileTool.TilePos().Get(e.Tile)
+			if !ok {
+				logger.Warn(fmt.Errorf("entity with uuid should exist"))
+				return
+			}
+			pos, err := tilePosArray.GetComponent(entity)
 			if err != nil {
 				logger.Warn(err)
 				return

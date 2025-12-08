@@ -18,7 +18,6 @@ import (
 	"engine/modules/render"
 	"engine/modules/text"
 	"engine/modules/transform"
-	"engine/modules/uuid"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"engine/services/scenes"
@@ -48,7 +47,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world, uiCamera, ui.UiCameraComponent{})
 
 			gameCamera := world.NewEntity()
-			ecs.SaveComponent(world, gameCamera, uuid.New([16]byte{48}))
+			// ecs.SaveComponent(world, gameCamera, uuid.New([16]byte{48}))
 			ecs.SaveComponent(world, gameCamera, camera.NewOrtho(-1000, +1000))
 			ecs.SaveComponent(world, gameCamera, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 			ecs.SaveComponent(world, gameCamera, camera.NewMobileCamera())
@@ -86,49 +85,50 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world, settingsEntity, inputs.NewMouseLeftClick(settings.EnterSettingsEvent{}))
 			ecs.SaveComponent(world, settingsEntity, inputs.KeepSelectedComponent{})
 			ecs.SaveComponent(world, settingsEntity, collider.NewCollider(gameassets.SquareColliderID))
+			if gameassets.IsServer {
+				rand := rand.New(rand.NewPCG(2077, 7137))
 
-			rand := rand.New(rand.NewPCG(2077, 7137))
+				tilesTypeArray := ecs.GetComponentsArray[definition.DefinitionLinkComponent](world)
+				tilesPosArray := ecs.GetComponentsArray[tile.PosComponent](world)
+				tilesTypeTransaction := tilesTypeArray.Transaction()
+				tilesPosTransaction := tilesPosArray.Transaction()
+				rows := 100
+				cols := 100
+				for i := 0; i < rows*cols; i++ {
+					row := i % cols
+					col := i / cols
+					entity := world.NewEntity()
+					tileType := definition.TileMountain
 
-			tilesTypeArray := ecs.GetComponentsArray[definition.DefinitionLinkComponent](world)
-			tilesPosArray := ecs.GetComponentsArray[tile.PosComponent](world)
-			tilesTypeTransaction := tilesTypeArray.Transaction()
-			tilesPosTransaction := tilesPosArray.Transaction()
-			rows := 100
-			cols := 100
-			for i := 0; i < rows*cols; i++ {
-				row := i % cols
-				col := i / cols
-				entity := world.NewEntity()
-				tileType := definition.TileMountain
+					num := rand.IntN(4)
 
-				num := rand.IntN(4)
-
-				switch num {
-				case 0:
-					tileType = definition.TileMountain
-				case 1:
-					tileType = definition.TileGround
-				case 2:
-					tileType = definition.TileForest
-				case 3:
-					tileType = definition.TileWater
+					switch num {
+					case 0:
+						tileType = definition.TileMountain
+					case 1:
+						tileType = definition.TileGround
+					case 2:
+						tileType = definition.TileForest
+					case 3:
+						tileType = definition.TileWater
+					}
+					tilesPosTransaction.SaveComponent(entity, tile.NewPos(int32(row), int32(col), tile.GroundLayer))
+					tilesTypeTransaction.SaveComponent(entity, definition.NewLink(tileType))
 				}
-				tilesPosTransaction.SaveAnyComponent(entity, tile.NewPos(int32(row), int32(col), tile.GroundLayer))
-				tilesTypeTransaction.SaveComponent(entity, definition.NewLink(tileType))
-			}
 
-			{
-				unit := world.NewEntity()
-				tilesPosTransaction.SaveAnyComponent(unit, tile.NewPos(0, 0, tile.UnitLayer))
-				tilesTypeTransaction.SaveComponent(unit, definition.NewLink(definition.TileU1))
+				{
+					unit := world.NewEntity()
+					tilesPosTransaction.SaveComponent(unit, tile.NewPos(0, 0, tile.UnitLayer))
+					tilesTypeTransaction.SaveComponent(unit, definition.NewLink(definition.TileU1))
+				}
+				{
+					unit := world.NewEntity()
+					tilesPosTransaction.SaveComponent(unit, tile.NewPos(1, 1, tile.UnitLayer))
+					tilesTypeTransaction.SaveComponent(unit, definition.NewLink(definition.TileU1))
+				}
+				err := ecs.FlushMany(tilesTypeTransaction, tilesPosTransaction)
+				ioc.Get[logger.Logger](c).Warn(err)
 			}
-			{
-				unit := world.NewEntity()
-				tilesPosTransaction.SaveAnyComponent(unit, tile.NewPos(1, 1, tile.UnitLayer))
-				tilesTypeTransaction.SaveComponent(unit, definition.NewLink(definition.TileU1))
-			}
-			err := ecs.FlushMany(tilesTypeTransaction, tilesPosTransaction)
-			ioc.Get[logger.Logger](c).Warn(err)
 
 			connectionToolFactory := ioc.Get[ecs.ToolFactory[connection.Tool]](c)
 			connectionTool := connectionToolFactory.Build(world)

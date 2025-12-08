@@ -11,9 +11,6 @@ type mapRelation[IndexType comparable] struct {
 	mutex   *sync.Mutex
 	indices map[IndexType]ecs.EntityID
 
-	upsertListeners []func([]ecs.EntityID)
-	removeListeners []func([]ecs.EntityID)
-
 	componentIndex func(ecs.EntityID) (IndexType, bool)
 }
 
@@ -26,9 +23,6 @@ func newMapIndex[IndexType comparable](
 		world:   w,
 		mutex:   &sync.Mutex{},
 		indices: make(map[IndexType]ecs.EntityID),
-
-		upsertListeners: make([]func([]ecs.EntityID), 0),
-		removeListeners: make([]func([]ecs.EntityID), 0),
 
 		componentIndex: componentIndex,
 	}
@@ -46,23 +40,6 @@ func (i mapRelation[IndexType]) Get(index IndexType) (ecs.EntityID, bool) {
 	return entity, ok
 }
 
-func (i mapRelation[IndexType]) OnUpsert(listener func([]ecs.EntityID)) {
-	values := make([]ecs.EntityID, 0)
-	for _, entity := range i.indices {
-		values = append(values, entity)
-	}
-	if len(values) != 0 {
-		listener(values)
-	}
-	i.upsertListeners = append(i.upsertListeners, listener)
-	i.world.SaveGlobal(i)
-}
-
-func (i mapRelation[IndexType]) OnRemove(listener func([]ecs.EntityID)) {
-	i.removeListeners = append(i.removeListeners, listener)
-	i.world.SaveGlobal(i)
-}
-
 func (i mapRelation[IndexType]) Upsert(ei []ecs.EntityID) {
 	i.mutex.Lock()
 	defer i.mutex.Unlock()
@@ -74,11 +51,6 @@ func (i mapRelation[IndexType]) Upsert(ei []ecs.EntityID) {
 		}
 		added = append(added, entity)
 		i.indices[indexType] = entity
-	}
-	if len(added) != 0 {
-		for _, listener := range i.upsertListeners {
-			listener(added)
-		}
 	}
 }
 
@@ -93,10 +65,5 @@ func (i mapRelation[IndexType]) Remove(ei []ecs.EntityID) {
 		}
 		delete(i.indices, indexType)
 		removed = append(removed, entity)
-	}
-	if len(removed) != 0 {
-		for _, listener := range i.removeListeners {
-			listener(removed)
-		}
 	}
 }

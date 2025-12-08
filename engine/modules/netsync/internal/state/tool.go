@@ -25,9 +25,8 @@ type toolState struct {
 	uniqueTool uuid.Tool
 	logger     logger.Logger
 
-	world        ecs.World
-	arrays       []ecs.AnyComponentArray
-	transactions []ecs.AnyComponentsArrayTransaction
+	world  ecs.World
+	arrays []ecs.AnyComponentArray
 }
 
 type tool struct {
@@ -63,7 +62,6 @@ func NewToolFactory(
 
 				world,
 				arrays,
-				transactions,
 			},
 		}
 		return t
@@ -81,6 +79,10 @@ func (t tool) GetState() State {
 }
 
 func (t tool) ApplyState(changes State) {
+	transactions := make([]ecs.AnyComponentsArrayTransaction, len(t.arrays))
+	for i, array := range t.arrays {
+		transactions[i] = array.AnyTransaction()
+	}
 	uuidTransaction := t.uuidArray.Transaction()
 	for id, snapshot := range changes.Entities {
 		entity, ok := t.uniqueTool.Entity(id)
@@ -92,11 +94,11 @@ func (t tool) ApplyState(changes State) {
 			entity = t.world.NewEntity()
 			uuidTransaction.SaveComponent(entity, uuid.New(id))
 		}
-		for i, transaction := range t.transactions {
+		for i, transaction := range transactions {
 			transaction.SaveAnyComponent(entity, snapshot.Components[i])
 		}
 	}
-	t.logger.Warn(ecs.FlushMany(append(t.transactions, uuidTransaction)...))
+	t.logger.Warn(ecs.FlushMany(append(transactions, uuidTransaction)...))
 }
 
 func (t tool) StartRecording() {

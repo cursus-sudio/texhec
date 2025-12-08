@@ -193,9 +193,13 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 			tiles.Set(entity, tile)
 		}
 	}
-	linkArray.OnAdd(onChangeOrAdd)
-	linkArray.OnChange(onChangeOrAdd)
-	linkArray.OnRemove(func(ei []ecs.EntityID) {
+	query := w.Query().
+		Require(definition.DefinitionLinkComponent{}).
+		Require(tile.PosComponent{}).
+		Build()
+	query.OnAdd(onChangeOrAdd)
+	query.OnChange(onChangeOrAdd)
+	query.OnRemove(func(ei []ecs.EntityID) {
 		changeMutex.Lock()
 		defer changeMutex.Unlock()
 		s.changed = true

@@ -113,7 +113,6 @@ func (s *collisionsService) Add(entities ...ecs.EntityID) {
 	static := make([]ecs.EntityID, 0, len(entities))
 	dynamic := make([]ecs.EntityID, 0, len(entities))
 	for _, entity := range entities {
-
 		_, err := s.transformStaticArray.GetComponent(entity)
 		isDynamic := err != nil
 		if isDynamic {

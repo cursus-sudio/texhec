@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"sync"
 
 	"github.com/ogiusek/events"
@@ -261,8 +262,6 @@ func (t Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
 		// 	t.predictions = t.predictions[1:]
 		// }
 	}
-	// t.logger.Warn(fmt.Errorf("wha? %v != %v ? (pool %v)", t.predictions[0].PredictedEvent.ID, dto.EventID, t.predictions))
-	t.logger.Info("now shit happen\n\n\n\n\n\n")
 	predictedEvents := t.undoPredictions()
 	t.stateTool.ApplyState(dto.Changes)
 	t.applyPredictedEvents(predictedEvents)
@@ -275,6 +274,12 @@ func (t Tool) ListenSendState(dto servertypes.SendStateDTO) {
 		return
 	}
 	t.predictions = nil
+	stringBuilder := strings.Builder{}
+	stringBuilder.WriteString("\nentities:\n")
+	// for uuid, entity := range dto.State.Entities {
+	// 	stringBuilder.WriteString(fmt.Sprintf("- %v: %v\n", uuid.String(), entity))
+	// }
+	// t.logger.Info(stringBuilder.String())
 	t.stateTool.ApplyState(dto.State)
 }
 

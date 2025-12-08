@@ -13,6 +13,7 @@ import (
 	"engine/services/logger"
 	"fmt"
 	"reflect"
+	"sync"
 
 	"github.com/ogiusek/events"
 )
@@ -25,6 +26,7 @@ type clientMessage struct {
 type toolState struct {
 	recordedEventUUID *uuid.UUID
 
+	mutex                  *sync.Mutex
 	messagesSentFromClient []clientMessage
 
 	world           ecs.World
@@ -53,6 +55,7 @@ func NewTool(
 		&toolState{
 			nil,
 
+			&sync.Mutex{},
 			nil,
 
 			world,
@@ -80,7 +83,9 @@ func NewTool(
 	events.Listen(t.world.EventsBuilder(), func(frames.FrameEvent) {
 		for len(t.messagesSentFromClient) != 0 {
 			message := t.messagesSentFromClient[0]
+			t.mutex.Lock()
 			t.messagesSentFromClient = t.messagesSentFromClient[1:]
+			t.mutex.Unlock()
 
 			messageType := reflect.TypeOf(message.Message)
 			listener, ok := listeners[messageType]
@@ -108,10 +113,12 @@ func NewTool(
 					if !ok {
 						break
 					}
+					t.mutex.Lock()
 					t.messagesSentFromClient = append(t.messagesSentFromClient, clientMessage{
 						Client:  entity,
 						Message: message,
 					})
+					t.mutex.Unlock()
 				}
 				world.RemoveEntity(entity)
 			}(entity)

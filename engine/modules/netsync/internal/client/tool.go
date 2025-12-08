@@ -12,7 +12,9 @@ import (
 	"engine/services/frames"
 	"engine/services/logger"
 	"errors"
+	"fmt"
 	"reflect"
+	"sync"
 
 	"github.com/ogiusek/events"
 )
@@ -27,11 +29,13 @@ type recordedPrediction struct {
 }
 
 type toolState struct {
-	recordNextEvent           bool
-	predictions               []savedPrediction
-	recordedPrediction        *recordedPrediction
-	recievingTransparentEvent bool
+	recordNextEvent    bool
+	predictions        []savedPrediction
+	recordedPrediction *recordedPrediction
+	sentTransparentEvent,
+	receivedTransparentEvent bool
 
+	mutex              *sync.Mutex
 	messagesFromServer []any
 
 	world           ecs.World
@@ -65,7 +69,9 @@ func NewTool(
 			make([]savedPrediction, 0),
 			nil,
 			false,
+			false,
 
+			&sync.Mutex{},
 			nil,
 
 			world,
@@ -90,6 +96,8 @@ func NewTool(
 		},
 	}
 	events.Listen(t.world.EventsBuilder(), func(frames.FrameEvent) {
+		t.mutex.Lock()
+		defer t.mutex.Unlock()
 		conn := t.getConnection()
 		if conn == nil {
 			return
@@ -101,7 +109,7 @@ func NewTool(
 			messageType := reflect.TypeOf(message)
 			listener, ok := listeners[messageType]
 			if !ok {
-				t.logger.Warn(errors.New("invalid listener called"))
+				t.logger.Warn(fmt.Errorf("invalid listener of type '%v' called", messageType.String()))
 				conn.Close()
 				return
 			}
@@ -136,7 +144,9 @@ func NewTool(
 				if !ok {
 					break
 				}
+				t.mutex.Lock()
 				t.messagesFromServer = append(t.messagesFromServer, message)
+				t.mutex.Unlock()
 			}
 			world.RemoveEntity(entity)
 		}(entity)
@@ -210,12 +220,16 @@ func (t Tool) AfterEvent(event any) {
 }
 
 func (t Tool) OnTransparentEvent(event any) {
+	if t.receivedTransparentEvent {
+		t.receivedTransparentEvent = false
+		return
+	}
 	conn := t.getConnection()
 	if conn == nil {
 		return
 	}
 
-	t.recievingTransparentEvent = true
+	t.sentTransparentEvent = true
 	conn.Send(clienttypes.TransparentEventDTO{Event: event})
 }
 
@@ -248,6 +262,7 @@ func (t Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
 		// }
 	}
 	// t.logger.Warn(fmt.Errorf("wha? %v != %v ? (pool %v)", t.predictions[0].PredictedEvent.ID, dto.EventID, t.predictions))
+	t.logger.Info("now shit happen\n\n\n\n\n\n")
 	predictedEvents := t.undoPredictions()
 	t.stateTool.ApplyState(dto.Changes)
 	t.applyPredictedEvents(predictedEvents)
@@ -264,10 +279,11 @@ func (t Tool) ListenSendState(dto servertypes.SendStateDTO) {
 }
 
 func (t Tool) ListenTransparentEvent(dto servertypes.TransparentEventDTO) {
-	if t.recievingTransparentEvent {
-		t.recievingTransparentEvent = false
+	if t.sentTransparentEvent {
+		t.sentTransparentEvent = false
 		return
 	}
+	t.receivedTransparentEvent = true
 	events.EmitAny(t.world.Events(), dto.Event)
 }
 

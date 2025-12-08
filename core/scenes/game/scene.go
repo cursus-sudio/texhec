@@ -42,24 +42,6 @@ const (
 func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.GameBuilder) gamescenes.GameBuilder {
 		b.OnLoad(func(world scenes.SceneCtx) {
-			connectionToolFactory := ioc.Get[ecs.ToolFactory[connection.Tool]](c)
-			connectionTool := connectionToolFactory.Build(world)
-			if gameassets.IsServer {
-				connectionTool.Host(":8080", func(cc connection.ConnectionComponent) {
-					entity := world.NewEntity()
-					ecs.SaveComponent(world, entity, netsync.ClientComponent{})
-					ecs.SaveComponent(world, entity, cc)
-				})
-			} else {
-				comp, err := connectionTool.Connect(":8080")
-				if err != nil {
-					panic("nie ma serwera")
-				}
-				entity := world.NewEntity()
-				ecs.SaveComponent(world, entity, netsync.ServerComponent{})
-				ecs.SaveComponent(world, entity, comp)
-			}
-
 			uiCamera := world.NewEntity()
 			ecs.SaveComponent(world, uiCamera, camera.NewOrtho(-1000, +1000))
 			ecs.SaveComponent(world, uiCamera, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
@@ -147,6 +129,25 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			}
 			err := ecs.FlushMany(tilesTypeTransaction, tilesPosTransaction)
 			ioc.Get[logger.Logger](c).Warn(err)
+
+			connectionToolFactory := ioc.Get[ecs.ToolFactory[connection.Tool]](c)
+			connectionTool := connectionToolFactory.Build(world)
+			if gameassets.IsServer {
+				connectionTool.Host(":8080", func(cc connection.ConnectionComponent) {
+					entity := world.NewEntity()
+					ecs.SaveComponent(world, entity, netsync.ClientComponent{})
+					ecs.SaveComponent(world, entity, cc)
+				})
+			} else {
+				comp, err := connectionTool.Connect(":8080")
+				if err != nil {
+					panic("nie ma serwera")
+				}
+				entity := world.NewEntity()
+				ecs.SaveComponent(world, entity, netsync.ServerComponent{})
+				ecs.SaveComponent(world, entity, comp)
+			}
+
 		})
 
 		return b

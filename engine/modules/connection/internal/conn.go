@@ -2,9 +2,7 @@ package internal
 
 import (
 	"encoding/binary"
-	"fmt"
 	"net"
-	"reflect"
 )
 
 type conn struct {
@@ -22,7 +20,7 @@ func (conn conn) Send(message any) error {
 		return err
 	}
 
-	conn.logger.Info(fmt.Sprintf("sending type '%v'", reflect.TypeOf(message).String()))
+	// conn.logger.Info(fmt.Sprintf("sending type '%v'", reflect.TypeOf(message).String()))
 	length := uint16(len(bytes))
 	lengthInByes := make([]byte, 2)
 	binary.BigEndian.PutUint16(lengthInByes, length)

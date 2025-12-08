@@ -9,16 +9,23 @@ import (
 	"engine/modules/netsync/internal/state"
 	"engine/modules/uuid"
 	"engine/services/ecs"
+	"engine/services/frames"
 	"engine/services/logger"
-	"errors"
 	"fmt"
 	"reflect"
 
 	"github.com/ogiusek/events"
 )
 
+type clientMessage struct {
+	Client  ecs.EntityID
+	Message any
+}
+
 type toolState struct {
 	recordedEventUUID *uuid.UUID
+
+	messagesSentFromClient []clientMessage
 
 	world           ecs.World
 	clientArray     ecs.ComponentsArray[netsync.ClientComponent]
@@ -46,6 +53,8 @@ func NewTool(
 		&toolState{
 			nil,
 
+			nil,
+
 			world,
 			ecs.GetComponentsArray[netsync.ClientComponent](world),
 			ecs.GetComponentsArray[connection.ConnectionComponent](world),
@@ -57,11 +66,30 @@ func NewTool(
 	}
 
 	// listen to server messages
-	t.clientArray.OnAdd(func(ei []ecs.EntityID) {
-		t.logger.Info(fmt.Sprintf("adding %v clients", len(ei)))
-	})
-	t.clientArray.OnRemove(func(ei []ecs.EntityID) {
-		t.logger.Info(fmt.Sprintf("removing %v clients", len(ei)))
+	listeners := map[reflect.Type]func(ecs.EntityID, any){
+		reflect.TypeFor[clienttypes.FetchStateDTO](): func(entity ecs.EntityID, a any) {
+			t.ListenFetchState(entity, a.(clienttypes.FetchStateDTO))
+		},
+		reflect.TypeFor[clienttypes.EmitEventDTO](): func(entity ecs.EntityID, a any) {
+			t.ListenEmitEvent(entity, a.(clienttypes.EmitEventDTO))
+		},
+		reflect.TypeFor[clienttypes.TransparentEventDTO](): func(entity ecs.EntityID, a any) {
+			t.ListenTransparentEvent(entity, a.(clienttypes.TransparentEventDTO))
+		},
+	}
+	events.Listen(t.world.EventsBuilder(), func(frames.FrameEvent) {
+		for len(t.messagesSentFromClient) != 0 {
+			message := t.messagesSentFromClient[0]
+			t.messagesSentFromClient = t.messagesSentFromClient[1:]
+
+			messageType := reflect.TypeOf(message.Message)
+			listener, ok := listeners[messageType]
+			if !ok {
+				t.logger.Warn(fmt.Errorf("invalid listener called there is no %v type", messageType.String()))
+				continue
+			}
+			listener(message.Client, message.Message)
+		}
 	})
 	t.world.Query().
 		Require(netsync.ClientComponent{}).
@@ -73,33 +101,17 @@ func NewTool(
 				t.logger.Warn(err)
 				continue
 			}
+			messages := comp.Conn().Messages()
 			go func(entity ecs.EntityID) {
-				conn := comp.Conn()
-				messages := conn.Messages()
-				listeners := map[reflect.Type]func(any){
-					reflect.TypeFor[clienttypes.FetchStateDTO](): func(a any) {
-						t.ListenFetchState(entity, a.(clienttypes.FetchStateDTO))
-					},
-					reflect.TypeFor[clienttypes.EmitEventDTO](): func(a any) {
-						t.ListenEmitEvent(entity, a.(clienttypes.EmitEventDTO))
-					},
-					reflect.TypeFor[clienttypes.TransparentEventDTO](): func(a any) {
-						t.ListenTransparentEvent(entity, a.(clienttypes.TransparentEventDTO))
-					},
-				}
 				for {
 					message, ok := <-messages
 					if !ok {
 						break
 					}
-					messageType := reflect.TypeOf(message)
-					listener, ok := listeners[messageType]
-					if !ok {
-						t.logger.Warn(errors.New("invalid listener called"))
-						conn.Close()
-						continue
-					}
-					listener(message)
+					t.messagesSentFromClient = append(t.messagesSentFromClient, clientMessage{
+						Client:  entity,
+						Message: message,
+					})
 				}
 				world.RemoveEntity(entity)
 			}(entity)

@@ -122,6 +122,7 @@ func (pkg) Register(b ioc.Builder) {
 
 			ecs.RegisterSystems(ctx,
 				ioc.Get[netsync.StartSystem](c),
+				// update {
 
 				// inputs
 				ioc.Get[inputs.System](c),
@@ -140,7 +141,7 @@ func (pkg) Register(b ioc.Builder) {
 				// ui update
 				ioc.Get[ui.System](c),
 				ioc.Get[settings.System](c),
-
+				// } (update)
 				ioc.Get[netsync.StopSystem](c),
 
 				// audio

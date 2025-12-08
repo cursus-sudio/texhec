@@ -9,9 +9,9 @@ import (
 	"engine/modules/netsync/internal/state"
 	"engine/modules/uuid"
 	"engine/services/ecs"
+	"engine/services/frames"
 	"engine/services/logger"
 	"errors"
-	"fmt"
 	"reflect"
 
 	"github.com/ogiusek/events"
@@ -31,6 +31,8 @@ type toolState struct {
 	predictions               []savedPrediction
 	recordedPrediction        *recordedPrediction
 	recievingTransparentEvent bool
+
+	messagesFromServer []any
 
 	world           ecs.World
 	serverArray     ecs.ComponentsArray[netsync.ServerComponent]
@@ -64,6 +66,8 @@ func NewTool(
 			nil,
 			false,
 
+			nil,
+
 			world,
 			ecs.GetComponentsArray[netsync.ServerComponent](world),
 			ecs.GetComponentsArray[connection.ConnectionComponent](world),
@@ -74,52 +78,68 @@ func NewTool(
 		},
 	}
 
+	listeners := map[reflect.Type]func(any){
+		reflect.TypeFor[servertypes.SendStateDTO](): func(a any) {
+			t.ListenSendState(a.(servertypes.SendStateDTO))
+		},
+		reflect.TypeFor[servertypes.SendChangeDTO](): func(a any) {
+			t.ListenSendChange(a.(servertypes.SendChangeDTO))
+		},
+		reflect.TypeFor[servertypes.TransparentEventDTO](): func(a any) {
+			t.ListenTransparentEvent(a.(servertypes.TransparentEventDTO))
+		},
+	}
+	events.Listen(t.world.EventsBuilder(), func(frames.FrameEvent) {
+		conn := t.getConnection()
+		if conn == nil {
+			return
+		}
+		for len(t.messagesFromServer) != 0 {
+			message := t.messagesFromServer[0]
+			t.messagesFromServer = t.messagesFromServer[1:]
+
+			messageType := reflect.TypeOf(message)
+			listener, ok := listeners[messageType]
+			if !ok {
+				t.logger.Warn(errors.New("invalid listener called"))
+				conn.Close()
+				return
+			}
+			listener(message)
+		}
+	})
+
 	// listen to server messages
 	t.world.Query().
 		Require(netsync.ServerComponent{}).
 		Require(connection.ConnectionComponent{}).
 		Build().OnAdd(func(ei []ecs.EntityID) {
-		for _, entity := range ei {
-			comp, err := t.connectionArray.GetComponent(entity)
-			if err != nil {
-				t.logger.Warn(err)
-				continue
-			}
-			conn := comp.Conn()
-			messages := conn.Messages()
-			if err := conn.Send(clienttypes.FetchStateDTO{}); err != nil {
-				logger.Warn(err)
-				continue
-			}
-			go func(entity ecs.EntityID) {
-				listeners := map[reflect.Type]func(any){
-					reflect.TypeFor[servertypes.SendStateDTO](): func(a any) {
-						t.ListenSendState(a.(servertypes.SendStateDTO))
-					},
-					reflect.TypeFor[servertypes.SendChangeDTO](): func(a any) {
-						t.ListenSendChange(a.(servertypes.SendChangeDTO))
-					},
-					reflect.TypeFor[servertypes.TransparentEventDTO](): func(a any) {
-						t.ListenTransparentEvent(a.(servertypes.TransparentEventDTO))
-					},
-				}
-				for {
-					message, ok := <-messages
-					if !ok {
-						break
-					}
-					messageType := reflect.TypeOf(message)
-					listener, ok := listeners[messageType]
-					if !ok {
-						t.logger.Warn(errors.New("invalid listener called"))
-						conn.Close()
-						continue
-					}
-					listener(message)
-				}
-				world.RemoveEntity(entity)
-			}(entity)
+		if len(ei) != 1 {
+			t.logger.Warn(errors.New("has more than one server"))
+			return
 		}
+		entity := ei[0]
+		comp, err := t.connectionArray.GetComponent(entity)
+		if err != nil {
+			t.logger.Warn(err)
+			return
+		}
+		conn := comp.Conn()
+		messages := conn.Messages()
+		if err := conn.Send(clienttypes.FetchStateDTO{}); err != nil {
+			logger.Warn(err)
+			return
+		}
+		go func(entity ecs.EntityID) {
+			for {
+				message, ok := <-messages
+				if !ok {
+					break
+				}
+				t.messagesFromServer = append(t.messagesFromServer, message)
+			}
+			world.RemoveEntity(entity)
+		}(entity)
 	})
 
 	// listen to entities changes
@@ -227,7 +247,7 @@ func (t Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
 		// 	t.predictions = t.predictions[1:]
 		// }
 	}
-	t.logger.Warn(fmt.Errorf("wha? %v != %v ? (pool %v)", t.predictions[0].PredictedEvent.ID, dto.EventID, t.predictions))
+	// t.logger.Warn(fmt.Errorf("wha? %v != %v ? (pool %v)", t.predictions[0].PredictedEvent.ID, dto.EventID, t.predictions))
 	predictedEvents := t.undoPredictions()
 	t.stateTool.ApplyState(dto.Changes)
 	t.applyPredictedEvents(predictedEvents)

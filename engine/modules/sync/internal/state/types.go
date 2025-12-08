@@ -4,8 +4,6 @@ import (
 	"engine/modules/uuid"
 )
 
-//
-
 // this is a component of any type
 // nil means that component don't exists.
 // otherwise it should be of fixed type

@@ -28,11 +28,15 @@ func Package(config Config) ioc.Pkg {
 func (pkg pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
 		return b.
+			// client
 			Register(clienttypes.PredictedEvent{}).
 			Register(clienttypes.FetchStateDTO{}).
 			Register(clienttypes.EmitEventDTO{}).
+			Register(clienttypes.TransparentEventDTO{}).
+			// server
 			Register(servertypes.SendStateDTO{}).
-			Register(servertypes.SendChangeDTO{})
+			Register(servertypes.SendChangeDTO{}).
+			Register(servertypes.TransparentEventDTO{})
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[state.Tool] {
@@ -65,12 +69,18 @@ func (pkg pkg) Register(b ioc.Builder) {
 			if pkg.config.config.IsClient {
 				tool := clientToolFactory.Build(w)
 				for _, listen := range tool.ListenToEvents {
-					listen(w.EventsBuilder(), tool.BeforeInternalEvent)
+					listen(w.EventsBuilder(), tool.BeforeEvent)
+				}
+				for _, listen := range tool.ListenToTransparentEvents {
+					listen(w.EventsBuilder(), tool.OnTransparentEvent)
 				}
 			} else {
 				tool := serverToolFactory.Build(w)
 				for _, listen := range tool.ListenToEvents {
-					listen(w.EventsBuilder(), tool.BeforeInternalEvent)
+					listen(w.EventsBuilder(), tool.BeforeEvent)
+				}
+				for _, listen := range tool.ListenToTransparentEvents {
+					listen(w.EventsBuilder(), tool.OnTransparentEvent)
 				}
 			}
 			return nil
@@ -83,12 +93,12 @@ func (pkg pkg) Register(b ioc.Builder) {
 			if pkg.config.config.IsClient {
 				tool := clientToolFactory.Build(w)
 				for _, listen := range tool.ListenToEvents {
-					listen(w.EventsBuilder(), tool.AfterInternalEvent)
+					listen(w.EventsBuilder(), tool.AfterEvent)
 				}
 			} else {
 				tool := serverToolFactory.Build(w)
 				for _, listen := range tool.ListenToEvents {
-					listen(w.EventsBuilder(), tool.AfterInternalEvent)
+					listen(w.EventsBuilder(), tool.AfterEvent)
 				}
 			}
 			return nil

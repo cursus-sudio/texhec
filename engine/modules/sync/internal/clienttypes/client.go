@@ -15,3 +15,7 @@ type PredictedEvent struct {
 
 type FetchStateDTO struct{}
 type EmitEventDTO PredictedEvent
+
+type TransparentEventDTO struct {
+	Event any
+}

@@ -78,10 +78,13 @@ func NewTool(
 				messages := conn.Messages()
 				listeners := map[reflect.Type]func(any){
 					reflect.TypeFor[clienttypes.FetchStateDTO](): func(a any) {
-						t.OnFetchState(entity, a.(clienttypes.FetchStateDTO))
+						t.ListenFetchState(entity, a.(clienttypes.FetchStateDTO))
 					},
 					reflect.TypeFor[clienttypes.EmitEventDTO](): func(a any) {
-						t.OnEmitEvent(entity, a.(clienttypes.EmitEventDTO))
+						t.ListenEmitEvent(entity, a.(clienttypes.EmitEventDTO))
+					},
+					reflect.TypeFor[clienttypes.TransparentEventDTO](): func(a any) {
+						t.ListenTransparentEvent(entity, a.(clienttypes.TransparentEventDTO))
 					},
 				}
 				for {
@@ -117,7 +120,7 @@ func NewTool(
 
 // public methods
 
-func (t Tool) BeforeInternalEvent(event any) {
+func (t Tool) BeforeEvent(event any) {
 	// if there are no clients return
 
 	if t.recordedEventUUID == nil {
@@ -127,7 +130,7 @@ func (t Tool) BeforeInternalEvent(event any) {
 	t.stateTool.StartRecording()
 }
 
-func (t Tool) AfterInternalEvent(event any) {
+func (t Tool) AfterEvent(event any) {
 	// if there are no clients return
 
 	if changes := t.stateTool.FinishRecording(); changes != nil && t.recordedEventUUID != nil {
@@ -137,22 +140,34 @@ func (t Tool) AfterInternalEvent(event any) {
 	}
 }
 
-func (t Tool) OnFetchState(client ecs.EntityID, dto clienttypes.FetchStateDTO) {
+func (t Tool) OnTransparentEvent(event any) {
+	// if there are no clients return
+
+	for _, client := range t.clientArray.GetEntities() {
+		connComp, err := t.connectionArray.GetComponent(client)
+		if err != nil {
+			t.logger.Warn(err)
+			return
+		}
+		t.logger.Warn(connComp.Conn().Send(servertypes.TransparentEventDTO{Event: event}))
+	}
+}
+
+func (t Tool) ListenFetchState(client ecs.EntityID, dto clienttypes.FetchStateDTO) {
 	state := t.stateTool.GetState()
-	// go func() {
-	// if err := t.sendVisible(client, nil, state); err != nil {
-	// 	t.logger.Warn(err)
-	// }
-	// }()
 	t.sendVisible(client, nil, state)
 }
 
-func (t Tool) OnEmitEvent(client ecs.EntityID, dto clienttypes.EmitEventDTO) {
+func (t Tool) ListenEmitEvent(client ecs.EntityID, dto clienttypes.EmitEventDTO) {
 	// TODO
 	// is this event even present in config ?
 	// can client do that ?
 	// if yes than do that
 	t.recordedEventUUID = &dto.ID
+	events.EmitAny(t.world.Events(), dto.Event)
+}
+
+func (t Tool) ListenTransparentEvent(client ecs.EntityID, dto clienttypes.TransparentEventDTO) {
 	events.EmitAny(t.world.Events(), dto.Event)
 }
 
@@ -190,8 +205,5 @@ func (t Tool) sendVisible(client ecs.EntityID, eventUUID *uuid.UUID, changes sta
 func (t Tool) emitChanges(eventUUID uuid.UUID, changes state.State) {
 	for _, client := range t.clientArray.GetEntities() {
 		t.sendVisible(client, &eventUUID, changes)
-		// if err := t.sendVisible(client, &eventUUID, changes); err != nil {
-		// 	t.logger.Warn(err)
-		// }
 	}
 }

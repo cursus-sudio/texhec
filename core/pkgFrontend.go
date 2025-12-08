@@ -3,9 +3,11 @@ package main
 import (
 	gameassets "core/assets"
 	"core/modules/fpslogger/pkg"
+	"core/modules/settings"
 	settingspkg "core/modules/settings/pkg"
 	"core/modules/tile"
 	tilepkg "core/modules/tile/pkg"
+	"core/modules/ui"
 	uipkg "core/modules/ui/pkg"
 	gamescenes "core/scenes"
 	creditsscene "core/scenes/credits"
@@ -217,6 +219,10 @@ func frontendDic(
 			// syncpkg.AddEvent[scenessys.ChangeSceneEvent](config)
 			syncpkg.AddEvent[drag.DraggableEvent](config)
 			syncpkg.AddEvent[inputs.DragEvent](config)
+
+			syncpkg.AddTransparentEvent[settings.EnterSettingsEvent](config)
+			syncpkg.AddTransparentEvent[tile.TileClickEvent](config)
+			syncpkg.AddTransparentEvent[ui.HideUiEvent](config)
 			// syncpkg.AddEvent[frames.FrameEvent](config)
 			return config
 		}()),

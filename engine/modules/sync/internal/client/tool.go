@@ -27,9 +27,10 @@ type recordedPrediction struct {
 }
 
 type toolState struct {
-	recordNextEvent    bool
-	predictions        []savedPrediction
-	recordedPrediction *recordedPrediction
+	recordNextEvent           bool
+	predictions               []savedPrediction
+	recordedPrediction        *recordedPrediction
+	recievingTransparentEvent bool
 
 	world           ecs.World
 	serverArray     ecs.ComponentsArray[sync.ServerComponent]
@@ -61,6 +62,7 @@ func NewTool(
 			true,
 			make([]savedPrediction, 0),
 			nil,
+			false,
 
 			world,
 			ecs.GetComponentsArray[sync.ServerComponent](world),
@@ -92,10 +94,13 @@ func NewTool(
 			go func(entity ecs.EntityID) {
 				listeners := map[reflect.Type]func(any){
 					reflect.TypeFor[servertypes.SendStateDTO](): func(a any) {
-						t.OnState(a.(servertypes.SendStateDTO))
+						t.ListenSendState(a.(servertypes.SendStateDTO))
 					},
 					reflect.TypeFor[servertypes.SendChangeDTO](): func(a any) {
-						t.OnChange(a.(servertypes.SendChangeDTO))
+						t.ListenSendChange(a.(servertypes.SendChangeDTO))
+					},
+					reflect.TypeFor[servertypes.TransparentEventDTO](): func(a any) {
+						t.ListenTransparentEvent(a.(servertypes.TransparentEventDTO))
 					},
 				}
 				for {
@@ -130,7 +135,7 @@ func NewTool(
 
 // public methods
 
-func (t Tool) BeforeInternalEvent(event any) {
+func (t Tool) BeforeEvent(event any) {
 	clientConn := t.getConnection()
 	if clientConn == nil {
 		return
@@ -164,7 +169,7 @@ func (t Tool) BeforeInternalEvent(event any) {
 	}
 }
 
-func (t Tool) AfterInternalEvent(event any) {
+func (t Tool) AfterEvent(event any) {
 	conn := t.getConnection()
 	if conn == nil {
 		return
@@ -184,7 +189,19 @@ func (t Tool) AfterInternalEvent(event any) {
 	t.predictions = append(t.predictions, newPrediction)
 }
 
-func (t Tool) OnChange(dto servertypes.SendChangeDTO) {
+func (t Tool) OnTransparentEvent(event any) {
+	conn := t.getConnection()
+	if conn == nil {
+		return
+	}
+
+	t.recievingTransparentEvent = true
+	conn.Send(clienttypes.TransparentEventDTO{Event: event})
+}
+
+// func (t Tool) On
+
+func (t Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
 	conn := t.getConnection()
 	if conn == nil {
 		return
@@ -217,13 +234,21 @@ func (t Tool) OnChange(dto servertypes.SendChangeDTO) {
 }
 
 // reconciliate
-func (t Tool) OnState(dto servertypes.SendStateDTO) {
+func (t Tool) ListenSendState(dto servertypes.SendStateDTO) {
 	conn := t.getConnection()
 	if conn == nil {
 		return
 	}
 	t.predictions = nil
 	t.stateTool.ApplyState(dto.State)
+}
+
+func (t Tool) ListenTransparentEvent(dto servertypes.TransparentEventDTO) {
+	if t.recievingTransparentEvent {
+		t.recievingTransparentEvent = false
+		return
+	}
+	events.EmitAny(t.world.Events(), dto.Event)
 }
 
 // private methods

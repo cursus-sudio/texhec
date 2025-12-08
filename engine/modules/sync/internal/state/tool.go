@@ -8,7 +8,6 @@ import (
 )
 
 type Tool interface {
-	// TODO add get state (returns changes from nothing to current state)
 	GetState() State
 	ApplyState(State)
 
@@ -41,18 +40,8 @@ func NewToolFactory(
 	uuidToolFactory ecs.ToolFactory[uuid.Tool],
 	logger logger.Logger,
 ) ecs.ToolFactory[Tool] {
-	// mutex := &sync.Mutex{}
 	// each factory client can get unique instance so mutex isn't necessary
 	return ecs.NewToolFactory(func(world ecs.World) Tool {
-		// if t, err := ecs.GetGlobal[tool](world); err == nil {
-		// 	return t
-		// }
-		// mutex.Lock()
-		// defer mutex.Unlock()
-		// if t, err := ecs.GetGlobal[tool](world); err == nil {
-		// 	return t
-		// }
-
 		arrayCtors := config.ArraysOfComponents
 		arrays := make([]ecs.AnyComponentArray, len(arrayCtors))
 		for i, ctor := range arrayCtors {
@@ -86,7 +75,7 @@ func (t tool) GetState() State {
 		Entities: make(map[uuid.UUID]EntitySnapshot),
 	}
 	for _, entity := range t.uuidArray.GetEntities() {
-		t.CaptureEntity(state, entity)
+		t.captureEntity(state, entity)
 	}
 	return state
 }
@@ -128,13 +117,13 @@ func (t tool) RecordEntitiesChange(ei []ecs.EntityID) {
 		return
 	}
 	for _, entity := range ei {
-		t.CaptureEntity(*recording, entity)
+		t.captureEntity(*recording, entity)
 	}
 }
 
 // private methods
 
-func (t tool) CaptureEntity(state State, entity ecs.EntityID) {
+func (t tool) captureEntity(state State, entity ecs.EntityID) {
 	unique, err := t.uuidArray.GetComponent(entity)
 	if err != nil {
 		return

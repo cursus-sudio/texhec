@@ -8,12 +8,12 @@ import (
 )
 
 type Config struct {
-	// shared
-	// events and their usages
 	Events         []reflect.Type
 	ListenToEvents []func(events.Builder, func(any))
 
-	// components and their usages
+	TransparentEvents         []reflect.Type
+	ListenToTransparentEvents []func(events.Builder, func(any))
+
 	Components         []reflect.Type
 	ArraysOfComponents []func(ecs.World) ecs.AnyComponentArray
 

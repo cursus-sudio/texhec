@@ -5,8 +5,10 @@ import (
 	"engine/modules/connection"
 	"engine/services/codec"
 	"engine/services/logger"
+	"fmt"
 	"io"
 	"net"
+	"reflect"
 )
 
 type factory struct {
@@ -40,7 +42,7 @@ func (f *factory) NewConnection(rawConn net.Conn) connection.Connection {
 				f.logger.Warn(err)
 				continue
 			}
-			// f.logger.Info(fmt.Sprintf("received type '%v'", reflect.TypeOf(message).String()))
+			f.logger.Info(fmt.Sprintf("received type '%v'", reflect.TypeOf(message).String()))
 
 			messages <- message
 		}

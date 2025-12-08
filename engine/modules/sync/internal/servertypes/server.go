@@ -15,3 +15,7 @@ type SendChangeDTO struct {
 	EventID uuid.UUID
 	Changes state.State
 }
+
+type TransparentEventDTO struct {
+	Event any
+}

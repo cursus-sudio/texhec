@@ -10,6 +10,7 @@ import (
 	"engine/modules/render"
 	"engine/modules/text"
 	"engine/modules/transform"
+	"engine/services/codec"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"time"
@@ -41,6 +42,14 @@ func Package(
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
+		return b.
+			// components
+			Register(ui.UiCameraComponent{}).
+			// events
+			Register(ui.HideUiEvent{})
+	})
+
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[ui.Tool] {
 		return uitool.NewToolFactory(
 			pkg.animationDuration,

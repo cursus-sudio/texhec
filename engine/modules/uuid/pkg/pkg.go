@@ -5,6 +5,7 @@ import (
 	relationpkg "engine/modules/relation/pkg"
 	uuid "engine/modules/uuid"
 	"engine/modules/uuid/internal"
+	"engine/services/codec"
 	"engine/services/ecs"
 
 	"github.com/ogiusek/ioc/v2"
@@ -18,6 +19,11 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) Register(b ioc.Builder) {
+	ioc.WrapService(b, ioc.DefaultOrder, func(_ ioc.Dic, b codec.Builder) codec.Builder {
+		return b.
+			Register(uuid.UUID{}).
+			Register(uuid.Component{})
+	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) uuid.Factory { return internal.NewFactory() })
 	relationpkg.MapRelationPackage(
 		func(w ecs.World) ecs.LiveQuery {

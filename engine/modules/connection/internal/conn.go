@@ -20,10 +20,10 @@ func (conn conn) Send(message any) error {
 		return err
 	}
 
-	// conn.logger.Info(fmt.Sprintf("sending type '%v'", reflect.TypeOf(message).String()))
-	length := uint16(len(bytes))
-	lengthInByes := make([]byte, 2)
-	binary.BigEndian.PutUint16(lengthInByes, length)
+	// conn.logger.Info(fmt.Sprintf("sending '%v' of type '%v'", message, reflect.TypeOf(message).String()))
+	length := uint32(len(bytes))
+	lengthInByes := make([]byte, 4)
+	binary.BigEndian.PutUint32(lengthInByes, length)
 	if _, err := conn.conn.Write(append(lengthInByes, bytes...)); err != nil {
 		return err
 	}

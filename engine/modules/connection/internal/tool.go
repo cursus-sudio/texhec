@@ -82,6 +82,13 @@ func (t tool) Connect(addr string) (connection.ConnectionComponent, error) {
 	return connComp, nil
 }
 
+func (t tool) MockConnectionPair() (connection.ConnectionComponent, connection.ConnectionComponent) {
+	rawC1, rawC2 := net.Pipe()
+	c1, c2 := t.NewConnection(rawC1), t.NewConnection(rawC2)
+	comp1, comp2 := connection.NewConnection(c1), connection.NewConnection(c2)
+	return comp1, comp2
+}
+
 func (t tool) TransferConnection(entityFrom, entityTo ecs.EntityID) error {
 	comp, err := t.connectionArray.GetComponent(entityFrom)
 	if err != nil {

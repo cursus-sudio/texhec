@@ -5,6 +5,7 @@ import (
 	"engine/modules/collider"
 	"engine/modules/groups"
 	"engine/modules/relation"
+	"engine/modules/uuid"
 	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/logger"
@@ -58,7 +59,37 @@ func (pkg pkg) Register(b ioc.Builder) {
 					pkg.gridDepth,
 					pkg.tileGroups,
 					pkg.colliderComponent,
+					ioc.Get[uuid.Factory](c),
 				),
+				ecs.NewSystemRegister(func(w ecs.World) error {
+					posIndexFactory := ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[tile.PosComponent]]](c)
+
+					posIndex := posIndexFactory.Build(w)
+					posArray := ecs.GetComponentsArray[tile.PosComponent](w)
+					colliderArray := ecs.GetComponentsArray[ColliderComponent](w)
+					upsertEntities := func(ei []ecs.EntityID) {
+						colliderTransaction := colliderArray.Transaction()
+						for _, entity := range ei {
+							pos, err := posArray.GetComponent(entity)
+							if err != nil {
+								continue
+							}
+							collider := NewCollider().Ptr().Add(pkg.mainLayer).Val()
+							for _, layer := range pkg.layers {
+								pos.Layer = layer
+								_, ok := posIndex.Get(pos)
+								if ok {
+									collider.Add(layer)
+								}
+							}
+							colliderTransaction.SaveComponent(entity, collider)
+						}
+						logger.Warn(ecs.FlushMany(colliderTransaction))
+					}
+					posArray.OnAdd(upsertEntities)
+					posArray.OnChange(upsertEntities)
+					return nil
+				}),
 				ecs.NewSystemRegister(func(w ecs.World) error {
 					posArray := ecs.GetComponentsArray[tile.PosComponent](w)
 					colliderArray := ecs.GetComponentsArray[ColliderComponent](w)
@@ -101,39 +132,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 				return errs[0]
 			}
 			return nil
-		})
-	})
-
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, indices ecs.ToolFactory[relation.EntityToKeyTool[tile.ColliderPos]]) ecs.ToolFactory[relation.EntityToKeyTool[tile.ColliderPos]] {
-		posIndexFactory := ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[tile.PosComponent]]](c)
-		logger := ioc.Get[logger.Logger](c)
-
-		return ecs.NewToolFactory(func(w ecs.World) relation.EntityToKeyTool[tile.ColliderPos] {
-			posIndex := posIndexFactory.Build(w)
-			posArray := ecs.GetComponentsArray[tile.PosComponent](w)
-			colliderArray := ecs.GetComponentsArray[ColliderComponent](w)
-			upsertEntities := func(ei []ecs.EntityID) {
-				colliderTransaction := colliderArray.Transaction()
-				for _, entity := range ei {
-					pos, err := posArray.GetComponent(entity)
-					if err != nil {
-						continue
-					}
-					collider := NewCollider().Ptr().Add(pkg.mainLayer).Val()
-					for _, layer := range pkg.layers {
-						pos.Layer = layer
-						_, ok := posIndex.Get(pos)
-						if ok {
-							collider.Add(layer)
-						}
-					}
-					colliderTransaction.SaveComponent(entity, collider)
-				}
-				logger.Warn(ecs.FlushMany(colliderTransaction))
-			}
-			tool := indices.Build(w)
-			tool.OnUpsert(upsertEntities)
-			return tool
 		})
 	})
 }

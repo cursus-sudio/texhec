@@ -19,6 +19,7 @@ import (
 type pkg struct {
 	tileSize   int32
 	gridDepth  float32
+	layers     int32
 	gridGroups groups.GroupsComponent
 }
 
@@ -28,9 +29,10 @@ type pkg struct {
 func Package(
 	tileSize int32,
 	gridDepth float32,
+	layers int32,
 	groups groups.GroupsComponent,
 ) ioc.Pkg {
-	return pkg{tileSize, gridDepth, groups}
+	return pkg{tileSize, gridDepth, layers, groups}
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
@@ -43,6 +45,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			ioc.Get[assets.AssetsStorage](c),
 			pkg.tileSize,
 			pkg.gridDepth,
+			pkg.layers,
 			pkg.gridGroups,
 			ioc.Get[ecs.ToolFactory[camera.Tool]](c),
 		)
@@ -60,17 +63,12 @@ func (pkg pkg) Register(b ioc.Builder) {
 				var i uint32 = 0
 
 				gl.VertexAttribIPointerWithOffset(i, 1, gl.INT,
-					int32(unsafe.Sizeof(TileData{})), uintptr(unsafe.Offsetof(TileData{}.Pos.X)))
+					int32(unsafe.Sizeof(TileData{})), uintptr(unsafe.Offsetof(TileData{}.PosX)))
 				gl.EnableVertexAttribArray(i)
 				i++
 
 				gl.VertexAttribIPointerWithOffset(i, 1, gl.INT,
-					int32(unsafe.Sizeof(TileData{})), uintptr(unsafe.Offsetof(TileData{}.Pos.Y)))
-				gl.EnableVertexAttribArray(i)
-				i++
-
-				gl.VertexAttribIPointerWithOffset(i, 1, gl.INT,
-					int32(unsafe.Sizeof(TileData{})), uintptr(unsafe.Offsetof(TileData{}.Pos.Z)))
+					int32(unsafe.Sizeof(TileData{})), uintptr(unsafe.Offsetof(TileData{}.PosY)))
 				gl.EnableVertexAttribArray(i)
 				i++
 

@@ -25,20 +25,22 @@ import (
 )
 
 type TileData struct {
-	Pos  PosComponent
-	Type definition.DefinitionID
+	PosX, PosY int32
+	Type       definition.DefinitionID
 }
 
 type global struct {
 	program      program.Program
 	textureArray texturearray.TextureArray
-	vao          vao.VAO
+	layers       []*layer
 }
 
 func (g global) Release() {
 	g.program.Release()
 	g.textureArray.Release()
-	g.vao.Release()
+	for _, layer := range g.layers {
+		layer.vao.Release()
+	}
 }
 
 //
@@ -53,6 +55,7 @@ type TileRenderSystemRegister struct {
 
 	tileSize  int32
 	gridDepth float32
+	layers    int32
 
 	groups             groups.GroupsComponent
 	cameraCtorsFactory ecs.ToolFactory[camera.Tool]
@@ -66,6 +69,7 @@ func NewTileRenderSystemRegister(
 	assetsStorage assets.AssetsStorage,
 	tileSize int32,
 	gridDepth float32,
+	layers int32,
 	groups groups.GroupsComponent,
 	cameraCtorsFactory ecs.ToolFactory[camera.Tool],
 ) TileRenderSystemRegister {
@@ -79,6 +83,7 @@ func NewTileRenderSystemRegister(
 
 		tileSize:  tileSize,
 		gridDepth: gridDepth,
+		layers:    layers,
 
 		groups:             groups,
 		cameraCtorsFactory: cameraCtorsFactory,
@@ -136,14 +141,23 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 		return err
 	}
 
-	VBO := factory.vboFactory()
-	var EBO ebo.EBO = nil
-	VAO := vao.NewVAO(VBO, EBO)
-
 	changeMutex := &sync.Mutex{}
-	tiles := datastructures.NewSparseArray[ecs.EntityID, TileData]()
+	layers := []*layer{}
+	for i := 0; i < int(factory.layers); i++ {
+		VBO := factory.vboFactory()
+		var EBO ebo.EBO = nil
+		VAO := vao.NewVAO(VBO, EBO)
+		layer := &layer{
+			VAO,
+			VBO,
+			0,
+			true,
+			datastructures.NewSparseArray[ecs.EntityID, TileData](),
+		}
+		layers = append(layers, layer)
+	}
 
-	g := global{p, textureArray, VAO}
+	g := global{p, textureArray, layers}
 	w.SaveGlobal(g)
 
 	s := system{
@@ -153,10 +167,8 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 
 		logger: factory.logger,
 
-		textureArray:  textureArray,
-		vao:           VAO,
-		vertices:      VBO,
-		verticesCount: 0,
+		textureArray: textureArray,
+		layers:       layers,
 
 		tileSize:  factory.tileSize,
 		gridDepth: factory.gridDepth,
@@ -166,10 +178,6 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 		gridGroups:  factory.groups,
 		cameraQuery: w.Query().Require(camera.OrthoComponent{}).Build(),
 		cameraCtors: factory.cameraCtorsFactory.Build(w),
-
-		changed:     false,
-		changeMutex: changeMutex,
-		tiles:       tiles,
 	}
 
 	linkArray := ecs.GetComponentsArray[definition.DefinitionLinkComponent](w)
@@ -178,7 +186,6 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 	onChangeOrAdd := func(ei []ecs.EntityID) {
 		changeMutex.Lock()
 		defer changeMutex.Unlock()
-		s.changed = true
 
 		for _, entity := range ei {
 			tileType, err := linkArray.GetComponent(entity)
@@ -189,19 +196,30 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 			if err != nil {
 				continue
 			}
-			tile := TileData{NewPos(tilePos), tileType.DefinitionID}
-			tiles.Set(entity, tile)
+			layer := s.layers[tilePos.Layer]
+			layer.changed = true
+			tile := TileData{tilePos.X, tilePos.Y, tileType.DefinitionID}
+			layer.tiles.Set(entity, tile)
 		}
 	}
-	linkArray.OnAdd(onChangeOrAdd)
-	linkArray.OnChange(onChangeOrAdd)
-	linkArray.OnRemove(func(ei []ecs.EntityID) {
+	query := w.Query().
+		Require(definition.DefinitionLinkComponent{}).
+		Require(tile.PosComponent{}).
+		Build()
+	query.OnAdd(onChangeOrAdd)
+	query.OnChange(onChangeOrAdd)
+	query.OnRemove(func(ei []ecs.EntityID) {
 		changeMutex.Lock()
 		defer changeMutex.Unlock()
-		s.changed = true
 
 		for _, entity := range ei {
-			tiles.Remove(entity)
+			tilePos, err := posArray.GetComponent(entity)
+			if err != nil {
+				continue
+			}
+			layer := s.layers[tilePos.Layer]
+			layer.changed = true
+			layer.tiles.Remove(entity)
 		}
 	})
 

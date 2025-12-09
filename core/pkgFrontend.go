@@ -2,10 +2,14 @@ package main
 
 import (
 	gameassets "core/assets"
+	"core/modules/definition"
+	definitionpkg "core/modules/definition/pkg"
 	"core/modules/fpslogger/pkg"
+	"core/modules/settings"
 	settingspkg "core/modules/settings/pkg"
 	"core/modules/tile"
 	tilepkg "core/modules/tile/pkg"
+	"core/modules/ui"
 	uipkg "core/modules/ui/pkg"
 	gamescenes "core/scenes"
 	creditsscene "core/scenes/credits"
@@ -14,20 +18,25 @@ import (
 	settingsscene "core/scenes/settings"
 	"engine/modules/animation/pkg"
 	"engine/modules/audio/pkg"
+	"engine/modules/camera"
 	"engine/modules/camera/pkg"
 	"engine/modules/collider"
 	"engine/modules/collider/pkg"
 	"engine/modules/connection/pkg"
+	"engine/modules/drag"
 	"engine/modules/drag/pkg"
 	"engine/modules/genericrenderer/pkg"
 	"engine/modules/groups"
 	"engine/modules/groups/pkg"
 	"engine/modules/hierarchy/pkg"
+	"engine/modules/inputs"
 	"engine/modules/inputs/pkg"
+	"engine/modules/netsync/pkg"
 	"engine/modules/render/pkg"
 	"engine/modules/scenes/pkg"
 	"engine/modules/text"
 	"engine/modules/text/pkg"
+	"engine/modules/transform"
 	"engine/modules/transform/pkg"
 	"engine/modules/uuid/pkg"
 	"engine/services/assets"
@@ -142,6 +151,7 @@ func frontendDic(
 			0, 1000, // min-max y
 			0, 3, // min-max z
 		),
+		definitionpkg.Package(),
 		uipkg.Package(
 			3,
 			time.Millisecond*300,
@@ -205,6 +215,25 @@ func frontendDic(
 		hierarchypkg.Package(),
 		uuidpkg.Package(),
 		connectionpkg.Package(),
+		netsyncpkg.Package(func() netsyncpkg.Config {
+			config := netsyncpkg.NewConfig(
+				150, // max predictions
+			)
+			netsyncpkg.AddComponent[transform.PosComponent](config)
+			netsyncpkg.AddComponent[camera.OrthoComponent](config)
+			netsyncpkg.AddComponent[definition.DefinitionLinkComponent](config)
+			netsyncpkg.AddComponent[tile.PosComponent](config)
+
+			// syncpkg.AddEvent[scenessys.ChangeSceneEvent](config)
+			netsyncpkg.AddEvent[drag.DraggableEvent](config)
+			netsyncpkg.AddEvent[inputs.DragEvent](config)
+
+			netsyncpkg.AddTransparentEvent[settings.EnterSettingsEvent](config)
+			netsyncpkg.AddTransparentEvent[tile.TileClickEvent](config)
+			netsyncpkg.AddTransparentEvent[ui.HideUiEvent](config)
+			// syncpkg.AddEvent[frames.FrameEvent](config)
+			return config
+		}()),
 
 		// game packages
 		fpsloggerpkg.Package(),

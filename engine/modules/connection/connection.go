@@ -36,6 +36,7 @@ func (comp ConnectionComponent) Conn() Connection {
 type Tool interface {
 	Host(addr string, conn func(ConnectionComponent)) error
 	Connect(addr string) (ConnectionComponent, error)
+	MockConnectionPair() (c1, c2 ConnectionComponent)
 
 	TransferConnection(fromEntity, toEntity ecs.EntityID) error
 }

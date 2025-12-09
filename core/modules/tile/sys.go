@@ -1,10 +1,12 @@
 package tile
 
-import "engine/services/ecs"
+import (
+	"engine/services/ecs"
+)
 
 type System ecs.SystemRegister
 type SystemRenderer ecs.SystemRegister
 
-type TileClickEvent struct{ Tile ecs.EntityID }
+type TileClickEvent struct{ Tile PosComponent }
 
-func NewTileClickEvent(t ecs.EntityID) TileClickEvent { return TileClickEvent{t} }
+func NewTileClickEvent(t PosComponent) TileClickEvent { return TileClickEvent{t} }

@@ -12,12 +12,9 @@ type Config struct {
 	config *config.Config
 }
 
-func NewConfig(
-	isClient bool,
-) Config {
+func NewConfig() Config {
 	return Config{
 		config: &config.Config{
-			IsClient:       isClient,
 			MaxPredictions: 60,
 		},
 	}

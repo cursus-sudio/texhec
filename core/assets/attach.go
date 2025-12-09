@@ -29,9 +29,6 @@ import (
 	"golang.org/x/image/font/opentype"
 )
 
-// var IsServer bool = true
-var IsServer bool = false
-
 //go:embed files/1.png
 var mountainSource []byte
 

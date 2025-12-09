@@ -63,7 +63,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			// ecs.SaveComponent(world, background, animation.NewLoopComponent())
 
 			buttonArea := world.NewEntity()
-			ecs.SaveComponent(world, buttonArea, transform.NewSize(500, 200, 1))
+			ecs.SaveComponent(world, buttonArea, transform.NewSize(500, 300, 1))
 			ecs.SaveComponent(world, buttonArea, hierarchy.NewParent(cameraEntity))
 			ecs.SaveComponent(world, buttonArea, transform.NewParent(transform.RelativePos))
 
@@ -73,6 +73,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			}
 			buttons := []Button{
 				{Text: "play", OnClick: scenessys.NewChangeSceneEvent(gamescenes.GameID)},
+				{Text: "connect", OnClick: scenessys.NewChangeSceneEvent(gamescenes.GameClientID)},
 				{Text: "settings", OnClick: scenessys.NewChangeSceneEvent(gamescenes.SettingsID)},
 				{Text: "credits", OnClick: scenessys.NewChangeSceneEvent(gamescenes.CreditsID)},
 				{Text: "exit", OnClick: inputs.QuitEvent{}},

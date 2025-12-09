@@ -66,22 +66,20 @@ func (pkg pkg) Register(b ioc.Builder) {
 		clientToolFactory := ioc.Get[ecs.ToolFactory[client.Tool]](c)
 		serverToolFactory := ioc.Get[ecs.ToolFactory[server.Tool]](c)
 		return ecs.NewSystemRegister(func(w ecs.World) error {
-			if pkg.config.config.IsClient {
-				tool := clientToolFactory.Build(w)
-				for _, listen := range tool.ListenToEvents {
-					listen(w.EventsBuilder(), tool.BeforeEvent)
-				}
-				for _, listen := range tool.ListenToTransparentEvents {
-					listen(w.EventsBuilder(), tool.OnTransparentEvent)
-				}
-			} else {
-				tool := serverToolFactory.Build(w)
-				for _, listen := range tool.ListenToEvents {
-					listen(w.EventsBuilder(), tool.BeforeEvent)
-				}
-				for _, listen := range tool.ListenToTransparentEvents {
-					listen(w.EventsBuilder(), tool.OnTransparentEvent)
-				}
+			clientTool := clientToolFactory.Build(w)
+			for _, listen := range clientTool.ListenToEvents {
+				listen(w.EventsBuilder(), clientTool.BeforeEvent)
+			}
+			for _, listen := range clientTool.ListenToTransparentEvents {
+				listen(w.EventsBuilder(), clientTool.OnTransparentEvent)
+			}
+
+			serverTool := serverToolFactory.Build(w)
+			for _, listen := range serverTool.ListenToEvents {
+				listen(w.EventsBuilder(), serverTool.BeforeEvent)
+			}
+			for _, listen := range serverTool.ListenToTransparentEvents {
+				listen(w.EventsBuilder(), serverTool.OnTransparentEvent)
 			}
 			return nil
 		})
@@ -90,16 +88,14 @@ func (pkg pkg) Register(b ioc.Builder) {
 		clientToolFactory := ioc.Get[ecs.ToolFactory[client.Tool]](c)
 		serverToolFactory := ioc.Get[ecs.ToolFactory[server.Tool]](c)
 		return ecs.NewSystemRegister(func(w ecs.World) error {
-			if pkg.config.config.IsClient {
-				tool := clientToolFactory.Build(w)
-				for _, listen := range tool.ListenToEvents {
-					listen(w.EventsBuilder(), tool.AfterEvent)
-				}
-			} else {
-				tool := serverToolFactory.Build(w)
-				for _, listen := range tool.ListenToEvents {
-					listen(w.EventsBuilder(), tool.AfterEvent)
-				}
+			clientTool := clientToolFactory.Build(w)
+			for _, listen := range clientTool.ListenToEvents {
+				listen(w.EventsBuilder(), clientTool.AfterEvent)
+			}
+
+			serverTool := serverToolFactory.Build(w)
+			for _, listen := range serverTool.ListenToEvents {
+				listen(w.EventsBuilder(), serverTool.AfterEvent)
 			}
 			return nil
 		})

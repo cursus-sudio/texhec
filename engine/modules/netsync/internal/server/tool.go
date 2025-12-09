@@ -140,7 +140,9 @@ func NewTool(
 // public methods
 
 func (t Tool) BeforeEvent(event any) {
-	// if there are no clients return
+	if len(t.clientArray.GetEntities()) == 0 {
+		return
+	}
 
 	if t.recordedEventUUID == nil {
 		uuid := t.uniqueTool.NewUUID()
@@ -150,7 +152,9 @@ func (t Tool) BeforeEvent(event any) {
 }
 
 func (t Tool) AfterEvent(event any) {
-	// if there are no clients return
+	if len(t.clientArray.GetEntities()) == 0 {
+		return
+	}
 
 	if changes := t.stateTool.FinishRecording(); changes != nil && t.recordedEventUUID != nil {
 		t.emitChanges(*t.recordedEventUUID, *changes)
@@ -160,7 +164,9 @@ func (t Tool) AfterEvent(event any) {
 }
 
 func (t Tool) OnTransparentEvent(event any) {
-	// if there are no clients return
+	if len(t.clientArray.GetEntities()) == 0 {
+		return
+	}
 
 	for _, client := range t.clientArray.GetEntities() {
 		connComp, err := t.connectionArray.GetComponent(client)

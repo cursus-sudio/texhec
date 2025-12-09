@@ -1,11 +1,9 @@
 package main
 
 import (
-	gameassets "core/assets"
 	_ "embed"
 	"engine/services/ecs"
 	appruntime "engine/services/runtime"
-	"os"
 	"runtime"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -13,9 +11,6 @@ import (
 )
 
 func main() {
-	if os.Args[len(os.Args)-1] == "server" {
-		gameassets.IsServer = true
-	}
 	print("started\n")
 
 	runtime.LockOSThread()

@@ -215,7 +215,7 @@ func frontendDic(
 		uuidpkg.Package(),
 		connectionpkg.Package(),
 		netsyncpkg.Package(func() netsyncpkg.Config {
-			config := netsyncpkg.NewConfig(!gameassets.IsServer)
+			config := netsyncpkg.NewConfig()
 			netsyncpkg.AddComponent[transform.PosComponent](config)
 			// netsyncpkg.AddComponent[camera.OrthoComponent](config)
 			netsyncpkg.AddComponent[definition.DefinitionLinkComponent](config)

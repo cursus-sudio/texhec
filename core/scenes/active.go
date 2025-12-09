@@ -30,10 +30,11 @@ import (
 )
 
 var (
-	MenuID     = scenes.NewSceneId("menu")
-	GameID     = scenes.NewSceneId("game")
-	SettingsID = scenes.NewSceneId("settings")
-	CreditsID  = scenes.NewSceneId("credits")
+	MenuID       = scenes.NewSceneId("menu")
+	GameID       = scenes.NewSceneId("game")
+	GameClientID = scenes.NewSceneId("game client")
+	SettingsID   = scenes.NewSceneId("settings")
+	CreditsID    = scenes.NewSceneId("credits")
 )
 
 const (
@@ -45,6 +46,7 @@ type CoreSystems func(scenes.SceneCtx)
 
 type MenuBuilder scenes.SceneBuilder
 type GameBuilder scenes.SceneBuilder
+type GameClientBuilder scenes.SceneBuilder
 type SettingsBuilder scenes.SceneBuilder
 type CreditsBuilder scenes.SceneBuilder
 
@@ -74,6 +76,7 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b scenes.SceneManagerBuilder) scenes.SceneManagerBuilder {
 		b.AddScene(ioc.Get[MenuBuilder](c).Build(MenuID))
 		b.AddScene(ioc.Get[GameBuilder](c).Build(GameID))
+		b.AddScene(ioc.Get[GameClientBuilder](c).Build(GameClientID))
 		b.AddScene(ioc.Get[SettingsBuilder](c).Build(SettingsID))
 		b.AddScene(ioc.Get[CreditsBuilder](c).Build(CreditsID))
 		b.MakeActive(MenuID)

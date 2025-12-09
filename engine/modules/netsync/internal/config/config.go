@@ -17,8 +17,6 @@ type Config struct {
 	Components         []reflect.Type
 	ArraysOfComponents []func(ecs.World) ecs.AnyComponentArray
 
-	IsClient bool
-
 	// client
 	MaxPredictions int
 

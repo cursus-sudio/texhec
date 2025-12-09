@@ -12,10 +12,10 @@ type Config struct {
 	config *config.Config
 }
 
-func NewConfig() Config {
+func NewConfig(maxPredictions int) Config {
 	return Config{
 		config: &config.Config{
-			MaxPredictions: 60,
+			MaxPredictions: maxPredictions,
 		},
 	}
 }

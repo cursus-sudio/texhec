@@ -18,6 +18,7 @@ import (
 	settingsscene "core/scenes/settings"
 	"engine/modules/animation/pkg"
 	"engine/modules/audio/pkg"
+	"engine/modules/camera"
 	"engine/modules/camera/pkg"
 	"engine/modules/collider"
 	"engine/modules/collider/pkg"
@@ -215,9 +216,11 @@ func frontendDic(
 		uuidpkg.Package(),
 		connectionpkg.Package(),
 		netsyncpkg.Package(func() netsyncpkg.Config {
-			config := netsyncpkg.NewConfig()
+			config := netsyncpkg.NewConfig(
+				150, // max predictions
+			)
 			netsyncpkg.AddComponent[transform.PosComponent](config)
-			// netsyncpkg.AddComponent[camera.OrthoComponent](config)
+			netsyncpkg.AddComponent[camera.OrthoComponent](config)
 			netsyncpkg.AddComponent[definition.DefinitionLinkComponent](config)
 			netsyncpkg.AddComponent[tile.PosComponent](config)
 

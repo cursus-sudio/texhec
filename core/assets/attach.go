@@ -181,7 +181,7 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, appruntime.OrderCleanUp, func(c ioc.Dic, b appruntime.Builder) appruntime.Builder {
 		assets := ioc.Get[assets.Assets](c)
 		b.OnStop(func(r appruntime.Runtime) {
-			scene := ioc.Get[scenes.SceneManager](c).CurrentSceneCtx()
+			scene := ioc.Get[scenes.SceneManager](c).CurrentSceneWorld()
 			scene.Release()
 
 			assets.ReleaseAll()

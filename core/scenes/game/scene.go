@@ -41,7 +41,7 @@ const (
 )
 
 func addScene(
-	world scenes.SceneCtx,
+	world ecs.World,
 	logger logger.Logger,
 	connectionTool connection.Tool,
 	isServer bool,
@@ -154,7 +154,7 @@ func addScene(
 
 func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.GameBuilder) gamescenes.GameBuilder {
-		b.OnLoad(func(world scenes.SceneCtx) {
+		b.OnLoad(func(world ecs.World) {
 			addScene(
 				world,
 				ioc.Get[logger.Logger](c),
@@ -166,7 +166,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 		return b
 	})
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.GameClientBuilder) gamescenes.GameClientBuilder {
-		b.OnLoad(func(world scenes.SceneCtx) {
+		b.OnLoad(func(world ecs.World) {
 			addScene(
 				world,
 				ioc.Get[logger.Logger](c),

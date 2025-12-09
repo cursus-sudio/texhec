@@ -29,7 +29,7 @@ func Package() ioc.Pkg {
 
 func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.CreditsBuilder) gamescenes.CreditsBuilder {
-		b.OnLoad(func(world scenes.SceneCtx) {
+		b.OnLoad(func(world ecs.World) {
 			cameraEntity := world.NewEntity()
 			ecs.SaveComponent(world, cameraEntity, camera.NewOrtho(-1000, +1000))
 

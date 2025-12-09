@@ -51,6 +51,7 @@ func Package(
 			tilerenderer.Package(
 				tileSize,
 				gridDepth,
+				maxZ-minZ,
 				tileGroups,
 			),
 		},

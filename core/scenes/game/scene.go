@@ -18,6 +18,7 @@ import (
 	"engine/modules/render"
 	"engine/modules/text"
 	"engine/modules/transform"
+	"engine/modules/uuid"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"engine/services/scenes"
@@ -47,7 +48,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world, uiCamera, ui.UiCameraComponent{})
 
 			gameCamera := world.NewEntity()
-			// ecs.SaveComponent(world, gameCamera, uuid.New([16]byte{48}))
+			ecs.SaveComponent(world, gameCamera, uuid.New([16]byte{48}))
 			ecs.SaveComponent(world, gameCamera, camera.NewOrtho(-1000, +1000))
 			ecs.SaveComponent(world, gameCamera, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 			ecs.SaveComponent(world, gameCamera, camera.NewMobileCamera())
@@ -94,6 +95,11 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				tilesPosTransaction := tilesPosArray.Transaction()
 				rows := 100
 				cols := 100
+				{
+					unit := world.NewEntity()
+					tilesPosTransaction.SaveComponent(unit, tile.NewPos(1, 1, tile.UnitLayer))
+					tilesTypeTransaction.SaveComponent(unit, definition.NewLink(definition.TileU1))
+				}
 				for i := 0; i < rows*cols; i++ {
 					row := i % cols
 					col := i / cols
@@ -119,11 +125,6 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				{
 					unit := world.NewEntity()
 					tilesPosTransaction.SaveComponent(unit, tile.NewPos(0, 0, tile.UnitLayer))
-					tilesTypeTransaction.SaveComponent(unit, definition.NewLink(definition.TileU1))
-				}
-				{
-					unit := world.NewEntity()
-					tilesPosTransaction.SaveComponent(unit, tile.NewPos(1, 1, tile.UnitLayer))
 					tilesTypeTransaction.SaveComponent(unit, definition.NewLink(definition.TileU1))
 				}
 				err := ecs.FlushMany(tilesTypeTransaction, tilesPosTransaction)

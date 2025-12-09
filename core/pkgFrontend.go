@@ -35,6 +35,7 @@ import (
 	"engine/modules/scenes/pkg"
 	"engine/modules/text"
 	"engine/modules/text/pkg"
+	"engine/modules/transform"
 	"engine/modules/transform/pkg"
 	"engine/modules/uuid/pkg"
 	"engine/services/assets"
@@ -215,7 +216,7 @@ func frontendDic(
 		connectionpkg.Package(),
 		netsyncpkg.Package(func() netsyncpkg.Config {
 			config := netsyncpkg.NewConfig(!gameassets.IsServer)
-			// netsyncpkg.AddComponent[transform.PosComponent](config)
+			netsyncpkg.AddComponent[transform.PosComponent](config)
 			// netsyncpkg.AddComponent[camera.OrthoComponent](config)
 			netsyncpkg.AddComponent[definition.DefinitionLinkComponent](config)
 			netsyncpkg.AddComponent[tile.PosComponent](config)

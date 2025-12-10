@@ -3,6 +3,11 @@ package hierarchy
 import (
 	"engine/services/datastructures"
 	"engine/services/ecs"
+	"errors"
+)
+
+var (
+	ErrParentCycle error = errors.New("parent cycle is not allowed")
 )
 
 type ParentComponent struct {
@@ -37,8 +42,8 @@ type Object interface {
 	// returns true if is child of any parent doesn't matter the depth
 	IsChildOf(parent ecs.EntityID) bool
 	// from closest to furthest
-	GetParents() datastructures.SparseSet[ecs.EntityID]
-	GetOrderedParents() []ecs.EntityID
+	GetParents() (datastructures.SparseSet[ecs.EntityID], error)
+	GetOrderedParents() ([]ecs.EntityID, error)
 
 	Children() datastructures.SparseSetReader[ecs.EntityID]
 	// includes children of children

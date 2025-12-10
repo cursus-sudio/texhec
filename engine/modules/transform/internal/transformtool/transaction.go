@@ -46,6 +46,8 @@ func (t transaction) Transactions() []ecs.AnyComponentsArrayTransaction {
 		t.posTransaction,
 		t.rotationTransaction,
 		t.sizeTransaction,
+		t.maxSizeTransaction,
+		t.minSizeTransaction,
 		t.pivotPointTransaction,
 		t.parentMaskTransaction,
 		t.parentPivotPointTransaction,

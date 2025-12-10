@@ -82,6 +82,8 @@ func (tool tool) Query(b ecs.LiveQueryBuilder) ecs.LiveQueryBuilder {
 		transform.PosComponent{},
 		transform.RotationComponent{},
 		transform.SizeComponent{},
+		transform.MaxSizeComponent{},
+		transform.MinSizeComponent{},
 		transform.PivotPointComponent{},
 		transform.ParentComponent{},
 		transform.ParentPivotPointComponent{},

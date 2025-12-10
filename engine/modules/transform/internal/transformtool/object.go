@@ -71,6 +71,9 @@ func (t object) AbsoluteSize() ecs.EntityComponent[transform.SizeComponent] {
 	return t.absoluteSize
 }
 
+func (t object) MaxSize() ecs.EntityComponent[transform.MaxSizeComponent] { return t.maxSize }
+func (t object) MinSize() ecs.EntityComponent[transform.MinSizeComponent] { return t.minSize }
+
 func (t object) PivotPoint() ecs.EntityComponent[transform.PivotPointComponent] {
 	return t.pivotPoint
 }

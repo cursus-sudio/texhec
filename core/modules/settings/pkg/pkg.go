@@ -1,6 +1,7 @@
 package settingspkg
 
 import (
+	gameassets "core/assets"
 	"core/modules/settings"
 	"core/modules/settings/internal"
 	"core/modules/ui"
@@ -29,6 +30,7 @@ func (pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) settings.System {
 		system := internal.NewSystem(
+			ioc.Get[gameassets.GameAssets](c),
 			ioc.Get[logger.Logger](c),
 			ioc.Get[ecs.ToolFactory[transform.Tool]](c),
 			ioc.Get[ecs.ToolFactory[render.Tool]](c),

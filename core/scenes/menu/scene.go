@@ -30,6 +30,7 @@ func Package() ioc.Pkg {
 
 func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.MenuBuilder) gamescenes.MenuBuilder {
+		gameAssets := ioc.Get[gameassets.GameAssets](c)
 		b.OnLoad(func(world ecs.World) {
 			cameraEntity := world.NewEntity()
 			ecs.SaveComponent(world, cameraEntity, camera.NewOrtho(-1000, 1000))
@@ -53,8 +54,8 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world, background, transform.NewPos(0, 0, 1))
 			ecs.SaveComponent(world, background, transform.NewPivotPoint(.5, .5, 0))
 			ecs.SaveComponent(world, background, transform.NewParentPivotPoint(.5, .5, 0))
-			ecs.SaveComponent(world, background, render.NewMesh(gameassets.SquareMesh))
-			ecs.SaveComponent(world, background, render.NewTexture(gameassets.ForestTileTextureID))
+			ecs.SaveComponent(world, background, render.NewMesh(gameAssets.SquareMesh))
+			ecs.SaveComponent(world, background, render.NewTexture(gameAssets.Tiles.Forest))
 			ecs.SaveComponent(world, background, genericrenderer.PipelineComponent{})
 			ecs.SaveComponent(world, background, animation.NewAnimationComponent(
 				gameassets.ChangeColorsAnimation,
@@ -88,8 +89,8 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				ecs.SaveComponent(world, btn, transform.NewParent(transform.RelativePos))
 				ecs.SaveComponent(world, btn, transform.NewParentPivotPoint(.5, normalizedIndex, .5))
 
-				ecs.SaveComponent(world, btn, render.NewMesh(gameassets.SquareMesh))
-				ecs.SaveComponent(world, btn, render.NewTexture(gameassets.WaterTileTextureID))
+				ecs.SaveComponent(world, btn, render.NewMesh(gameAssets.SquareMesh))
+				ecs.SaveComponent(world, btn, render.NewTexture(gameAssets.Tiles.Water))
 				ecs.SaveComponent(world, btn, render.NewTextureFrameComponent(1))
 				ecs.SaveComponent(world, btn, genericrenderer.PipelineComponent{})
 				ecs.SaveComponent(world, btn, animation.NewAnimationComponent(
@@ -99,7 +100,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				ecs.SaveComponent(world, btn, animation.NewLoopComponent())
 
 				ecs.SaveComponent(world, btn, inputs.NewMouseLeftClick(button.OnClick))
-				ecs.SaveComponent(world, btn, collider.NewCollider(gameassets.SquareColliderID))
+				ecs.SaveComponent(world, btn, collider.NewCollider(gameAssets.SquareCollider))
 				ecs.SaveComponent(world, btn, inputs.KeepSelectedComponent{})
 
 				ecs.SaveComponent(world, btn, text.TextComponent{Text: strings.ToUpper(button.Text)})

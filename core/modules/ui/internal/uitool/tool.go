@@ -37,6 +37,7 @@ type tool struct {
 	hideAnimation     animation.AnimationID
 
 	world         ecs.World
+	gameAssets    gameassets.GameAssets
 	logger        logger.Logger
 	cameraTool    camera.Tool
 	transformTool transform.Tool
@@ -60,6 +61,7 @@ func NewTool(
 	showAnimation animation.AnimationID,
 	hideAnimation animation.AnimationID,
 	world ecs.World,
+	gameAssets gameassets.GameAssets,
 	logger logger.Logger,
 	cameraToolFactory ecs.ToolFactory[camera.Tool],
 	transformToolFactory ecs.ToolFactory[transform.Tool],
@@ -76,6 +78,7 @@ func NewTool(
 		hideAnimation:     hideAnimation,
 
 		world:         world,
+		gameAssets:    gameAssets,
 		logger:        logger,
 		cameraTool:    cameraToolFactory.Build(world),
 		transformTool: transformToolFactory.Build(world),
@@ -151,12 +154,12 @@ func (t tool) Init() error {
 
 	menuRender := renderTransaction.GetObject(menu)
 	menuRender.Color().Set(render.NewColor(mgl32.Vec4{1, 1, 1, .5}))
-	menuRender.Mesh().Set(render.NewMesh(gameassets.SquareMesh))
-	menuRender.Texture().Set(render.NewTexture(gameassets.WaterTileTextureID))
+	menuRender.Mesh().Set(render.NewMesh(t.gameAssets.SquareMesh))
+	menuRender.Texture().Set(render.NewTexture(t.gameAssets.Tiles.Water))
 	pipelineTransaction.SaveComponent(menu, genericrenderer.PipelineComponent{})
 
 	groupInheritTransaction.SaveComponent(menu, groups.InheritGroupsComponent{})
-	colliderTransaction.SaveComponent(menu, collider.NewCollider(gameassets.SquareColliderID))
+	colliderTransaction.SaveComponent(menu, collider.NewCollider(t.gameAssets.SquareCollider))
 	keepSelectedTransaction.SaveComponent(menu, inputs.KeepSelectedComponent{})
 
 	// quit btn
@@ -178,13 +181,13 @@ func (t tool) Init() error {
 
 	quitRender := renderTransaction.GetObject(quit)
 	quitRender.Color().Set(render.NewColor(mgl32.Vec4{1, 0, 0, 1}))
-	quitRender.Mesh().Set(render.NewMesh(gameassets.SquareMesh))
-	quitRender.Texture().Set(render.NewTexture(gameassets.WaterTileTextureID))
+	quitRender.Mesh().Set(render.NewMesh(t.gameAssets.SquareMesh))
+	quitRender.Texture().Set(render.NewTexture(t.gameAssets.Tiles.Water))
 	pipelineTransaction.SaveComponent(quit, genericrenderer.PipelineComponent{})
 
 	leftClickTransaction.SaveComponent(quit, inputs.NewMouseLeftClick(ui.HideUiEvent{}))
 	keepSelectedTransaction.SaveComponent(quit, inputs.KeepSelectedComponent{})
-	colliderTransaction.SaveComponent(quit, collider.NewCollider(gameassets.SquareColliderID))
+	colliderTransaction.SaveComponent(quit, collider.NewCollider(t.gameAssets.SquareCollider))
 
 	// child wrapper
 	childWrapper := t.world.NewEntity()

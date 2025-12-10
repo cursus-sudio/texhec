@@ -6,15 +6,20 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
-type pkg struct{}
-
-func Package() ioc.Pkg {
-	return pkg{}
+type pkg struct {
+	filePrefix string
 }
 
-func (pkg) Register(b ioc.Builder) {
+func Package(filePrefix string) ioc.Pkg {
+	return pkg{filePrefix}
+}
+
+func (pkg pkg) Register(b ioc.Builder) {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) AssetModule {
+		return newAssetModule()
+	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) AssetsStorageBuilder {
-		return NewAssetsStorageBuilder()
+		return NewAssetsStorageBuilder(pkg.filePrefix)
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) AssetsStorage {

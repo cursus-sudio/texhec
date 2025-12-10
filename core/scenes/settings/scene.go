@@ -29,6 +29,7 @@ func Package() ioc.Pkg {
 
 func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.SettingsBuilder) gamescenes.SettingsBuilder {
+		gameassets := ioc.Get[gameassets.GameAssets](c)
 		b.OnLoad(func(world ecs.World) {
 			cameraEntity := world.NewEntity()
 			ecs.SaveComponent(world, cameraEntity, camera.NewOrtho(-1000, +1000))
@@ -49,7 +50,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world, background, hierarchy.NewParent(cameraEntity))
 			ecs.SaveComponent(world, background, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
 			ecs.SaveComponent(world, background, render.NewMesh(gameassets.SquareMesh))
-			ecs.SaveComponent(world, background, render.NewTexture(gameassets.GroundTileTextureID))
+			ecs.SaveComponent(world, background, render.NewTexture(gameassets.Tiles.Ground))
 			ecs.SaveComponent(world, background, genericrenderer.PipelineComponent{})
 
 			buttonArea := world.NewEntity()
@@ -62,7 +63,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				OnClick any
 			}
 			buttons := []Button{
-				{Text: "mute", OnClick: audio.NewPlayEvent(gamescenes.EffectChannel, gameassets.AudioID)},
+				{Text: "mute", OnClick: audio.NewPlayEvent(gamescenes.EffectChannel, gameassets.ExampleAudio)},
 				{Text: "keybinds", OnClick: nil},
 				{Text: "return to menu", OnClick: scenessys.NewChangeSceneEvent(gamescenes.MenuID)},
 			}
@@ -77,11 +78,11 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				ecs.SaveComponent(world, btn, transform.NewParentPivotPoint(.5, normalizedIndex, .5))
 
 				ecs.SaveComponent(world, btn, render.NewMesh(gameassets.SquareMesh))
-				ecs.SaveComponent(world, btn, render.NewTexture(gameassets.WaterTileTextureID))
+				ecs.SaveComponent(world, btn, render.NewTexture(gameassets.Tiles.Water))
 				ecs.SaveComponent(world, btn, genericrenderer.PipelineComponent{})
 
 				ecs.SaveComponent(world, btn, inputs.NewMouseLeftClick(button.OnClick))
-				ecs.SaveComponent(world, btn, collider.NewCollider(gameassets.SquareColliderID))
+				ecs.SaveComponent(world, btn, collider.NewCollider(gameassets.SquareCollider))
 				ecs.SaveComponent(world, btn, inputs.KeepSelectedComponent{})
 
 				ecs.SaveComponent(world, btn, text.TextComponent{Text: strings.ToUpper(button.Text)})

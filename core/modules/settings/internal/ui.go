@@ -24,6 +24,7 @@ import (
 // 2. quit button
 
 func NewSystem(
+	gameAssets gameassets.GameAssets,
 	logger logger.Logger,
 	transformToolFactory ecs.ToolFactory[transform.Tool],
 	renderToolFactory ecs.ToolFactory[render.Tool],
@@ -112,8 +113,8 @@ func NewSystem(
 			btnTransform.Size().Set(transform.NewSize(1, 50, 1))
 
 			btnRender := renderTransaction.GetObject(btnEntity)
-			btnRender.Mesh().Set(render.NewMesh(gameassets.SquareMesh))
-			btnRender.Texture().Set(render.NewTexture(gameassets.GroundTileTextureID))
+			btnRender.Mesh().Set(render.NewMesh(gameAssets.SquareMesh))
+			btnRender.Texture().Set(render.NewTexture(gameAssets.Tiles.Ground))
 			pipelineTransaction.SaveComponent(btnEntity, genericrenderer.PipelineComponent{})
 
 			btnText := textTransaction.GetObject(btnEntity)
@@ -123,7 +124,7 @@ func NewSystem(
 
 			leftClickTransaction.SaveComponent(btnEntity, inputs.NewMouseLeftClick(scenes.NewChangeSceneEvent(gamescenes.MenuID)))
 			keepSelectedTransaction.SaveComponent(btnEntity, inputs.KeepSelectedComponent{})
-			colliderTransaction.SaveComponent(btnEntity, collider.NewCollider(gameassets.SquareColliderID))
+			colliderTransaction.SaveComponent(btnEntity, collider.NewCollider(gameAssets.SquareCollider))
 
 			// flush
 			logger.Warn(ecs.FlushMany(transactions...))

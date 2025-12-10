@@ -7,7 +7,6 @@ import (
 	"core/modules/tile/internal/tiletool"
 	"core/modules/tile/internal/tileui"
 	"core/modules/ui"
-	"engine/modules/collider"
 	"engine/modules/groups"
 	"engine/modules/text"
 	"engine/services/codec"
@@ -25,7 +24,6 @@ func Package(
 	tileSize int32,
 	gridDepth float32,
 	tileGroups groups.GroupsComponent,
-	colliderComponent collider.ColliderComponent,
 	mainLayer tile.Layer,
 	layers []tile.Layer,
 	minX, maxX, minY, maxY, minZ, maxZ int32,
@@ -43,7 +41,6 @@ func Package(
 				tileSize,
 				gridDepth,
 				tileGroups,
-				colliderComponent,
 				mainLayer,
 				layers,
 				minX, maxX, minY, maxY, minZ,

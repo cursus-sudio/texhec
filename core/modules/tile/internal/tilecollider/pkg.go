@@ -1,6 +1,7 @@
 package tilecollider
 
 import (
+	gameassets "core/assets"
 	"core/modules/tile"
 	"engine/modules/collider"
 	"engine/modules/groups"
@@ -17,7 +18,6 @@ type pkg struct {
 	tileSize                     int32
 	gridDepth                    float32
 	tileGroups                   groups.GroupsComponent
-	colliderComponent            collider.ColliderComponent
 	mainLayer                    tile.Layer
 	layers                       []tile.Layer
 	minX, maxX, minY, maxY, minZ int32
@@ -27,7 +27,6 @@ func Package(
 	tileSize int32,
 	gridDepth float32,
 	tileGroups groups.GroupsComponent,
-	colliderComponent collider.ColliderComponent,
 	mainLayer tile.Layer,
 	layers []tile.Layer,
 	minX, maxX, minY, maxY, minZ int32,
@@ -36,7 +35,6 @@ func Package(
 		tileSize,
 		gridDepth,
 		tileGroups,
-		colliderComponent,
 		mainLayer,
 		layers,
 		minX, maxX, minY, maxY, minZ,
@@ -58,7 +56,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 					pkg.tileSize,
 					pkg.gridDepth,
 					pkg.tileGroups,
-					pkg.colliderComponent,
+					collider.NewCollider(ioc.Get[gameassets.GameAssets](c).SquareCollider),
 					ioc.Get[uuid.Factory](c),
 				),
 				ecs.NewSystemRegister(func(w ecs.World) error {

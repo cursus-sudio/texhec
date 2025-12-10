@@ -42,6 +42,7 @@ const (
 
 func addScene(
 	world ecs.World,
+	gameAssets gameassets.GameAssets,
 	logger logger.Logger,
 	connectionTool connection.Tool,
 	isServer bool,
@@ -83,13 +84,13 @@ func addScene(
 	ecs.SaveComponent(world, settingsEntity, transform.NewParentPivotPoint(0, 1, .5))
 	ecs.SaveComponent(world, settingsEntity, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
-	ecs.SaveComponent(world, settingsEntity, render.NewMesh(gameassets.SquareMesh))
-	ecs.SaveComponent(world, settingsEntity, render.NewTexture(gameassets.SettingsTextureID))
+	ecs.SaveComponent(world, settingsEntity, render.NewMesh(gameAssets.SquareMesh))
+	ecs.SaveComponent(world, settingsEntity, render.NewTexture(gameAssets.Ui.Settings))
 	ecs.SaveComponent(world, settingsEntity, genericrenderer.PipelineComponent{})
 
 	ecs.SaveComponent(world, settingsEntity, inputs.NewMouseLeftClick(settings.EnterSettingsEvent{}))
 	ecs.SaveComponent(world, settingsEntity, inputs.KeepSelectedComponent{})
-	ecs.SaveComponent(world, settingsEntity, collider.NewCollider(gameassets.SquareColliderID))
+	ecs.SaveComponent(world, settingsEntity, collider.NewCollider(gameAssets.SquareCollider))
 	if isServer {
 		rand := rand.New(rand.NewPCG(2077, 7137))
 
@@ -157,6 +158,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 		b.OnLoad(func(world ecs.World) {
 			addScene(
 				world,
+				ioc.Get[gameassets.GameAssets](c),
 				ioc.Get[logger.Logger](c),
 				ioc.Get[ecs.ToolFactory[connection.Tool]](c).Build(world),
 				true, // is server
@@ -169,6 +171,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 		b.OnLoad(func(world ecs.World) {
 			addScene(
 				world,
+				ioc.Get[gameassets.GameAssets](c),
 				ioc.Get[logger.Logger](c),
 				ioc.Get[ecs.ToolFactory[connection.Tool]](c).Build(world),
 				false, // is server

@@ -28,52 +28,46 @@ func NewSceneId(sceneId string) SceneId {
 
 //
 
-type SceneCtx ecs.World
-
-func NewSceneCtx(world ecs.World) SceneCtx {
-	return world
-}
-
 //
 
 type SceneBuilder interface {
-	OnLoad(func(ctx SceneCtx)) SceneBuilder
-	OnUnload(func(ctx SceneCtx)) SceneBuilder
+	OnLoad(func(world ecs.World)) SceneBuilder
+	OnUnload(func(world ecs.World)) SceneBuilder
 	Build(id SceneId) Scene
 }
 
 type sceneBuilder struct {
-	onLoad   []func(SceneCtx)
-	onUnload []func(SceneCtx)
+	onLoad   []func(ecs.World)
+	onUnload []func(ecs.World)
 }
 
 func NewSceneBuilder() SceneBuilder {
 	return &sceneBuilder{}
 }
 
-func (b *sceneBuilder) OnLoad(listener func(SceneCtx)) SceneBuilder {
+func (b *sceneBuilder) OnLoad(listener func(ecs.World)) SceneBuilder {
 	b.onLoad = append(b.onLoad, listener)
 	return b
 }
 
-func (b *sceneBuilder) OnUnload(listener func(SceneCtx)) SceneBuilder {
+func (b *sceneBuilder) OnUnload(listener func(ecs.World)) SceneBuilder {
 	b.onUnload = append(b.onUnload, listener)
 	return b
 }
 
 func (n *sceneBuilder) Build(sceneId SceneId) Scene {
-	onUnload := func(ctx SceneCtx) {
+	onUnload := func(world ecs.World) {
 		for _, listener := range n.onUnload {
-			listener(ctx)
+			listener(world)
 		}
-		ctx.Release()
+		world.Release()
 	}
-	onLoad := func() SceneCtx {
-		ctx := NewSceneCtx(ecs.NewWorld())
+	onLoad := func() ecs.World {
+		world := ecs.NewWorld()
 		for _, listener := range n.onLoad {
-			listener(ctx)
+			listener(world)
 		}
-		return ctx
+		return world
 	}
 	return newScene(sceneId, onLoad, onUnload)
 }
@@ -83,20 +77,20 @@ func (n *sceneBuilder) Build(sceneId SceneId) Scene {
 type Scene interface {
 	Id() SceneId
 
-	Load() SceneCtx
-	Unload(ctx SceneCtx)
+	Load() ecs.World
+	Unload(ecs.World)
 }
 
 type scene struct {
 	id       SceneId
-	onLoad   func() SceneCtx
-	onUnload func(SceneCtx)
+	onLoad   func() ecs.World
+	onUnload func(ecs.World)
 }
 
 func newScene(
 	id SceneId,
-	onLoad func() SceneCtx,
-	onUnload func(SceneCtx),
+	onLoad func() ecs.World,
+	onUnload func(ecs.World),
 ) Scene {
 	return &scene{
 		id:       id,
@@ -109,5 +103,5 @@ func (scene *scene) Id() SceneId {
 	return scene.id
 }
 
-func (scene *scene) Load() SceneCtx      { return scene.onLoad() }
-func (scene *scene) Unload(ctx SceneCtx) { scene.onUnload(ctx) }
+func (scene *scene) Load() ecs.World        { return scene.onLoad() }
+func (scene *scene) Unload(world ecs.World) { scene.onUnload(world) }

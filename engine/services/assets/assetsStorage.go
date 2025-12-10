@@ -5,27 +5,39 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 type AssetsStorageBuilder interface {
 	RegisterAsset(AssetID, func() (any, error))
+	RegisterExtension(
+		/* shouldn't have dots and be after dots in asset */ extension string,
+		loader func(id AssetID) (any, error),
+	)
 	Build() (AssetsStorage, []error)
 }
 
 type assetStorageBuilder struct {
-	errs    []error
-	getters map[AssetID]func() (any, error)
+	filePrefix       string
+	errs             []error
+	assetGetters     map[AssetID]func() (any, error)
+	extensionGetters map[string]func(AssetID) (any, error)
 }
 
-func NewAssetsStorageBuilder() AssetsStorageBuilder {
+func NewAssetsStorageBuilder(filePrefix string) AssetsStorageBuilder {
+	if len(filePrefix) != 0 && filePrefix[len(filePrefix)-1] != '/' {
+		filePrefix += "/"
+	}
 	return &assetStorageBuilder{
-		errs:    []error{},
-		getters: map[AssetID]func() (any, error){},
+		filePrefix:       filePrefix,
+		errs:             []error{},
+		assetGetters:     map[AssetID]func() (any, error){},
+		extensionGetters: map[string]func(AssetID) (any, error){},
 	}
 }
 
 func (b *assetStorageBuilder) RegisterAsset(id AssetID, getter func() (any, error)) {
-	if _, ok := b.getters[id]; ok {
+	if _, ok := b.assetGetters[id]; ok {
 		err := errors.Join(
 			httperrors.Err409,
 			fmt.Errorf("\"%s\" id is already registered", id),
@@ -33,7 +45,19 @@ func (b *assetStorageBuilder) RegisterAsset(id AssetID, getter func() (any, erro
 		b.errs = append(b.errs, err)
 		return
 	}
-	b.getters[id] = getter
+	b.assetGetters[id] = getter
+}
+
+func (b *assetStorageBuilder) RegisterExtension(id string, getter func(AssetID) (any, error)) {
+	if _, ok := b.extensionGetters[id]; ok {
+		err := errors.Join(
+			httperrors.Err409,
+			fmt.Errorf("\"%s\" extension is already registered", id),
+		)
+		b.errs = append(b.errs, err)
+		return
+	}
+	b.extensionGetters[id] = getter
 }
 
 func (b *assetStorageBuilder) Build() (AssetsStorage, []error) {
@@ -41,7 +65,9 @@ func (b *assetStorageBuilder) Build() (AssetsStorage, []error) {
 		return nil, b.errs
 	}
 	return &assetsStorage{
-		getters: b.getters,
+		filePrefix:       AssetID(b.filePrefix),
+		assetGetters:     b.assetGetters,
+		extensionGetters: b.extensionGetters,
 	}, nil
 }
 
@@ -52,15 +78,21 @@ type AssetsStorage interface {
 }
 
 type assetsStorage struct {
-	getters map[AssetID]func() (any, error)
+	filePrefix       AssetID
+	assetGetters     map[AssetID]func() (any, error)
+	extensionGetters map[string]func(AssetID) (any, error)
 }
 
-func (s *assetsStorage) Get(id AssetID) (any, error) {
-	getter, ok := s.getters[id]
-	if !ok {
-		return nil, httperrors.Err404
+func (s *assetsStorage) Get(asset AssetID) (any, error) {
+	if getter, ok := s.assetGetters[asset]; ok {
+		return getter()
 	}
-	return getter()
+	parts := strings.Split(string(asset), ".")
+	extension := parts[len(parts)-1]
+	if getter, ok := s.extensionGetters[extension]; ok {
+		return getter(s.filePrefix + asset)
+	}
+	return nil, httperrors.Err404
 }
 
 func StorageGet[Asset any](s AssetsStorage, id AssetID) (Asset, error) {

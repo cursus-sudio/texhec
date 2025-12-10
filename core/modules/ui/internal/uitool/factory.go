@@ -1,6 +1,7 @@
 package uitool
 
 import (
+	gameassets "core/assets"
 	"core/modules/tile"
 	"core/modules/ui"
 	"engine/modules/animation"
@@ -19,6 +20,7 @@ func NewToolFactory(
 	animationDuration time.Duration,
 	showAnimation animation.AnimationID,
 	hideAnimation animation.AnimationID,
+	gameAssets gameassets.GameAssets,
 	logger logger.Logger,
 	cameraToolFactory ecs.ToolFactory[camera.Tool],
 	transformToolFactory ecs.ToolFactory[transform.Tool],
@@ -39,6 +41,7 @@ func NewToolFactory(
 			showAnimation,
 			hideAnimation,
 			w,
+			gameAssets,
 			logger,
 			cameraToolFactory,
 			transformToolFactory,

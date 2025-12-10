@@ -20,7 +20,7 @@ import (
 )
 
 type pkg struct {
-	defaultFontFamily text.FontFamilyComponent
+	defaultFontFamily func(c ioc.Dic) text.FontFamilyComponent
 	defaultFontSize   text.FontSizeComponent
 	// defaultOverflow   text.Overflow
 	defaultBreak     text.BreakComponent
@@ -33,7 +33,7 @@ type pkg struct {
 }
 
 func Package(
-	defaultFontFamily text.FontFamilyComponent,
+	defaultFontFamily func(c ioc.Dic) text.FontFamilyComponent,
 	defaultFontSize text.FontSizeComponent,
 	// defaultOverflow text.Overflow,
 	defaultBreak text.BreakComponent,
@@ -83,7 +83,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			ioc.Get[textrenderer.FontService](c),
 			ioc.Get[textrenderer.FontKeys](c),
 			ioc.Get[ecs.ToolFactory[transform.Tool]](c),
-			pkg.defaultFontFamily,
+			pkg.defaultFontFamily(c),
 			pkg.defaultFontSize,
 			// pkg.defaultOverflow,
 			pkg.defaultBreak,
@@ -103,7 +103,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			ioc.Get[vbo.VBOFactory[textrenderer.Glyph]](c),
 			ioc.Get[textrenderer.LayoutServiceFactory](c),
 			ioc.Get[logger.Logger](c),
-			pkg.defaultFontFamily.FontFamily,
+			pkg.defaultFontFamily(c).FontFamily,
 			pkg.defaultColor,
 			ioc.Get[texturearray.Factory](c),
 			ioc.Get[textrenderer.FontKeys](c),

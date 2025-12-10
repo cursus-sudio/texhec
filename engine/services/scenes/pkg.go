@@ -27,13 +27,13 @@ func (pkg pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b events.Builder) events.Builder {
 		events.ListenToAll(b, func(a any) {
 			m := ioc.Get[SceneManager](c)
-			events.EmitAny(m.CurrentSceneCtx().Events(), a)
+			events.EmitAny(m.CurrentSceneWorld().Events(), a)
 		})
 		return b
 	})
 	ioc.RegisterDependency[events.Builder, SceneManager](b)
 
 	ioc.RegisterTransient(b, func(c ioc.Dic) ecs.World {
-		return ioc.Get[SceneManager](c).CurrentSceneCtx()
+		return ioc.Get[SceneManager](c).CurrentSceneWorld()
 	})
 }

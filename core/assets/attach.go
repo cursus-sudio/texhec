@@ -16,11 +16,13 @@ import (
 	"engine/services/datastructures"
 	gtexture "engine/services/graphics/texture"
 	"engine/services/graphics/vao/ebo"
+	"engine/services/logger"
 	appruntime "engine/services/runtime"
 	"engine/services/scenes"
 	"image"
 	_ "image/png"
 	"math"
+	"os"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
@@ -29,46 +31,143 @@ import (
 	"golang.org/x/image/font/opentype"
 )
 
-//go:embed files/1.png
-var mountainSource []byte
+type GameAssets struct {
+	Tiles        TileAssets
+	Ui           UiAssets
+	ExampleAudio assets.AssetID `path:"audio.wav"`
 
-//go:embed files/2.png
-var groundSource []byte
+	SquareMesh     assets.AssetID `path:"square mesh"`
+	SquareCollider assets.AssetID `path:"square collider"`
+	FontAsset      assets.AssetID `path:"font_asset"`
+}
 
-//go:embed files/3.png
-var forestSource []byte
+type UiAssets struct {
+	Settings assets.AssetID `path:"ui/settings.png"`
+}
 
-//go:embed files/4.png
-var waterSource []byte
+type TileAssets struct {
+	Mountain assets.AssetID `path:"tiles/mountain.png"`
+	Ground   assets.AssetID `path:"tiles/ground.png"`
+	Forest   assets.AssetID `path:"tiles/forest.png"`
+	Water    assets.AssetID `path:"tiles/water.png"`
 
-//go:embed files/u1.png
-var u1Source []byte
+	Unit assets.AssetID `path:"tiles/u1.png"`
+}
 
-//go:embed files/settings.png
-var settingsSource []byte
+type pkg struct{}
 
-//go:embed files/audio.wav
-var audioSource []byte
+func Package() ioc.Pkg {
+	return pkg{}
+}
 
-var fontSource []byte = goregular.TTF
+func (pkg) Assets(b ioc.Builder) {
+	// register specific files
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b assets.AssetsStorageBuilder) assets.AssetsStorageBuilder {
+		b.RegisterExtension("wav", func(id assets.AssetID) (any, error) {
+			source, err := os.ReadFile(string(id))
+			if err != nil {
+				return nil, err
+			}
+			chunk, err := mix.QuickLoadWAV(source)
+			if err != nil {
+				return nil, err
+			}
+			audio := audio.NewAudioAsset(chunk)
+			return audio, nil
+		})
 
-const (
-	SquareMesh assets.AssetID = "square mesh"
+		b.RegisterExtension("png", func(id assets.AssetID) (any, error) {
+			source, err := os.ReadFile(string(id))
+			if err != nil {
+				return nil, err
+			}
+			imgFile := bytes.NewBuffer(source)
+			img, _, err := image.Decode(imgFile)
+			if err != nil {
+				return nil, err
+			}
 
-	MountainTileTextureID assets.AssetID = "mountain tile texture"
-	GroundTileTextureID   assets.AssetID = "ground tile texture"
-	ForestTileTextureID   assets.AssetID = "forest tile texture"
-	WaterTileTextureID    assets.AssetID = "water tile texture"
+			img = gtexture.FlipImage(img)
+			asset := render.NewTextureStorageAsset(img)
+			return asset, nil
+		})
 
-	U1TextureID assets.AssetID = "u1 texture"
+		gameAssets := ioc.Get[GameAssets](c)
+		b.RegisterAsset(gameAssets.SquareMesh, func() (any, error) {
+			vertices := []genericrenderer.Vertex{
+				{Pos: [3]float32{1, 1, 1}, TexturePos: [2]float32{1, 1}},
+				{Pos: [3]float32{1, -1, 1}, TexturePos: [2]float32{1, 0}},
+				{Pos: [3]float32{-1, -1, 1}, TexturePos: [2]float32{0, 0}},
+				{Pos: [3]float32{-1, 1, 1}, TexturePos: [2]float32{0, 1}},
+			}
 
-	SettingsTextureID assets.AssetID = "settings texture"
+			indices := []ebo.Index{
+				0, 1, 2,
+				0, 2, 3,
+			}
+			asset := render.NewMeshStorageAsset(vertices, indices)
+			return asset, nil
+		})
 
-	SquareColliderID assets.AssetID = "square collider"
-	FontAssetID      assets.AssetID = "font_asset"
+		b.RegisterAsset(gameAssets.SquareCollider, func() (any, error) {
+			asset := collider.NewColliderStorageAsset(
+				[]collider.AABB{collider.NewAABB(mgl32.Vec3{-1, -1}, mgl32.Vec3{1, 1})},
+				[]collider.Range{collider.NewRange(collider.Leaf, 0, 2)},
+				[]collider.Polygon{
+					collider.NewPolygon(mgl32.Vec3{-1, -1, 0}, mgl32.Vec3{+1, -1, 0}, [3]float32{-1, +1, 0}),
+					collider.NewPolygon(mgl32.Vec3{+1, +1, 0}, mgl32.Vec3{+1, -1, 0}, [3]float32{-1, +1, 0}),
+				})
+			return asset, nil
+		})
 
-	AudioID assets.AssetID = "audio.wav"
-)
+		b.RegisterAsset(gameAssets.FontAsset, func() (any, error) {
+			font, err := opentype.Parse(goregular.TTF)
+			if err != nil {
+				return nil, err
+			}
+			asset := text.NewFontFaceAsset(*font)
+			return asset, nil
+		})
+
+		return b
+	})
+
+	// register assets
+	ioc.RegisterSingleton(b, func(c ioc.Dic) GameAssets {
+		logger := ioc.Get[logger.Logger](c)
+		assetsService := ioc.Get[assets.AssetModule](c)
+
+		gameAssets := GameAssets{}
+		logger.Warn(assetsService.InitializeProperties(&gameAssets))
+		return gameAssets
+	})
+
+	ioc.WrapService(b, appruntime.OrderCleanUp, func(c ioc.Dic, b appruntime.Builder) appruntime.Builder {
+		assets := ioc.Get[assets.Assets](c)
+		b.OnStop(func(r appruntime.Runtime) {
+			scene := ioc.Get[scenes.SceneManager](c).CurrentSceneWorld()
+			scene.Release()
+
+			assets.ReleaseAll()
+		})
+		return b
+	})
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.TileAssets) tile.TileAssets {
+		gameAssets := ioc.Get[GameAssets](c)
+		assets := datastructures.NewSparseArray[definition.DefinitionID, assets.AssetID]()
+		assets.Set(definition.TileMountain, gameAssets.Tiles.Mountain)
+		assets.Set(definition.TileGround, gameAssets.Tiles.Ground)
+		assets.Set(definition.TileForest, gameAssets.Tiles.Forest)
+		assets.Set(definition.TileWater, gameAssets.Tiles.Water)
+		assets.Set(definition.TileU1, gameAssets.Tiles.Unit)
+		s.AddType(assets)
+		return s
+	})
+}
+
+//
+//
+//
 
 const (
 	ChangeColorsAnimation animation.AnimationID = iota
@@ -84,13 +183,7 @@ const (
 	EaseOutElastic
 )
 
-type pkg struct{}
-
-func Package() ioc.Pkg {
-	return pkg{}
-}
-
-func (pkg) Register(b ioc.Builder) {
+func (pkg) Animations(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b animation.AnimationSystemBuilder) animation.AnimationSystemBuilder {
 		b.AddEasingFunction(LinearEasingFunction, func(t animation.AnimationState) animation.AnimationState { return t })
 		b.AddEasingFunction(MyEasingFunction, func(t animation.AnimationState) animation.AnimationState {
@@ -178,148 +271,9 @@ func (pkg) Register(b ioc.Builder) {
 		))
 		return b
 	})
-	ioc.WrapService(b, appruntime.OrderCleanUp, func(c ioc.Dic, b appruntime.Builder) appruntime.Builder {
-		assets := ioc.Get[assets.Assets](c)
-		b.OnStop(func(r appruntime.Runtime) {
-			scene := ioc.Get[scenes.SceneManager](c).CurrentSceneCtx()
-			scene.Release()
+}
 
-			assets.ReleaseAll()
-		})
-		return b
-	})
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.TileAssets) tile.TileAssets {
-		assets := datastructures.NewSparseArray[definition.DefinitionID, assets.AssetID]()
-		assets.Set(definition.TileMountain, MountainTileTextureID)
-		assets.Set(definition.TileGround, GroundTileTextureID)
-		assets.Set(definition.TileForest, ForestTileTextureID)
-		assets.Set(definition.TileWater, WaterTileTextureID)
-		assets.Set(definition.TileU1, U1TextureID)
-		s.AddType(assets)
-		return s
-	})
-
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b assets.AssetsStorageBuilder) assets.AssetsStorageBuilder {
-		b.RegisterAsset(SquareMesh, func() (any, error) {
-			vertices := []genericrenderer.Vertex{
-				{Pos: [3]float32{1, 1, 1}, TexturePos: [2]float32{1, 1}},
-				{Pos: [3]float32{1, -1, 1}, TexturePos: [2]float32{1, 0}},
-				{Pos: [3]float32{-1, -1, 1}, TexturePos: [2]float32{0, 0}},
-				{Pos: [3]float32{-1, 1, 1}, TexturePos: [2]float32{0, 1}},
-			}
-
-			indices := []ebo.Index{
-				0, 1, 2,
-				0, 2, 3,
-			}
-			asset := render.NewMeshStorageAsset(vertices, indices)
-			return asset, nil
-		})
-
-		b.RegisterAsset(MountainTileTextureID, func() (any, error) {
-			imgFile := bytes.NewBuffer(mountainSource)
-			img, _, err := image.Decode(imgFile)
-			if err != nil {
-				return nil, err
-			}
-
-			img = gtexture.FlipImage(img)
-			asset := render.NewTextureStorageAsset(img)
-			return asset, nil
-		})
-
-		b.RegisterAsset(GroundTileTextureID, func() (any, error) {
-			imgFile := bytes.NewBuffer(groundSource)
-			img, _, err := image.Decode(imgFile)
-			if err != nil {
-				return nil, err
-			}
-			img = gtexture.FlipImage(img)
-			asset := render.NewTextureStorageAsset(img)
-			return asset, nil
-		})
-
-		b.RegisterAsset(ForestTileTextureID, func() (any, error) {
-			imgFile := bytes.NewBuffer(forestSource)
-			img, _, err := image.Decode(imgFile)
-			if err != nil {
-				return nil, err
-			}
-			img = gtexture.FlipImage(img)
-			asset := render.NewTextureStorageAsset(img)
-			return asset, nil
-		})
-
-		b.RegisterAsset(WaterTileTextureID, func() (any, error) {
-			img1File := bytes.NewBuffer(waterSource)
-			img1, _, err := image.Decode(img1File)
-			if err != nil {
-				return nil, err
-			}
-			img1 = gtexture.FlipImage(img1)
-
-			img2File := bytes.NewBuffer(waterSource)
-			img2, _, err := image.Decode(img2File)
-			if err != nil {
-				return nil, err
-			}
-			img2 = Rotate90Clockwise(img2)
-			// img2 = gtexture.FlipImage(img2)
-			asset := render.NewTextureStorageAsset(img1, img2)
-			// asset := render.NewTextureStorageAsset(img2, img1)
-			return asset, nil
-		})
-
-		b.RegisterAsset(U1TextureID, func() (any, error) {
-			imgFile := bytes.NewBuffer(u1Source)
-			img, _, err := image.Decode(imgFile)
-			if err != nil {
-				return nil, err
-			}
-			img = gtexture.FlipImage(img)
-			asset := render.NewTextureStorageAsset(img)
-			return asset, nil
-		})
-
-		b.RegisterAsset(SettingsTextureID, func() (any, error) {
-			imgFile := bytes.NewBuffer(settingsSource)
-			img, _, err := image.Decode(imgFile)
-			if err != nil {
-				return nil, err
-			}
-			img = gtexture.FlipImage(img)
-			asset := render.NewTextureStorageAsset(img)
-			return asset, nil
-		})
-
-		b.RegisterAsset(SquareColliderID, func() (any, error) {
-			asset := collider.NewColliderStorageAsset(
-				[]collider.AABB{collider.NewAABB(mgl32.Vec3{-1, -1}, mgl32.Vec3{1, 1})},
-				[]collider.Range{collider.NewRange(collider.Leaf, 0, 2)},
-				[]collider.Polygon{
-					collider.NewPolygon(mgl32.Vec3{-1, -1, 0}, mgl32.Vec3{+1, -1, 0}, [3]float32{-1, +1, 0}),
-					collider.NewPolygon(mgl32.Vec3{+1, +1, 0}, mgl32.Vec3{+1, -1, 0}, [3]float32{-1, +1, 0}),
-				})
-			return asset, nil
-		})
-
-		b.RegisterAsset(FontAssetID, func() (any, error) {
-			font, err := opentype.Parse(fontSource)
-			if err != nil {
-				return nil, err
-			}
-			asset := text.NewFontFaceAsset(*font)
-			return asset, nil
-		})
-
-		b.RegisterAsset(AudioID, func() (any, error) {
-			chunk, err := mix.QuickLoadWAV(audioSource)
-			if err != nil {
-				return nil, err
-			}
-			audio := audio.NewAudioAsset(chunk)
-			return audio, nil
-		})
-		return b
-	})
+func (pkg pkg) Register(b ioc.Builder) {
+	pkg.Assets(b)
+	pkg.Animations(b)
 }

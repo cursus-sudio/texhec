@@ -1,6 +1,7 @@
 package uipkg
 
 import (
+	gameassets "core/assets"
 	"core/modules/tile"
 	"core/modules/ui"
 	"core/modules/ui/internal/uitool"
@@ -55,6 +56,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			pkg.animationDuration,
 			pkg.showAnimation,
 			pkg.hideAnimation,
+			ioc.Get[gameassets.GameAssets](c),
 			ioc.Get[logger.Logger](c),
 			ioc.Get[ecs.ToolFactory[camera.Tool]](c),
 			ioc.Get[ecs.ToolFactory[transform.Tool]](c),

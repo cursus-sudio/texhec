@@ -258,6 +258,7 @@ func (m *system) Listen(render.RenderEvent) error {
 
 			textureAsset, err := m.getTexture(entity)
 			if err != nil {
+				m.logger.Warn(err)
 				continue
 			}
 

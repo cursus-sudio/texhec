@@ -42,7 +42,7 @@ const (
 	MusicChannel
 )
 
-type CoreSystems func(scenes.SceneCtx)
+type CoreSystems func(ecs.World)
 
 type MenuBuilder scenes.SceneBuilder
 type GameBuilder scenes.SceneBuilder
@@ -59,8 +59,8 @@ func Package() ioc.Pkg {
 func AddDefaults[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadConfig, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		logger := ioc.Get[logger.Logger](c)
-		b.OnLoad(func(ctx scenes.SceneCtx) {
-			events.GlobalErrHandler(ctx.EventsBuilder(), func(err error) {
+		b.OnLoad(func(world ecs.World) {
+			events.GlobalErrHandler(world.EventsBuilder(), func(err error) {
 				logger.Warn(err)
 			})
 		})
@@ -84,7 +84,7 @@ func (pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) CoreSystems {
-		return func(ctx scenes.SceneCtx) {
+		return func(world ecs.World) {
 			logger := ioc.Get[logger.Logger](c)
 			posFactory := ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[tile.PosComponent]]](c)
 			colliderFactory := ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[tile.ColliderPos]]](c)
@@ -95,11 +95,11 @@ func (pkg) Register(b ioc.Builder) {
 				events.Listen(w.EventsBuilder(), func(e sdl.KeyboardEvent) {
 					if e.Keysym.Sym == sdl.K_q {
 						logger.Info("quiting program due to pressing 'Q'")
-						events.Emit(ctx.Events(), inputs.NewQuitEvent())
+						events.Emit(world.Events(), inputs.NewQuitEvent())
 					}
 					if e.Keysym.Sym == sdl.K_ESCAPE {
 						logger.Info("quiting program due to pressing 'ESC'")
-						events.Emit(ctx.Events(), inputs.NewQuitEvent())
+						events.Emit(world.Events(), inputs.NewQuitEvent())
 					}
 					if e.State == sdl.PRESSED && e.Keysym.Sym == sdl.K_f {
 						logger.Info("toggling screen size due to pressing 'F'")
@@ -116,14 +116,7 @@ func (pkg) Register(b ioc.Builder) {
 				return nil
 			})
 
-			// temporary system to say wich tile was pressed
-			// events.Listen(ctx.EventsBuilder(), func(event tile.TileClickEvent) {
-			// 	tileColliderArray := ecs.GetComponentsArray[tile.PosComponent](ctx)
-			// 	tileCollider, _ := tileColliderArray.GetComponent(event.Tile)
-			// 	logger.Info(fmt.Sprintf("collider: %v", tileCollider))
-			// })
-
-			ecs.RegisterSystems(ctx,
+			ecs.RegisterSystems(world,
 				ioc.Get[netsync.StartSystem](c),
 				// update {
 

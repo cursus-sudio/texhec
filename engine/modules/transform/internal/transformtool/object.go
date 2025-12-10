@@ -22,6 +22,9 @@ type object struct {
 	size         ecs.EntityComponent[transform.SizeComponent]
 	absoluteSize ecs.EntityComponent[transform.SizeComponent]
 
+	maxSize ecs.EntityComponent[transform.MaxSizeComponent]
+	minSize ecs.EntityComponent[transform.MinSizeComponent]
+
 	pivotPoint       ecs.EntityComponent[transform.PivotPointComponent]
 	parentMask       ecs.EntityComponent[transform.ParentComponent]
 	parentPivotPoint ecs.EntityComponent[transform.ParentPivotPointComponent]
@@ -40,6 +43,9 @@ func newEntityTransform(
 		pos:  t.posTransaction.GetEntityComponent(entity),
 		rot:  t.rotationTransaction.GetEntityComponent(entity),
 		size: t.sizeTransaction.GetEntityComponent(entity),
+
+		maxSize: t.maxSizeTransaction.GetEntityComponent(entity),
+		minSize: t.minSizeTransaction.GetEntityComponent(entity),
 
 		pivotPoint:       t.pivotPointTransaction.GetEntityComponent(entity),
 		parentMask:       t.parentMaskTransaction.GetEntityComponent(entity),

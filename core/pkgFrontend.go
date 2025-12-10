@@ -20,7 +20,6 @@ import (
 	"engine/modules/audio/pkg"
 	"engine/modules/camera"
 	"engine/modules/camera/pkg"
-	"engine/modules/collider"
 	"engine/modules/collider/pkg"
 	"engine/modules/connection/pkg"
 	"engine/modules/drag"
@@ -126,7 +125,7 @@ func frontendDic(
 
 	pkgs := []ioc.Pkg{
 		sharedPkg,
-		assets.Package(),
+		assets.Package("assets/files/"),
 		logger.Package(true, func(c ioc.Dic, message string) {
 			ioc.Get[console.Console](c).PrintPermanent(message)
 		}),
@@ -143,8 +142,6 @@ func frontendDic(
 			100,
 			0,
 			groups.EmptyGroups().Ptr().Enable(gamescene.GameGroup).Val(),
-			collider.NewCollider(gameassets.SquareColliderID),
-
 			tile.GroundLayer,
 			[]tile.Layer{tile.UnitLayer, tile.BuildingLayer},
 			0, 1000, // min-max x
@@ -174,7 +171,10 @@ func frontendDic(
 		renderpkg.Package(),
 		scenespkg.Package(),
 		textpkg.Package(
-			text.FontFamilyComponent{FontFamily: gameassets.FontAssetID},
+			func(c ioc.Dic) text.FontFamilyComponent {
+				asset := ioc.Get[gameassets.GameAssets](c).FontAsset
+				return text.FontFamilyComponent{FontFamily: asset}
+			},
 			text.FontSizeComponent{FontSize: 16},
 			// text.Overflow{Visible: false},
 			text.BreakComponent{Break: text.BreakWord},

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"core/modules/definition"
 	"core/modules/tile"
-	_ "embed"
 	"engine/modules/animation"
 	"engine/modules/audio"
 	"engine/modules/collider"

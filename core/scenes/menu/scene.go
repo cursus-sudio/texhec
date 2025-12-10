@@ -90,7 +90,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				ecs.SaveComponent(world, btn, transform.NewParentPivotPoint(.5, normalizedIndex, .5))
 
 				ecs.SaveComponent(world, btn, render.NewMesh(gameAssets.SquareMesh))
-				ecs.SaveComponent(world, btn, render.NewTexture(gameAssets.Tiles.Water))
+				ecs.SaveComponent(world, btn, render.NewTexture(gameAssets.Hud.Btn))
 				ecs.SaveComponent(world, btn, render.NewTextureFrameComponent(1))
 				ecs.SaveComponent(world, btn, genericrenderer.PipelineComponent{})
 				ecs.SaveComponent(world, btn, animation.NewAnimationComponent(

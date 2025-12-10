@@ -63,7 +63,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world, draggable, transform.NewSize(50, 50, 3))
 			ecs.SaveComponent(world, draggable, render.NewColor(mgl32.Vec4{0, 1, 0, .2}))
 			ecs.SaveComponent(world, draggable, render.NewMesh(gameAssets.SquareMesh))
-			ecs.SaveComponent(world, draggable, render.NewTexture(gameAssets.Tiles.Water))
+			ecs.SaveComponent(world, draggable, render.NewTexture(gameAssets.Hud.Btn))
 			ecs.SaveComponent(world, draggable, genericrenderer.PipelineComponent{})
 
 			ecs.SaveComponent(world, draggable, collider.NewCollider(gameAssets.SquareCollider))
@@ -81,7 +81,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world, btn, transform.NewParentPivotPoint(.5, 0, .5))
 
 			ecs.SaveComponent(world, btn, render.NewMesh(gameAssets.SquareMesh))
-			ecs.SaveComponent(world, btn, render.NewTexture(gameAssets.Tiles.Water))
+			ecs.SaveComponent(world, btn, render.NewTexture(gameAssets.Hud.Btn))
 			ecs.SaveComponent(world, btn, genericrenderer.PipelineComponent{})
 
 			ecs.SaveComponent(world, btn, inputs.NewMouseLeftClick(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))

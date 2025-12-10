@@ -22,6 +22,7 @@ import (
 	_ "image/png"
 	"math"
 	"os"
+	"strings"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
@@ -32,7 +33,7 @@ import (
 
 type GameAssets struct {
 	Tiles        TileAssets
-	Ui           UiAssets
+	Hud          HudAssets
 	ExampleAudio assets.AssetID `path:"audio.wav"`
 
 	SquareMesh     assets.AssetID `path:"square mesh"`
@@ -40,8 +41,9 @@ type GameAssets struct {
 	FontAsset      assets.AssetID `path:"font_asset"`
 }
 
-type UiAssets struct {
-	Settings assets.AssetID `path:"ui/settings.png"`
+type HudAssets struct {
+	Btn      assets.AssetID `path:"hud/btn.png"`
+	Settings assets.AssetID `path:"hud/settings.png"`
 }
 
 type TileAssets struct {
@@ -87,6 +89,9 @@ func (pkg) Assets(b ioc.Builder) {
 			}
 
 			img = gtexture.FlipImage(img)
+			if !strings.Contains(string(id), "tiles") {
+				img = TrimTransparentBackground(img)
+			}
 			asset := render.NewTextureStorageAsset(img)
 			return asset, nil
 		})

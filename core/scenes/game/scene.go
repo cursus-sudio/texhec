@@ -85,7 +85,7 @@ func addScene(
 	ecs.SaveComponent(world, settingsEntity, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
 	ecs.SaveComponent(world, settingsEntity, render.NewMesh(gameAssets.SquareMesh))
-	ecs.SaveComponent(world, settingsEntity, render.NewTexture(gameAssets.Ui.Settings))
+	ecs.SaveComponent(world, settingsEntity, render.NewTexture(gameAssets.Hud.Settings))
 	ecs.SaveComponent(world, settingsEntity, genericrenderer.PipelineComponent{})
 
 	ecs.SaveComponent(world, settingsEntity, inputs.NewMouseLeftClick(settings.EnterSettingsEvent{}))

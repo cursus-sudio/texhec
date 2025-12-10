@@ -159,7 +159,7 @@ func (s system) Render(parent ecs.EntityID) error {
 
 		btnRender := renderTransaction.GetObject(btnEntity)
 		btnRender.Mesh().Set(render.NewMesh(s.gameAssets.SquareMesh))
-		btnRender.Texture().Set(render.NewTexture(s.gameAssets.Tiles.Ground))
+		btnRender.Texture().Set(render.NewTexture(s.gameAssets.Hud.Btn))
 		pipelineTransaction.SaveComponent(btnEntity, genericrenderer.PipelineComponent{})
 
 		btnText := textTransaction.GetObject(btnEntity)

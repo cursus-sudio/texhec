@@ -42,19 +42,22 @@ func (t object) IsChildOf(wantedParent ecs.EntityID) bool {
 	}
 }
 
-func (t object) GetParents() datastructures.SparseSet[ecs.EntityID] {
-	orderedParents := t.GetOrderedParents()
+func (t object) GetParents() (datastructures.SparseSet[ecs.EntityID], error) {
+	orderedParents, err := t.GetOrderedParents()
+	if err != nil {
+		return nil, err
+	}
 	parents := datastructures.NewSparseSet[ecs.EntityID]()
 	for _, parent := range orderedParents {
 		parents.Add(parent)
 	}
-	return parents
+	return parents, nil
 }
 
-func (t object) GetOrderedParents() []ecs.EntityID {
+func (t object) GetOrderedParents() ([]ecs.EntityID, error) {
 	parent, err := t.transaction.GetObject(t.entity).Parent().Get()
 	if err != nil {
-		return []ecs.EntityID{}
+		return []ecs.EntityID{}, err
 	}
 	return t.tool.GetOrderedParents(parent)
 }

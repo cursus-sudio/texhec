@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"core/modules/definition"
 	"core/modules/tile"
-	_ "embed"
 	"engine/modules/animation"
 	"engine/modules/audio"
 	"engine/modules/collider"
@@ -72,7 +71,7 @@ func (pkg) Assets(b ioc.Builder) {
 			if err != nil {
 				return nil, err
 			}
-			audio := audio.NewAudioAsset(chunk)
+			audio := audio.NewAudioAsset(chunk, source)
 			return audio, nil
 		})
 

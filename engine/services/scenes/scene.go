@@ -11,8 +11,8 @@ import (
 const (
 	_ ioc.Order = iota
 	LoadConfig
-	LoadObjects
 	LoadSystems
+	LoadObjects
 	LoadInitialEvents
 )
 

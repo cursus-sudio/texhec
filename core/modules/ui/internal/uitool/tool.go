@@ -24,9 +24,10 @@ import (
 )
 
 type changing struct {
-	active       bool
-	menu         ecs.EntityID
-	childWrapper ecs.EntityID
+	isInitialized bool
+	active        bool
+	menu          ecs.EntityID
+	childWrapper  ecs.EntityID
 }
 
 type tool struct {
@@ -129,16 +130,14 @@ func (t tool) Init() error {
 
 	pipelineTransaction := t.pipelineArray.Transaction()
 	groupInheritTransaction := t.groupInheritArray.Transaction()
+
 	leftClickTransaction := t.leftClickArray.Transaction()
 	keepSelectedTransaction := t.keepSelectedArray.Transaction()
 	colliderTransaction := t.colliderArray.Transaction()
 
 	transactions = append(transactions,
-		pipelineTransaction,
-		groupInheritTransaction,
-		leftClickTransaction,
-		keepSelectedTransaction,
-		colliderTransaction,
+		pipelineTransaction, groupInheritTransaction,
+		leftClickTransaction, keepSelectedTransaction, colliderTransaction,
 	)
 
 	// objects
@@ -197,6 +196,7 @@ func (t tool) Init() error {
 
 	t.menu = menu
 	t.childWrapper = childWrapper
+	t.isInitialized = true
 
 	events.Listen(t.world.EventsBuilder(), func(e ui.HideUiEvent) {
 		t.Hide()
@@ -205,8 +205,16 @@ func (t tool) Init() error {
 }
 
 func (t tool) ResetChildWrapper() error {
+	if !t.isInitialized {
+		err := t.Init()
+		if err != nil {
+			return err
+		}
+	}
+	transactions := []ecs.AnyComponentsArrayTransaction{}
+
 	groupsInheritTransaction := t.groupInheritArray.Transaction()
-	transactions := []ecs.AnyComponentsArrayTransaction{groupsInheritTransaction}
+	transactions = append(transactions, groupsInheritTransaction)
 
 	transformTransaction := t.transformTool.Transaction()
 	transactions = append(transactions, transformTransaction.Transactions()...)
@@ -228,7 +236,7 @@ func (t tool) ResetChildWrapper() error {
 }
 
 func (t tool) Show() ecs.EntityID {
-	t.ResetChildWrapper()
+	t.logger.Warn(t.ResetChildWrapper())
 	if !t.active {
 		t.active = true
 		t.animationArray.SaveComponent(t.menu, animation.NewAnimationComponent(t.showAnimation, t.animationDuration))

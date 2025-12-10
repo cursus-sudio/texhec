@@ -2,22 +2,18 @@ package settingsscene
 
 import (
 	gameassets "core/assets"
+	"core/modules/settings"
 	gamescenes "core/scenes"
-	"engine/modules/audio"
 	"engine/modules/camera"
-	"engine/modules/collider"
 	"engine/modules/genericrenderer"
 	"engine/modules/hierarchy"
-	"engine/modules/inputs"
 	"engine/modules/render"
-	scenessys "engine/modules/scenes"
 	"engine/modules/text"
 	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/scenes"
-	"slices"
-	"strings"
 
+	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -55,40 +51,11 @@ func (pkg) LoadObjects(b ioc.Builder) {
 
 			buttonArea := world.NewEntity()
 			ecs.SaveComponent(world, buttonArea, transform.NewSize(500, 200, 2))
+			// ecs.SaveComponent(world, buttonArea, transform.NewPos(0, 0, -50))
 			ecs.SaveComponent(world, buttonArea, hierarchy.NewParent(cameraEntity))
 			ecs.SaveComponent(world, buttonArea, transform.NewParent(transform.RelativePos))
 
-			type Button struct {
-				Text    string
-				OnClick any
-			}
-			buttons := []Button{
-				{Text: "mute", OnClick: audio.NewPlayEvent(gamescenes.EffectChannel, gameassets.ExampleAudio)},
-				{Text: "keybinds", OnClick: nil},
-				{Text: "return to menu", OnClick: scenessys.NewChangeSceneEvent(gamescenes.MenuID)},
-			}
-			slices.Reverse(buttons)
-
-			for i, button := range buttons {
-				btn := world.NewEntity()
-				normalizedIndex := float32(i) / (float32(len(buttons)) - 1)
-				ecs.SaveComponent(world, btn, transform.NewSize(500, 50, 2))
-				ecs.SaveComponent(world, btn, hierarchy.NewParent(buttonArea))
-				ecs.SaveComponent(world, btn, transform.NewParent(transform.RelativePos))
-				ecs.SaveComponent(world, btn, transform.NewParentPivotPoint(.5, normalizedIndex, .5))
-
-				ecs.SaveComponent(world, btn, render.NewMesh(gameassets.SquareMesh))
-				ecs.SaveComponent(world, btn, render.NewTexture(gameassets.Tiles.Water))
-				ecs.SaveComponent(world, btn, genericrenderer.PipelineComponent{})
-
-				ecs.SaveComponent(world, btn, inputs.NewMouseLeftClick(button.OnClick))
-				ecs.SaveComponent(world, btn, collider.NewCollider(gameassets.SquareCollider))
-				ecs.SaveComponent(world, btn, inputs.KeepSelectedComponent{})
-
-				ecs.SaveComponent(world, btn, text.TextComponent{Text: strings.ToUpper(button.Text)})
-				ecs.SaveComponent(world, btn, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
-				ecs.SaveComponent(world, btn, text.FontSizeComponent{FontSize: 32})
-			}
+			events.Emit(world.Events(), settings.EnterSettingsForParentEvent{Parent: buttonArea})
 		})
 
 		return b

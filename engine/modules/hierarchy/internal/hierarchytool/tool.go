@@ -5,6 +5,8 @@ import (
 	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/logger"
+	"errors"
+	"fmt"
 	"sync"
 )
 
@@ -49,15 +51,21 @@ func (t tool) Transaction() hierarchy.Transaction {
 	return newTransaction(t)
 }
 
-func (t tool) GetOrderedParents(comp hierarchy.ParentComponent) []ecs.EntityID {
+func (t tool) GetOrderedParents(comp hierarchy.ParentComponent) ([]ecs.EntityID, error) {
 	parents := []ecs.EntityID{comp.Parent}
 	child := comp.Parent
 	for {
 		parent, err := t.parentArray.GetComponent(child)
 		if err != nil {
-			return parents
+			return parents, nil
 		}
 		parents = append(parents, parent.Parent)
+		if parents[0] == parent.Parent {
+			return nil, errors.Join(
+				hierarchy.ErrParentCycle,
+				fmt.Errorf("cycle is %v", parents),
+			)
+		}
 		child = parent.Parent
 	}
 }
@@ -79,7 +87,13 @@ func (t tool) Upsert(ei []ecs.EntityID) {
 
 		// flat parent
 
-		for _, parent := range t.GetOrderedParents(comp) {
+		parents, err := t.GetOrderedParents(comp)
+		if err != nil {
+			t.logger.Warn(err)
+			continue
+		}
+
+		for _, parent := range parents {
 			children, ok := t.parentFlatChildren.Get(parent)
 			if !ok {
 				children = datastructures.NewSparseSet[ecs.EntityID]()
@@ -107,7 +121,12 @@ func (t tool) Remove(ei []ecs.EntityID) {
 		}
 
 		// remove from flat parents array
-		for _, parent := range t.GetOrderedParents(parentComponent) {
+		parents, err := t.GetOrderedParents(parentComponent)
+		if err != nil {
+			t.logger.Warn(err)
+			continue
+		}
+		for _, parent := range parents {
 			children, ok := t.parentFlatChildren.Get(parent)
 			if !ok {
 				continue

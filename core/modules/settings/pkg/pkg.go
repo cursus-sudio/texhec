@@ -30,8 +30,8 @@ func (pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) settings.System {
 		system := internal.NewSystem(
-			ioc.Get[gameassets.GameAssets](c),
 			ioc.Get[logger.Logger](c),
+			ioc.Get[gameassets.GameAssets](c),
 			ioc.Get[ecs.ToolFactory[transform.Tool]](c),
 			ioc.Get[ecs.ToolFactory[render.Tool]](c),
 			ioc.Get[ecs.ToolFactory[ui.Tool]](c),

@@ -24,6 +24,8 @@ type tool struct {
 	posArray              ecs.ComponentsArray[transform.PosComponent]
 	rotationArray         ecs.ComponentsArray[transform.RotationComponent]
 	sizeArray             ecs.ComponentsArray[transform.SizeComponent]
+	maxSizeArray          ecs.ComponentsArray[transform.MaxSizeComponent]
+	minSizeArray          ecs.ComponentsArray[transform.MinSizeComponent]
 	pivotPointArray       ecs.ComponentsArray[transform.PivotPointComponent]
 	parentMaskArray       ecs.ComponentsArray[transform.ParentComponent]
 	parentPivotPointArray ecs.ComponentsArray[transform.ParentPivotPointComponent]
@@ -59,6 +61,8 @@ func NewTransformTool(
 			ecs.GetComponentsArray[transform.PosComponent](w),
 			ecs.GetComponentsArray[transform.RotationComponent](w),
 			ecs.GetComponentsArray[transform.SizeComponent](w),
+			ecs.GetComponentsArray[transform.MaxSizeComponent](w),
+			ecs.GetComponentsArray[transform.MinSizeComponent](w),
 			ecs.GetComponentsArray[transform.PivotPointComponent](w),
 			ecs.GetComponentsArray[transform.ParentComponent](w),
 			ecs.GetComponentsArray[transform.ParentPivotPointComponent](w),

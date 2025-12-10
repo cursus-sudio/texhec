@@ -13,6 +13,8 @@ type transaction struct {
 	posTransaction              ecs.ComponentsArrayTransaction[transform.PosComponent]
 	rotationTransaction         ecs.ComponentsArrayTransaction[transform.RotationComponent]
 	sizeTransaction             ecs.ComponentsArrayTransaction[transform.SizeComponent]
+	maxSizeTransaction          ecs.ComponentsArrayTransaction[transform.MaxSizeComponent]
+	minSizeTransaction          ecs.ComponentsArrayTransaction[transform.MinSizeComponent]
 	pivotPointTransaction       ecs.ComponentsArrayTransaction[transform.PivotPointComponent]
 	parentMaskTransaction       ecs.ComponentsArrayTransaction[transform.ParentComponent]
 	parentPivotPointTransaction ecs.ComponentsArrayTransaction[transform.ParentPivotPointComponent]
@@ -27,6 +29,8 @@ func newTransformTransaction(
 		tool.posArray.Transaction(),
 		tool.rotationArray.Transaction(),
 		tool.sizeArray.Transaction(),
+		tool.maxSizeArray.Transaction(),
+		tool.minSizeArray.Transaction(),
 		tool.pivotPointArray.Transaction(),
 		tool.parentMaskArray.Transaction(),
 		tool.parentPivotPointArray.Transaction(),

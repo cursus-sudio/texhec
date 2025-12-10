@@ -173,6 +173,29 @@ func (t *object) Init() {
 				size.Size[2] * relativeParentSize[2],
 			}
 
+			if maxSize, err := t.maxSize.Get(); err == nil {
+				if maxSize.Size[0] != 0 && size.Size[0] > maxSize.Size[0] {
+					size.Size[0] = maxSize.Size[0]
+				}
+				if maxSize.Size[1] != 0 && size.Size[1] > maxSize.Size[1] {
+					size.Size[1] = maxSize.Size[1]
+				}
+				if maxSize.Size[2] != 0 && size.Size[2] > maxSize.Size[2] {
+					size.Size[2] = maxSize.Size[2]
+				}
+			}
+			if minSize, err := t.minSize.Get(); err == nil {
+				if minSize.Size[0] != 0 && size.Size[0] < minSize.Size[0] {
+					size.Size[0] = minSize.Size[0]
+				}
+				if minSize.Size[1] != 0 && size.Size[1] < minSize.Size[1] {
+					size.Size[1] = minSize.Size[1]
+				}
+				if minSize.Size[2] != 0 && size.Size[2] < minSize.Size[2] {
+					size.Size[2] = minSize.Size[2]
+				}
+			}
+
 			return size, nil
 		},
 		func(absoluteSize transform.SizeComponent) {

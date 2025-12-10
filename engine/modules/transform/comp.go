@@ -26,6 +26,9 @@ type PosComponent struct{ Pos mgl32.Vec3 }
 type RotationComponent struct{ Rotation mgl32.Quat }
 type SizeComponent struct{ Size mgl32.Vec3 }
 
+type MaxSizeComponent SizeComponent // refers to absolute size
+type MinSizeComponent SizeComponent // refers to absolute size
+
 // pivot refers to object center.
 // default center is (.5, .5, .5).
 // each axis value should be between 0 and 1.
@@ -41,6 +44,8 @@ type ParentPivotPointComponent PivotPointComponent
 func NewPos(x, y, z float32) PosComponent               { return PosComponent{mgl32.Vec3{x, y, z}} }
 func NewRotation(rotation mgl32.Quat) RotationComponent { return RotationComponent{rotation} }
 func NewSize(x, y, z float32) SizeComponent             { return SizeComponent{mgl32.Vec3{x, y, z}} }
+func NewMaxSize(x, y, z float32) MaxSizeComponent       { return MaxSizeComponent{mgl32.Vec3{x, y, z}} }
+func NewMinSize(x, y, z float32) MinSizeComponent       { return MinSizeComponent{mgl32.Vec3{x, y, z}} }
 func NewPivotPoint(x, y, z float32) PivotPointComponent {
 	return PivotPointComponent{mgl32.Vec3{x, y, z}}
 }

@@ -14,7 +14,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"strings"
 	"sync"
 
 	"github.com/ogiusek/events"
@@ -234,8 +233,6 @@ func (t Tool) OnTransparentEvent(event any) {
 	conn.Send(clienttypes.TransparentEventDTO{Event: event})
 }
 
-// func (t Tool) On
-
 func (t Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
 	conn := t.getConnection()
 	if conn == nil {
@@ -274,12 +271,6 @@ func (t Tool) ListenSendState(dto servertypes.SendStateDTO) {
 		return
 	}
 	t.predictions = nil
-	stringBuilder := strings.Builder{}
-	stringBuilder.WriteString("\nentities:\n")
-	// for uuid, entity := range dto.State.Entities {
-	// 	stringBuilder.WriteString(fmt.Sprintf("- %v: %v\n", uuid.String(), entity))
-	// }
-	// t.logger.Info(stringBuilder.String())
 	t.stateTool.ApplyState(dto.State)
 }
 

@@ -72,7 +72,7 @@ func (pkg) Assets(b ioc.Builder) {
 			if err != nil {
 				return nil, err
 			}
-			audio := audio.NewAudioAsset(chunk)
+			audio := audio.NewAudioAsset(chunk, source)
 			return audio, nil
 		})
 

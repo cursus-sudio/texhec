@@ -115,18 +115,18 @@ func (s system) Render(parent ecs.EntityID) error {
 	// click
 
 	// changes
-	textEntity := s.world.NewEntity()
-	hierarchyTransaction.SaveComponent(textEntity, hierarchy.NewParent(parent))
-	inheritGroupsTransaction.SaveComponent(textEntity, groups.InheritGroupsComponent{})
+	labelEntity := s.world.NewEntity()
+	hierarchyTransaction.SaveComponent(labelEntity, hierarchy.NewParent(parent))
+	inheritGroupsTransaction.SaveComponent(labelEntity, groups.InheritGroupsComponent{})
 
-	labelTransform := transformTransaction.GetObject(textEntity)
+	labelTransform := transformTransaction.GetObject(labelEntity)
 	labelTransform.Parent().Set(transform.NewParent(transform.RelativePos | transform.RelativeSizeX))
 	labelTransform.ParentPivotPoint().Set(transform.NewParentPivotPoint(.5, .5, 1))
 	labelTransform.PivotPoint().Set(transform.NewPivotPoint(.5, .5, 0))
 	labelTransform.Pos().Set(transform.NewPos(0, 25, 0))
 	labelTransform.Size().Set(transform.NewSize(1, 50, 1))
 
-	labelText := textTransaction.GetObject(textEntity)
+	labelText := textTransaction.GetObject(labelEntity)
 	labelText.Text().Set(text.TextComponent{Text: "SETTINGS"})
 	labelText.FontSize().Set(text.FontSizeComponent{FontSize: 25})
 	labelText.TextAlign().Set(text.TextAlignComponent{Vertical: .5, Horizontal: .5})
@@ -150,6 +150,8 @@ func (s system) Render(parent ecs.EntityID) error {
 		inheritGroupsTransaction.SaveComponent(btnEntity, groups.InheritGroupsComponent{})
 
 		btnTransform := transformTransaction.GetObject(btnEntity)
+		x, y, z := s.gameAssets.Hud.BtnAspectRatio.Elem()
+		btnTransform.AspectRatio().Set(transform.NewAspectRatio(x, y, z, transform.PrimaryAxisX))
 		btnTransform.Parent().Set(transform.NewParent(transform.RelativePos | transform.RelativeSizeX))
 		btnTransform.ParentPivotPoint().Set(transform.NewParentPivotPoint(.5, .5, 1))
 		btnTransform.PivotPoint().Set(transform.NewPivotPoint(.5, .5, 0))

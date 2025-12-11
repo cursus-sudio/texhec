@@ -127,30 +127,20 @@ func (t object) ApplyMinMaxSize(size *transform.SizeComponent) {
 	}
 }
 
-func (t object) ApplyAspectRatio(size *transform.SizeComponent) {
-	ratio, err := t.aspectRatio.Get()
-	if err != nil {
-		return
-	}
+// its used by full ApplyAspectRatio method.
+// ignores min and max size.
+// also concludes that aspect ratio is verified.
+func (t object) getAspectRatio(size transform.SizeComponent, ratio transform.AspectRatioComponent) transform.SizeComponent {
 	var base float32
 	switch ratio.PrimaryAxis {
 	case transform.PrimaryAxisX:
-		if ratio.AspectRatio[0] == 0 {
-			return
-		}
 		base = size.Size[0] / ratio.AspectRatio[0]
 	case transform.PrimaryAxisY:
-		if ratio.AspectRatio[1] == 0 {
-			return
-		}
 		base = size.Size[1] / ratio.AspectRatio[1]
 	case transform.PrimaryAxisZ:
-		if ratio.AspectRatio[2] == 0 {
-			return
-		}
 		base = size.Size[2] / ratio.AspectRatio[2]
 	default:
-		return
+		return size
 	}
 	if ratio.AspectRatio[0] != 0 {
 		size.Size[0] = base * ratio.AspectRatio[0]
@@ -161,6 +151,73 @@ func (t object) ApplyAspectRatio(size *transform.SizeComponent) {
 	if ratio.AspectRatio[2] != 0 {
 		size.Size[2] = base * ratio.AspectRatio[2]
 	}
+	return size
+}
+
+// integrates min and max size
+func (t object) ApplyAspectRatio(size *transform.SizeComponent) {
+	ratio, err := t.aspectRatio.Get()
+	if err != nil {
+		return
+	}
+	if ratio.PrimaryAxis == 0 || ratio.PrimaryAxis > 3 || ratio.AspectRatio[ratio.PrimaryAxis-1] == 0 {
+		return
+	}
+	sizeRatio := t.getAspectRatio(*size, ratio)
+	if maxSize, err := t.maxSize.Get(); err == nil {
+		for i := 0; i < 3; i++ {
+			if maxSize.Size[i] == 0 {
+				maxSize.Size[i] = sizeRatio.Size[i]
+			}
+		}
+		maxSizeRatio := ratio
+
+		primaryAxisIndex := -1
+		for i := 0; i < 3; i++ {
+			if maxSize.Size[i] != 0 && maxSizeRatio.AspectRatio[i] != 0 &&
+				(primaryAxisIndex == -1 || maxSizeRatio.AspectRatio[primaryAxisIndex] > maxSizeRatio.AspectRatio[i]) {
+				primaryAxisIndex = i
+			}
+		}
+		if primaryAxisIndex != -1 {
+			maxSizeRatio.PrimaryAxis = transform.PrimaryAxis(primaryAxisIndex + 1) // +1 because 0 isn't an axis
+			maxSize = transform.MaxSizeComponent(
+				t.getAspectRatio(transform.SizeComponent(maxSize), maxSizeRatio),
+			)
+			for i := 0; i < 3; i++ {
+				if maxSize.Size[i] >= sizeRatio.Size[i] {
+					continue
+				}
+				sizeRatio = transform.SizeComponent(maxSize)
+				break
+			}
+		}
+	}
+	if minSize, err := t.minSize.Get(); err == nil {
+		minSizeRatio := ratio
+
+		primaryAxisIndex := -1
+		for i := 0; i < 3; i++ {
+			if minSize.Size[i] != 0 && minSizeRatio.AspectRatio[i] != 0 &&
+				(primaryAxisIndex == -1 || minSizeRatio.AspectRatio[primaryAxisIndex] < minSizeRatio.AspectRatio[i]) {
+				primaryAxisIndex = i
+			}
+		}
+		if primaryAxisIndex != -1 {
+			minSizeRatio.PrimaryAxis = transform.PrimaryAxis(primaryAxisIndex + 1) // +1 because 0 isn't an axis
+			minSize = transform.MinSizeComponent(
+				t.getAspectRatio(transform.SizeComponent(minSize), minSizeRatio),
+			)
+			for i := 0; i < 3; i++ {
+				if minSize.Size[i] <= sizeRatio.Size[i] {
+					continue
+				}
+				sizeRatio = transform.SizeComponent(minSize)
+				break
+			}
+		}
+	}
+	*size = sizeRatio
 }
 
 //
@@ -233,8 +290,8 @@ func (t *object) Init() {
 				size.Size[1] * relativeParentSize[1],
 				size.Size[2] * relativeParentSize[2],
 			}
-			t.ApplyMinMaxSize(&size)
 			t.ApplyAspectRatio(&size)
+			t.ApplyMinMaxSize(&size)
 
 			return size, nil
 		},

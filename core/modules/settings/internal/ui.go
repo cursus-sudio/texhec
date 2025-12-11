@@ -15,6 +15,7 @@ import (
 	"engine/modules/scenes"
 	"engine/modules/text"
 	"engine/modules/transform"
+	"engine/services/assets"
 	"engine/services/ecs"
 	"engine/services/logger"
 
@@ -25,9 +26,11 @@ import (
 // 2. quit button
 
 type system struct {
+	assets     assets.Assets
 	gameAssets gameassets.GameAssets
 
-	world ecs.World
+	logger logger.Logger
+	world  ecs.World
 
 	uiTool        ui.Tool
 	transformTool transform.Tool
@@ -45,6 +48,7 @@ type system struct {
 }
 
 func NewSystem(
+	assets assets.Assets,
 	logger logger.Logger,
 	gameAssets gameassets.GameAssets,
 	transformToolFactory ecs.ToolFactory[transform.Tool],
@@ -54,8 +58,10 @@ func NewSystem(
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(world ecs.World) error {
 		s := system{
+			assets,
 			gameAssets,
 
+			logger,
 			world,
 			uiToolFactory.Build(world),
 			transformToolFactory.Build(world),
@@ -142,6 +148,12 @@ func (s system) Render(parent ecs.EntityID) error {
 		{"QUIT", scenes.NewChangeSceneEvent(gamescenes.MenuID)},
 	}
 
+	btnAsset, err := assets.GetAsset[render.TextureAsset](s.assets, s.gameAssets.Hud.Btn)
+	if err != nil {
+		return err
+	}
+	btnAspectRatio := btnAsset.AspectRatio()
+
 	for i, btn := range btns {
 		var height float32 = 50
 		var margin float32 = 10
@@ -150,12 +162,11 @@ func (s system) Render(parent ecs.EntityID) error {
 		inheritGroupsTransaction.SaveComponent(btnEntity, groups.InheritGroupsComponent{})
 
 		btnTransform := transformTransaction.GetObject(btnEntity)
-		x, y, z := s.gameAssets.Hud.BtnAspectRatio.Elem()
-		btnTransform.AspectRatio().Set(transform.NewAspectRatio(x, y, z, transform.PrimaryAxisX))
+		btnTransform.AspectRatio().Set(transform.NewAspectRatio(float32(btnAspectRatio.Dx()), float32(btnAspectRatio.Dy()), 0, transform.PrimaryAxisX))
 		btnTransform.Parent().Set(transform.NewParent(transform.RelativePos | transform.RelativeSizeX))
 		btnTransform.ParentPivotPoint().Set(transform.NewParentPivotPoint(.5, .5, 1))
 		btnTransform.PivotPoint().Set(transform.NewPivotPoint(.5, .5, 0))
-		btnTransform.MaxSize().Set(transform.NewMaxSize(300, 0, 0))
+		btnTransform.MaxSize().Set(transform.NewMaxSize(0, height+margin-1, 0))
 		btnTransform.Pos().Set(transform.NewPos(0, float32(-i)*(height+margin)-25, 0))
 		btnTransform.Size().Set(transform.NewSize(1, height, 1))
 

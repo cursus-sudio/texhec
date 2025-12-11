@@ -13,7 +13,9 @@ import (
 	scenessys "engine/modules/scenes"
 	"engine/modules/text"
 	"engine/modules/transform"
+	"engine/services/assets"
 	"engine/services/ecs"
+	"engine/services/logger"
 	"engine/services/scenes"
 	"slices"
 	"strings"
@@ -31,6 +33,8 @@ func Package() ioc.Pkg {
 func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.MenuBuilder) gamescenes.MenuBuilder {
 		gameAssets := ioc.Get[gameassets.GameAssets](c)
+		assetsService := ioc.Get[assets.Assets](c)
+		logger := ioc.Get[logger.Logger](c)
 		b.OnLoad(func(world ecs.World) {
 			cameraEntity := world.NewEntity()
 			ecs.SaveComponent(world, cameraEntity, camera.NewOrtho(-1000, 1000))
@@ -81,12 +85,18 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			}
 			slices.Reverse(buttons)
 
+			btnAsset, err := assets.GetAsset[render.TextureAsset](assetsService, gameAssets.Hud.Btn)
+			if err != nil {
+				logger.Warn(err)
+				return
+			}
+			btnAspectRatio := btnAsset.AspectRatio()
+
 			for i, button := range buttons {
 				btn := world.NewEntity()
 				normalizedIndex := float32(i) / (float32(len(buttons)) - 1)
-				ecs.SaveComponent(world, btn, transform.NewSize(150, 50, 2))
-				x, y, z := gameAssets.Hud.BtnAspectRatio.Elem()
-				ecs.SaveComponent(world, btn, transform.NewAspectRatio(x, y, z, transform.PrimaryAxisX))
+				ecs.SaveComponent(world, btn, transform.NewSize(150, 50, 1))
+				ecs.SaveComponent(world, btn, transform.NewAspectRatio(float32(btnAspectRatio.Dx()), float32(btnAspectRatio.Dy()), 0, transform.PrimaryAxisX))
 				ecs.SaveComponent(world, btn, hierarchy.NewParent(buttonArea))
 				ecs.SaveComponent(world, btn, transform.NewParent(transform.RelativePos))
 				ecs.SaveComponent(world, btn, transform.NewParentPivotPoint(.5, normalizedIndex, .5))

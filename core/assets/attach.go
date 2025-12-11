@@ -41,9 +41,9 @@ type GameAssets struct {
 }
 
 type HudAssets struct {
-	Btn            assets.AssetID `path:"hud/btn.png"`
-	BtnAspectRatio mgl32.Vec3
-	Settings       assets.AssetID `path:"hud/settings.png"`
+	Btn assets.AssetID `path:"hud/btn.png"`
+	// BtnAspectRatio mgl32.Vec3
+	Settings assets.AssetID `path:"hud/settings.png"`
 }
 
 type TileAssets struct {
@@ -92,8 +92,7 @@ func (pkg) Assets(b ioc.Builder) {
 			if !strings.Contains(string(id), "tiles") {
 				img = TrimTransparentBackground(img)
 			}
-			asset := render.NewTextureStorageAsset(img)
-			return asset, nil
+			return render.NewTextureStorageAsset(img)
 		})
 
 		b.RegisterExtension("ttf", func(id assets.AssetID) (any, error) {
@@ -147,7 +146,7 @@ func (pkg) Assets(b ioc.Builder) {
 
 		gameAssets := GameAssets{}
 		logger.Warn(assetsService.InitializeProperties(&gameAssets))
-		gameAssets.Hud.BtnAspectRatio = mgl32.Vec3{33, 13}
+		// gameAssets.Hud.BtnAspectRatio = mgl32.Vec3{33, 13}
 		return gameAssets
 	})
 

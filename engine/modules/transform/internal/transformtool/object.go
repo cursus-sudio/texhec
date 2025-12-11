@@ -25,6 +25,7 @@ type object struct {
 	maxSize ecs.EntityComponent[transform.MaxSizeComponent]
 	minSize ecs.EntityComponent[transform.MinSizeComponent]
 
+	aspectRatio      ecs.EntityComponent[transform.AspectRatioComponent]
 	pivotPoint       ecs.EntityComponent[transform.PivotPointComponent]
 	parentMask       ecs.EntityComponent[transform.ParentComponent]
 	parentPivotPoint ecs.EntityComponent[transform.ParentPivotPointComponent]
@@ -47,6 +48,7 @@ func newEntityTransform(
 		maxSize: t.maxSizeTransaction.GetEntityComponent(entity),
 		minSize: t.minSizeTransaction.GetEntityComponent(entity),
 
+		aspectRatio:      t.aspectRatioTransaction.GetEntityComponent(entity),
 		pivotPoint:       t.pivotPointTransaction.GetEntityComponent(entity),
 		parentMask:       t.parentMaskTransaction.GetEntityComponent(entity),
 		parentPivotPoint: t.parentPivotPointTransaction.GetEntityComponent(entity),
@@ -74,6 +76,9 @@ func (t object) AbsoluteSize() ecs.EntityComponent[transform.SizeComponent] {
 func (t object) MaxSize() ecs.EntityComponent[transform.MaxSizeComponent] { return t.maxSize }
 func (t object) MinSize() ecs.EntityComponent[transform.MinSizeComponent] { return t.minSize }
 
+func (t object) AspectRatio() ecs.EntityComponent[transform.AspectRatioComponent] {
+	return t.aspectRatio
+}
 func (t object) PivotPoint() ecs.EntityComponent[transform.PivotPointComponent] {
 	return t.pivotPoint
 }

@@ -102,6 +102,67 @@ func (t object) GetRelativeParentSize() mgl32.Vec3 {
 	return size
 }
 
+func (t object) ApplyMinMaxSize(size *transform.SizeComponent) {
+	if maxSize, err := t.maxSize.Get(); err == nil {
+		if maxSize.Size[0] != 0 && size.Size[0] > maxSize.Size[0] {
+			size.Size[0] = maxSize.Size[0]
+		}
+		if maxSize.Size[1] != 0 && size.Size[1] > maxSize.Size[1] {
+			size.Size[1] = maxSize.Size[1]
+		}
+		if maxSize.Size[2] != 0 && size.Size[2] > maxSize.Size[2] {
+			size.Size[2] = maxSize.Size[2]
+		}
+	}
+	if minSize, err := t.minSize.Get(); err == nil {
+		if minSize.Size[0] != 0 && size.Size[0] < minSize.Size[0] {
+			size.Size[0] = minSize.Size[0]
+		}
+		if minSize.Size[1] != 0 && size.Size[1] < minSize.Size[1] {
+			size.Size[1] = minSize.Size[1]
+		}
+		if minSize.Size[2] != 0 && size.Size[2] < minSize.Size[2] {
+			size.Size[2] = minSize.Size[2]
+		}
+	}
+}
+
+func (t object) ApplyAspectRatio(size *transform.SizeComponent) {
+	ratio, err := t.aspectRatio.Get()
+	if err != nil {
+		return
+	}
+	var base float32
+	switch ratio.PrimaryAxis {
+	case transform.PrimaryAxisX:
+		if ratio.AspectRatio[0] == 0 {
+			return
+		}
+		base = size.Size[0] / ratio.AspectRatio[0]
+	case transform.PrimaryAxisY:
+		if ratio.AspectRatio[1] == 0 {
+			return
+		}
+		base = size.Size[1] / ratio.AspectRatio[1]
+	case transform.PrimaryAxisZ:
+		if ratio.AspectRatio[2] == 0 {
+			return
+		}
+		base = size.Size[2] / ratio.AspectRatio[2]
+	default:
+		return
+	}
+	if ratio.AspectRatio[0] != 0 {
+		size.Size[0] = base * ratio.AspectRatio[0]
+	}
+	if ratio.AspectRatio[1] != 0 {
+		size.Size[1] = base * ratio.AspectRatio[1]
+	}
+	if ratio.AspectRatio[2] != 0 {
+		size.Size[2] = base * ratio.AspectRatio[2]
+	}
+}
+
 //
 
 func (t *object) Init() {
@@ -172,29 +233,8 @@ func (t *object) Init() {
 				size.Size[1] * relativeParentSize[1],
 				size.Size[2] * relativeParentSize[2],
 			}
-
-			if maxSize, err := t.maxSize.Get(); err == nil {
-				if maxSize.Size[0] != 0 && size.Size[0] > maxSize.Size[0] {
-					size.Size[0] = maxSize.Size[0]
-				}
-				if maxSize.Size[1] != 0 && size.Size[1] > maxSize.Size[1] {
-					size.Size[1] = maxSize.Size[1]
-				}
-				if maxSize.Size[2] != 0 && size.Size[2] > maxSize.Size[2] {
-					size.Size[2] = maxSize.Size[2]
-				}
-			}
-			if minSize, err := t.minSize.Get(); err == nil {
-				if minSize.Size[0] != 0 && size.Size[0] < minSize.Size[0] {
-					size.Size[0] = minSize.Size[0]
-				}
-				if minSize.Size[1] != 0 && size.Size[1] < minSize.Size[1] {
-					size.Size[1] = minSize.Size[1]
-				}
-				if minSize.Size[2] != 0 && size.Size[2] < minSize.Size[2] {
-					size.Size[2] = minSize.Size[2]
-				}
-			}
+			t.ApplyMinMaxSize(&size)
+			t.ApplyAspectRatio(&size)
 
 			return size, nil
 		},

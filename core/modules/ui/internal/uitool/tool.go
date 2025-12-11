@@ -250,3 +250,39 @@ func (t tool) Hide() {
 		t.animationArray.SaveComponent(t.menu, animation.NewAnimationComponent(t.hideAnimation, t.animationDuration))
 	}
 }
+
+// func (t tool) Buttons(buttons ...ui.Button) []ecs.EntityID {
+// 	entities := []ecs.EntityID{}
+//
+// 	btnAsset, err := assets.GetAsset[render.TextureAsset](assetsService, gameAssets.Hud.Btn)
+// 	if err != nil {
+// 		t.logger.Warn(err)
+// 		return
+// 	}
+// 	btnAspectRatio := btnAsset.AspectRatio()
+//
+// 	for i, button := range buttons {
+// 		btn := t.world.NewEntity()
+// 		normalizedIndex := float32(i) / (float32(len(buttons)) - 1)
+// 		ecs.SaveComponent(world, btn, transform.NewSize(150, 50, 1))
+// 		ecs.SaveComponent(world, btn, transform.NewAspectRatio(float32(btnAspectRatio.Dx()), float32(btnAspectRatio.Dy()), 0, transform.PrimaryAxisX))
+// 		ecs.SaveComponent(world, btn, hierarchy.NewParent(buttonArea))
+// 		ecs.SaveComponent(world, btn, transform.NewParent(transform.RelativePos))
+// 		ecs.SaveComponent(world, btn, transform.NewParentPivotPoint(.5, normalizedIndex, .5))
+//
+// 		ecs.SaveComponent(world, btn, render.NewMesh(gameAssets.SquareMesh))
+// 		ecs.SaveComponent(world, btn, render.NewTexture(gameAssets.Hud.Btn))
+// 		ecs.SaveComponent(world, btn, render.NewTextureFrameComponent(1))
+// 		ecs.SaveComponent(world, btn, genericrenderer.PipelineComponent{})
+//
+// 		ecs.SaveComponent(world, btn, inputs.NewMouseLeftClick(button.OnClick))
+// 		ecs.SaveComponent(world, btn, collider.NewCollider(gameAssets.SquareCollider))
+// 		ecs.SaveComponent(world, btn, inputs.KeepSelectedComponent{})
+//
+// 		ecs.SaveComponent(world, btn, text.TextComponent{Text: strings.ToUpper(button.Text)})
+// 		ecs.SaveComponent(world, btn, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+// 		// ecs.SaveComponent(world, btn, text.FontSizeComponent{FontSize: 32})
+// 		ecs.SaveComponent(world, btn, text.FontSizeComponent{FontSize: 24})
+// 	}
+// 	return entities
+// }

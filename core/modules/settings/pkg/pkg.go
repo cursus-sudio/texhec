@@ -8,6 +8,7 @@ import (
 	"engine/modules/render"
 	"engine/modules/text"
 	"engine/modules/transform"
+	"engine/services/assets"
 	"engine/services/codec"
 	"engine/services/ecs"
 	"engine/services/logger"
@@ -30,6 +31,7 @@ func (pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) settings.System {
 		system := internal.NewSystem(
+			ioc.Get[assets.Assets](c),
 			ioc.Get[logger.Logger](c),
 			ioc.Get[gameassets.GameAssets](c),
 			ioc.Get[ecs.ToolFactory[transform.Tool]](c),

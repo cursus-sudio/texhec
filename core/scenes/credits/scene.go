@@ -13,7 +13,9 @@ import (
 	scenessys "engine/modules/scenes"
 	"engine/modules/text"
 	"engine/modules/transform"
+	"engine/services/assets"
 	"engine/services/ecs"
+	"engine/services/logger"
 	"engine/services/scenes"
 	"strings"
 
@@ -30,6 +32,8 @@ func Package() ioc.Pkg {
 func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.CreditsBuilder) gamescenes.CreditsBuilder {
 		gameAssets := ioc.Get[gameassets.GameAssets](c)
+		logger := ioc.Get[logger.Logger](c)
+		assetsService := ioc.Get[assets.Assets](c)
 		b.OnLoad(func(world ecs.World) {
 			cameraEntity := world.NewEntity()
 			ecs.SaveComponent(world, cameraEntity, camera.NewOrtho(-1000, +1000))
@@ -63,7 +67,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world, draggable, transform.NewSize(50, 50, 3))
 			ecs.SaveComponent(world, draggable, render.NewColor(mgl32.Vec4{0, 1, 0, .2}))
 			ecs.SaveComponent(world, draggable, render.NewMesh(gameAssets.SquareMesh))
-			ecs.SaveComponent(world, draggable, render.NewTexture(gameAssets.Tiles.Water))
+			ecs.SaveComponent(world, draggable, render.NewTexture(gameAssets.Hud.Btn))
 			ecs.SaveComponent(world, draggable, genericrenderer.PipelineComponent{})
 
 			ecs.SaveComponent(world, draggable, collider.NewCollider(gameAssets.SquareCollider))
@@ -74,14 +78,22 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			ecs.SaveComponent(world, draggable, text.FontSizeComponent{FontSize: 15})
 			ecs.SaveComponent(world, draggable, text.TextColorComponent{Color: mgl32.Vec4{.5, 0, 1, 1}})
 
+			btnAsset, err := assets.GetAsset[render.TextureAsset](assetsService, gameAssets.Hud.Btn)
+			if err != nil {
+				logger.Warn(err)
+				return
+			}
+			btnAspectRatio := btnAsset.AspectRatio()
+
 			btn := world.NewEntity()
-			ecs.SaveComponent(world, btn, transform.NewSize(500, 50, 2))
+			ecs.SaveComponent(world, btn, transform.NewSize(500, 100, 1))
 			ecs.SaveComponent(world, btn, hierarchy.NewParent(buttonArea))
 			ecs.SaveComponent(world, btn, transform.NewParent(transform.RelativePos))
 			ecs.SaveComponent(world, btn, transform.NewParentPivotPoint(.5, 0, .5))
+			ecs.SaveComponent(world, btn, transform.NewAspectRatio(float32(btnAspectRatio.Dx()), float32(btnAspectRatio.Dy()), 0, transform.PrimaryAxisY))
 
 			ecs.SaveComponent(world, btn, render.NewMesh(gameAssets.SquareMesh))
-			ecs.SaveComponent(world, btn, render.NewTexture(gameAssets.Tiles.Water))
+			ecs.SaveComponent(world, btn, render.NewTexture(gameAssets.Hud.Btn))
 			ecs.SaveComponent(world, btn, genericrenderer.PipelineComponent{})
 
 			ecs.SaveComponent(world, btn, inputs.NewMouseLeftClick(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))

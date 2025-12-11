@@ -32,6 +32,7 @@ type Object interface {
 	MaxSize() ecs.EntityComponent[MaxSizeComponent]
 	MinSize() ecs.EntityComponent[MinSizeComponent]
 
+	AspectRatio() ecs.EntityComponent[AspectRatioComponent]
 	PivotPoint() ecs.EntityComponent[PivotPointComponent]
 
 	Parent() ecs.EntityComponent[ParentComponent]

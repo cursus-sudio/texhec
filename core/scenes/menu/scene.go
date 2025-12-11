@@ -13,7 +13,9 @@ import (
 	scenessys "engine/modules/scenes"
 	"engine/modules/text"
 	"engine/modules/transform"
+	"engine/services/assets"
 	"engine/services/ecs"
+	"engine/services/logger"
 	"engine/services/scenes"
 	"slices"
 	"strings"
@@ -31,6 +33,8 @@ func Package() ioc.Pkg {
 func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.MenuBuilder) gamescenes.MenuBuilder {
 		gameAssets := ioc.Get[gameassets.GameAssets](c)
+		assetsService := ioc.Get[assets.Assets](c)
+		logger := ioc.Get[logger.Logger](c)
 		b.OnLoad(func(world ecs.World) {
 			cameraEntity := world.NewEntity()
 			ecs.SaveComponent(world, cameraEntity, camera.NewOrtho(-1000, 1000))
@@ -81,23 +85,26 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			}
 			slices.Reverse(buttons)
 
+			btnAsset, err := assets.GetAsset[render.TextureAsset](assetsService, gameAssets.Hud.Btn)
+			if err != nil {
+				logger.Warn(err)
+				return
+			}
+			btnAspectRatio := btnAsset.AspectRatio()
+
 			for i, button := range buttons {
 				btn := world.NewEntity()
 				normalizedIndex := float32(i) / (float32(len(buttons)) - 1)
-				ecs.SaveComponent(world, btn, transform.NewSize(500, 50, 2))
+				ecs.SaveComponent(world, btn, transform.NewSize(150, 50, 1))
+				ecs.SaveComponent(world, btn, transform.NewAspectRatio(float32(btnAspectRatio.Dx()), float32(btnAspectRatio.Dy()), 0, transform.PrimaryAxisX))
 				ecs.SaveComponent(world, btn, hierarchy.NewParent(buttonArea))
 				ecs.SaveComponent(world, btn, transform.NewParent(transform.RelativePos))
 				ecs.SaveComponent(world, btn, transform.NewParentPivotPoint(.5, normalizedIndex, .5))
 
 				ecs.SaveComponent(world, btn, render.NewMesh(gameAssets.SquareMesh))
-				ecs.SaveComponent(world, btn, render.NewTexture(gameAssets.Tiles.Water))
+				ecs.SaveComponent(world, btn, render.NewTexture(gameAssets.Hud.Btn))
 				ecs.SaveComponent(world, btn, render.NewTextureFrameComponent(1))
 				ecs.SaveComponent(world, btn, genericrenderer.PipelineComponent{})
-				ecs.SaveComponent(world, btn, animation.NewAnimationComponent(
-					gameassets.ButtonAnimation,
-					time.Second*2,
-				))
-				ecs.SaveComponent(world, btn, animation.NewLoopComponent())
 
 				ecs.SaveComponent(world, btn, inputs.NewMouseLeftClick(button.OnClick))
 				ecs.SaveComponent(world, btn, collider.NewCollider(gameAssets.SquareCollider))
@@ -105,7 +112,8 @@ func (pkg) LoadObjects(b ioc.Builder) {
 
 				ecs.SaveComponent(world, btn, text.TextComponent{Text: strings.ToUpper(button.Text)})
 				ecs.SaveComponent(world, btn, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
-				ecs.SaveComponent(world, btn, text.FontSizeComponent{FontSize: 32})
+				// ecs.SaveComponent(world, btn, text.FontSizeComponent{FontSize: 32})
+				ecs.SaveComponent(world, btn, text.FontSizeComponent{FontSize: 24})
 			}
 		})
 

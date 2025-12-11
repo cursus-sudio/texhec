@@ -2,6 +2,7 @@ package render
 
 import (
 	"engine/services/assets"
+	"errors"
 	"image"
 )
 
@@ -43,20 +44,65 @@ func (c1 TextureFrameComponent) Blend(c2 TextureFrameComponent, mix64 float64) T
 
 //
 
+var (
+	ErrTextureAssetRequiresImages             error = errors.New("texture asset requires images")
+	ErrTextureAssetImagesHasToMatchResolution error = errors.New("images have to have the same resolution")
+)
+
 type TextureAsset interface {
 	Images() []image.Image
+	Res() image.Rectangle
+	AspectRatio() image.Rectangle
 }
 
 type textureAsset struct {
-	images []image.Image
+	images      []image.Image
+	res         image.Rectangle
+	aspectRatio image.Rectangle
+}
+
+// greatestCommonDivisor calculates the Greatest Common Divisor of two integers (a and b)
+func greatestCommonDivisor(a, b int) int {
+	for b != 0 {
+		a, b = b, a%b
+	}
+	return a
 }
 
 func NewTextureStorageAsset(
 	images ...image.Image,
-) TextureAsset {
-	return &textureAsset{
-		images: images,
+) (TextureAsset, error) {
+	if len(images) == 0 {
+		return nil, ErrTextureAssetRequiresImages
 	}
+	var res image.Rectangle
+	for i, img := range images {
+		bounds := img.Bounds()
+		bounds = image.Rect(0, 0, bounds.Dx(), bounds.Dy())
+		if i == 0 {
+			res = bounds
+			continue
+		}
+		if res != bounds {
+			return nil, ErrTextureAssetImagesHasToMatchResolution
+		}
+	}
+
+	aspectRatio := image.Rect(0, 0, res.Dx(), res.Dy())
+	divisor := greatestCommonDivisor(aspectRatio.Max.X, aspectRatio.Max.Y)
+
+	aspectRatio.Max.X /= divisor
+	aspectRatio.Max.Y /= divisor
+
+	asset := &textureAsset{
+		images:      images,
+		res:         res,
+		aspectRatio: aspectRatio,
+	}
+	return asset, nil
 }
 
-func (a *textureAsset) Images() []image.Image { return a.images }
+func (a *textureAsset) Images() []image.Image        { return a.images }
+func (a *textureAsset) Res() image.Rectangle         { return a.res }
+func (a *textureAsset) AspectRatio() image.Rectangle { return a.aspectRatio }
+func (a *textureAsset) Release()                     {}

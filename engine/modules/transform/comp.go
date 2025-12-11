@@ -6,6 +6,7 @@ import (
 
 // components
 
+// parent
 type ParentFlag uint8
 
 const (
@@ -22,12 +23,28 @@ const (
 	RelativeSizeYZ  = RelativeSizeY | RelativeSizeZ
 )
 
+// aspect ratio
+type PrimaryAxis uint8
+
+const (
+	_ PrimaryAxis = iota
+	PrimaryAxisX
+	PrimaryAxisY
+	PrimaryAxisZ
+)
+
 type PosComponent struct{ Pos mgl32.Vec3 }
 type RotationComponent struct{ Rotation mgl32.Quat }
 type SizeComponent struct{ Size mgl32.Vec3 }
 
-type MaxSizeComponent SizeComponent // refers to absolute size
-type MinSizeComponent SizeComponent // refers to absolute size
+type MinSizeComponent SizeComponent // refers to absolute size. 0 means ignore axis
+type MaxSizeComponent SizeComponent // refers to absolute size. 0 means ignore axis
+
+type AspectRatioComponent struct {
+	// 0 means ignore axis
+	AspectRatio mgl32.Vec3
+	PrimaryAxis PrimaryAxis
+}
 
 // pivot refers to object center.
 // default center is (.5, .5, .5).
@@ -44,8 +61,11 @@ type ParentPivotPointComponent PivotPointComponent
 func NewPos(x, y, z float32) PosComponent               { return PosComponent{mgl32.Vec3{x, y, z}} }
 func NewRotation(rotation mgl32.Quat) RotationComponent { return RotationComponent{rotation} }
 func NewSize(x, y, z float32) SizeComponent             { return SizeComponent{mgl32.Vec3{x, y, z}} }
-func NewMaxSize(x, y, z float32) MaxSizeComponent       { return MaxSizeComponent{mgl32.Vec3{x, y, z}} }
 func NewMinSize(x, y, z float32) MinSizeComponent       { return MinSizeComponent{mgl32.Vec3{x, y, z}} }
+func NewMaxSize(x, y, z float32) MaxSizeComponent       { return MaxSizeComponent{mgl32.Vec3{x, y, z}} }
+func NewAspectRatio(x, y, z float32, primaryAxis PrimaryAxis) AspectRatioComponent {
+	return AspectRatioComponent{mgl32.Vec3{x, y, z}, primaryAxis}
+}
 func NewPivotPoint(x, y, z float32) PivotPointComponent {
 	return PivotPointComponent{mgl32.Vec3{x, y, z}}
 }

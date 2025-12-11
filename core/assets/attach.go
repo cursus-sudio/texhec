@@ -22,26 +22,28 @@ import (
 	_ "image/png"
 	"math"
 	"os"
+	"strings"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
 	"github.com/veandco/go-sdl2/mix"
-	"golang.org/x/image/font/gofont/goregular"
 	"golang.org/x/image/font/opentype"
 )
 
 type GameAssets struct {
 	Tiles        TileAssets
-	Ui           UiAssets
+	Hud          HudAssets
 	ExampleAudio assets.AssetID `path:"audio.wav"`
 
 	SquareMesh     assets.AssetID `path:"square mesh"`
 	SquareCollider assets.AssetID `path:"square collider"`
-	FontAsset      assets.AssetID `path:"font_asset"`
+	FontAsset      assets.AssetID `path:"font3.ttf"`
 }
 
-type UiAssets struct {
-	Settings assets.AssetID `path:"ui/settings.png"`
+type HudAssets struct {
+	Btn assets.AssetID `path:"hud/btn.png"`
+	// BtnAspectRatio mgl32.Vec3
+	Settings assets.AssetID `path:"hud/settings.png"`
 }
 
 type TileAssets struct {
@@ -87,7 +89,22 @@ func (pkg) Assets(b ioc.Builder) {
 			}
 
 			img = gtexture.FlipImage(img)
-			asset := render.NewTextureStorageAsset(img)
+			if !strings.Contains(string(id), "tiles") {
+				img = TrimTransparentBackground(img)
+			}
+			return render.NewTextureStorageAsset(img)
+		})
+
+		b.RegisterExtension("ttf", func(id assets.AssetID) (any, error) {
+			source, err := os.ReadFile(string(id))
+			if err != nil {
+				return nil, err
+			}
+			font, err := opentype.Parse(source)
+			if err != nil {
+				return nil, err
+			}
+			asset := text.NewFontFaceAsset(*font)
 			return asset, nil
 		})
 
@@ -119,15 +136,6 @@ func (pkg) Assets(b ioc.Builder) {
 			return asset, nil
 		})
 
-		b.RegisterAsset(gameAssets.FontAsset, func() (any, error) {
-			font, err := opentype.Parse(goregular.TTF)
-			if err != nil {
-				return nil, err
-			}
-			asset := text.NewFontFaceAsset(*font)
-			return asset, nil
-		})
-
 		return b
 	})
 
@@ -138,6 +146,7 @@ func (pkg) Assets(b ioc.Builder) {
 
 		gameAssets := GameAssets{}
 		logger.Warn(assetsService.InitializeProperties(&gameAssets))
+		// gameAssets.Hud.BtnAspectRatio = mgl32.Vec3{33, 13}
 		return gameAssets
 	})
 
@@ -170,7 +179,6 @@ func (pkg) Assets(b ioc.Builder) {
 
 const (
 	ChangeColorsAnimation animation.AnimationID = iota
-	ButtonAnimation
 
 	// game scene events
 	ShowMenuAnimation
@@ -218,26 +226,6 @@ func (pkg) Animations(b ioc.Builder) {
 				1
 			return animation.AnimationState(x)
 		})
-		b.AddAnimation(ButtonAnimation, animation.NewAnimation(
-			[]animation.Event{},
-			[]animation.Transition{
-				animation.NewTransition(
-					render.NewTextureFrameComponent(0),
-					render.NewTextureFrameComponent(.6),
-					LinearEasingFunction,
-				),
-				animation.NewTransition(
-					render.NewColor(mgl32.Vec4{1, 1, 0, 1}),
-					render.NewColor(mgl32.Vec4{1, 1, 1, 1}),
-					MyEasingFunction,
-				).SetStart(0).SetEnd(.5),
-				animation.NewTransition(
-					render.NewColor(mgl32.Vec4{1, 1, 1, 1}),
-					render.NewColor(mgl32.Vec4{1, 1, 0, 1}),
-					MyEasingFunction,
-				).SetStart(.5).SetEnd(1),
-			},
-		))
 		b.AddAnimation(ChangeColorsAnimation, animation.NewAnimation(
 			[]animation.Event{},
 			[]animation.Transition{

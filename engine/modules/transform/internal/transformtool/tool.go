@@ -26,6 +26,7 @@ type tool struct {
 	sizeArray             ecs.ComponentsArray[transform.SizeComponent]
 	maxSizeArray          ecs.ComponentsArray[transform.MaxSizeComponent]
 	minSizeArray          ecs.ComponentsArray[transform.MinSizeComponent]
+	aspectRatioArray      ecs.ComponentsArray[transform.AspectRatioComponent]
 	pivotPointArray       ecs.ComponentsArray[transform.PivotPointComponent]
 	parentMaskArray       ecs.ComponentsArray[transform.ParentComponent]
 	parentPivotPointArray ecs.ComponentsArray[transform.ParentPivotPointComponent]
@@ -63,6 +64,7 @@ func NewTransformTool(
 			ecs.GetComponentsArray[transform.SizeComponent](w),
 			ecs.GetComponentsArray[transform.MaxSizeComponent](w),
 			ecs.GetComponentsArray[transform.MinSizeComponent](w),
+			ecs.GetComponentsArray[transform.AspectRatioComponent](w),
 			ecs.GetComponentsArray[transform.PivotPointComponent](w),
 			ecs.GetComponentsArray[transform.ParentComponent](w),
 			ecs.GetComponentsArray[transform.ParentPivotPointComponent](w),
@@ -84,6 +86,7 @@ func (tool tool) Query(b ecs.LiveQueryBuilder) ecs.LiveQueryBuilder {
 		transform.SizeComponent{},
 		transform.MaxSizeComponent{},
 		transform.MinSizeComponent{},
+		transform.AspectRatioComponent{},
 		transform.PivotPointComponent{},
 		transform.ParentComponent{},
 		transform.ParentPivotPointComponent{},

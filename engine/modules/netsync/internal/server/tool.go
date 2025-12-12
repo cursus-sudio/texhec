@@ -178,22 +178,28 @@ func (t Tool) OnTransparentEvent(event any) {
 	}
 }
 
-func (t Tool) ListenFetchState(client ecs.EntityID, dto clienttypes.FetchStateDTO) {
+func (t Tool) ListenFetchState(entity ecs.EntityID, dto clienttypes.FetchStateDTO) {
 	state := t.stateTool.GetState()
-	t.sendVisible(client, nil, state)
+	t.sendVisible(entity, nil, state)
 }
 
-func (t Tool) ListenEmitEvent(client ecs.EntityID, dto clienttypes.EmitEventDTO) {
-	// TODO
-	// is this event even present in config ?
-	// can client do that ?
-	// if yes than do that
+func (t Tool) ListenEmitEvent(entity ecs.EntityID, dto clienttypes.EmitEventDTO) {
+	event, err := t.Config.Auth(entity, dto.Event)
+	if err != nil {
+		t.logger.Warn(err)
+		return
+	}
 	t.recordedEventUUID = &dto.ID
-	events.EmitAny(t.world.Events(), dto.Event)
+	events.EmitAny(t.world.Events(), event)
 }
 
-func (t Tool) ListenTransparentEvent(client ecs.EntityID, dto clienttypes.TransparentEventDTO) {
-	events.EmitAny(t.world.Events(), dto.Event)
+func (t Tool) ListenTransparentEvent(entity ecs.EntityID, dto clienttypes.TransparentEventDTO) {
+	event, err := t.Config.Auth(entity, dto.Event)
+	if err != nil {
+		t.logger.Warn(err)
+		return
+	}
+	events.EmitAny(t.world.Events(), event)
 }
 
 // private methods

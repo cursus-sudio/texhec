@@ -165,7 +165,8 @@ func NewTool(
 
 // public methods
 
-func (t Tool) BeforeEvent(event any) {
+// doesn't send event to server
+func (t Tool) BeforeEventRecord(event any) {
 	clientConn := t.getConnection()
 	if clientConn == nil {
 		return
@@ -192,6 +193,14 @@ func (t Tool) BeforeEvent(event any) {
 			Event: event,
 		},
 	}
+}
+
+func (t Tool) BeforeEvent(event any) {
+	clientConn := t.getConnection()
+	if clientConn == nil {
+		return
+	}
+	t.BeforeEventRecord(event)
 
 	dto := clienttypes.EmitEventDTO(t.recordedPrediction.PredictedEvent)
 	if err := clientConn.Send(dto); err != nil {

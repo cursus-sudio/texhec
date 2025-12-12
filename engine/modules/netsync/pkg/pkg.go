@@ -70,12 +70,18 @@ func (pkg pkg) Register(b ioc.Builder) {
 			for _, listen := range clientTool.ListenToEvents {
 				listen(w.EventsBuilder(), clientTool.BeforeEvent)
 			}
+			for _, listen := range clientTool.ListenToSimulatedEvents {
+				listen(w.EventsBuilder(), clientTool.BeforeEventRecord)
+			}
 			for _, listen := range clientTool.ListenToTransparentEvents {
 				listen(w.EventsBuilder(), clientTool.OnTransparentEvent)
 			}
 
 			serverTool := serverToolFactory.Build(w)
 			for _, listen := range serverTool.ListenToEvents {
+				listen(w.EventsBuilder(), serverTool.BeforeEvent)
+			}
+			for _, listen := range clientTool.ListenToSimulatedEvents {
 				listen(w.EventsBuilder(), serverTool.BeforeEvent)
 			}
 			for _, listen := range serverTool.ListenToTransparentEvents {
@@ -92,9 +98,15 @@ func (pkg pkg) Register(b ioc.Builder) {
 			for _, listen := range clientTool.ListenToEvents {
 				listen(w.EventsBuilder(), clientTool.AfterEvent)
 			}
+			for _, listen := range clientTool.ListenToSimulatedEvents {
+				listen(w.EventsBuilder(), clientTool.AfterEvent)
+			}
 
 			serverTool := serverToolFactory.Build(w)
 			for _, listen := range serverTool.ListenToEvents {
+				listen(w.EventsBuilder(), serverTool.AfterEvent)
+			}
+			for _, listen := range serverTool.ListenToSimulatedEvents {
 				listen(w.EventsBuilder(), serverTool.AfterEvent)
 			}
 			return nil

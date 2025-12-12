@@ -25,6 +25,8 @@ type locations struct {
 }
 
 type textRenderer struct {
+	*textRendererRegister
+
 	world                ecs.World
 	groupsArray          ecs.ComponentsArray[groups.GroupsComponent]
 	colorArray           ecs.ComponentsArray[text.TextColorComponent]
@@ -45,6 +47,7 @@ type textRenderer struct {
 	fontKeys     FontKeys
 	fontsBatches datastructures.SparseArray[FontKey, fontBatch]
 
+	dirtyEntities  datastructures.SparseSet[ecs.EntityID]
 	layoutsBatches datastructures.SparseArray[ecs.EntityID, layoutBatch]
 }
 
@@ -135,6 +138,23 @@ func (s *textRenderer) ensureFontExists(asset assets.AssetID) error {
 
 func (s *textRenderer) Listen(rendersys.RenderEvent) {
 	s.program.Use()
+
+	for _, entity := range s.dirtyEntities.GetIndices() {
+		s.dirtyEntities.Remove(entity)
+
+		if prevBatch, ok := s.layoutsBatches.Get(entity); ok {
+			prevBatch.Release()
+			s.layoutsBatches.Remove(entity)
+		}
+
+		layout, err := s.layoutServiceFactory.New(s.world).EntityLayout(entity)
+		if err != nil {
+			continue
+		}
+
+		batch := NewLayoutBatch(s.vboFactory, layout)
+		s.layoutsBatches.Set(entity, batch)
+	}
 
 	for _, entity := range s.layoutsBatches.GetIndices() {
 		layout, _ := s.layoutsBatches.Get(entity)

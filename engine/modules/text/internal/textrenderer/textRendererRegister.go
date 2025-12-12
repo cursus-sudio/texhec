@@ -112,6 +112,8 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 
 	transformTool := f.transformToolFactory.Build(w)
 	renderer := textRenderer{
+		textRendererRegister: f,
+
 		world:                w,
 		colorArray:           ecs.GetComponentsArray[text.TextColorComponent](w),
 		groupsArray:          ecs.GetComponentsArray[groups.GroupsComponent](w),
@@ -132,6 +134,7 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 		fontKeys:     f.fontsKeys,
 		fontsBatches: datastructures.NewSparseArray[FontKey, fontBatch](),
 
+		dirtyEntities:  datastructures.NewSparseSet[ecs.EntityID](),
 		layoutsBatches: datastructures.NewSparseArray[ecs.EntityID, layoutBatch](),
 	}
 
@@ -139,34 +142,15 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 		Require(text.TextComponent{}).
 		Build()
 
-	addOrChangeListener := func(ei []ecs.EntityID) {
+	onMod := func(ei []ecs.EntityID) {
 		for _, entity := range ei {
-			if prevBatch, ok := renderer.layoutsBatches.Get(entity); ok {
-				prevBatch.Release()
-				renderer.layoutsBatches.Remove(entity)
-			}
-
-			layout, err := f.layoutServiceFactory.New(w).EntityLayout(entity)
-			if err != nil {
-				continue
-			}
-
-			batch := NewLayoutBatch(f.vboFactory, layout)
-			renderer.layoutsBatches.Set(entity, batch)
-		}
-	}
-	rmListener := func(ei []ecs.EntityID) {
-		for _, entity := range ei {
-			if prevBatch, ok := renderer.layoutsBatches.Get(entity); ok {
-				prevBatch.Release()
-			}
-			renderer.layoutsBatches.Remove(entity)
+			renderer.dirtyEntities.Add(entity)
 		}
 	}
 
-	query.OnAdd(addOrChangeListener)
-	query.OnChange(addOrChangeListener)
-	query.OnRemove(rmListener)
+	query.OnAdd(onMod)
+	query.OnChange(onMod)
+	query.OnRemove(onMod)
 
 	arrays := []ecs.AnyComponentArray{
 		ecs.GetComponentsArray[text.BreakComponent](w),
@@ -177,9 +161,9 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 	}
 
 	for _, array := range arrays {
-		array.OnAdd(addOrChangeListener)
-		array.OnChange(addOrChangeListener)
-		array.OnRemove(rmListener)
+		array.OnAdd(onMod)
+		array.OnChange(onMod)
+		array.OnRemove(onMod)
 	}
 
 	fontArray := ecs.GetComponentsArray[text.FontFamilyComponent](w)

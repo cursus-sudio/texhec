@@ -232,6 +232,11 @@ func frontendDic(
 			netsyncpkg.AddTransparentEvent[tile.TileClickEvent](config)
 			netsyncpkg.AddTransparentEvent[ui.HideUiEvent](config)
 			// syncpkg.AddEvent[frames.FrameEvent](config)
+
+			// netsyncpkg.AddEventAuthorization(config, func(c inputs.DragEvent) error {
+			// 	return errors.New("no")
+			// })
+
 			return config
 		}()),
 

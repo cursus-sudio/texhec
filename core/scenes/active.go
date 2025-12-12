@@ -119,6 +119,7 @@ func (pkg) Register(b ioc.Builder) {
 			ecs.RegisterSystems(world,
 				ioc.Get[netsync.StartSystem](c),
 				// update {
+				ioc.Get[connection.System](c),
 
 				// inputs
 				ioc.Get[inputs.System](c),
@@ -129,7 +130,6 @@ func (pkg) Register(b ioc.Builder) {
 				ioc.Get[collider.System](c),
 				ioc.Get[drag.System](c),
 				ioc.Get[groups.System](c),
-				ioc.Get[connection.System](c),
 				temporaryInlineSystems,
 
 				ioc.Get[tile.System](c),

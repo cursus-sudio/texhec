@@ -1,6 +1,8 @@
 package netsync
 
-import "engine/services/ecs"
+import (
+	"engine/services/ecs"
+)
 
 type StartSystem ecs.SystemRegister
 type StopSystem ecs.SystemRegister
@@ -25,3 +27,8 @@ type ClientComponent struct {
 // - if matches with predicted event we're good
 // - if doesn't match we revert latest changes and push event before predicted event
 // - if we have to many predicted events than we remove them all
+
+// event pointer should implement it
+type AuthorizedEvent interface {
+	SetConnection(ecs.EntityID)
+}

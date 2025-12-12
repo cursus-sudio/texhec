@@ -178,22 +178,38 @@ func (t Tool) OnTransparentEvent(event any) {
 	}
 }
 
-func (t Tool) ListenFetchState(client ecs.EntityID, dto clienttypes.FetchStateDTO) {
+func (t Tool) ListenFetchState(entity ecs.EntityID, dto clienttypes.FetchStateDTO) {
 	state := t.stateTool.GetState()
-	t.sendVisible(client, nil, state)
+	t.sendVisible(entity, nil, state)
 }
 
-func (t Tool) ListenEmitEvent(client ecs.EntityID, dto clienttypes.EmitEventDTO) {
-	// TODO
-	// is this event even present in config ?
-	// can client do that ?
-	// if yes than do that
+func (t Tool) ListenEmitEvent(entity ecs.EntityID, dto clienttypes.EmitEventDTO) {
+	conn, err := t.connectionArray.GetComponent(entity)
+	if err != nil {
+		return
+	}
+	event, err := t.Config.Auth(entity, dto.Event)
+	if err != nil {
+		conn.Conn().Send(servertypes.SendChangeDTO{Error: err})
+		t.logger.Warn(err)
+		return
+	}
 	t.recordedEventUUID = &dto.ID
-	events.EmitAny(t.world.Events(), dto.Event)
+	events.EmitAny(t.world.Events(), event)
 }
 
-func (t Tool) ListenTransparentEvent(client ecs.EntityID, dto clienttypes.TransparentEventDTO) {
-	events.EmitAny(t.world.Events(), dto.Event)
+func (t Tool) ListenTransparentEvent(entity ecs.EntityID, dto clienttypes.TransparentEventDTO) {
+	conn, err := t.connectionArray.GetComponent(entity)
+	if err != nil {
+		return
+	}
+	event, err := t.Config.Auth(entity, dto.Event)
+	if err != nil {
+		conn.Conn().Send(servertypes.TransparentEventDTO{Error: err})
+		t.logger.Warn(err)
+		return
+	}
+	events.EmitAny(t.world.Events(), event)
 }
 
 // private methods
@@ -212,19 +228,20 @@ func (t Tool) sendVisible(client ecs.EntityID, eventUUID *uuid.UUID, changes sta
 	// 	delete(changes.Entities, uuid)
 	// }
 
-	if eventUUID != nil {
-		// TODO make sending non-blocking
-		err := connComp.Conn().Send(servertypes.SendChangeDTO{
-			EventID: *eventUUID,
-			Changes: sentChanges,
-		})
-		t.logger.Warn(err)
-	} else {
-		err := connComp.Conn().Send(servertypes.SendStateDTO{
-			State: sentChanges,
-		})
-		t.logger.Warn(err)
-	}
+	go func() {
+		if eventUUID != nil {
+			err := connComp.Conn().Send(servertypes.SendChangeDTO{
+				EventID: *eventUUID,
+				Changes: sentChanges,
+			})
+			t.logger.Warn(err)
+		} else {
+			err := connComp.Conn().Send(servertypes.SendStateDTO{
+				State: sentChanges,
+			})
+			t.logger.Warn(err)
+		}
+	}()
 }
 
 func (t Tool) emitChanges(eventUUID uuid.UUID, changes state.State) {

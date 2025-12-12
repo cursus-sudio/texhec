@@ -15,23 +15,38 @@ type Config struct {
 func NewConfig(maxPredictions int) Config {
 	return Config{
 		config: &config.Config{
-			MaxPredictions: maxPredictions,
+			AuthorizeEvent:      make(map[reflect.Type]func(any) error),
+			AllowedClientEvents: make(map[reflect.Type]struct{}),
+			MaxPredictions:      maxPredictions,
 		},
 	}
 }
 
 func AddEvent[EventType any](config Config) {
-	config.config.Events = append(config.config.Events, reflect.TypeFor[EventType]())
+	eventType := reflect.TypeFor[EventType]()
+	config.config.Events = append(config.config.Events, eventType)
 	config.config.ListenToEvents = append(config.config.ListenToEvents, func(b events.Builder, f func(any)) {
+		events.Listen(b, func(e EventType) { f(e) })
+	})
+	config.config.AllowedClientEvents[eventType] = struct{}{}
+}
+
+// these event are sent from server to client regurally but they aren't sent from client to server
+func AddSimulatedEvent[EventType any](config Config) {
+	config.config.SimulatedEvents = append(config.config.Events, reflect.TypeFor[EventType]())
+	config.config.ListenToSimulatedEvents = append(config.config.ListenToEvents, func(b events.Builder, f func(any)) {
 		events.Listen(b, func(e EventType) { f(e) })
 	})
 }
 
+// these are freely exchanged between server and client instead of sending authorized state
 func AddTransparentEvent[EventType any](config Config) {
-	config.config.TransparentEvents = append(config.config.TransparentEvents, reflect.TypeFor[EventType]())
+	eventType := reflect.TypeFor[EventType]()
+	config.config.TransparentEvents = append(config.config.TransparentEvents, eventType)
 	config.config.ListenToTransparentEvents = append(config.config.ListenToTransparentEvents, func(b events.Builder, f func(any)) {
 		events.Listen(b, func(e EventType) { f(e) })
 	})
+	config.config.AllowedClientEvents[eventType] = struct{}{}
 }
 
 func AddComponent[ComponentType any](config Config) {
@@ -39,4 +54,11 @@ func AddComponent[ComponentType any](config Config) {
 	config.config.ArraysOfComponents = append(config.config.ArraysOfComponents, func(w ecs.World) ecs.AnyComponentArray {
 		return ecs.GetComponentsArray[ComponentType](w)
 	})
+}
+
+func AddEventAuthorization[EventType any](config Config, handler func(EventType) error) {
+	eventType := reflect.TypeFor[EventType]()
+	config.config.AuthorizeEvent[eventType] = func(a any) error {
+		return handler(a.(EventType))
+	}
 }

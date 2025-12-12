@@ -96,12 +96,12 @@ func NewTool(
 		},
 	}
 	events.Listen(t.world.EventsBuilder(), func(frames.FrameEvent) {
-		t.mutex.Lock()
-		defer t.mutex.Unlock()
 		conn := t.getConnection()
 		if conn == nil {
 			return
 		}
+		t.mutex.Lock()
+		defer t.mutex.Unlock()
 		for len(t.messagesFromServer) != 0 {
 			message := t.messagesFromServer[0]
 			t.messagesFromServer = t.messagesFromServer[1:]
@@ -201,6 +201,9 @@ func (t Tool) BeforeEvent(event any) {
 		return
 	}
 	t.BeforeEventRecord(event)
+	if t.recordedPrediction == nil {
+		return
+	}
 
 	dto := clienttypes.EmitEventDTO(t.recordedPrediction.PredictedEvent)
 	if err := clientConn.Send(dto); err != nil {
@@ -247,6 +250,19 @@ func (t Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
 	if conn == nil {
 		return
 	}
+	if dto.Error != nil {
+		predictedEvents := t.undoPredictions()
+		// reApplied events are events without applied event
+		reEmitedEvents := make([]clienttypes.PredictedEvent, 0, len(predictedEvents))
+		for _, predictedEvent := range predictedEvents {
+			if predictedEvent.ID != dto.EventID {
+				reEmitedEvents = append(reEmitedEvents, predictedEvent)
+			}
+		}
+		t.applyPredictedEvents(reEmitedEvents)
+		t.logger.Warn(dto.Error)
+		return
+	}
 	// check is event predicted. if is then remove first event from queue
 	// if isn't then undo predictions, emit server event(as not recordable), emit all predicted events again
 	if len(t.predictions) == 0 {
@@ -270,13 +286,26 @@ func (t Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
 	}
 	predictedEvents := t.undoPredictions()
 	t.stateTool.ApplyState(dto.Changes)
-	t.applyPredictedEvents(predictedEvents)
+	// reApplied events are events without applied event
+	reEmitedEvents := make([]clienttypes.PredictedEvent, 0, len(predictedEvents))
+	for _, predictedEvent := range predictedEvents {
+		if predictedEvent.ID != dto.EventID {
+			reEmitedEvents = append(reEmitedEvents, predictedEvent)
+		}
+	}
+	t.applyPredictedEvents(reEmitedEvents)
 }
 
 // reconciliate
 func (t Tool) ListenSendState(dto servertypes.SendStateDTO) {
 	conn := t.getConnection()
 	if conn == nil {
+		return
+	}
+	if dto.Error != nil {
+		t.predictions = nil
+		t.logger.Warn(dto.Error)
+		conn.Close()
 		return
 	}
 	t.predictions = nil
@@ -286,6 +315,10 @@ func (t Tool) ListenSendState(dto servertypes.SendStateDTO) {
 func (t Tool) ListenTransparentEvent(dto servertypes.TransparentEventDTO) {
 	if t.sentTransparentEvent {
 		t.sentTransparentEvent = false
+		return
+	}
+	if dto.Error != nil {
+		t.logger.Warn(dto.Error)
 		return
 	}
 	t.receivedTransparentEvent = true
@@ -307,6 +340,7 @@ func (t Tool) undoPredictions() []clienttypes.PredictedEvent {
 		original.MergeC1OverC2(prediction.Snapshot)
 	}
 	t.stateTool.ApplyState(original)
+	t.predictions = nil
 	return unDoneEvents
 }
 

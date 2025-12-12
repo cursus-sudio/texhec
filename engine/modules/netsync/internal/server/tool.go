@@ -184,8 +184,13 @@ func (t Tool) ListenFetchState(entity ecs.EntityID, dto clienttypes.FetchStateDT
 }
 
 func (t Tool) ListenEmitEvent(entity ecs.EntityID, dto clienttypes.EmitEventDTO) {
+	conn, err := t.connectionArray.GetComponent(entity)
+	if err != nil {
+		return
+	}
 	event, err := t.Config.Auth(entity, dto.Event)
 	if err != nil {
+		conn.Conn().Send(servertypes.SendChangeDTO{Error: err})
 		t.logger.Warn(err)
 		return
 	}
@@ -194,8 +199,13 @@ func (t Tool) ListenEmitEvent(entity ecs.EntityID, dto clienttypes.EmitEventDTO)
 }
 
 func (t Tool) ListenTransparentEvent(entity ecs.EntityID, dto clienttypes.TransparentEventDTO) {
+	conn, err := t.connectionArray.GetComponent(entity)
+	if err != nil {
+		return
+	}
 	event, err := t.Config.Auth(entity, dto.Event)
 	if err != nil {
+		conn.Conn().Send(servertypes.TransparentEventDTO{Error: err})
 		t.logger.Warn(err)
 		return
 	}
@@ -218,19 +228,20 @@ func (t Tool) sendVisible(client ecs.EntityID, eventUUID *uuid.UUID, changes sta
 	// 	delete(changes.Entities, uuid)
 	// }
 
-	if eventUUID != nil {
-		// TODO make sending non-blocking
-		err := connComp.Conn().Send(servertypes.SendChangeDTO{
-			EventID: *eventUUID,
-			Changes: sentChanges,
-		})
-		t.logger.Warn(err)
-	} else {
-		err := connComp.Conn().Send(servertypes.SendStateDTO{
-			State: sentChanges,
-		})
-		t.logger.Warn(err)
-	}
+	go func() {
+		if eventUUID != nil {
+			err := connComp.Conn().Send(servertypes.SendChangeDTO{
+				EventID: *eventUUID,
+				Changes: sentChanges,
+			})
+			t.logger.Warn(err)
+		} else {
+			err := connComp.Conn().Send(servertypes.SendStateDTO{
+				State: sentChanges,
+			})
+			t.logger.Warn(err)
+		}
+	}()
 }
 
 func (t Tool) emitChanges(eventUUID uuid.UUID, changes state.State) {

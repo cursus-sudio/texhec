@@ -31,5 +31,4 @@ type ClientComponent struct {
 // event pointer should implement it
 type AuthorizedEvent interface {
 	SetConnection(ecs.EntityID)
-	// SetConnection(uuid.Component)
 }

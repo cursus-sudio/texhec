@@ -22,16 +22,16 @@ func NewSetup() Setup {
 	b := ioc.NewBuilder()
 	pkgs := []ioc.Pkg{
 		relationpkg.SpatialRelationPackage(
-			func(w ecs.World) ecs.LiveQuery {
-				return w.Query().
-					Require(Component{}).
-					Build()
+			func(w ecs.World) ecs.DirtySet {
+				dirtySet := ecs.NewDirtySet()
+				ecs.GetComponentsArray[Component](w).AddDirtySet(dirtySet)
+				return dirtySet
 			},
 			func(w ecs.World) func(entity ecs.EntityID) (uint32, bool) {
 				componentArray := ecs.GetComponentsArray[Component](w)
 				return func(entity ecs.EntityID) (uint32, bool) {
-					comp, err := componentArray.GetComponent(entity)
-					return comp.Index, err == nil
+					comp, ok := componentArray.GetComponent(entity)
+					return comp.Index, ok
 				}
 			},
 			func(index uint32) uint32 { return index },

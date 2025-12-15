@@ -46,7 +46,6 @@ type componentsInterface interface {
 
 	// returns for with all listed component types
 	// the same live query should be returned for the same input
-	Query() LiveQueryBuilder
 }
 
 // impl
@@ -74,16 +73,12 @@ func newComponents(entities datastructures.SparseSet[EntityID]) *componentsImpl 
 type arraysSharedInterface interface {
 	AnyComponentArray
 	// this adds listeners for change and remove
-	addQueries([]*liveQuery)
 }
 
 type componentsStorage struct {
 	arrays              map[componentType]arraysSharedInterface // any is *componentsArray[ComponentType]
 	entities            datastructures.SparseSet[EntityID]
 	onArrayAddListeners map[componentType][]func(arraysSharedInterface)
-
-	cachedQueries    map[queryKey]*liveQuery
-	dependentQueries map[componentType][]*liveQuery
 }
 
 type ComponentsStorage *componentsStorage
@@ -93,20 +88,7 @@ func newComponentsStorage(entities datastructures.SparseSet[EntityID]) Component
 		arrays:              make(map[componentType]arraysSharedInterface),
 		entities:            entities,
 		onArrayAddListeners: make(map[componentType][]func(arraysSharedInterface)),
-
-		cachedQueries:    make(map[queryKey]*liveQuery, 0),
-		dependentQueries: make(map[componentType][]*liveQuery, 0),
 	}
-}
-
-func (components *componentsStorage) whenArrExists(t componentType, l func(arraysSharedInterface)) {
-	if arr, ok := components.arrays[t]; ok {
-		l(arr)
-		return
-	}
-	onAdd, _ := components.onArrayAddListeners[t]
-	onAdd = append(onAdd, l)
-	components.onArrayAddListeners[t] = onAdd
 }
 
 func GetComponentsArray[Component any](world World) ComponentsArray[Component] {
@@ -132,15 +114,14 @@ func SaveComponent[Component any](
 	w World,
 	entity EntityID,
 	component Component,
-) error {
-	return GetComponentsArray[Component](w).
-		SaveComponent(entity, component)
+) {
+	GetComponentsArray[Component](w).SaveComponent(entity, component)
 }
 
 func GetComponent[Component any](
 	w World,
 	entity EntityID,
-) (Component, error) {
+) (Component, bool) {
 	return GetComponentsArray[Component](w).
 		GetComponent(entity)
 }
@@ -176,15 +157,11 @@ func GetEntitiesWithComponents(
 arrayEntities:
 	for _, entity := range arrayEntities {
 		for _, array := range arrays {
-			if _, err := array.GetAnyComponent(entity); err != nil {
+			if _, ok := array.GetAnyComponent(entity); !ok {
 				continue arrayEntities
 			}
 		}
 		finalEntities = append(finalEntities, entity)
 	}
 	return finalEntities
-}
-
-func (i *componentsImpl) Query() LiveQueryBuilder {
-	return newLiveQueryFactory(i)
 }

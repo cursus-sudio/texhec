@@ -13,13 +13,12 @@ type cameraResolver struct {
 	constructors map[reflect.Type]func(ecs.EntityID) (camera.Object, error)
 }
 
+func (c *cameraResolver) Camera() camera.Interface { return c }
+
 func (c *cameraResolver) GetObject(entity ecs.EntityID) (camera.Object, error) {
-	cameraComponent, err := c.cameraArray.GetComponent(entity)
-	if err != nil {
-		return nil, errors.Join(
-			camera.ErrNotCamera,
-			err,
-		)
+	cameraComponent, ok := c.cameraArray.GetComponent(entity)
+	if !ok {
+		return nil, camera.ErrNotCamera
 	}
 	constructor, ok := c.constructors[cameraComponent.Projection]
 	if !ok {

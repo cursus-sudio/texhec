@@ -63,7 +63,7 @@ func Package(
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[text.Tool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[text.Text] {
 		return texttool.NewTool(ioc.Get[logger.Logger](c))
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) textrenderer.FontService {
@@ -82,7 +82,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			ioc.Get[logger.Logger](c),
 			ioc.Get[textrenderer.FontService](c),
 			ioc.Get[textrenderer.FontKeys](c),
-			ioc.Get[ecs.ToolFactory[transform.Tool]](c),
+			ioc.Get[ecs.ToolFactory[transform.Transform]](c),
 			pkg.defaultFontFamily(c),
 			pkg.defaultFontSize,
 			// pkg.defaultOverflow,
@@ -97,8 +97,9 @@ func (pkg pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) text.System {
 		return textrenderer.NewTextRendererRegister(
-			ioc.Get[ecs.ToolFactory[camera.Tool]](c),
-			ioc.Get[ecs.ToolFactory[transform.Tool]](c),
+			ioc.Get[ecs.ToolFactory[camera.Camera]](c),
+			ioc.Get[ecs.ToolFactory[transform.Transform]](c),
+			ioc.Get[ecs.ToolFactory[text.Text]](c),
 			ioc.Get[textrenderer.FontService](c),
 			ioc.Get[vbo.VBOFactory[textrenderer.Glyph]](c),
 			ioc.Get[textrenderer.LayoutServiceFactory](c),

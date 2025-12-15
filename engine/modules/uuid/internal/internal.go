@@ -18,12 +18,9 @@ func NewToolFactory(
 ) ecs.ToolFactory[uuid.Tool] {
 	mutex := &sync.Mutex{}
 	return ecs.NewToolFactory(func(w ecs.World) uuid.Tool {
-		if t, err := ecs.GetGlobal[tool](w); err == nil {
-			return t
-		}
 		mutex.Lock()
 		defer mutex.Unlock()
-		if t, err := ecs.GetGlobal[tool](w); err == nil {
+		if t, ok := ecs.GetGlobal[tool](w); ok {
 			return t
 		}
 		t := tool{

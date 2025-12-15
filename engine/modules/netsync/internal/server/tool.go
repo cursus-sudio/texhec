@@ -8,6 +8,7 @@ import (
 	"engine/modules/netsync/internal/servertypes"
 	"engine/modules/netsync/internal/state"
 	"engine/modules/uuid"
+	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/frames"
 	"engine/services/logger"
@@ -26,8 +27,11 @@ type clientMessage struct {
 type toolState struct {
 	recordedEventUUID *uuid.UUID
 
-	mutex                  *sync.Mutex
+	mutex *sync.Mutex
+
+	dirtySet               ecs.DirtySet
 	messagesSentFromClient []clientMessage
+	listeners              datastructures.SparseSet[ecs.EntityID]
 
 	world           ecs.World
 	clientArray     ecs.ComponentsArray[netsync.ClientComponent]
@@ -56,7 +60,10 @@ func NewTool(
 			nil,
 
 			&sync.Mutex{},
+
+			ecs.NewDirtySet(),
 			nil,
+			datastructures.NewSparseSet[ecs.EntityID](),
 
 			world,
 			ecs.GetComponentsArray[netsync.ClientComponent](world),
@@ -96,42 +103,15 @@ func NewTool(
 			listener(message.Client, message.Message)
 		}
 	})
-	t.world.Query().
-		Require(netsync.ClientComponent{}).
-		Require(connection.ConnectionComponent{}).
-		Build().OnAdd(func(ei []ecs.EntityID) {
-		for _, entity := range ei {
-			comp, err := t.connectionArray.GetComponent(entity)
-			if err != nil {
-				t.logger.Warn(err)
-				continue
-			}
-			messages := comp.Conn().Messages()
-			go func(entity ecs.EntityID) {
-				for {
-					message, ok := <-messages
-					if !ok {
-						break
-					}
-					t.mutex.Lock()
-					t.messagesSentFromClient = append(t.messagesSentFromClient, clientMessage{
-						Client:  entity,
-						Message: message,
-					})
-					t.mutex.Unlock()
-				}
-				world.RemoveEntity(entity)
-			}(entity)
-		}
-	})
+	t.clientArray.AddDirtySet(t.dirtySet)
+	t.connectionArray.AddDirtySet(t.dirtySet)
 
 	// listen to entities changes
 
 	for _, arrayCtor := range config.ArraysOfComponents {
 		array := arrayCtor(world)
-		array.BeforeAdd(t.stateTool.RecordEntitiesChange)
-		array.BeforeChange(t.stateTool.RecordEntitiesChange)
-		array.BeforeRemove(t.stateTool.RecordEntitiesChange)
+		// before changes record
+		array.BeforeGet(t.stateTool.RecordEntitiesChange)
 	}
 
 	return t
@@ -140,6 +120,7 @@ func NewTool(
 // public methods
 
 func (t Tool) BeforeEvent(event any) {
+	t.loadConnections()
 	if len(t.clientArray.GetEntities()) == 0 {
 		return
 	}
@@ -152,6 +133,7 @@ func (t Tool) BeforeEvent(event any) {
 }
 
 func (t Tool) AfterEvent(event any) {
+	t.loadConnections()
 	if len(t.clientArray.GetEntities()) == 0 {
 		return
 	}
@@ -169,9 +151,8 @@ func (t Tool) OnTransparentEvent(event any) {
 	}
 
 	for _, client := range t.clientArray.GetEntities() {
-		connComp, err := t.connectionArray.GetComponent(client)
-		if err != nil {
-			t.logger.Warn(err)
+		connComp, ok := t.connectionArray.GetComponent(client)
+		if !ok {
 			return
 		}
 		t.logger.Warn(connComp.Conn().Send(servertypes.TransparentEventDTO{Event: event}))
@@ -184,8 +165,8 @@ func (t Tool) ListenFetchState(entity ecs.EntityID, dto clienttypes.FetchStateDT
 }
 
 func (t Tool) ListenEmitEvent(entity ecs.EntityID, dto clienttypes.EmitEventDTO) {
-	conn, err := t.connectionArray.GetComponent(entity)
-	if err != nil {
+	conn, ok := t.connectionArray.GetComponent(entity)
+	if !ok {
 		return
 	}
 	event, err := t.Config.Auth(entity, dto.Event)
@@ -199,8 +180,8 @@ func (t Tool) ListenEmitEvent(entity ecs.EntityID, dto clienttypes.EmitEventDTO)
 }
 
 func (t Tool) ListenTransparentEvent(entity ecs.EntityID, dto clienttypes.TransparentEventDTO) {
-	conn, err := t.connectionArray.GetComponent(entity)
-	if err != nil {
+	conn, ok := t.connectionArray.GetComponent(entity)
+	if !ok {
 		return
 	}
 	event, err := t.Config.Auth(entity, dto.Event)
@@ -214,10 +195,43 @@ func (t Tool) ListenTransparentEvent(entity ecs.EntityID, dto clienttypes.Transp
 
 // private methods
 
+func (t Tool) loadConnections() {
+	for _, entity := range t.dirtySet.Get() {
+		if ok := t.listeners.Get(entity); ok {
+			continue
+		}
+		if _, ok := t.clientArray.GetComponent(entity); !ok {
+			continue
+		}
+
+		comp, ok := t.connectionArray.GetComponent(entity)
+		if !ok {
+			continue
+		}
+		t.listeners.Add(entity)
+		messages := comp.Conn().Messages()
+		go func(entity ecs.EntityID) {
+			for {
+				message, ok := <-messages
+				if !ok {
+					break
+				}
+				t.mutex.Lock()
+				t.messagesSentFromClient = append(t.messagesSentFromClient, clientMessage{
+					Client:  entity,
+					Message: message,
+				})
+				t.mutex.Unlock()
+			}
+			t.listeners.Remove(entity)
+			t.world.RemoveEntity(entity)
+		}(entity)
+	}
+}
+
 func (t Tool) sendVisible(client ecs.EntityID, eventUUID *uuid.UUID, changes state.State) {
-	connComp, err := t.connectionArray.GetComponent(client)
-	if err != nil {
-		t.logger.Warn(err)
+	connComp, ok := t.connectionArray.GetComponent(client)
+	if !ok {
 		return
 	}
 

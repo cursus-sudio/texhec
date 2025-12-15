@@ -3,22 +3,23 @@ package collisions
 import (
 	"engine/modules/collider"
 	"engine/modules/transform"
+	"engine/services/ecs"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-func TransformAABB(t transform.Object) (collider.AABB, error) {
-	pos, err := t.AbsolutePos().Get()
-	if err != nil {
-		return collider.AABB{}, err
+func TransformAABB(t transform.Interface, entity ecs.EntityID) collider.AABB {
+	pos, ok := t.AbsolutePos().GetComponent(entity)
+	if !ok {
+		pos.Pos = mgl32.Vec3{}
 	}
-	rot, err := t.AbsoluteRotation().Get()
-	if err != nil {
-		return collider.AABB{}, err
+	rot, ok := t.AbsoluteRotation().GetComponent(entity)
+	if !ok {
+		rot.Rotation = mgl32.QuatIdent()
 	}
-	size, err := t.AbsoluteSize().Get()
-	if err != nil {
-		return collider.AABB{}, err
+	size, ok := t.AbsoluteSize().GetComponent(entity)
+	if !ok {
+		size.Size = mgl32.Vec3{1, 1, 1}
 	}
 	halfSize := size.Size.Mul(0.5)
 
@@ -50,5 +51,5 @@ func TransformAABB(t transform.Object) (collider.AABB, error) {
 		}
 	}
 
-	return collider.NewAABB(minCorner, maxCorner), nil
+	return collider.NewAABB(minCorner, maxCorner)
 }

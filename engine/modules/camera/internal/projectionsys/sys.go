@@ -20,8 +20,11 @@ type updateProjetionsSystem struct {
 	window window.Api
 	logger logger.Logger
 
-	transformTool transform.Tool
-	cameraTool    camera.Tool
+	transformTool transform.Interface
+	cameraTool    camera.Interface
+
+	perspectivesDirtySet ecs.DirtySet
+	orthoDirtySet        ecs.DirtySet
 
 	cameraArray              ecs.ComponentsArray[camera.CameraComponent]
 	dynamicPerspectivesArray ecs.ComponentsArray[camera.DynamicPerspective]
@@ -32,8 +35,8 @@ type updateProjetionsSystem struct {
 func NewUpdateProjectionsSystem(
 	window window.Api,
 	logger logger.Logger,
-	transformToolFactory ecs.ToolFactory[transform.Tool],
-	cameraToolFactory ecs.ToolFactory[camera.Tool],
+	transformToolFactory ecs.ToolFactory[transform.Transform],
+	cameraToolFactory ecs.ToolFactory[camera.Camera],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := &updateProjetionsSystem{
@@ -41,25 +44,27 @@ func NewUpdateProjectionsSystem(
 			window: window,
 			logger: logger,
 
-			transformTool: transformToolFactory.Build(w),
-			cameraTool:    cameraToolFactory.Build(w),
+			transformTool: transformToolFactory.Build(w).Transform(),
+			cameraTool:    cameraToolFactory.Build(w).Camera(),
+
+			perspectivesDirtySet: ecs.NewDirtySet(),
+			orthoDirtySet:        ecs.NewDirtySet(),
 
 			dynamicPerspectivesArray: ecs.GetComponentsArray[camera.DynamicPerspective](w),
 			perspectivesArray:        ecs.GetComponentsArray[camera.Perspective](w),
 			orthoArray:               ecs.GetComponentsArray[camera.OrthoComponent](w),
 		}
 
-		s.dynamicPerspectivesArray.OnAdd(s.UpsertPerspective)
-		s.dynamicPerspectivesArray.OnChange(s.UpsertPerspective)
+		s.perspectivesArray.BeforeGet(s.UpsertPerspective)
+		s.dynamicPerspectivesArray.AddDirtySet(s.perspectivesDirtySet)
 
-		orthoQuery := w.Query().
-			Require(camera.OrthoComponent{}).
-			Track(camera.OrthoResolutionComponent{}).
-			Track(camera.ViewportComponent{}).
-			Track(camera.NormalizedViewportComponent{}).
-			Build()
-		orthoQuery.OnAdd(s.UpsertOrtho)
-		orthoQuery.OnChange(s.UpsertOrtho)
+		ecs.GetComponentsArray[camera.OrthoComponent](w).AddDirtySet(s.orthoDirtySet)
+		ecs.GetComponentsArray[camera.OrthoResolutionComponent](w).AddDirtySet(s.orthoDirtySet)
+		ecs.GetComponentsArray[camera.ViewportComponent](w).AddDirtySet(s.orthoDirtySet)
+		ecs.GetComponentsArray[camera.NormalizedViewportComponent](w).AddDirtySet(s.orthoDirtySet)
+
+		s.orthoArray.AddDirtySet(s.orthoDirtySet)
+		s.orthoArray.BeforeGet(s.UpsertOrtho)
 
 		events.Listen(w.EventsBuilder(), s.Listen)
 		return nil
@@ -76,18 +81,16 @@ func (s *updateProjetionsSystem) AspectRatio() float32 {
 	return w / h
 }
 
-func (s *updateProjetionsSystem) UpsertOrtho(ei []ecs.EntityID) {
-	transformTransaction := s.transformTool.Transaction()
+func (s *updateProjetionsSystem) UpsertOrtho() {
+	ei := s.orthoDirtySet.Get()
 	for _, entity := range ei {
 		camera, err := s.cameraTool.GetObject(entity)
 		if err != nil {
-			s.logger.Warn(err)
 			continue
 		}
-		transformObj := transformTransaction.GetObject(entity)
 		s.cameraTool.GetObject(entity)
-		resizeOrtho, err := s.orthoArray.GetComponent(entity)
-		if err != nil {
+		resizeOrtho, ok := s.orthoArray.GetComponent(entity)
+		if !ok {
 			continue
 		}
 
@@ -98,30 +101,34 @@ func (s *updateProjetionsSystem) UpsertOrtho(ei []ecs.EntityID) {
 			float32(h-y)/resizeOrtho.Zoom,
 			mgl32.Abs(resizeOrtho.Far-resizeOrtho.Near),
 		)
-		transformObj.AbsoluteSize().Set(size)
+		s.transformTool.SetAbsoluteSize(entity, transform.AbsoluteSizeComponent(size))
 	}
-
-	s.logger.Warn(transformTransaction.Flush())
 }
 
-func (s *updateProjetionsSystem) UpsertPerspective(ei []ecs.EntityID) {
-	perspectiveTransaction := s.perspectivesArray.Transaction()
+func (s *updateProjetionsSystem) UpsertPerspective() {
+	ei := s.perspectivesDirtySet.Get()
 	aspectRatio := s.AspectRatio()
-	for _, entity := range s.dynamicPerspectivesArray.GetEntities() {
-		resizePerspective, err := s.dynamicPerspectivesArray.GetComponent(entity)
-		if err != nil {
+	for _, entity := range ei {
+		resizePerspective, ok := s.dynamicPerspectivesArray.GetComponent(entity)
+		if !ok {
 			continue
 		}
 		perspective := camera.NewPerspective(
 			resizePerspective.FovY, aspectRatio,
 			resizePerspective.Near, resizePerspective.Far,
 		)
-		perspectiveTransaction.SaveComponent(entity, perspective)
+		s.perspectivesArray.SaveComponent(entity, perspective)
 	}
-	s.logger.Warn(ecs.FlushMany(perspectiveTransaction))
 }
 
 func (s *updateProjetionsSystem) Listen(e camera.ChangedResolutionEvent) {
-	s.UpsertOrtho(s.orthoArray.GetEntities())
-	s.UpsertPerspective(s.dynamicPerspectivesArray.GetEntities())
+	for _, entity := range s.orthoArray.GetEntities() {
+		s.orthoDirtySet.Dirty(entity)
+	}
+	s.UpsertOrtho()
+
+	for _, entity := range s.dynamicPerspectivesArray.GetEntities() {
+		s.perspectivesDirtySet.Dirty(entity)
+	}
+	s.UpsertPerspective()
 }

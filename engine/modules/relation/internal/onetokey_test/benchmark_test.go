@@ -17,10 +17,8 @@ func BenchmarkSpatialIndexingGet(b *testing.B) {
 	setup := NewSetup()
 	component := Component{Index: 69}
 	entity := setup.W.NewEntity()
-	if err := setup.Array.SaveComponent(entity, component); err != nil {
-		b.Error(err)
-		return
-	}
+	setup.Array.SaveComponent(entity, component)
+
 	tool := setup.Tool()
 
 	b.StartTimer()

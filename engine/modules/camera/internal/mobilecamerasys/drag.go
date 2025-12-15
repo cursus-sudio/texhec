@@ -16,19 +16,19 @@ type dragSystem struct {
 	isHeld bool
 	button uint8
 
-	world         ecs.World
-	transformTool transform.Tool
-	query         ecs.LiveQuery
+	world             ecs.World
+	transformTool     transform.Interface
+	mobileCameraArray ecs.ComponentsArray[camera.MobileCameraComponent]
 
-	cameraCtors camera.Tool
+	cameraCtors camera.Interface
 	window      window.Api
 	logger      logger.Logger
 }
 
 func NewDragSystem(
 	dragButton uint8,
-	cameraCtors ecs.ToolFactory[camera.Tool],
-	transformTool ecs.ToolFactory[transform.Tool],
+	cameraCtors ecs.ToolFactory[camera.Camera],
+	transformTool ecs.ToolFactory[transform.Transform],
 	window window.Api,
 	logger logger.Logger,
 ) ecs.SystemRegister {
@@ -37,13 +37,11 @@ func NewDragSystem(
 			isHeld: false,
 			button: dragButton,
 
-			world:         w,
-			transformTool: transformTool.Build(w),
-			query: w.Query().Require(
-				camera.MobileCameraComponent{},
-			).Build(),
+			world:             w,
+			transformTool:     transformTool.Build(w).Transform(),
+			mobileCameraArray: ecs.GetComponentsArray[camera.MobileCameraComponent](w),
 
-			cameraCtors: cameraCtors.Build(w),
+			cameraCtors: cameraCtors.Build(w).Camera(),
 			window:      window,
 			logger:      logger,
 		}
@@ -53,18 +51,13 @@ func NewDragSystem(
 }
 
 func (s *dragSystem) Listen(e inputs.DragEvent) {
-	transformTransaction := s.transformTool.Transaction()
-
-	for _, cameraEntity := range s.query.Entities() {
-		transform := transformTransaction.GetObject(cameraEntity)
-		pos, err := transform.AbsolutePos().Get()
-		if err != nil {
-			s.logger.Warn(err)
+	for _, cameraEntity := range s.mobileCameraArray.GetEntities() {
+		pos, ok := s.transformTool.AbsolutePos().GetComponent(cameraEntity)
+		if !ok {
 			continue
 		}
-		rot, err := transform.AbsoluteRotation().Get()
-		if err != nil {
-			s.logger.Warn(err)
+		rot, ok := s.transformTool.AbsoluteRotation().GetComponent(cameraEntity)
+		if !ok {
 			continue
 		}
 
@@ -81,9 +74,7 @@ func (s *dragSystem) Listen(e inputs.DragEvent) {
 		rotationDifference := mgl32.QuatBetweenVectors(rayBefore.Direction, rayAfter.Direction)
 		rot.Rotation = rotationDifference.Mul(rot.Rotation)
 
-		transform.AbsolutePos().Set(pos)
-		transform.AbsoluteRotation().Set(rot)
+		s.transformTool.AbsolutePos().SaveComponent(cameraEntity, pos)
+		s.transformTool.AbsoluteRotation().SaveComponent(cameraEntity, rot)
 	}
-
-	ecs.FlushMany(transformTransaction.Transactions()...)
 }

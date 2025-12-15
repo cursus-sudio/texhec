@@ -18,7 +18,7 @@ func NewFactory(codec codec.Codec, logger logger.Logger) *factory {
 	return &factory{codec, logger}
 }
 
-func (f *factory) NewConnection(rawConn net.Conn) connection.Connection {
+func (f *factory) NewConnection(rawConn net.Conn) connection.Conn {
 	messages := make(chan any)
 	go func() {
 		defer rawConn.Close()

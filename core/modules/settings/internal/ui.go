@@ -33,11 +33,12 @@ type system struct {
 	world  ecs.World
 
 	uiTool        ui.Tool
-	transformTool transform.Tool
-	renderTool    render.Tool
-	textTool      text.Tool
+	transformTool transform.Interface
+	renderTool    render.Interface
+	textTool      text.Interface
 
-	hierarchyArray     ecs.ComponentsArray[hierarchy.ParentComponent]
+	hierarchyArray     ecs.ComponentsArray[hierarchy.Component]
+	groupsArray        ecs.ComponentsArray[groups.GroupsComponent]
 	inheritGroupsArray ecs.ComponentsArray[groups.InheritGroupsComponent]
 
 	colliderArray     ecs.ComponentsArray[collider.ColliderComponent]
@@ -51,10 +52,10 @@ func NewSystem(
 	assets assets.Assets,
 	logger logger.Logger,
 	gameAssets gameassets.GameAssets,
-	transformToolFactory ecs.ToolFactory[transform.Tool],
-	renderToolFactory ecs.ToolFactory[render.Tool],
+	transformToolFactory ecs.ToolFactory[transform.Transform],
+	renderToolFactory ecs.ToolFactory[render.Render],
 	uiToolFactory ecs.ToolFactory[ui.Tool],
-	textToolFactory ecs.ToolFactory[text.Tool],
+	textToolFactory ecs.ToolFactory[text.Text],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(world ecs.World) error {
 		s := system{
@@ -64,11 +65,12 @@ func NewSystem(
 			logger,
 			world,
 			uiToolFactory.Build(world),
-			transformToolFactory.Build(world),
-			renderToolFactory.Build(world),
-			textToolFactory.Build(world),
+			transformToolFactory.Build(world).Transform(),
+			renderToolFactory.Build(world).Render(),
+			textToolFactory.Build(world).Text(),
 
-			ecs.GetComponentsArray[hierarchy.ParentComponent](world),
+			ecs.GetComponentsArray[hierarchy.Component](world),
+			ecs.GetComponentsArray[groups.GroupsComponent](world),
 			ecs.GetComponentsArray[groups.InheritGroupsComponent](world),
 			ecs.GetComponentsArray[collider.ColliderComponent](world),
 			ecs.GetComponentsArray[inputs.MouseLeftClickComponent](world),
@@ -91,51 +93,24 @@ func NewSystem(
 }
 
 func (s system) Render(parent ecs.EntityID) error {
-	// transactions
-	hierarchyTransaction := s.hierarchyArray.Transaction()
-	inheritGroupsTransaction := s.inheritGroupsArray.Transaction()
-
-	colliderTransaction := s.colliderArray.Transaction()
-	leftClickTransaction := s.leftClickArray.Transaction()
-	keepSelectedTransaction := s.keepSelectedArray.Transaction()
-
-	pipelineTransaction := s.pipelineArray.Transaction()
-
-	transactions := []ecs.AnyComponentsArrayTransaction{
-		hierarchyTransaction, inheritGroupsTransaction,
-		colliderTransaction, leftClickTransaction, keepSelectedTransaction,
-		pipelineTransaction,
-	}
-
-	transformTransaction := s.transformTool.Transaction()
-	transactions = append(transactions, transformTransaction.Transactions()...)
-
-	renderTransaction := s.renderTool.Transaction()
-	transactions = append(transactions, renderTransaction.Transactions()...)
-
-	textTransaction := s.textTool.Transaction()
-	transactions = append(transactions, textTransaction.Transactions()...)
-
 	// render
 	// collider
 	// click
 
 	// changes
 	labelEntity := s.world.NewEntity()
-	hierarchyTransaction.SaveComponent(labelEntity, hierarchy.NewParent(parent))
-	inheritGroupsTransaction.SaveComponent(labelEntity, groups.InheritGroupsComponent{})
+	s.hierarchyArray.SaveComponent(labelEntity, hierarchy.NewParent(parent))
+	s.inheritGroupsArray.SaveComponent(labelEntity, groups.InheritGroupsComponent{})
 
-	labelTransform := transformTransaction.GetObject(labelEntity)
-	labelTransform.Parent().Set(transform.NewParent(transform.RelativePos | transform.RelativeSizeX))
-	labelTransform.ParentPivotPoint().Set(transform.NewParentPivotPoint(.5, .5, 1))
-	labelTransform.PivotPoint().Set(transform.NewPivotPoint(.5, .5, 0))
-	labelTransform.Pos().Set(transform.NewPos(0, 25, 0))
-	labelTransform.Size().Set(transform.NewSize(1, 50, 1))
+	s.transformTool.Parent().SaveComponent(labelEntity, transform.NewParent(transform.RelativePos|transform.RelativeSizeX))
+	s.transformTool.ParentPivotPoint().SaveComponent(labelEntity, transform.NewParentPivotPoint(.5, .5, 1))
+	s.transformTool.PivotPoint().SaveComponent(labelEntity, transform.NewPivotPoint(.5, .5, 0))
+	s.transformTool.Pos().SaveComponent(labelEntity, transform.NewPos(0, 25, 0))
+	s.transformTool.Size().SaveComponent(labelEntity, transform.NewSize(1, 50, 1))
 
-	labelText := textTransaction.GetObject(labelEntity)
-	labelText.Text().Set(text.TextComponent{Text: "SETTINGS"})
-	labelText.FontSize().Set(text.FontSizeComponent{FontSize: 25})
-	labelText.TextAlign().Set(text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+	s.textTool.TextContent().SaveComponent(labelEntity, text.TextComponent{Text: "SETTINGS"})
+	s.textTool.FontSize().SaveComponent(labelEntity, text.FontSizeComponent{FontSize: 25})
+	s.textTool.TextAlign().SaveComponent(labelEntity, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
 
 	//
 
@@ -158,33 +133,29 @@ func (s system) Render(parent ecs.EntityID) error {
 		var height float32 = 50
 		var margin float32 = 10
 		btnEntity := s.world.NewEntity()
-		hierarchyTransaction.SaveComponent(btnEntity, hierarchy.NewParent(parent))
-		inheritGroupsTransaction.SaveComponent(btnEntity, groups.InheritGroupsComponent{})
+		s.hierarchyArray.SaveComponent(btnEntity, hierarchy.NewParent(parent))
+		s.inheritGroupsArray.SaveComponent(btnEntity, groups.InheritGroupsComponent{})
 
-		btnTransform := transformTransaction.GetObject(btnEntity)
-		btnTransform.AspectRatio().Set(transform.NewAspectRatio(float32(btnAspectRatio.Dx()), float32(btnAspectRatio.Dy()), 0, transform.PrimaryAxisX))
-		btnTransform.Parent().Set(transform.NewParent(transform.RelativePos | transform.RelativeSizeX))
-		btnTransform.ParentPivotPoint().Set(transform.NewParentPivotPoint(.5, .5, 1))
-		btnTransform.PivotPoint().Set(transform.NewPivotPoint(.5, .5, 0))
-		btnTransform.MaxSize().Set(transform.NewMaxSize(0, height+margin-1, 0))
-		btnTransform.Pos().Set(transform.NewPos(0, float32(-i)*(height+margin)-25, 0))
-		btnTransform.Size().Set(transform.NewSize(1, height, 1))
+		// btnTransform := transformTransaction.GetObject(btnEntity)
+		s.transformTool.AspectRatio().SaveComponent(btnEntity, transform.NewAspectRatio(float32(btnAspectRatio.Dx()), float32(btnAspectRatio.Dy()), 0, transform.PrimaryAxisX))
+		s.transformTool.Parent().SaveComponent(btnEntity, transform.NewParent(transform.RelativePos|transform.RelativeSizeX))
+		s.transformTool.ParentPivotPoint().SaveComponent(btnEntity, transform.NewParentPivotPoint(.5, .5, 1))
+		s.transformTool.PivotPoint().SaveComponent(btnEntity, transform.NewPivotPoint(.5, .5, 0))
+		s.transformTool.MaxSize().SaveComponent(btnEntity, transform.NewMaxSize(0, height+margin-1, 0))
+		s.transformTool.Pos().SaveComponent(btnEntity, transform.NewPos(0, float32(-i)*(height+margin)-25, 0))
+		s.transformTool.Size().SaveComponent(btnEntity, transform.NewSize(1, height, 1))
 
-		btnRender := renderTransaction.GetObject(btnEntity)
-		btnRender.Mesh().Set(render.NewMesh(s.gameAssets.SquareMesh))
-		btnRender.Texture().Set(render.NewTexture(s.gameAssets.Hud.Btn))
-		pipelineTransaction.SaveComponent(btnEntity, genericrenderer.PipelineComponent{})
+		s.renderTool.Mesh().SaveComponent(btnEntity, render.NewMesh(s.gameAssets.SquareMesh))
+		s.renderTool.Texture().SaveComponent(btnEntity, render.NewTexture(s.gameAssets.Hud.Btn))
+		s.pipelineArray.SaveComponent(btnEntity, genericrenderer.PipelineComponent{})
 
-		btnText := textTransaction.GetObject(btnEntity)
-		btnText.Text().Set(text.TextComponent{Text: btn.text})
-		btnText.FontSize().Set(text.FontSizeComponent{FontSize: 25})
-		btnText.TextAlign().Set(text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+		s.textTool.TextContent().SaveComponent(btnEntity, text.TextComponent{Text: btn.text})
+		s.textTool.FontSize().SaveComponent(btnEntity, text.FontSizeComponent{FontSize: 25})
+		s.textTool.TextAlign().SaveComponent(btnEntity, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
 
-		leftClickTransaction.SaveComponent(btnEntity, inputs.NewMouseLeftClick(btn.event))
-		keepSelectedTransaction.SaveComponent(btnEntity, inputs.KeepSelectedComponent{})
-		colliderTransaction.SaveComponent(btnEntity, collider.NewCollider(s.gameAssets.SquareCollider))
+		s.leftClickArray.SaveComponent(btnEntity, inputs.NewMouseLeftClick(btn.event))
+		s.keepSelectedArray.SaveComponent(btnEntity, inputs.KeepSelectedComponent{})
+		s.colliderArray.SaveComponent(btnEntity, collider.NewCollider(s.gameAssets.SquareCollider))
 	}
-
-	// flush
-	return ecs.FlushMany(transactions...)
+	return nil
 }

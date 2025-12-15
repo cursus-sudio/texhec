@@ -11,7 +11,7 @@ type CameraResolverFactory interface {
 		reflect.Type,
 		func(ecs.World) func(ecs.EntityID) (camera.Object, error),
 	)
-	ecs.ToolFactory[camera.Tool]
+	ecs.ToolFactory[camera.Camera]
 }
 
 type cameraResolverFactory struct {
@@ -31,7 +31,7 @@ func (f *cameraResolverFactory) Register(
 	f.constructors[componentType] = ctor
 }
 
-func (f *cameraResolverFactory) Build(world ecs.World) camera.Tool {
+func (f *cameraResolverFactory) Build(world ecs.World) camera.Camera {
 	ctors := make(map[reflect.Type]func(ecs.EntityID) (camera.Object, error))
 	for key, ctor := range f.constructors {
 		ctors[key] = ctor(world)

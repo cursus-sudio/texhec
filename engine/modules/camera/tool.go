@@ -13,7 +13,11 @@ var (
 	ErrNotCamera error = errors.New("this isn't a camera")
 )
 
-type Tool interface {
+type Camera interface {
+	Camera() Interface
+}
+
+type Interface interface {
 	GetObject(ecs.EntityID) (Object, error)
 }
 

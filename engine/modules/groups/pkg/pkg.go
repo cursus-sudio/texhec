@@ -28,7 +28,7 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) groups.System {
 		return internal.NewSystem(
 			ioc.Get[logger.Logger](c),
-			ioc.Get[ecs.ToolFactory[hierarchy.Tool]](c),
+			ioc.Get[ecs.ToolFactory[hierarchy.Hierarchy]](c),
 		)
 	})
 }

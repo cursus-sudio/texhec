@@ -9,12 +9,12 @@ import (
 )
 
 type mapRelationPkg[IndexType comparable] struct {
-	queryFactory   func(ecs.World) ecs.LiveQuery
+	queryFactory   func(ecs.World) ecs.DirtySet
 	componentIndex func(ecs.World) func(ecs.EntityID) (IndexType, bool)
 }
 
 func MapRelationPackage[IndexType comparable](
-	queryFactory func(ecs.World) ecs.LiveQuery,
+	queryFactory func(ecs.World) ecs.DirtySet,
 	componentIndex func(ecs.World) func(entity ecs.EntityID) (indexType IndexType, ok bool),
 ) ioc.Pkg {
 	return mapRelationPkg[IndexType]{

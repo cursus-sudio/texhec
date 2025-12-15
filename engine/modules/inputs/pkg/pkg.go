@@ -7,7 +7,6 @@ import (
 	engineinputs "engine/modules/inputs"
 	"engine/modules/inputs/internal/mouse"
 	"engine/modules/inputs/internal/systems"
-	inputstool "engine/modules/inputs/internal/tool"
 	"engine/services/codec"
 	"engine/services/ecs"
 	"engine/services/frames"
@@ -48,7 +47,6 @@ func (pkg) Register(b ioc.Builder) {
 			Register(inputs.SynchronizePositionEvent{})
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[engineinputs.Tool] { return inputstool.NewTool() })
 	ioc.RegisterSingleton(b, func(c ioc.Dic) engineinputs.System {
 		return ecs.NewSystemRegister(func(w ecs.World) error {
 			ecs.RegisterSystems(w,
@@ -65,9 +63,9 @@ func (pkg) Register(b ioc.Builder) {
 
 				mouse.NewCameraRaySystem(
 					ioc.Get[logger.Logger](c),
-					ioc.Get[ecs.ToolFactory[collider.CollisionTool]](c),
+					ioc.Get[ecs.ToolFactory[collider.Collider]](c),
 					ioc.Get[window.Api](c),
-					ioc.Get[ecs.ToolFactory[camera.Tool]](c),
+					ioc.Get[ecs.ToolFactory[camera.Camera]](c),
 				),
 				mouse.NewHoverSystem(),
 				mouse.NewHoverEventsSystem(),

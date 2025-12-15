@@ -44,7 +44,7 @@ func addScene(
 	world ecs.World,
 	gameAssets gameassets.GameAssets,
 	logger logger.Logger,
-	connectionTool connection.Tool,
+	connectionTool connection.Connection,
 	isServer bool,
 ) {
 	uiCamera := world.NewEntity()
@@ -96,14 +96,12 @@ func addScene(
 
 		tilesTypeArray := ecs.GetComponentsArray[definition.DefinitionLinkComponent](world)
 		tilesPosArray := ecs.GetComponentsArray[tile.PosComponent](world)
-		tilesTypeTransaction := tilesTypeArray.Transaction()
-		tilesPosTransaction := tilesPosArray.Transaction()
 		rows := 100
 		cols := 100
 		{
 			unit := world.NewEntity()
-			tilesPosTransaction.SaveComponent(unit, tile.NewPos(1, 1, tile.UnitLayer))
-			tilesTypeTransaction.SaveComponent(unit, definition.NewLink(definition.TileU1))
+			tilesPosArray.SaveComponent(unit, tile.NewPos(1, 1, tile.UnitLayer))
+			tilesTypeArray.SaveComponent(unit, definition.NewLink(definition.TileU1))
 		}
 		for i := 0; i < rows*cols; i++ {
 			row := i % cols
@@ -123,17 +121,15 @@ func addScene(
 			case 3:
 				tileType = definition.TileWater
 			}
-			tilesPosTransaction.SaveComponent(entity, tile.NewPos(int32(row), int32(col), tile.GroundLayer))
-			tilesTypeTransaction.SaveComponent(entity, definition.NewLink(tileType))
+			tilesPosArray.SaveComponent(entity, tile.NewPos(int32(row), int32(col), tile.GroundLayer))
+			tilesTypeArray.SaveComponent(entity, definition.NewLink(tileType))
 		}
 
 		{
 			unit := world.NewEntity()
-			tilesPosTransaction.SaveComponent(unit, tile.NewPos(0, 0, tile.UnitLayer))
-			tilesTypeTransaction.SaveComponent(unit, definition.NewLink(definition.TileU1))
+			tilesPosArray.SaveComponent(unit, tile.NewPos(0, 0, tile.UnitLayer))
+			tilesTypeArray.SaveComponent(unit, definition.NewLink(definition.TileU1))
 		}
-		err := ecs.FlushMany(tilesTypeTransaction, tilesPosTransaction)
-		logger.Warn(err)
 	}
 
 	if isServer {
@@ -160,7 +156,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				world,
 				ioc.Get[gameassets.GameAssets](c),
 				ioc.Get[logger.Logger](c),
-				ioc.Get[ecs.ToolFactory[connection.Tool]](c).Build(world),
+				ioc.Get[ecs.ToolFactory[connection.Connection]](c).Build(world),
 				true, // is server
 			)
 		})
@@ -173,7 +169,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				world,
 				ioc.Get[gameassets.GameAssets](c),
 				ioc.Get[logger.Logger](c),
-				ioc.Get[ecs.ToolFactory[connection.Tool]](c).Build(world),
+				ioc.Get[ecs.ToolFactory[connection.Connection]](c).Build(world),
 				false, // is server
 			)
 		})

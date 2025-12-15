@@ -27,30 +27,30 @@ type cameraRaySystem struct {
 	world           ecs.World
 	logger          logger.Logger
 	cameraArray     ecs.ComponentsArray[camera.CameraComponent]
-	broadCollisions collider.CollisionTool
+	broadCollisions collider.Interface
 	window          window.Api
 	events          events.Events
 	assets          assets.Assets
-	cameraResolver  camera.Tool
+	cameraResolver  camera.Interface
 
 	hoversOverEntity *ecs.EntityID
 }
 
 func NewCameraRaySystem(
 	logger logger.Logger,
-	colliderFactory ecs.ToolFactory[collider.CollisionTool],
+	colliderFactory ecs.ToolFactory[collider.Collider],
 	window window.Api,
-	cameraResolver ecs.ToolFactory[camera.Tool],
+	cameraResolver ecs.ToolFactory[camera.Camera],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := &cameraRaySystem{
 			world:           w,
 			logger:          logger,
 			cameraArray:     ecs.GetComponentsArray[camera.CameraComponent](w),
-			broadCollisions: colliderFactory.Build(w),
+			broadCollisions: colliderFactory.Build(w).Collider(),
 			window:          window,
 			events:          w.Events(),
-			cameraResolver:  cameraResolver.Build(w),
+			cameraResolver:  cameraResolver.Build(w).Camera(),
 
 			hoversOverEntity: nil,
 		}

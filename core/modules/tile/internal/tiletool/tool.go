@@ -10,5 +10,7 @@ type tool struct {
 	colliderPos relation.EntityToKeyTool[tile.ColliderPos]
 }
 
+func (t *tool) Tile() tile.Interface { return t }
+
 func (t *tool) TilePos() relation.EntityToKeyTool[tile.PosComponent]    { return t.tilePos }
 func (t *tool) ColliderPos() relation.EntityToKeyTool[tile.ColliderPos] { return t.colliderPos }

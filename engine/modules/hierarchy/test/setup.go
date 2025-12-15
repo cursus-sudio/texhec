@@ -12,9 +12,8 @@ import (
 )
 
 type Setup struct {
-	World       ecs.World
-	Tool        hierarchy.Tool
-	Transaction hierarchy.Transaction
+	World ecs.World
+	Tool  hierarchy.Interface
 }
 
 func NewSetup() Setup {
@@ -28,11 +27,10 @@ func NewSetup() Setup {
 	}
 	c := b.Build()
 	world := ecs.NewWorld()
-	toolFactory := ioc.Get[ecs.ToolFactory[hierarchy.Tool]](c)
+	toolFactory := ioc.Get[ecs.ToolFactory[hierarchy.Hierarchy]](c)
 	tool := toolFactory.Build(world)
 	return Setup{
 		world,
-		tool,
-		tool.Transaction(),
+		tool.Hierarchy(),
 	}
 }

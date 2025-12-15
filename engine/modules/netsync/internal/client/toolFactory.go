@@ -17,12 +17,9 @@ func NewToolFactory(
 ) ecs.ToolFactory[Tool] {
 	mutex := &sync.Mutex{}
 	return ecs.NewToolFactory(func(w ecs.World) Tool {
-		if t, err := ecs.GetGlobal[Tool](w); err == nil {
-			return t
-		}
 		mutex.Lock()
 		defer mutex.Unlock()
-		if t, err := ecs.GetGlobal[Tool](w); err == nil {
+		if t, ok := ecs.GetGlobal[Tool](w); ok {
 			return t
 		}
 		t := NewTool(

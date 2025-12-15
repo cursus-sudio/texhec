@@ -20,10 +20,10 @@ func (pkg pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
 		return b.
 			// components
-			Register(hierarchy.ParentComponent{})
+			Register(hierarchy.Component{})
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[hierarchy.Tool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[hierarchy.Hierarchy] {
 		return hierarchytool.NewTool(
 			ioc.Get[logger.Logger](c),
 		)

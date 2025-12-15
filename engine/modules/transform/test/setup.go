@@ -8,19 +8,24 @@ import (
 	"engine/services/clock"
 	"engine/services/ecs"
 	"engine/services/logger"
+	"testing"
 	"time"
 
 	"github.com/ogiusek/ioc/v2"
 )
 
-type Setup struct {
-	World          ecs.World
-	Tool           transform.Tool
-	Transaction    transform.Transaction
-	HierarchyArray ecs.ComponentsArray[hierarchy.ParentComponent]
+type world struct {
+	World     ecs.World
+	Transform transform.Interface
+	Hierarchy hierarchy.Interface
 }
 
-func NewSetup() Setup {
+type Setup struct {
+	world
+	T *testing.T
+}
+
+func NewSetup(t *testing.T) Setup {
 	b := ioc.NewBuilder()
 	for _, pkg := range []ioc.Pkg{
 		logger.Package(true, func(c ioc.Dic, message string) { print(message) }),
@@ -31,14 +36,27 @@ func NewSetup() Setup {
 		pkg.Register(b)
 	}
 	c := b.Build()
-	world := ecs.NewWorld()
-	toolFactory := ioc.Get[ecs.ToolFactory[transform.Tool]](c)
-	tool := toolFactory.Build(world)
-	hierarchyArray := ecs.GetComponentsArray[hierarchy.ParentComponent](world)
+	w := ecs.NewWorld()
 	return Setup{
-		world,
-		tool,
-		tool.Transaction(),
-		hierarchyArray,
+		world{
+			w,
+			ioc.Get[ecs.ToolFactory[transform.Transform]](c).Build(w).Transform(),
+			ioc.Get[ecs.ToolFactory[hierarchy.Hierarchy]](c).Build(w).Hierarchy(),
+		},
+		t,
+	}
+}
+
+func (setup Setup) expectAbsolutePos(entity ecs.EntityID, expectedPos transform.PosComponent) {
+	pos, _ := setup.Transform.AbsolutePos().GetComponent(entity)
+	if pos.Pos != expectedPos.Pos {
+		setup.T.Errorf("expected pos %v but has %v", expectedPos, pos)
+	}
+}
+
+func (setup Setup) expectAbsoluteSize(entity ecs.EntityID, expectedSize transform.SizeComponent) {
+	size, _ := setup.Transform.AbsoluteSize().GetComponent(entity)
+	if size.Size != expectedSize.Size {
+		setup.T.Errorf("expected size %v but has %v", expectedSize, size)
 	}
 }

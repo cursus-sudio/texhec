@@ -58,12 +58,12 @@ func (pkg pkg) Register(b ioc.Builder) {
 			pkg.hideAnimation,
 			ioc.Get[gameassets.GameAssets](c),
 			ioc.Get[logger.Logger](c),
-			ioc.Get[ecs.ToolFactory[camera.Tool]](c),
-			ioc.Get[ecs.ToolFactory[transform.Tool]](c),
-			ioc.Get[ecs.ToolFactory[tile.Tool]](c),
-			ioc.Get[ecs.ToolFactory[text.Tool]](c),
-			ioc.Get[ecs.ToolFactory[render.Tool]](c),
-			ioc.Get[ecs.ToolFactory[hierarchy.Tool]](c),
+			ioc.Get[ecs.ToolFactory[camera.Camera]](c),
+			ioc.Get[ecs.ToolFactory[transform.Transform]](c),
+			ioc.Get[ecs.ToolFactory[tile.Tile]](c),
+			ioc.Get[ecs.ToolFactory[text.Text]](c),
+			ioc.Get[ecs.ToolFactory[render.Render]](c),
+			ioc.Get[ecs.ToolFactory[hierarchy.Hierarchy]](c),
 		)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ui.System {

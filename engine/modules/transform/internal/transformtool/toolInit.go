@@ -5,75 +5,90 @@ import (
 	"engine/services/ecs"
 )
 
+type save struct {
+	entity ecs.EntityID
+	pos    transform.AbsolutePosComponent
+	rot    transform.AbsoluteRotationComponent
+	size   transform.AbsoluteSizeComponent
+}
+
 func (t tool) Init() {
-	onPosUpsert := func(ei []ecs.EntityID) {
-		posTransaction := t.posArray.Transaction()
-		for _, entity := range ei {
-			parentObj := t.hierarchyTransaction.GetObject(entity)
-			for _, child := range parentObj.Children().GetIndices() {
-				mask, err := t.parentMaskArray.GetComponent(child)
-				if err != nil {
-					continue
-				}
-				if mask.RelativeMask&transform.RelativePos != 0 {
-					posTransaction.TriggerChangeListener(child)
-				}
-			}
-		}
-		t.logger.Warn(ecs.FlushMany(posTransaction))
+	arrays := []ecs.AnyComponentArray{
+		t.absolutePosArray,
+		t.absoluteRotationArray,
+		t.absoluteSizeArray,
 	}
 
-	onRotUpsert := func(ei []ecs.EntityID) {
-		posTransaction := t.posArray.Transaction()
-		rotTransaction := t.posArray.Transaction()
-		for _, entity := range ei {
-			parentObj := t.hierarchyTransaction.GetObject(entity)
-			for _, child := range parentObj.Children().GetIndices() {
-				mask, err := t.parentMaskArray.GetComponent(child)
-				if err != nil {
-					continue
-				}
-				if mask.RelativeMask&transform.RelativePos != 0 {
-					posTransaction.TriggerChangeListener(child)
-				}
-				if mask.RelativeMask&transform.RelativeRotation != 0 {
-					rotTransaction.TriggerChangeListener(child)
-				}
-			}
-		}
-		t.logger.Warn(ecs.FlushMany(posTransaction, rotTransaction))
+	for _, arr := range arrays {
+		arr.AddDependency(t.posArray)
+		arr.AddDependency(t.rotationArray)
+		arr.AddDependency(t.sizeArray)
+
+		arr.AddDependency(t.maxSizeArray)
+		arr.AddDependency(t.minSizeArray)
+
+		arr.AddDependency(t.aspectRatioArray)
+		arr.AddDependency(t.pivotPointArray)
+
+		arr.AddDependency(t.hierarchyArray)
+		arr.AddDependency(t.parentMaskArray)
+		arr.AddDependency(t.parentPivotPointArray)
 	}
 
-	onSizeUpsert := func(ei []ecs.EntityID) {
-		posTransaction := t.posArray.Transaction()
-		sizeTransaction := t.posArray.Transaction()
-		for _, entity := range ei {
-			parentObj := t.hierarchyTransaction.GetObject(entity)
-			for _, child := range parentObj.Children().GetIndices() {
-				mask, err := t.parentMaskArray.GetComponent(child)
-				if err != nil {
+	dirtySet := ecs.NewDirtySet()
+
+	beforeGet := func() {
+		entities := dirtySet.Get()
+		if len(entities) == 0 {
+			return
+		}
+		children := []ecs.EntityID{}
+
+		saves := []save{}
+
+		for len(entities) != 0 || len(children) != 0 {
+			if len(entities) == 0 {
+				entities = children
+				for _, save := range saves {
+					t.absolutePosArray.SaveComponent(save.entity, save.pos)
+					t.absoluteRotationArray.SaveComponent(save.entity, save.rot)
+					t.absoluteSizeArray.SaveComponent(save.entity, save.size)
+				}
+				dirtySet.Clear()
+
+				children = nil
+				saves = nil
+			}
+			entity := entities[0]
+			entities = entities[1:]
+
+			saves = append(saves, save{
+				entity: entity,
+				pos:    t.CalculateAbsolutePos(entity),
+				rot:    t.CalculateAbsoluteRot(entity),
+				size:   t.CalculateAbsoluteSize(entity),
+			})
+
+			for _, child := range t.hierarchy.Children(entity).GetIndices() {
+				comparedMask := transform.RelativePos | transform.RelativeRotation | transform.RelativeSizeXYZ
+				mask, ok := t.parentMaskArray.GetComponent(child)
+				if !ok || mask.RelativeMask&comparedMask == 0 {
 					continue
 				}
-				if mask.RelativeMask&transform.RelativePos != 0 {
-					posTransaction.TriggerChangeListener(child)
-				}
-				if mask.RelativeMask&transform.RelativeSizeXYZ != 0 {
-					sizeTransaction.TriggerChangeListener(child)
-				}
+				children = append(children, child)
 			}
 		}
-		t.logger.Warn(ecs.FlushMany(posTransaction, sizeTransaction))
+
+		for _, save := range saves {
+			t.absolutePosArray.SaveComponent(save.entity, save.pos)
+			t.absoluteRotationArray.SaveComponent(save.entity, save.rot)
+			t.absoluteSizeArray.SaveComponent(save.entity, save.size)
+		}
+		dirtySet.Clear()
 	}
 
-	t.posArray.OnChange(onPosUpsert)
-	t.pivotPointArray.OnChange(onPosUpsert)
-	t.parentPivotPointArray.OnChange(onPosUpsert)
-	t.rotationArray.OnChange(onRotUpsert)
-	t.sizeArray.OnChange(onSizeUpsert)
-
-	// t.posArray.OnAdd(onPosUpsert)
-	// t.pivotPointArray.OnAdd(onPosUpsert)
-	// t.parentPivotPointArray.OnAdd(onPosUpsert)
-	// t.rotationArray.OnAdd(onRotUpsert)
-	// t.sizeArray.OnAdd(onSizeUpsert)
+	for _, array := range arrays {
+		array.AddDirtySet(dirtySet)
+		array.BeforeGet(beforeGet)
+	}
 }

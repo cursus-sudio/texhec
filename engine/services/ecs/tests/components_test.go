@@ -15,46 +15,38 @@ var secondComponent = Component{Counter: 8}
 func TestComponents(t *testing.T) {
 	world := ecs.NewWorld()
 
-	if _, err := ecs.GetComponent[Component](world, ecs.EntityID(0)); err != ecs.ErrEntityDoNotExists {
-		t.Errorf("when retrieving component from not existing entity do not got ErrEntityDoNotExists error")
+	if _, ok := ecs.GetComponent[Component](world, ecs.EntityID(0)); ok {
+		t.Errorf("retrieved not existing component")
 	}
 
 	entityId := world.NewEntity()
-	if err := ecs.SaveComponent(world, entityId, component); err != nil {
-		t.Errorf("when trying to save component on existing entity got unexpected error")
-	}
+	ecs.SaveComponent(world, entityId, component)
 
-	if retrievedComponent, err := ecs.GetComponent[Component](world, entityId); err != nil {
-		t.Errorf("unexpected error when retrieving component")
+	if retrievedComponent, ok := ecs.GetComponent[Component](world, entityId); !ok {
+		t.Errorf("expected component")
 	} else if retrievedComponent != component {
 		t.Errorf("retrieved component isn't equal to saved component")
 	}
 
-	if err := ecs.SaveComponent(world, ecs.EntityID(0), secondComponent); err != ecs.ErrEntityDoNotExists {
-		t.Errorf("when trying to save existing component on not existing entity do not got ErrEntityDoNotExists error")
-	}
+	ecs.SaveComponent(world, entityId, secondComponent)
 
-	if err := ecs.SaveComponent(world, entityId, secondComponent); err != nil {
-		t.Errorf("when saving component got unexpected error")
-	}
-
-	if retrievedComponent, err := ecs.GetComponent[Component](world, entityId); err != nil {
-		t.Errorf("unexpected error when retrieving component")
+	if retrievedComponent, ok := ecs.GetComponent[Component](world, entityId); !ok {
+		t.Errorf("expected component")
 	} else if retrievedComponent != secondComponent {
 		t.Errorf("retrieved component isn't equal to saved component")
 	}
 
 	ecs.RemoveComponent[Component](world, entityId)
 
-	if _, err := ecs.GetComponent[Component](world, entityId); err != ecs.ErrComponentDoNotExists {
-		t.Errorf("retrieving removed component didn't return ecs.ErrComponentDoNotExists but %v\n", err)
+	if _, ok := ecs.GetComponent[Component](world, entityId); ok {
+		t.Errorf("retrieved removed component")
 	}
 
 	ecs.SaveComponent(world, entityId, component)
 	world.RemoveEntity(entityId)
 
-	if _, err := ecs.GetComponent[Component](world, entityId); err != ecs.ErrEntityDoNotExists {
-		t.Errorf("retrieving component from removed entity didn't return ecs.ErrEntityDoNotExists but %v\n", err)
+	if _, ok := ecs.GetComponent[Component](world, entityId); ok {
+		t.Errorf("retrieved removed component")
 	}
 }
 
@@ -62,194 +54,76 @@ func TestComponentsArrays(t *testing.T) {
 	world := ecs.NewWorld()
 	componentArray := ecs.GetComponentsArray[Component](world)
 
-	if _, err := componentArray.GetComponent(ecs.EntityID(0)); err != ecs.ErrEntityDoNotExists {
-		t.Errorf("when retrieving component from not existing entity do not got ErrEntityDoNotExists error")
-	}
-
 	entityId := world.NewEntity()
-	if err := componentArray.SaveComponent(entityId, component); err != nil {
-		t.Errorf("when trying to save component on existing entity got unexpected error")
-	}
+	componentArray.SaveComponent(entityId, component)
 
-	if retrievedComponent, err := componentArray.GetComponent(entityId); err != nil {
-		t.Errorf("unexpected error when retrieving component")
+	if retrievedComponent, ok := componentArray.GetComponent(entityId); !ok {
+		t.Errorf("expected component")
 	} else if retrievedComponent != component {
 		t.Errorf("retrieved component isn't equal to saved component")
 	}
 
-	if err := componentArray.SaveComponent(ecs.EntityID(0), secondComponent); err != ecs.ErrEntityDoNotExists {
-		t.Errorf("when trying to save existing component on not existing entity do not got ErrEntityDoNotExists error")
-	}
+	componentArray.SaveComponent(entityId, secondComponent)
 
-	if err := componentArray.SaveComponent(entityId, secondComponent); err != nil {
-		t.Errorf("when saving component got unexpected error")
-	}
-
-	if retrievedComponent, err := componentArray.GetComponent(entityId); err != nil {
-		t.Errorf("unexpected error when retrieving component")
+	if retrievedComponent, ok := componentArray.GetComponent(entityId); !ok {
+		t.Errorf("expected component")
 	} else if retrievedComponent != secondComponent {
 		t.Errorf("retrieved component isn't equal to saved component")
 	}
 
 	componentArray.RemoveComponent(entityId)
 
-	if _, err := componentArray.GetComponent(entityId); err != ecs.ErrComponentDoNotExists {
-		t.Errorf("retrieving removed component didn't return ecs.ErrComponentDoNotExists but %v\n", err)
+	if _, ok := componentArray.GetComponent(entityId); ok {
+		t.Errorf("retrieved removed component")
 	}
 
 	componentArray.SaveComponent(entityId, component)
 	world.RemoveEntity(entityId)
 
-	if _, err := componentArray.GetComponent(entityId); err != ecs.ErrEntityDoNotExists {
-		t.Errorf("retrieving component from removed entity didn't return ecs.ErrEntityDoNotExists but %v\n", err)
+	if _, ok := componentArray.GetComponent(entityId); ok {
+		t.Errorf("retrieved removed component")
 	}
 }
 
 func TestComponentsQuery(t *testing.T) {
 	type Component2 struct{}
-	type ForbiddenComponent struct{}
-	type TrackedComponent struct{}
 	world := ecs.NewWorld()
-
-	adds := 0
-	expectedAdds := 0
-	changes := 0
-	expectedChanges := 0
-	removes := 0
-	expectedRemoves := 0
-
-	query := world.Query().
-		Require(Component{}).
-		Require(Component2{}).
-		Forbid(ForbiddenComponent{}).
-		Track(TrackedComponent{}).
-		Build()
-
-	query.OnAdd(func(ei []ecs.EntityID) { adds += 1 })
-	query.OnChange(func(ei []ecs.EntityID) { changes += 1 })
-	query.OnRemove(func(ei []ecs.EntityID) { removes += 1 })
-
-	entity := world.NewEntity()
 
 	component := ecs.GetComponentsArray[Component](world)
 	component2 := ecs.GetComponentsArray[Component2](world)
-	forbiddenComponent := ecs.GetComponentsArray[ForbiddenComponent](world)
-	trackedComponent := ecs.GetComponentsArray[TrackedComponent](world)
 
-	expectNothing := func() bool {
-		if adds != expectedAdds {
-			t.Errorf("unexpected call on query onAdd")
-			return false
-		}
-		if changes != expectedChanges {
-			t.Errorf("unexpected call on query onChange")
-			return false
-		}
-		if removes != expectedRemoves {
-			t.Errorf("unexpected call on query onRemove")
-			return false
-		}
-		return true
+	set := ecs.NewDirtySet()
+	component.AddDirtySet(set)
+	component2.AddDirtySet(set)
+
+	if dirty := set.Get(); len(dirty) != 0 {
+		t.Errorf("no dirty flags were expected")
+		return
 	}
 
-	expectAdd := func() bool {
-		expectedAdds += 1
-		if adds != expectedAdds {
-			t.Errorf("expected call on query onAdd")
-			return false
-		}
-		if changes != expectedChanges {
-			t.Errorf("unexpected call on query onChange expected call onAdd")
-			return false
-		}
-		if removes != expectedRemoves {
-			t.Errorf("unexpected call on query onRemove expected call onAdd")
-			return false
-		}
-		return true
-	}
-
-	expectChange := func() bool {
-		expectedChanges += 1
-		if adds != expectedAdds {
-			t.Errorf("unexpected call on query onAdd expected onChange")
-			return false
-		}
-		if changes != expectedChanges {
-			t.Errorf("expected call on query onChange")
-			return false
-		}
-		if removes != expectedRemoves {
-			t.Errorf("unexpected call on query onRemove expected call onChange")
-			return false
-		}
-		return true
-	}
-
-	expectRemove := func() bool {
-		expectedRemoves += 1
-		if adds != expectedAdds {
-			t.Errorf("unexpected call on query onAdd expected onRemove")
-			return false
-		}
-		if changes != expectedChanges {
-			t.Errorf("unexpected call on query onChange expected onRemove")
-			return false
-		}
-		if removes != expectedRemoves {
-			t.Errorf("expected call on query onRemove")
-			return false
-		}
-		return true
-	}
+	entity := world.NewEntity()
 
 	component.SaveComponent(entity, Component{})
-	if ok := expectNothing(); !ok {
-		return
-	}
-
-	component2.SaveComponent(entity, Component2{})
-	if ok := expectAdd(); !ok {
-		return
-	}
-
-	component2.SaveComponent(entity, Component2{})
-	if ok := expectNothing(); !ok {
-		return
-	}
-
-	component.SaveComponent(entity, Component{})
-	if ok := expectNothing(); !ok {
-		return
-	}
-
-	trackedComponent.SaveComponent(entity, TrackedComponent{})
-	if ok := expectChange(); !ok {
-		return
-	}
-
-	trackedComponent.SaveComponent(entity, TrackedComponent{})
-	if ok := expectNothing(); !ok {
-		return
-	}
-
-	trackedComponent.RemoveComponent(entity)
-	if ok := expectChange(); !ok {
-		return
-	}
-
-	forbiddenComponent.SaveComponent(entity, ForbiddenComponent{})
-	if ok := expectRemove(); !ok {
-		return
-	}
-
-	forbiddenComponent.RemoveComponent(entity)
-	if ok := expectAdd(); !ok {
+	if dirty := set.Get(); len(dirty) != 1 || dirty[0] != entity {
+		t.Errorf("expected entity to be dirty")
 		return
 	}
 
 	component.RemoveComponent(entity)
-	if ok := expectRemove(); !ok {
+	if dirty := set.Get(); len(dirty) != 1 || dirty[0] != entity {
+		t.Errorf("expected entity to be dirty")
+		return
+	}
+
+	component2.SaveComponent(entity, Component2{})
+	if dirty := set.Get(); len(dirty) != 1 || dirty[0] != entity {
+		t.Errorf("expected entity to be dirty")
+		return
+	}
+
+	component2.RemoveComponent(entity)
+	if dirty := set.Get(); len(dirty) != 1 || dirty[0] != entity {
+		t.Errorf("expected entity to be dirty")
 		return
 	}
 }

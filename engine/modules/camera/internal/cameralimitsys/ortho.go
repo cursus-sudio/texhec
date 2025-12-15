@@ -11,74 +11,78 @@ import (
 
 type orthoSys struct {
 	world         ecs.World
-	query         ecs.LiveQuery
+	dirtySet      ecs.DirtySet
 	limitsArray   ecs.ComponentsArray[camera.CameraLimitsComponent]
 	orthoArray    ecs.ComponentsArray[camera.OrthoComponent]
-	transformTool transform.Tool
-	cameraTool    camera.Tool
+	transformTool transform.Interface
+	cameraTool    camera.Interface
 
 	logger logger.Logger
 }
 
 func NewOrthoSys(
-	transformToolFactory ecs.ToolFactory[transform.Tool],
-	cameraToolFactory ecs.ToolFactory[camera.Tool],
+	transformToolFactory ecs.ToolFactory[transform.Transform],
+	cameraToolFactory ecs.ToolFactory[camera.Camera],
 	logger logger.Logger,
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
-		transformTool := transformToolFactory.Build(w)
-		cameraTool := cameraToolFactory.Build(w)
+		transformTool := transformToolFactory.Build(w).Transform()
+		cameraTool := cameraToolFactory.Build(w).Camera()
+
+		dirtySet := ecs.NewDirtySet()
+		transformTool.AddDirtySet(dirtySet)
+		ecs.GetComponentsArray[camera.CameraLimitsComponent](w).AddDirtySet(dirtySet)
+		ecs.GetComponentsArray[camera.OrthoComponent](w).AddDirtySet(dirtySet)
+		ecs.GetComponentsArray[camera.ViewportComponent](w).AddDirtySet(dirtySet)
+		ecs.GetComponentsArray[camera.NormalizedViewportComponent](w).AddDirtySet(dirtySet)
+
 		s := &orthoSys{
-			world: w,
-			query: transformTool.Query(w.Query()).
-				Require(camera.CameraLimitsComponent{}).
-				Require(camera.OrthoComponent{}).
-				Track(camera.ViewportComponent{}).
-				Track(camera.NormalizedViewportComponent{}).
-				Build(),
+			world:         w,
+			dirtySet:      dirtySet,
 			limitsArray:   ecs.GetComponentsArray[camera.CameraLimitsComponent](w),
 			orthoArray:    ecs.GetComponentsArray[camera.OrthoComponent](w),
 			transformTool: transformTool,
 			cameraTool:    cameraTool,
 			logger:        logger,
 		}
-		s.Addlisteners()
+		s.transformTool.Pos().BeforeGet(s.BeforeGet)
+
 		return nil
 	})
 }
 
-func (s *orthoSys) Addlisteners() {
-	s.query.OnAdd(s.ChangeListener)
-	s.query.OnChange(s.ChangeListener)
-}
+func (s *orthoSys) BeforeGet() {
+	ei := s.dirtySet.Get()
+	if len(ei) == 0 {
+		return
+	}
+	type save struct {
+		entity ecs.EntityID
+		pos    transform.AbsolutePosComponent
+	}
+	saves := []save{}
 
-func (s *orthoSys) ChangeListener(ei []ecs.EntityID) {
-	transformTransaction := s.transformTool.Transaction()
 	for _, entity := range ei {
 		camera, err := s.cameraTool.GetObject(entity)
 		if err != nil {
-			s.logger.Warn(err)
 			continue
 		}
-		limits, err := s.limitsArray.GetComponent(entity)
-		if err != nil {
+		limits, ok := s.limitsArray.GetComponent(entity)
+		if !ok {
 			continue
 		}
-		ortho, err := s.orthoArray.GetComponent(entity)
-		if err != nil {
-			s.logger.Warn(err)
+		ortho, ok := s.orthoArray.GetComponent(entity)
+		if !ok {
 			continue
 		}
 
-		transform := transformTransaction.GetObject(entity)
-		pos, err := transform.AbsolutePos().Get()
-		if err != nil {
-			s.logger.Warn(err)
+		pos, ok := s.transformTool.AbsolutePos().GetComponent(entity)
+		if !ok {
 			continue
 		}
 		x, y, w, h := camera.Viewport()
-		var halfWidth float32 = float32(w-x) / 2 / ortho.Zoom
-		var halfHeight float32 = float32(h-y) / 2 / ortho.Zoom
+		halfWidth := float32(w-x) / 2 / ortho.Zoom
+		halfHeight := float32(h-y) / 2 / ortho.Zoom
 
 		minPos := mgl32.Vec3{
 			limits.Min.X() + halfWidth,
@@ -111,8 +115,9 @@ func (s *orthoSys) ChangeListener(ei []ecs.EntityID) {
 			min(pos.Pos.Z(), maxPos.Z()),
 		}
 
-		transform.AbsolutePos().Set(pos)
+		saves = append(saves, save{entity, pos})
 	}
-
-	s.logger.Warn(ecs.FlushMany(transformTransaction.Transactions()...))
+	for _, save := range saves {
+		s.transformTool.SetAbsolutePos(save.entity, save.pos)
+	}
 }

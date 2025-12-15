@@ -13,43 +13,40 @@ import (
 )
 
 type wasdMoveSystem struct {
-	logger        logger.Logger
-	world         ecs.World
-	transformTool transform.Tool
-	orthoArray    ecs.ComponentsArray[camera.OrthoComponent]
-	query         ecs.LiveQuery
+	logger            logger.Logger
+	world             ecs.World
+	transformTool     transform.Interface
+	orthoArray        ecs.ComponentsArray[camera.OrthoComponent]
+	mobileCameraArray ecs.ComponentsArray[camera.MobileCameraComponent]
 
-	cameraCtors camera.Tool
+	cameraCtors camera.Camera
 	cameraSpeed float32
 }
 
 func NewWasdSystem(
 	logger logger.Logger,
-	cameraCtors ecs.ToolFactory[camera.Tool],
-	transformToolFactory ecs.ToolFactory[transform.Tool],
+	cameraCtors ecs.ToolFactory[camera.Camera],
+	transformToolFactory ecs.ToolFactory[transform.Transform],
 	cameraSpeed float32,
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		transformTool := transformToolFactory.Build(w)
 		s := &wasdMoveSystem{
-			logger:        logger,
-			world:         w,
-			transformTool: transformTool,
-			orthoArray:    ecs.GetComponentsArray[camera.OrthoComponent](w),
-			query: transformTool.Query(w.Query()).Require(
-				camera.OrthoComponent{},
-				camera.MobileCameraComponent{},
-			).Build(),
+			logger:            logger,
+			world:             w,
+			transformTool:     transformTool.Transform(),
+			orthoArray:        ecs.GetComponentsArray[camera.OrthoComponent](w),
+			mobileCameraArray: ecs.GetComponentsArray[camera.MobileCameraComponent](w),
 
 			cameraCtors: cameraCtors.Build(w),
 			cameraSpeed: cameraSpeed,
 		}
-		events.ListenE(w.EventsBuilder(), s.Listen)
+		events.Listen(w.EventsBuilder(), s.Listen)
 		return nil
 	})
 }
 
-func (s *wasdMoveSystem) Listen(event frames.FrameEvent) error {
+func (s *wasdMoveSystem) Listen(event frames.FrameEvent) {
 	var moveVerticaly float32 = 0
 	var moveHorizontaly float32 = 0
 	{
@@ -74,18 +71,14 @@ func (s *wasdMoveSystem) Listen(event frames.FrameEvent) error {
 		moveVerticaly *= float32(event.Delta.Milliseconds()) * s.cameraSpeed
 	}
 
-	transformTransaction := s.transformTool.Transaction()
-
-	for _, camera := range s.query.Entities() {
-		transform := transformTransaction.GetObject(camera)
-		pos, err := transform.AbsolutePos().Get()
-		if err != nil {
-			s.logger.Warn(err)
+	for _, camera := range s.mobileCameraArray.GetEntities() {
+		pos, ok := s.transformTool.AbsolutePos().GetComponent(camera)
+		if !ok {
 			continue
 		}
 
-		ortho, err := s.orthoArray.GetComponent(camera)
-		if err != nil {
+		ortho, ok := s.orthoArray.GetComponent(camera)
+		if !ok {
 			continue
 		}
 
@@ -94,8 +87,6 @@ func (s *wasdMoveSystem) Listen(event frames.FrameEvent) error {
 			pos.Pos.Y() + moveVerticaly/ortho.Zoom,
 			pos.Pos.Z(),
 		}
-		transform.AbsolutePos().Set(pos)
+		s.transformTool.AbsolutePos().SaveComponent(camera, pos)
 	}
-
-	return ecs.FlushMany(transformTransaction.Transactions()...)
 }

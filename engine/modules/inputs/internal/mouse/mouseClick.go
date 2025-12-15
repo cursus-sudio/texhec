@@ -87,8 +87,8 @@ func (s *clickSystem) ListenMove(event sdl.MouseMotionEvent) {
 
 	if s.movedEntity != nil {
 		entity := *s.movedEntity
-		dragComponent, err := s.dragArray.GetComponent(entity)
-		if err != nil {
+		dragComponent, ok := s.dragArray.GetComponent(entity)
+		if !ok {
 			goto cleanUp
 		}
 
@@ -127,7 +127,7 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
 			break
 		}
 
-		if _, err := s.keepSelectedArray.GetComponent(*entity); err == nil {
+		if _, ok := s.keepSelectedArray.GetComponent(*entity); ok {
 			s.emitDrag = false
 			break
 		}
@@ -143,7 +143,7 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
 			break
 		}
 
-		if _, err := s.keepSelectedArray.GetComponent(*entity); err != nil && s.moved {
+		if _, ok := s.keepSelectedArray.GetComponent(*entity); !ok && s.moved {
 			break
 		}
 
@@ -151,24 +151,24 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
 
 		switch event.Button {
 		case sdl.BUTTON_LEFT:
-			if comp, err := s.leftClickArray.GetComponent(*entity); err == nil {
+			if comp, ok := s.leftClickArray.GetComponent(*entity); ok {
 				eventToEmit = comp.Event
 			}
 			switch event.Clicks {
 			case 2:
-				if comp, err := s.doubleLeftClickArray.GetComponent(*entity); err == nil {
+				if comp, ok := s.doubleLeftClickArray.GetComponent(*entity); ok {
 					eventToEmit = comp.Event
 				}
 				break
 			}
 			break
 		case sdl.BUTTON_RIGHT:
-			if comp, err := s.rightClickArray.GetComponent(*entity); err == nil {
+			if comp, ok := s.rightClickArray.GetComponent(*entity); ok {
 				eventToEmit = comp.Event
 			}
 			switch event.Clicks {
 			case 2:
-				if comp, err := s.doubleRightClickArray.GetComponent(*entity); err == nil {
+				if comp, ok := s.doubleRightClickArray.GetComponent(*entity); ok {
 					eventToEmit = comp.Event
 				}
 				break

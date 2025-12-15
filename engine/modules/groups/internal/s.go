@@ -11,76 +11,102 @@ type s struct {
 	logger logger.Logger
 
 	world     ecs.World
-	hierarchy hierarchy.Transaction
+	hierarchy hierarchy.Interface
 
-	inheritArray ecs.ComponentsArray[groups.InheritGroupsComponent]
-	groupsArray  ecs.ComponentsArray[groups.GroupsComponent]
-
-	groupsTransaction ecs.ComponentsArrayTransaction[groups.GroupsComponent]
+	hierarchyArray ecs.ComponentsArray[hierarchy.Component]
+	inheritArray   ecs.ComponentsArray[groups.InheritGroupsComponent]
+	groupsArray    ecs.ComponentsArray[groups.GroupsComponent]
 }
 
 func NewSystem(
 	logger logger.Logger,
-	parentToolFactory ecs.ToolFactory[hierarchy.Tool],
+	parentToolFactory ecs.ToolFactory[hierarchy.Hierarchy],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
-		inheritArray := ecs.GetComponentsArray[groups.InheritGroupsComponent](w)
-		groupsArray := ecs.GetComponentsArray[groups.GroupsComponent](w)
 		s := s{
 			logger,
 			w,
-			parentToolFactory.Build(w).Transaction(),
-			inheritArray,
-			groupsArray,
-			groupsArray.Transaction(),
+			parentToolFactory.Build(w).Hierarchy(),
+			ecs.GetComponentsArray[hierarchy.Component](w),
+			ecs.GetComponentsArray[groups.InheritGroupsComponent](w),
+			ecs.GetComponentsArray[groups.GroupsComponent](w),
 		}
 		return s.Init()
 	})
 }
 
-func (s s) Init() error {
-	onParentUpsert := func(ei []ecs.EntityID) {
-		for _, entity := range ei {
-			groups, err := s.groupsArray.GetComponent(entity)
-			if err != nil {
-				continue
-			}
-			parentObject := s.hierarchy.GetObject(entity)
-			children := parentObject.Children()
-			for _, child := range children.GetIndices() {
-				_, err := s.inheritArray.GetComponent(child)
-				if err != nil {
-					continue
-				}
-				s.groupsTransaction.SaveComponent(child, groups)
-			}
-		}
-		s.logger.Warn(ecs.FlushMany(s.groupsTransaction))
+func (s s) calculateGroup(entity ecs.EntityID) (groups.GroupsComponent, bool) {
+	def := groups.GroupsComponent{}
+	parent, ok := s.hierarchy.Parent(entity)
+	if !ok {
+		return def, false
 	}
-	s.groupsArray.OnAdd(onParentUpsert)
-	s.groupsArray.OnChange(onParentUpsert)
+	groups, ok := s.groupsArray.GetComponent(parent)
+	if !ok {
+		return def, false
+	}
+	return groups, ok
+}
 
-	onChildUpsert := func(ei []ecs.EntityID) {
-		for _, entity := range ei {
-			parentObject := s.hierarchy.GetObject(entity)
-			parent, err := parentObject.Parent().Get()
-			if err != nil {
-				continue
-			}
-			parentGroup, err := s.groupsArray.GetComponent(parent.Parent)
-			if err != nil {
-				continue
-			}
-			s.groupsTransaction.SaveComponent(entity, parentGroup)
+type save struct {
+	entity ecs.EntityID
+	groups groups.GroupsComponent
+}
+
+func (s s) Init() error {
+	dirtySet := ecs.NewDirtySet()
+	s.groupsArray.AddDependency(s.inheritArray)
+	s.groupsArray.AddDependency(s.hierarchyArray)
+
+	s.groupsArray.AddDirtySet(dirtySet)
+
+	s.groupsArray.BeforeGet(func() {
+		entities := dirtySet.Get()
+		if len(entities) == 0 {
+			return
 		}
-		ecs.FlushMany(s.groupsTransaction)
-	}
-	childQuery := s.world.Query().
-		Track(hierarchy.ParentComponent{}).
-		Require(groups.InheritGroupsComponent{}).
-		Build()
-	childQuery.OnAdd(onChildUpsert)
-	childQuery.OnChange(onChildUpsert)
+		children := []ecs.EntityID{}
+
+		saves := []save{}
+
+		for len(entities) != 0 || len(children) != 0 {
+			if len(entities) == 0 {
+				entities = children
+				for _, save := range saves {
+					s.groupsArray.SaveComponent(save.entity, save.groups)
+				}
+
+				dirtySet.Clear()
+				children = nil
+				saves = nil
+			}
+			entity := entities[0]
+			entities = entities[1:]
+
+			groups, ok := s.calculateGroup(entity)
+			if !ok {
+				continue
+			}
+			if originalGroups, ok := s.groupsArray.GetComponent(entity); ok && groups == originalGroups {
+				continue
+			}
+			saves = append(saves, save{
+				entity: entity,
+				groups: groups,
+			})
+
+			for _, child := range s.hierarchy.Children(entity).GetIndices() {
+				if _, ok := s.inheritArray.GetComponent(child); ok {
+					children = append(children, child)
+				}
+			}
+		}
+
+		for _, save := range saves {
+			s.groupsArray.SaveComponent(save.entity, save.groups)
+		}
+		dirtySet.Clear()
+	})
 
 	return nil
 }

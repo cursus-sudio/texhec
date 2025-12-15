@@ -2,22 +2,17 @@ package text
 
 import "engine/services/ecs"
 
-type Tool interface {
-	Transaction() Transaction
-	Query(ecs.LiveQueryBuilder) ecs.LiveQueryBuilder
+type Text interface {
+	Text() Interface
 }
 
-type Transaction interface {
-	GetObject(ecs.EntityID) Object
-	Transactions() []ecs.AnyComponentsArrayTransaction
-	Flush() error
-}
+type Interface interface {
+	Break() ecs.ComponentsArray[BreakComponent]
+	TextContent() ecs.ComponentsArray[TextComponent]
+	TextAlign() ecs.ComponentsArray[TextAlignComponent]
+	TextColor() ecs.ComponentsArray[TextColorComponent]
+	FontFamily() ecs.ComponentsArray[FontFamilyComponent]
+	FontSize() ecs.ComponentsArray[FontSizeComponent]
 
-type Object interface {
-	Break() ecs.EntityComponent[BreakComponent]
-	Text() ecs.EntityComponent[TextComponent]
-	TextAlign() ecs.EntityComponent[TextAlignComponent]
-	TextColor() ecs.EntityComponent[TextColorComponent]
-	FontFamily() ecs.EntityComponent[FontFamilyComponent]
-	FontSize() ecs.EntityComponent[FontSizeComponent]
+	AddDirtySet(ecs.DirtySet)
 }

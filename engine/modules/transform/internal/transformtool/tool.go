@@ -6,13 +6,15 @@ import (
 	"engine/services/ecs"
 	"engine/services/logger"
 	"sync"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type tool struct {
 	logger logger.Logger
 
-	world                ecs.World
-	hierarchyTransaction hierarchy.Transaction
+	world     ecs.World
+	hierarchy hierarchy.Interface
 
 	defaultPos         transform.PosComponent
 	defaultRot         transform.RotationComponent
@@ -20,7 +22,11 @@ type tool struct {
 	defaultPivot       transform.PivotPointComponent
 	defaultParentPivot transform.ParentPivotPointComponent
 
-	parentArray           ecs.ComponentsArray[hierarchy.ParentComponent]
+	absolutePosArray      ecs.ComponentsArray[transform.AbsolutePosComponent]
+	absoluteRotationArray ecs.ComponentsArray[transform.AbsoluteRotationComponent]
+	absoluteSizeArray     ecs.ComponentsArray[transform.AbsoluteSizeComponent]
+
+	hierarchyArray        ecs.ComponentsArray[hierarchy.Component]
 	posArray              ecs.ComponentsArray[transform.PosComponent]
 	rotationArray         ecs.ComponentsArray[transform.RotationComponent]
 	sizeArray             ecs.ComponentsArray[transform.SizeComponent]
@@ -34,31 +40,34 @@ type tool struct {
 
 func NewTransformTool(
 	logger logger.Logger,
-	hierarchyToolFactory ecs.ToolFactory[hierarchy.Tool],
+	hierarchyToolFactory ecs.ToolFactory[hierarchy.Hierarchy],
 	defaultPos transform.PosComponent,
 	defaultRot transform.RotationComponent,
 	defaultSize transform.SizeComponent,
 	defaultPivot transform.PivotPointComponent,
 	defaultParentPivot transform.ParentPivotPointComponent,
-) ecs.ToolFactory[transform.Tool] {
+) ecs.ToolFactory[transform.Transform] {
 	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(w ecs.World) transform.Tool {
+	return ecs.NewToolFactory(func(w ecs.World) transform.Transform {
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		if tool, err := ecs.GetGlobal[tool](w); err == nil {
+		if tool, ok := ecs.GetGlobal[tool](w); ok {
 			return tool
 		}
 		tool := tool{
 			logger,
 			w,
-			hierarchyToolFactory.Build(w).Transaction(),
+			hierarchyToolFactory.Build(w).Hierarchy(),
 			defaultPos,
 			defaultRot,
 			defaultSize,
 			defaultPivot,
 			defaultParentPivot,
-			ecs.GetComponentsArray[hierarchy.ParentComponent](w),
+			ecs.GetComponentsArray[transform.AbsolutePosComponent](w),
+			ecs.GetComponentsArray[transform.AbsoluteRotationComponent](w),
+			ecs.GetComponentsArray[transform.AbsoluteSizeComponent](w),
+			ecs.GetComponentsArray[hierarchy.Component](w),
 			ecs.GetComponentsArray[transform.PosComponent](w),
 			ecs.GetComponentsArray[transform.RotationComponent](w),
 			ecs.GetComponentsArray[transform.SizeComponent](w),
@@ -75,20 +84,106 @@ func NewTransformTool(
 	})
 }
 
-func (tool tool) Transaction() transform.Transaction {
-	return newTransformTransaction(tool)
+func (t tool) SetAbsolutePos(entity ecs.EntityID, absolutePos transform.AbsolutePosComponent) {
+	pos, ok := t.posArray.GetComponent(entity)
+	if !ok {
+		pos.Pos = t.defaultPos.Pos
+	}
+
+	pos.Pos = absolutePos.Pos.
+		Sub(t.GetRelativeParentPos(entity)).
+		Sub(t.GetPivotPos(entity))
+
+	t.posArray.SaveComponent(entity, pos)
+}
+func (t tool) SetAbsoluteRotation(entity ecs.EntityID, absoluteRot transform.AbsoluteRotationComponent) {
+	rot, ok := t.rotationArray.GetComponent(entity)
+	if !ok {
+		rot = t.defaultRot
+	}
+
+	rot.Rotation = absoluteRot.Rotation.
+		Mul(t.GetRelativeParentRotation(entity).Inverse())
+
+	t.rotationArray.SaveComponent(entity, rot)
+}
+func (t tool) SetAbsoluteSize(entity ecs.EntityID, absoluteSize transform.AbsoluteSizeComponent) {
+	size, ok := t.sizeArray.GetComponent(entity)
+	if !ok {
+		size = t.defaultSize
+	}
+
+	parentSize := t.GetRelativeParentSize(entity)
+	size.Size = mgl32.Vec3{
+		absoluteSize.Size[0] / parentSize[0],
+		absoluteSize.Size[1] / parentSize[1],
+		absoluteSize.Size[2] / parentSize[2],
+	}
+
+	t.sizeArray.SaveComponent(entity, size)
 }
 
-func (tool tool) Query(b ecs.LiveQueryBuilder) ecs.LiveQueryBuilder {
-	return b.Track(
-		transform.PosComponent{},
-		transform.RotationComponent{},
-		transform.SizeComponent{},
-		transform.MaxSizeComponent{},
-		transform.MinSizeComponent{},
-		transform.AspectRatioComponent{},
-		transform.PivotPointComponent{},
-		transform.ParentComponent{},
-		transform.ParentPivotPointComponent{},
-	)
+func (t tool) Transform() transform.Interface { return t }
+
+func (t tool) AbsolutePos() ecs.ComponentsArray[transform.AbsolutePosComponent] {
+	return t.absolutePosArray
+}
+func (t tool) AbsoluteRotation() ecs.ComponentsArray[transform.AbsoluteRotationComponent] {
+	return t.absoluteRotationArray
+}
+func (t tool) AbsoluteSize() ecs.ComponentsArray[transform.AbsoluteSizeComponent] {
+	return t.absoluteSizeArray
+}
+func (t tool) Pos() ecs.ComponentsArray[transform.PosComponent] {
+	return t.posArray
+}
+func (t tool) Rotation() ecs.ComponentsArray[transform.RotationComponent] {
+	return t.rotationArray
+}
+func (t tool) Size() ecs.ComponentsArray[transform.SizeComponent] {
+	return t.sizeArray
+}
+func (t tool) MaxSize() ecs.ComponentsArray[transform.MaxSizeComponent] {
+	return t.maxSizeArray
+}
+func (t tool) MinSize() ecs.ComponentsArray[transform.MinSizeComponent] {
+	return t.minSizeArray
+}
+func (t tool) AspectRatio() ecs.ComponentsArray[transform.AspectRatioComponent] {
+	return t.aspectRatioArray
+}
+func (t tool) PivotPoint() ecs.ComponentsArray[transform.PivotPointComponent] {
+	return t.pivotPointArray
+}
+func (t tool) Parent() ecs.ComponentsArray[transform.ParentComponent] {
+	return t.parentMaskArray
+}
+func (t tool) ParentPivotPoint() ecs.ComponentsArray[transform.ParentPivotPointComponent] {
+	return t.parentPivotPointArray
+}
+
+func (t tool) Mat4(entity ecs.EntityID) mgl32.Mat4 {
+	pos, ok := t.absolutePosArray.GetComponent(entity)
+	if !ok {
+		pos.Pos = mgl32.Vec3{0, 0, 0}
+	}
+	rot, ok := t.absoluteRotationArray.GetComponent(entity)
+	if !ok {
+		rot.Rotation = mgl32.QuatIdent()
+	}
+	size, ok := t.absoluteSizeArray.GetComponent(entity)
+	if !ok {
+		size.Size = mgl32.Vec3{1, 1, 1}
+	}
+
+	translation := mgl32.Translate3D(pos.Pos.X(), pos.Pos.Y(), pos.Pos.Z())
+	rotation := rot.Rotation.Mat4()
+	scale := mgl32.Scale3D(size.Size.X()/2, size.Size.Y()/2, size.Size.Z()/2)
+	return translation.Mul4(rotation).Mul4(scale)
+}
+
+func (t tool) AddDirtySet(set ecs.DirtySet) {
+	t.absolutePosArray.AddDirtySet(set)
+	t.absoluteRotationArray.AddDirtySet(set)
+	t.absoluteSizeArray.AddDirtySet(set)
 }

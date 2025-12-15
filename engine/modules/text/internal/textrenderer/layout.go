@@ -28,11 +28,11 @@ type LayoutService interface {
 }
 
 type layoutService struct {
-	world                ecs.World
-	transformTransaction transform.Transaction
-	textArray            ecs.ComponentsArray[text.TextComponent]
-	fontFamilyArray      ecs.ComponentsArray[text.FontFamilyComponent]
-	fontSizeArray        ecs.ComponentsArray[text.FontSizeComponent]
+	world           ecs.World
+	transform       transform.Interface
+	textArray       ecs.ComponentsArray[text.TextComponent]
+	fontFamilyArray ecs.ComponentsArray[text.FontFamilyComponent]
+	fontSizeArray   ecs.ComponentsArray[text.FontSizeComponent]
 	// overflowArray   ecs.ComponentsArray[text.Overflow]
 	breakArray     ecs.ComponentsArray[text.BreakComponent]
 	textAlignArray ecs.ComponentsArray[text.TextAlignComponent]
@@ -51,7 +51,7 @@ type layoutService struct {
 func NewLayoutService(
 	world ecs.World,
 
-	transformToolFactory ecs.ToolFactory[transform.Tool],
+	transformToolFactory ecs.ToolFactory[transform.Transform],
 
 	logger logger.Logger,
 	fontService FontService,
@@ -64,11 +64,11 @@ func NewLayoutService(
 	defaultTextAlign text.TextAlignComponent,
 ) LayoutService {
 	return &layoutService{
-		world:                world,
-		transformTransaction: transformToolFactory.Build(world).Transaction(),
-		textArray:            ecs.GetComponentsArray[text.TextComponent](world),
-		fontFamilyArray:      ecs.GetComponentsArray[text.FontFamilyComponent](world),
-		fontSizeArray:        ecs.GetComponentsArray[text.FontSizeComponent](world),
+		world:           world,
+		transform:       transformToolFactory.Build(world).Transform(),
+		textArray:       ecs.GetComponentsArray[text.TextComponent](world),
+		fontFamilyArray: ecs.GetComponentsArray[text.FontFamilyComponent](world),
+		fontSizeArray:   ecs.GetComponentsArray[text.FontSizeComponent](world),
 		// overflowArray:   ecs.GetComponentsArray[text.Overflow](world),
 		breakArray:     ecs.GetComponentsArray[text.BreakComponent](world),
 		textAlignArray: ecs.GetComponentsArray[text.TextAlignComponent](world),
@@ -104,33 +104,32 @@ type line struct {
 func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	// TODO add overflow read, text align read and transform modification
 
-	transform := s.transformTransaction.GetObject(entity)
-	size, err := transform.AbsoluteSize().Get()
-	if err != nil {
-		return Layout{}, err
+	size, ok := s.transform.AbsoluteSize().GetComponent(entity)
+	if !ok {
+		return Layout{}, nil
 	}
-	textComponent, err := s.textArray.GetComponent(entity)
-	if err != nil {
-		return Layout{}, err
+	textComponent, ok := s.textArray.GetComponent(entity)
+	if !ok {
+		return Layout{}, nil
 	}
-	fontFamily, err := s.fontFamilyArray.GetComponent(entity)
-	if err != nil {
+	fontFamily, ok := s.fontFamilyArray.GetComponent(entity)
+	if !ok {
 		fontFamily = s.defaultFontFamily
 	}
-	fontSize, err := s.fontSizeArray.GetComponent(entity)
-	if err != nil {
+	fontSize, ok := s.fontSizeArray.GetComponent(entity)
+	if !ok {
 		fontSize = s.defaultFontSize
 	}
 	// overflow, err := s.overflowArray.GetComponent(entity)
 	// if err != nil {
 	// 	overflow = s.defaultOverflow
 	// }
-	breakComponent, err := s.breakArray.GetComponent(entity)
-	if err != nil {
+	breakComponent, ok := s.breakArray.GetComponent(entity)
+	if !ok {
 		breakComponent = s.defaultBreak
 	}
-	textAlign, err := s.textAlignArray.GetComponent(entity)
-	if err != nil {
+	textAlign, ok := s.textAlignArray.GetComponent(entity)
+	if !ok {
 		textAlign = s.defaultTextAlign
 	}
 

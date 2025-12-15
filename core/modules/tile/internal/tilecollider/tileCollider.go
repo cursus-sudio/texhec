@@ -30,31 +30,41 @@ func TileColliderSystem(logger logger.Logger,
 
 		groupsArray := ecs.GetComponentsArray[groups.GroupsComponent](w)
 
-		tilePosArray.OnAdd(func(ei []ecs.EntityID) {
-			uuidTransaction := uuidArray.Transaction()
+		tilePosDirtySet := ecs.NewDirtySet()
+		tilePosArray.AddDirtySet(tilePosDirtySet)
+		uuidArray.BeforeGet(func() {
+			ei := tilePosDirtySet.Get()
+			if len(ei) == 0 {
+				return
+			}
 			for _, entity := range ei {
-				if _, err := uuidArray.GetComponent(entity); err == nil {
+				if _, ok := uuidArray.GetComponent(entity); ok {
 					continue
 				}
 				comp := uuid.New(uuidFactory.NewUUID())
-				uuidTransaction.SaveComponent(entity, comp)
+				uuidArray.SaveComponent(entity, comp)
 			}
-			logger.Warn(ecs.FlushMany(uuidTransaction))
 		})
 
-		onUpsert := func(ei []ecs.EntityID) {
+		//
+
+		tileColliderDirtySet := ecs.NewDirtySet()
+		tileColliderArray := ecs.GetComponentsArray[ColliderComponent](w)
+		tileColliderArray.AddDirtySet(tileColliderDirtySet)
+		applyTileCollider := func() {
+			ei := tileColliderDirtySet.Get()
+			if len(ei) == 0 {
+				return
+			}
 			// groups
-			groupsTransaction := groupsArray.Transaction()
 			for _, entity := range ei {
-				groupsTransaction.SaveComponent(entity, tileGroups)
+				groupsArray.SaveComponent(entity, tileGroups)
 			}
 
 			// pos
-			posTransaction := posArray.Transaction()
-			leftClickTransaction := leftClickArray.Transaction()
 			for _, entity := range ei {
-				pos, err := tilePosArray.GetComponent(entity)
-				if err != nil {
+				pos, ok := tilePosArray.GetComponent(entity)
+				if !ok {
 					continue
 				}
 				transformPos := transform.NewPos(
@@ -62,36 +72,28 @@ func TileColliderSystem(logger logger.Logger,
 					float32(tileSize)*float32(pos.Y)+float32(tileSize)/2,
 					gridDepth+float32(pos.Layer),
 				)
-				posTransaction.SaveComponent(entity, transformPos)
+				posArray.SaveComponent(entity, transformPos)
 				comp := inputs.NewMouseLeftClick(tile.NewTileClickEvent(pos))
-				leftClickTransaction.SaveComponent(entity, comp)
+				leftClickArray.SaveComponent(entity, comp)
 			}
 
 			// transform
-			sizeTransaction := sizeArray.Transaction()
 			for _, entity := range ei {
-				sizeTransaction.SaveComponent(entity, transform.NewSize(float32(tileSize), float32(tileSize), 1))
+				sizeArray.SaveComponent(entity, transform.NewSize(float32(tileSize), float32(tileSize), 1))
 			}
 
 			// collider
-			colliderTransaction := collidersArray.Transaction()
 			for _, entity := range ei {
-				colliderTransaction.SaveComponent(entity, colliderComponent)
+				collidersArray.SaveComponent(entity, colliderComponent)
 			}
-
-			// mouse
-			logger.Warn(ecs.FlushMany(
-				groupsTransaction,
-				posTransaction,
-				sizeTransaction,
-				leftClickTransaction,
-				colliderTransaction,
-			))
 		}
 
-		tileColliderArray := ecs.GetComponentsArray[ColliderComponent](w)
-		tileColliderArray.OnAdd(onUpsert)
-		tileColliderArray.OnChange(onUpsert)
+		collidersArray.BeforeGet(applyTileCollider)
+		sizeArray.BeforeGet(applyTileCollider)
+		posArray.BeforeGet(applyTileCollider)
+		leftClickArray.BeforeGet(applyTileCollider)
+		groupsArray.BeforeGet(applyTileCollider)
+
 		return nil
 	})
 }

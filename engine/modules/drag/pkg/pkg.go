@@ -28,8 +28,8 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) drag.System {
 		return internal.NewSystem(
 			ioc.Get[logger.Logger](c),
-			ioc.Get[ecs.ToolFactory[camera.Tool]](c),
-			ioc.Get[ecs.ToolFactory[transform.Tool]](c),
+			ioc.Get[ecs.ToolFactory[camera.Camera]](c),
+			ioc.Get[ecs.ToolFactory[transform.Transform]](c),
 		)
 	})
 }

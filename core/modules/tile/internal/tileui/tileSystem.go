@@ -14,8 +14,8 @@ import (
 func NewSystem(
 	logger logger.Logger,
 	uiToolFactory ecs.ToolFactory[ui.Tool],
-	textToolFactory ecs.ToolFactory[text.Tool],
-	tileToolFactory ecs.ToolFactory[tile.Tool],
+	textToolFactory ecs.ToolFactory[text.Text],
+	tileToolFactory ecs.ToolFactory[tile.Tile],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(world ecs.World) error {
 		tilePosArray := ecs.GetComponentsArray[tile.PosComponent](world)
@@ -24,23 +24,19 @@ func NewSystem(
 		tileTool := tileToolFactory.Build(world)
 
 		events.Listen(world.EventsBuilder(), func(e tile.TileClickEvent) {
-			entity, ok := tileTool.TilePos().Get(e.Tile)
+			entity, ok := tileTool.Tile().TilePos().Get(e.Tile)
 			if !ok {
 				logger.Warn(fmt.Errorf("entity with uuid should exist"))
 				return
 			}
-			pos, err := tilePosArray.GetComponent(entity)
-			if err != nil {
-				logger.Warn(err)
+			pos, ok := tilePosArray.GetComponent(entity)
+			if !ok {
 				return
 			}
 			p := uiTool.Show()
-			textTransaction := textTool.Transaction()
-			quitText := textTransaction.GetObject(p)
-			quitText.Text().Set(text.TextComponent{Text: fmt.Sprintf("TILE: %v", pos)})
-			quitText.FontSize().Set(text.FontSizeComponent{FontSize: 25})
-			quitText.TextAlign().Set(text.TextAlignComponent{Vertical: .5, Horizontal: .5})
-			textTransaction.Flush()
+			textTool.Text().TextContent().SaveComponent(p, text.TextComponent{Text: fmt.Sprintf("TILE: %v", pos)})
+			textTool.Text().FontSize().SaveComponent(p, text.FontSizeComponent{FontSize: 25})
+			textTool.Text().TextAlign().SaveComponent(p, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
 		})
 		return nil
 	})

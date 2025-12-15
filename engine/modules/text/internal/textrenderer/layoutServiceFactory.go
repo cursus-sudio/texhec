@@ -16,7 +16,7 @@ type layoutServiceFactory struct {
 	fontService FontService
 	fontsKeys   FontKeys
 
-	transformToolFactory ecs.ToolFactory[transform.Tool]
+	transformToolFactory ecs.ToolFactory[transform.Transform]
 
 	defaultFontFamily text.FontFamilyComponent
 	defaultFontSize   text.FontSizeComponent
@@ -30,7 +30,7 @@ func NewLayoutServiceFactory(
 	fontService FontService,
 	fontsKeys FontKeys,
 
-	transformToolFactory ecs.ToolFactory[transform.Tool],
+	transformToolFactory ecs.ToolFactory[transform.Transform],
 
 	defaultFontFamily text.FontFamilyComponent,
 	defaultFontSize text.FontSizeComponent,

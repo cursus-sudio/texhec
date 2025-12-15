@@ -1,7 +1,6 @@
 package test
 
 import (
-	"engine/modules/hierarchy"
 	"testing"
 )
 
@@ -11,25 +10,16 @@ func TestChildren(t *testing.T) {
 	child := setup.World.NewEntity()
 	grandChild := setup.World.NewEntity()
 
-	parentTransform := setup.Transaction.GetObject(parent)
-	childTransform := setup.Transaction.GetObject(child)
-	grandChildTransform := setup.Transaction.GetObject(grandChild)
+	setup.Tool.SetParent(child, parent)
+	setup.Tool.SetParent(grandChild, child)
 
-	childTransform.Parent().Set(hierarchy.NewParent(parent))
-	grandChildTransform.Parent().Set(hierarchy.NewParent(child))
-
-	if err := setup.Transaction.Flush(); err != nil {
-		t.Error(err)
+	if children := setup.Tool.Children(parent); !children.Get(child) || len(children.GetIndices()) != 1 {
+		t.Errorf("expected parent to have one child %v", children.GetIndices())
 		return
 	}
 
-	if children := parentTransform.Children(); !children.Get(child) || len(children.GetIndices()) != 1 {
-		t.Errorf("expected parent to have one child")
-		return
-	}
-
-	if children := parentTransform.FlatChildren(); !children.Get(child) || !children.Get(grandChild) || len(children.GetIndices()) != 2 {
-		t.Errorf("expected parent to have two flat children")
+	if children := setup.Tool.FlatChildren(parent); !children.Get(child) || !children.Get(grandChild) || len(children.GetIndices()) != 2 {
+		t.Errorf("expected parent to have two flat children %v", children.GetIndices())
 		return
 	}
 }

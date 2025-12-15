@@ -21,8 +21,8 @@ type tool struct {
 
 func NewTool(
 	logger logger.Logger,
-) ecs.ToolFactory[text.Tool] {
-	return ecs.NewToolFactory(func(w ecs.World) text.Tool {
+) ecs.ToolFactory[text.Text] {
+	return ecs.NewToolFactory(func(w ecs.World) text.Text {
 		return tool{
 			logger,
 			w,
@@ -36,16 +36,19 @@ func NewTool(
 	})
 }
 
-func (tool tool) Transaction() text.Transaction {
-	return newTransaction(tool)
-}
+func (t tool) Text() text.Interface { return t }
 
-func (tool tool) Query(b ecs.LiveQueryBuilder) ecs.LiveQueryBuilder {
-	return b.Require(text.TextComponent{}).Track(
-		text.BreakComponent{},
-		text.TextAlignComponent{},
-		text.TextColorComponent{},
-		text.FontFamilyComponent{},
-		text.FontSizeComponent{},
-	)
+func (t tool) Break() ecs.ComponentsArray[text.BreakComponent]           { return t.breakArray }
+func (t tool) TextContent() ecs.ComponentsArray[text.TextComponent]      { return t.textArray }
+func (t tool) TextAlign() ecs.ComponentsArray[text.TextAlignComponent]   { return t.textAlignArray }
+func (t tool) TextColor() ecs.ComponentsArray[text.TextColorComponent]   { return t.textColorArray }
+func (t tool) FontFamily() ecs.ComponentsArray[text.FontFamilyComponent] { return t.fontFamilyArray }
+func (t tool) FontSize() ecs.ComponentsArray[text.FontSizeComponent]     { return t.fontSizeArray }
+
+func (t tool) AddDirtySet(set ecs.DirtySet) {
+	t.breakArray.AddDirtySet(set)
+	t.textAlignArray.AddDirtySet(set)
+	t.textColorArray.AddDirtySet(set)
+	t.fontFamilyArray.AddDirtySet(set)
+	t.fontSizeArray.AddDirtySet(set)
 }

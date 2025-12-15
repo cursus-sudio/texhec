@@ -8,7 +8,8 @@ type System ecs.SystemRegister
 
 // types
 
-type Connection interface {
+// singular connection interface
+type Conn interface {
 	// send has block behavior
 	Send(message any) error
 
@@ -20,20 +21,20 @@ type Connection interface {
 // components
 
 type ConnectionComponent struct {
-	conn Connection
+	conn Conn
 }
 
-func NewConnection(conn Connection) ConnectionComponent {
+func NewConnection(conn Conn) ConnectionComponent {
 	return ConnectionComponent{conn}
 }
 
-func (comp ConnectionComponent) Conn() Connection {
+func (comp ConnectionComponent) Conn() Conn {
 	return comp.conn
 }
 
 // tool
 
-type Tool interface {
+type Connection interface {
 	Host(addr string, conn func(ConnectionComponent)) error
 	Connect(addr string) (ConnectionComponent, error)
 	MockConnectionPair() (c1, c2 ConnectionComponent)

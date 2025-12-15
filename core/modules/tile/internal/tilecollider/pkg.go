@@ -5,7 +5,6 @@ import (
 	"core/modules/tile"
 	"engine/modules/collider"
 	"engine/modules/groups"
-	"engine/modules/relation"
 	"engine/modules/uuid"
 	"engine/services/datastructures"
 	"engine/services/ecs"
@@ -43,13 +42,13 @@ func Package(
 
 func (pkg pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.System) tile.System {
-		tileToolFactory := ioc.Get[ecs.ToolFactory[tile.Tool]](c)
+		tileToolFactory := ioc.Get[ecs.ToolFactory[tile.Tile]](c)
 		logger := ioc.Get[logger.Logger](c)
 		return ecs.NewSystemRegister(func(w ecs.World) error {
 			if err := s.Register(w); err != nil {
 				return err
 			}
-			posIndex := tileToolFactory.Build(w).TilePos()
+			posIndex := tileToolFactory.Build(w).Tile().TilePos()
 			errs := ecs.RegisterSystems(w,
 				TileColliderSystem(
 					logger,
@@ -60,68 +59,64 @@ func (pkg pkg) Register(b ioc.Builder) {
 					ioc.Get[uuid.Factory](c),
 				),
 				ecs.NewSystemRegister(func(w ecs.World) error {
-					posIndexFactory := ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[tile.PosComponent]]](c)
+					entitiesPositions := datastructures.NewSparseArray[ecs.EntityID, tile.PosComponent]()
+					dirtyEntities := ecs.NewDirtySet()
 
-					posIndex := posIndexFactory.Build(w)
 					posArray := ecs.GetComponentsArray[tile.PosComponent](w)
 					colliderArray := ecs.GetComponentsArray[ColliderComponent](w)
-					upsertEntities := func(ei []ecs.EntityID) {
-						colliderTransaction := colliderArray.Transaction()
-						for _, entity := range ei {
-							pos, err := posArray.GetComponent(entity)
-							if err != nil {
-								continue
-							}
-							collider := NewCollider().Ptr().Add(pkg.mainLayer).Val()
-							for _, layer := range pkg.layers {
-								pos.Layer = layer
-								_, ok := posIndex.Get(pos)
-								if ok {
-									collider.Add(layer)
+					posArray.AddDirtySet(dirtyEntities)
+
+					colliderArray.BeforeGet(func() {
+						entities := dirtyEntities.Get()
+						if len(entities) == 0 {
+							return
+						}
+						finalColliders := datastructures.NewSparseArray[ecs.EntityID, ColliderComponent]()
+						for _, entity := range entities {
+							if comp, ok := entitiesPositions.Get(entity); ok {
+								key := comp
+								key.Layer = pkg.mainLayer
+								if colliderEntity, ok := posIndex.Get(key); ok {
+									collider, ok := finalColliders.Get(colliderEntity)
+									if !ok {
+										collider, ok = colliderArray.GetComponent(colliderEntity)
+									}
+									if !ok {
+										collider = NewCollider()
+										collider.Add(pkg.mainLayer)
+									}
+									collider.LayersBitmask = collider.LayersBitmask &^ uint8(comp.Layer)
+									finalColliders.Set(colliderEntity, collider)
 								}
 							}
-							colliderTransaction.SaveComponent(entity, collider)
-						}
-						logger.Warn(ecs.FlushMany(colliderTransaction))
-					}
-					posArray.OnAdd(upsertEntities)
-					posArray.OnChange(upsertEntities)
-					return nil
-				}),
-				ecs.NewSystemRegister(func(w ecs.World) error {
-					posArray := ecs.GetComponentsArray[tile.PosComponent](w)
-					colliderArray := ecs.GetComponentsArray[ColliderComponent](w)
-					posArray.BeforeRemove(func(ei []ecs.EntityID) {
-						colliderTransaction := colliderArray.Transaction()
-						set := datastructures.NewSparseSet[ecs.EntityID]()
-						for _, entity := range ei {
-							component, err := posArray.GetComponent(entity)
-							if err != nil {
-								logger.Warn(err)
+
+							pos, ok := posArray.GetComponent(entity)
+							if !ok {
 								continue
 							}
-							component.Layer = pkg.mainLayer
-							entity, ok := posIndex.Get(component)
-							if ok {
-								set.Add(entity)
-							}
-						}
-						for _, entity := range set.GetIndices() {
-							pos, err := posArray.GetComponent(entity)
-							if err != nil {
-								continue
-							}
-							collider := NewCollider().Ptr().Add(pkg.mainLayer).Val()
-							for _, layer := range pkg.layers {
-								pos.Layer = layer
-								_, ok := posIndex.Get(pos)
-								if ok {
-									collider.Add(layer)
+							key := pos
+							key.Layer = pkg.mainLayer
+							if colliderEntity, ok := posIndex.Get(key); ok {
+								collider, ok := finalColliders.Get(colliderEntity)
+								if !ok {
+									collider, ok = colliderArray.GetComponent(colliderEntity)
 								}
+								if !ok {
+									collider = NewCollider()
+									collider.Add(pkg.mainLayer)
+								}
+								collider.LayersBitmask = collider.LayersBitmask | uint8(pos.Layer)
+								finalColliders.Set(colliderEntity, collider)
 							}
-							colliderTransaction.SaveComponent(entity, collider)
 						}
-						logger.Warn(ecs.FlushMany(colliderTransaction))
+
+						for _, entity := range finalColliders.GetIndices() {
+							value, ok := finalColliders.Get(entity)
+							if !ok {
+								continue
+							}
+							colliderArray.SaveComponent(entity, value)
+						}
 					})
 					return nil
 				}),

@@ -7,21 +7,21 @@ import (
 )
 
 func NewMapRelationFactory[IndexType comparable](
-	queryFactory func(ecs.World) ecs.LiveQuery,
+	dirtySetFactory func(ecs.World) ecs.DirtySet,
 	componentIndexFactory func(ecs.World) func(ecs.EntityID) (IndexType, bool),
 ) ecs.ToolFactory[relation.EntityToKeyTool[IndexType]] {
 	mutex := &sync.Mutex{}
 	return ecs.NewToolFactory(func(w ecs.World) relation.EntityToKeyTool[IndexType] {
-		if index, err := ecs.GetGlobal[mapRelation[IndexType]](w); err == nil {
+		if index, ok := ecs.GetGlobal[mapRelation[IndexType]](w); ok {
 			return index
 		}
 		mutex.Lock()
 		defer mutex.Unlock()
-		if index, err := ecs.GetGlobal[mapRelation[IndexType]](w); err == nil {
+		if index, ok := ecs.GetGlobal[mapRelation[IndexType]](w); ok {
 			return index
 		}
-		query := queryFactory(w)
+		dirtySet := dirtySetFactory(w)
 		componentIndex := componentIndexFactory(w)
-		return newMapIndex(w, query, componentIndex)
+		return newMapIndex(w, dirtySet, componentIndex)
 	})
 }

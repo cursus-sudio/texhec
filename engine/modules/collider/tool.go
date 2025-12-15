@@ -2,7 +2,11 @@ package collider
 
 import "engine/services/ecs"
 
-type CollisionTool interface {
+type Collider interface {
+	Collider() Interface
+}
+
+type Interface interface {
 	// todo add collision groups
 	// narrow
 	CollidesWithRay(ecs.EntityID, Ray) (ObjectRayCollision, error)

@@ -19,6 +19,7 @@ import (
 	"engine/modules/render"
 	scenesys "engine/modules/scenes"
 	"engine/modules/text"
+	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"engine/services/media/window"
@@ -126,6 +127,7 @@ func (pkg) Register(b ioc.Builder) {
 
 				// update
 				ioc.Get[animation.System](c),
+				ioc.Get[transform.System](c),
 				ioc.Get[camera.System](c),
 				ioc.Get[collider.System](c),
 				ioc.Get[drag.System](c),

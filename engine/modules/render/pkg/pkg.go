@@ -18,7 +18,7 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[render.Tool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[render.Render] {
 		return internal.NewTool()
 	})
 
@@ -28,7 +28,7 @@ func (pkg) Register(b ioc.Builder) {
 				internal.NewClearSystem(),
 				internal.NewErrorLogger(
 					ioc.Get[logger.Logger](c),
-					ioc.Get[ecs.ToolFactory[render.Tool]](c).Build(w),
+					ioc.Get[ecs.ToolFactory[render.Render]](c).Build(w),
 				),
 				internal.NewRenderSystem(ioc.Get[window.Api](c)),
 			)
@@ -39,16 +39,16 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b animation.AnimationSystemBuilder) animation.AnimationSystemBuilder {
 		animation.AddTransitionFunction(b, func(w ecs.World) animation.TransitionFunction[render.ColorComponent] {
 			componentArray := ecs.GetComponentsArray[render.ColorComponent](w)
-			return func(arg animation.TransitionFunctionArgument[render.ColorComponent]) error {
+			return func(arg animation.TransitionFunctionArgument[render.ColorComponent]) {
 				comp := arg.From.Blend(arg.To, float32(arg.State))
-				return componentArray.SaveComponent(arg.Entity, comp)
+				componentArray.SaveComponent(arg.Entity, comp)
 			}
 		})
 		animation.AddTransitionFunction(b, func(w ecs.World) animation.TransitionFunction[render.TextureFrameComponent] {
 			componentArray := ecs.GetComponentsArray[render.TextureFrameComponent](w)
-			return func(arg animation.TransitionFunctionArgument[render.TextureFrameComponent]) error {
+			return func(arg animation.TransitionFunctionArgument[render.TextureFrameComponent]) {
 				comp := arg.From.Blend(arg.To, float64(arg.State))
-				return componentArray.SaveComponent(arg.Entity, comp)
+				componentArray.SaveComponent(arg.Entity, comp)
 			}
 		})
 		return b

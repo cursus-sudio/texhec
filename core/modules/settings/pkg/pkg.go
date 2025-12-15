@@ -34,10 +34,10 @@ func (pkg) Register(b ioc.Builder) {
 			ioc.Get[assets.Assets](c),
 			ioc.Get[logger.Logger](c),
 			ioc.Get[gameassets.GameAssets](c),
-			ioc.Get[ecs.ToolFactory[transform.Tool]](c),
-			ioc.Get[ecs.ToolFactory[render.Tool]](c),
+			ioc.Get[ecs.ToolFactory[transform.Transform]](c),
+			ioc.Get[ecs.ToolFactory[render.Render]](c),
 			ioc.Get[ecs.ToolFactory[ui.Tool]](c),
-			ioc.Get[ecs.ToolFactory[text.Tool]](c),
+			ioc.Get[ecs.ToolFactory[text.Text]](c),
 		)
 		return system
 	})

@@ -4,7 +4,11 @@ import (
 	"engine/modules/relation"
 )
 
-type Tool interface {
+type Tile interface {
+	Tile() Interface
+}
+
+type Interface interface {
 	TilePos() relation.EntityToKeyTool[PosComponent]
 	ColliderPos() relation.EntityToKeyTool[ColliderPos]
 }

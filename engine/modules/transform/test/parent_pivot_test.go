@@ -1,51 +1,25 @@
 package test
 
 import (
-	"engine/modules/hierarchy"
 	"engine/modules/transform"
 	"testing"
 )
 
 func TestParentPivot(t *testing.T) {
-	setup := NewSetup()
+	setup := NewSetup(t)
 	parent := setup.World.NewEntity()
-	parentTransform := setup.Transaction.GetObject(parent)
-	parentTransform.Pos().Set(transform.NewPos(10, 10, 10))
-	parentTransform.Size().Set(transform.NewSize(10, 10, 10))
+	setup.Transform.Pos().SaveComponent(parent, transform.NewPos(10, 10, 10))
+	setup.Transform.Size().SaveComponent(parent, transform.NewSize(10, 10, 10))
 
 	entity := setup.World.NewEntity()
-	entityTransform := setup.Transaction.GetObject(entity)
-	setup.HierarchyArray.SaveComponent(entity, hierarchy.NewParent(parent))
 
-	expectPos := func(expectedPos transform.PosComponent) {
-		pos, err := entityTransform.AbsolutePos().Get()
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if pos != expectedPos {
-			t.Errorf("expected pos %v but has %v", expectedPos, pos)
-		}
-	}
+	setup.Hierarchy.SetParent(entity, parent)
+	setup.Transform.Parent().SaveComponent(entity, transform.NewParent(transform.RelativePos))
+	setup.expectAbsolutePos(entity, transform.NewPos(10, 10, 10))
 
-	entityTransform.Parent().Set(transform.NewParent(transform.RelativePos))
-	if err := setup.Transaction.Flush(); err != nil {
-		t.Error(err)
-		return
-	}
-	expectPos(transform.NewPos(10, 10, 10))
+	setup.Transform.ParentPivotPoint().SaveComponent(entity, transform.NewParentPivotPoint(0, 0, 0))
+	setup.expectAbsolutePos(entity, transform.NewPos(5, 5, 5))
 
-	entityTransform.ParentPivotPoint().Set(transform.NewParentPivotPoint(0, 0, 0))
-	if err := setup.Transaction.Flush(); err != nil {
-		t.Error(err)
-		return
-	}
-	expectPos(transform.NewPos(5, 5, 5))
-
-	entityTransform.ParentPivotPoint().Set(transform.NewParentPivotPoint(1, 1, 1))
-	if err := setup.Transaction.Flush(); err != nil {
-		t.Error(err)
-		return
-	}
-	expectPos(transform.NewPos(15, 15, 15))
+	setup.Transform.ParentPivotPoint().SaveComponent(entity, transform.NewParentPivotPoint(1, 1, 1))
+	setup.expectAbsolutePos(entity, transform.NewPos(15, 15, 15))
 }

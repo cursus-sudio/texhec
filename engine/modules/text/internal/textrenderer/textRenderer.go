@@ -129,7 +129,10 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 		layout, _ := s.layoutsBatches.Get(entity)
 		font, ok := s.fontsBatches.Get(layout.Layout.Font)
 		if !ok {
-			s.layoutsBatches.Remove(entity)
+			if prevBatch, ok := s.layoutsBatches.Get(entity); ok {
+				prevBatch.Release()
+				s.layoutsBatches.Remove(entity)
+			}
 			continue
 		}
 

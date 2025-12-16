@@ -182,14 +182,9 @@ func (t tool) ResetChildWrapper() error {
 		}
 	}
 
-	t.world.RemoveEntity(t.childWrapper)
-
-	childrenContainer := t.world.NewEntity()
-	t.hierarchyTool.SetParent(childrenContainer, t.menu)
-	t.transformTool.Parent().SaveComponent(childrenContainer, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
-	t.groupInheritArray.SaveComponent(childrenContainer, groups.InheritGroupsComponent{})
-
-	t.childWrapper = childrenContainer
+	for _, child := range t.hierarchyTool.Children(t.childWrapper).GetIndices() {
+		t.world.RemoveEntity(child)
+	}
 	return nil
 }
 

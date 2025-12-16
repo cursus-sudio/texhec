@@ -70,6 +70,30 @@ func TestDirtyFlagsInWorld(t *testing.T) {
 	}
 }
 
+func TestDependentDirtySet(t *testing.T) {
+	world := ecs.NewWorld()
+	set := ecs.NewDirtySet()
+
+	entity := world.NewEntity()
+
+	type AComponent struct{}
+	aComponents := ecs.GetComponentsArray[AComponent](world)
+
+	type BComponent struct{}
+	// componentDependent := ComponentDependent{}
+	bComponents := ecs.GetComponentsArray[BComponent](world)
+
+	bComponents.AddDirtySet(set)
+	bComponents.AddDependency(aComponents)
+
+	aComponents.SaveComponent(entity, AComponent{})
+
+	if dirty := set.Get(); len(dirty) != 1 || dirty[0] != entity {
+		t.Errorf("expected in dirty flags dirty entity but go %v", dirty)
+		return
+	}
+}
+
 //
 
 func benchmarkNEntitiesSaveWith7Systems(b *testing.B, entitiesCount int) {

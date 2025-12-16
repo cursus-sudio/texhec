@@ -72,11 +72,7 @@ func (s *wasdMoveSystem) Listen(event frames.FrameEvent) {
 	}
 
 	for _, camera := range s.mobileCameraArray.GetEntities() {
-		pos, ok := s.transformTool.AbsolutePos().GetComponent(camera)
-		if !ok {
-			continue
-		}
-
+		pos, _ := s.transformTool.AbsolutePos().GetComponent(camera)
 		ortho, ok := s.orthoArray.GetComponent(camera)
 		if !ok {
 			continue
@@ -87,6 +83,6 @@ func (s *wasdMoveSystem) Listen(event frames.FrameEvent) {
 			pos.Pos.Y() + moveVerticaly/ortho.Zoom,
 			pos.Pos.Z(),
 		}
-		s.transformTool.AbsolutePos().SaveComponent(camera, pos)
+		s.transformTool.SetAbsolutePos(camera, pos)
 	}
 }

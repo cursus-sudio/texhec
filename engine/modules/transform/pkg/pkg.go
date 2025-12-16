@@ -55,7 +55,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 		return transformtool.NewTransformTool(
 			ioc.Get[logger.Logger](c),
 			ioc.Get[ecs.ToolFactory[hierarchy.Hierarchy]](c),
-			pkg.defaultPos,
 			pkg.defaultRot,
 			pkg.defaultSize,
 			pkg.defaultPivot,

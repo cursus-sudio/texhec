@@ -52,13 +52,10 @@ func NewDragSystem(
 
 func (s *dragSystem) Listen(e inputs.DragEvent) {
 	for _, cameraEntity := range s.mobileCameraArray.GetEntities() {
-		pos, ok := s.transformTool.AbsolutePos().GetComponent(cameraEntity)
-		if !ok {
-			continue
-		}
+		pos, _ := s.transformTool.AbsolutePos().GetComponent(cameraEntity)
 		rot, ok := s.transformTool.AbsoluteRotation().GetComponent(cameraEntity)
 		if !ok {
-			continue
+			rot.Rotation = mgl32.QuatIdent()
 		}
 
 		camera, err := s.cameraCtors.GetObject(cameraEntity)
@@ -74,7 +71,7 @@ func (s *dragSystem) Listen(e inputs.DragEvent) {
 		rotationDifference := mgl32.QuatBetweenVectors(rayBefore.Direction, rayAfter.Direction)
 		rot.Rotation = rotationDifference.Mul(rot.Rotation)
 
-		s.transformTool.AbsolutePos().SaveComponent(cameraEntity, pos)
-		s.transformTool.AbsoluteRotation().SaveComponent(cameraEntity, rot)
+		s.transformTool.SetAbsolutePos(cameraEntity, pos)
+		s.transformTool.SetAbsoluteRotation(cameraEntity, rot)
 	}
 }

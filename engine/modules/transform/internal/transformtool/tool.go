@@ -14,9 +14,9 @@ type tool struct {
 	logger logger.Logger
 
 	world     ecs.World
+	dirtySet  ecs.DirtySet
 	hierarchy hierarchy.Interface
 
-	defaultPos         transform.PosComponent
 	defaultRot         transform.RotationComponent
 	defaultSize        transform.SizeComponent
 	defaultPivot       transform.PivotPointComponent
@@ -41,7 +41,6 @@ type tool struct {
 func NewTransformTool(
 	logger logger.Logger,
 	hierarchyToolFactory ecs.ToolFactory[hierarchy.Hierarchy],
-	defaultPos transform.PosComponent,
 	defaultRot transform.RotationComponent,
 	defaultSize transform.SizeComponent,
 	defaultPivot transform.PivotPointComponent,
@@ -58,8 +57,8 @@ func NewTransformTool(
 		tool := tool{
 			logger,
 			w,
+			ecs.NewDirtySet(),
 			hierarchyToolFactory.Build(w).Hierarchy(),
-			defaultPos,
 			defaultRot,
 			defaultSize,
 			defaultPivot,
@@ -84,41 +83,76 @@ func NewTransformTool(
 	})
 }
 
-func (t tool) SetAbsolutePos(entity ecs.EntityID, absolutePos transform.AbsolutePosComponent) {
-	pos, ok := t.posArray.GetComponent(entity)
-	if !ok {
-		pos.Pos = t.defaultPos.Pos
+func (t tool) BeforeGet() {
+	entities := t.dirtySet.Get()
+	if len(entities) == 0 {
+		return
+	}
+	children := []ecs.EntityID{}
+
+	saves := []save{}
+
+	for len(entities) != 0 || len(children) != 0 {
+		if len(entities) == 0 {
+			entities = children
+			for _, save := range saves {
+				t.absolutePosArray.SaveComponent(save.entity, save.pos)
+				t.absoluteRotationArray.SaveComponent(save.entity, save.rot)
+				t.absoluteSizeArray.SaveComponent(save.entity, save.size)
+			}
+			t.dirtySet.Clear()
+
+			children = nil
+			saves = nil
+		}
+		entity := entities[0]
+		entities = entities[1:]
+
+		saves = append(saves, save{
+			entity: entity,
+			pos:    t.CalculateAbsolutePos(entity),
+			rot:    t.CalculateAbsoluteRot(entity),
+			size:   t.CalculateAbsoluteSize(entity),
+		})
+
+		for _, child := range t.hierarchy.Children(entity).GetIndices() {
+			comparedMask := transform.RelativePos | transform.RelativeRotation | transform.RelativeSizeXYZ
+			mask, ok := t.parentMaskArray.GetComponent(child)
+			if !ok || mask.RelativeMask&comparedMask == 0 {
+				continue
+			}
+			children = append(children, child)
+		}
 	}
 
-	pos.Pos = absolutePos.Pos.
+	for _, save := range saves {
+		t.absolutePosArray.SaveComponent(save.entity, save.pos)
+		t.absoluteRotationArray.SaveComponent(save.entity, save.rot)
+		t.absoluteSizeArray.SaveComponent(save.entity, save.size)
+	}
+	t.dirtySet.Clear()
+}
+
+func (t tool) SetAbsolutePos(entity ecs.EntityID, absolutePos transform.AbsolutePosComponent) {
+	pos := transform.NewPos(absolutePos.Pos.
 		Sub(t.GetRelativeParentPos(entity)).
-		Sub(t.GetPivotPos(entity))
+		Sub(t.GetPivotPos(entity)).Elem())
 
 	t.posArray.SaveComponent(entity, pos)
 }
 func (t tool) SetAbsoluteRotation(entity ecs.EntityID, absoluteRot transform.AbsoluteRotationComponent) {
-	rot, ok := t.rotationArray.GetComponent(entity)
-	if !ok {
-		rot = t.defaultRot
-	}
-
-	rot.Rotation = absoluteRot.Rotation.
-		Mul(t.GetRelativeParentRotation(entity).Inverse())
+	rot := transform.NewRotation(absoluteRot.Rotation.
+		Mul(t.GetRelativeParentRotation(entity).Inverse()))
 
 	t.rotationArray.SaveComponent(entity, rot)
 }
 func (t tool) SetAbsoluteSize(entity ecs.EntityID, absoluteSize transform.AbsoluteSizeComponent) {
-	size, ok := t.sizeArray.GetComponent(entity)
-	if !ok {
-		size = t.defaultSize
-	}
-
 	parentSize := t.GetRelativeParentSize(entity)
-	size.Size = mgl32.Vec3{
-		absoluteSize.Size[0] / parentSize[0],
-		absoluteSize.Size[1] / parentSize[1],
-		absoluteSize.Size[2] / parentSize[2],
-	}
+	size := transform.NewSize(
+		absoluteSize.Size[0]/parentSize[0],
+		absoluteSize.Size[1]/parentSize[1],
+		absoluteSize.Size[2]/parentSize[2],
+	)
 
 	t.sizeArray.SaveComponent(entity, size)
 }

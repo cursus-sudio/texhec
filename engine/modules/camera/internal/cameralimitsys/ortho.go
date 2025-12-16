@@ -58,7 +58,7 @@ func (s *orthoSys) BeforeGet() {
 	}
 	type save struct {
 		entity ecs.EntityID
-		pos    transform.AbsolutePosComponent
+		pos    transform.PosComponent
 	}
 	saves := []save{}
 
@@ -76,7 +76,7 @@ func (s *orthoSys) BeforeGet() {
 			continue
 		}
 
-		pos, ok := s.transformTool.AbsolutePos().GetComponent(entity)
+		pos, ok := s.transformTool.Pos().GetComponent(entity)
 		if !ok {
 			continue
 		}
@@ -118,6 +118,6 @@ func (s *orthoSys) BeforeGet() {
 		saves = append(saves, save{entity, pos})
 	}
 	for _, save := range saves {
-		s.transformTool.SetAbsolutePos(save.entity, save.pos)
+		s.transformTool.Pos().SaveComponent(save.entity, save.pos)
 	}
 }

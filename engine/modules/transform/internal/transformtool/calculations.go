@@ -220,10 +220,7 @@ func (t tool) ApplyAspectRatio(entity ecs.EntityID, size *transform.SizeComponen
 //
 
 func (t tool) CalculateAbsolutePos(entity ecs.EntityID) transform.AbsolutePosComponent {
-	pos, ok := t.posArray.GetComponent(entity)
-	if !ok {
-		pos = t.defaultPos
-	}
+	pos, _ := t.posArray.GetComponent(entity)
 	relativeToParentPos := t.GetRelativeParentPos(entity)
 
 	pos.Pos = pos.Pos.

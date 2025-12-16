@@ -8,7 +8,9 @@ import (
 	"core/modules/tile/internal/tileui"
 	"core/modules/ui"
 	"engine/modules/groups"
+	"engine/modules/hierarchy"
 	"engine/modules/text"
+	"engine/modules/transform"
 	"engine/services/codec"
 	"engine/services/ecs"
 	"engine/services/logger"
@@ -73,6 +75,8 @@ func (pkg pkg) Register(b ioc.Builder) {
 				ioc.Get[logger.Logger](c),
 				ioc.Get[ecs.ToolFactory[ui.Tool]](c),
 				ioc.Get[ecs.ToolFactory[text.Text]](c),
+				ioc.Get[ecs.ToolFactory[transform.Transform]](c),
+				ioc.Get[ecs.ToolFactory[hierarchy.Hierarchy]](c),
 				ioc.Get[ecs.ToolFactory[tile.Tile]](c),
 			),
 		}

@@ -31,6 +31,7 @@ type toolState struct {
 
 	dirtySet               ecs.DirtySet
 	messagesSentFromClient []clientMessage
+	toRemove               []ecs.EntityID
 	listeners              datastructures.SparseSet[ecs.EntityID]
 
 	world           ecs.World
@@ -63,6 +64,7 @@ func NewTool(
 
 			ecs.NewDirtySet(),
 			nil,
+			nil,
 			datastructures.NewSparseSet[ecs.EntityID](),
 
 			world,
@@ -88,6 +90,17 @@ func NewTool(
 		},
 	}
 	events.Listen(t.world.EventsBuilder(), func(frames.FrameEvent) {
+		t.loadConnections()
+		for len(t.toRemove) != 0 {
+			entity := t.toRemove[0]
+			t.mutex.Lock()
+			t.toRemove = t.toRemove[1:]
+			t.mutex.Unlock()
+
+			t.listeners.Remove(entity)
+			t.world.RemoveEntity(entity)
+		}
+
 		for len(t.messagesSentFromClient) != 0 {
 			message := t.messagesSentFromClient[0]
 			t.mutex.Lock()
@@ -200,6 +213,7 @@ func (t Tool) loadConnections() {
 		if ok := t.listeners.Get(entity); ok {
 			continue
 		}
+		t.listeners.Add(entity)
 		if _, ok := t.clientArray.GetComponent(entity); !ok {
 			continue
 		}
@@ -208,7 +222,6 @@ func (t Tool) loadConnections() {
 		if !ok {
 			continue
 		}
-		t.listeners.Add(entity)
 		messages := comp.Conn().Messages()
 		go func(entity ecs.EntityID) {
 			for {
@@ -223,8 +236,9 @@ func (t Tool) loadConnections() {
 				})
 				t.mutex.Unlock()
 			}
-			t.listeners.Remove(entity)
-			t.world.RemoveEntity(entity)
+			t.mutex.Lock()
+			t.toRemove = append(t.toRemove, entity)
+			t.mutex.Unlock()
 		}(entity)
 	}
 }
@@ -242,18 +256,32 @@ func (t Tool) sendVisible(client ecs.EntityID, eventUUID *uuid.UUID, changes sta
 	// 	delete(changes.Entities, uuid)
 	// }
 
+	if len(sentChanges.Entities) == 0 {
+		return
+	}
+
 	go func() {
 		if eventUUID != nil {
 			err := connComp.Conn().Send(servertypes.SendChangeDTO{
 				EventID: *eventUUID,
 				Changes: sentChanges,
 			})
-			t.logger.Warn(err)
+			if err != nil {
+				t.mutex.Lock()
+				t.toRemove = append(t.toRemove, client)
+				t.mutex.Unlock()
+			}
+			// t.logger.Warn(err)
 		} else {
 			err := connComp.Conn().Send(servertypes.SendStateDTO{
 				State: sentChanges,
 			})
-			t.logger.Warn(err)
+			if err != nil {
+				t.mutex.Lock()
+				t.toRemove = append(t.toRemove, client)
+				t.mutex.Unlock()
+			}
+			// t.logger.Warn(err)
 		}
 	}()
 }

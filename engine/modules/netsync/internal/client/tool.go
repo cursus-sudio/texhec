@@ -40,6 +40,7 @@ type toolState struct {
 
 	dirtySet           ecs.DirtySet
 	messagesFromServer []any
+	toRemove           []ecs.EntityID
 	listeners          datastructures.SparseSet[ecs.EntityID]
 
 	world           ecs.World
@@ -79,6 +80,7 @@ func NewTool(
 
 			ecs.NewDirtySet(),
 			nil,
+			nil,
 			datastructures.NewSparseSet[ecs.EntityID](),
 
 			world,
@@ -103,12 +105,20 @@ func NewTool(
 		},
 	}
 	events.Listen(t.world.EventsBuilder(), func(frames.FrameEvent) {
+		t.loadConnections()
 		conn := t.getConnection()
 		if conn == nil {
 			return
 		}
 		t.mutex.Lock()
 		defer t.mutex.Unlock()
+
+		for len(t.toRemove) != 0 {
+			entity := t.toRemove[0]
+			t.toRemove = t.toRemove[1:]
+			t.world.RemoveEntity(entity)
+			t.listeners.Remove(entity)
+		}
 		for len(t.messagesFromServer) != 0 {
 			message := t.messagesFromServer[0]
 			t.messagesFromServer = t.messagesFromServer[1:]
@@ -312,6 +322,13 @@ func (t Tool) loadConnections() {
 		return
 	}
 	entity := ei[0]
+	if ok := t.listeners.Get(entity); ok {
+		return
+	}
+	if _, ok := t.serverArray.GetComponent(entity); !ok {
+		return
+	}
+	t.listeners.Add(entity)
 	comp, ok := t.connectionArray.GetComponent(entity)
 	if !ok {
 		return
@@ -332,7 +349,9 @@ func (t Tool) loadConnections() {
 			t.messagesFromServer = append(t.messagesFromServer, message)
 			t.mutex.Unlock()
 		}
-		t.world.RemoveEntity(entity)
+		t.mutex.Lock()
+		t.toRemove = append(t.toRemove, entity)
+		t.mutex.Unlock()
 	}(entity)
 }
 

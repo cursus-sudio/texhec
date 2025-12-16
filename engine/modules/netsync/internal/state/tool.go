@@ -90,8 +90,13 @@ func (t tool) ApplyState(changes State) {
 			entity = t.world.NewEntity()
 			t.uuidArray.SaveComponent(entity, uuid.New(id))
 		}
-		for i, transaction := range t.arrays {
-			transaction.SaveAnyComponent(entity, snapshot.Components[i])
+		for i, array := range t.arrays {
+			if snapshot.Components[i] != nil {
+				err := array.SaveAnyComponent(entity, snapshot.Components[i])
+				t.logger.Warn(err)
+			} else {
+				array.RemoveComponent(entity)
+			}
 		}
 	}
 }

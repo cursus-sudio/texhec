@@ -5,9 +5,12 @@ import (
 	"engine/services/codec"
 	"engine/services/datastructures"
 	"engine/services/ecs"
+	"engine/services/frames"
 	"engine/services/logger"
 	"net"
 	"sync"
+
+	"github.com/ogiusek/events"
 )
 
 type tool struct {
@@ -35,6 +38,9 @@ func NewToolFactory(
 			ecs.GetComponentsArray[connection.ConnectionComponent](w),
 		}
 		w.SaveGlobal(t)
+		events.Listen(w.EventsBuilder(), func(frames.FrameEvent) {
+			t.BeforeGet()
+		})
 
 		t.connectionArray.AddDirtySet(t.dirtySet)
 		t.connectionArray.BeforeGet(t.BeforeGet)
@@ -44,7 +50,9 @@ func NewToolFactory(
 }
 
 func (t tool) BeforeGet() {
-	t.dirtySet.Get()
+	if entities := t.dirtySet.Get(); len(entities) == 0 {
+		return
+	}
 	present := datastructures.NewSet[connection.Conn]()
 	for _, entity := range t.connectionArray.GetEntities() {
 		comp, ok := t.connectionArray.GetComponent(entity)

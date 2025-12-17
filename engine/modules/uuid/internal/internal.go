@@ -33,6 +33,8 @@ func NewToolFactory(
 	})
 }
 
+func (t tool) UUID() uuid.Interface { return t }
+
 func (t tool) Entity(uuid uuid.UUID) (ecs.EntityID, bool) {
 	return t.Get(uuid)
 }

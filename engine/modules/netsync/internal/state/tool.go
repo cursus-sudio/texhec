@@ -23,7 +23,7 @@ type toolState struct {
 	dirtySet        ecs.DirtySet
 
 	uuidArray  ecs.ComponentsArray[uuid.Component]
-	uniqueTool uuid.UUIDTool
+	uniqueTool uuid.Interface
 	logger     logger.Logger
 
 	world  ecs.World
@@ -58,7 +58,7 @@ func NewToolFactory(
 				dirtySet,
 
 				ecs.GetComponentsArray[uuid.Component](world),
-				uuidToolFactory.Build(world),
+				uuidToolFactory.Build(world).UUID(),
 				logger,
 
 				world,

@@ -49,7 +49,7 @@ func NewSystem(
 
 			textTool.Content().Set(entity, text.TextComponent{Text: fmt.Sprintf("TILE: %v", pos)})
 			textTool.FontSize().Set(entity, text.FontSizeComponent{FontSize: 25})
-			textTool.TextAlign().Set(entity, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+			textTool.Align().Set(entity, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
 		})
 		return nil
 	})

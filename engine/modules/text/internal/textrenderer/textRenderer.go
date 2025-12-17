@@ -148,7 +148,7 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 		if !ok {
 			continue
 		}
-		entityColor, ok := s.text.TextColor().Get(entity)
+		entityColor, ok := s.text.Color().Get(entity)
 		if !ok {
 			entityColor = s.defaultColor
 		}

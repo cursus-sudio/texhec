@@ -110,7 +110,7 @@ func (s system) Render(parent ecs.EntityID) error {
 
 	s.textTool.Content().Set(labelEntity, text.TextComponent{Text: "SETTINGS"})
 	s.textTool.FontSize().Set(labelEntity, text.FontSizeComponent{FontSize: 25})
-	s.textTool.TextAlign().Set(labelEntity, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+	s.textTool.Align().Set(labelEntity, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
 
 	//
 
@@ -151,7 +151,7 @@ func (s system) Render(parent ecs.EntityID) error {
 
 		s.textTool.Content().Set(btnEntity, text.TextComponent{Text: btn.text})
 		s.textTool.FontSize().Set(btnEntity, text.FontSizeComponent{FontSize: 25})
-		s.textTool.TextAlign().Set(btnEntity, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+		s.textTool.Align().Set(btnEntity, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
 
 		s.leftClickArray.Set(btnEntity, inputs.NewMouseLeftClick(btn.event))
 		s.keepSelectedArray.Set(btnEntity, inputs.KeepSelectedComponent{})

@@ -147,7 +147,7 @@ func (t tool) Init() error {
 
 	t.textTool.Content().Set(quit, text.TextComponent{Text: "X"})
 	t.textTool.FontSize().Set(quit, text.FontSizeComponent{FontSize: 25})
-	t.textTool.TextAlign().Set(quit, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+	t.textTool.Align().Set(quit, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
 
 	t.renderTool.Color().Set(quit, render.NewColor(mgl32.Vec4{1, 0, 0, 1}))
 	t.renderTool.Mesh().Set(quit, render.NewMesh(t.gameAssets.SquareMesh))

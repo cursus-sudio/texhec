@@ -40,8 +40,8 @@ func (t tool) Text() text.Interface { return t }
 
 func (t tool) Break() ecs.ComponentsArray[text.BreakComponent]           { return t.breakArray }
 func (t tool) Content() ecs.ComponentsArray[text.TextComponent]          { return t.textArray }
-func (t tool) TextAlign() ecs.ComponentsArray[text.TextAlignComponent]   { return t.textAlignArray }
-func (t tool) TextColor() ecs.ComponentsArray[text.TextColorComponent]   { return t.textColorArray }
+func (t tool) Align() ecs.ComponentsArray[text.TextAlignComponent]       { return t.textAlignArray }
+func (t tool) Color() ecs.ComponentsArray[text.TextColorComponent]       { return t.textColorArray }
 func (t tool) FontFamily() ecs.ComponentsArray[text.FontFamilyComponent] { return t.fontFamilyArray }
 func (t tool) FontSize() ecs.ComponentsArray[text.FontSizeComponent]     { return t.fontSizeArray }
 

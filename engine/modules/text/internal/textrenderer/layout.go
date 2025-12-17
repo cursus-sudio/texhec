@@ -104,10 +104,7 @@ type line struct {
 func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	// TODO add overflow read, text align read and transform modification
 
-	size, ok := s.transform.AbsoluteSize().Get(entity)
-	if !ok {
-		return Layout{}, nil
-	}
+	size, _ := s.transform.AbsoluteSize().Get(entity)
 	textComponent, ok := s.textArray.Get(entity)
 	if !ok {
 		return Layout{}, nil

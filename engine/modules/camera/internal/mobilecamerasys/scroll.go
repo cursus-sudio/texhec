@@ -68,10 +68,7 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) {
 		}
 
 		pos, _ := s.transformTool.AbsolutePos().Get(cameraEntity)
-		rot, ok := s.transformTool.AbsoluteRotation().Get(cameraEntity)
-		if !ok {
-			rot.Rotation = mgl32.QuatIdent()
-		}
+		rot, _ := s.transformTool.AbsoluteRotation().Get(cameraEntity)
 
 		camera, err := s.cameraCtors.GetObject(cameraEntity)
 		if err != nil {

@@ -136,18 +136,9 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 			continue
 		}
 
-		pos, ok := s.transform.AbsolutePos().Get(entity)
-		if !ok {
-			continue
-		}
-		rot, ok := s.transform.AbsoluteRotation().Get(entity)
-		if !ok {
-			continue
-		}
-		size, ok := s.transform.AbsoluteSize().Get(entity)
-		if !ok {
-			continue
-		}
+		pos, _ := s.transform.AbsolutePos().Get(entity)
+		rot, _ := s.transform.AbsoluteRotation().Get(entity)
+		size, _ := s.transform.AbsoluteSize().Get(entity)
 		entityColor, ok := s.text.Color().Get(entity)
 		if !ok {
 			entityColor = s.defaultColor

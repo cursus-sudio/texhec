@@ -88,14 +88,8 @@ func (pkg pkg) Register(b ioc.Builder) {
 			return func(entity ecs.EntityID) (camera.Object, error) {
 				viewport := viewport(entity)
 				getCameraTransformMatrix := func() mgl32.Mat4 {
-					pos, ok := transformTool.AbsolutePos().Get(entity)
-					if !ok {
-						return mgl32.Mat4{}
-					}
-					rot, ok := transformTool.AbsoluteRotation().Get(entity)
-					if !ok {
-						return mgl32.Mat4{}
-					}
+					pos, _ := transformTool.AbsolutePos().Get(entity)
+					rot, _ := transformTool.AbsoluteRotation().Get(entity)
 
 					cameraRot := rot.Rotation.Inverse()
 					cameraPos := rot.Rotation.Rotate(pos.Pos.Mul(-1))
@@ -152,14 +146,8 @@ func (pkg pkg) Register(b ioc.Builder) {
 			return func(entity ecs.EntityID) (camera.Object, error) {
 				viewport := viewport(entity)
 				getCameraTransformMatrix := func() mgl32.Mat4 {
-					pos, ok := transformTool.AbsolutePos().Get(entity)
-					if !ok {
-						return mgl32.Mat4{}
-					}
-					rot, ok := transformTool.AbsoluteRotation().Get(entity)
-					if !ok {
-						return mgl32.Mat4{}
-					}
+					pos, _ := transformTool.AbsolutePos().Get(entity)
+					rot, _ := transformTool.AbsoluteRotation().Get(entity)
 
 					up, forward := ioc.Get[camera.CameraUp](c), ioc.Get[camera.CameraForward](c)
 					return mgl32.LookAtV(
@@ -192,10 +180,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 					},
 					viewport,
 					func(mousePos window.MousePos) collider.Ray {
-						pos, ok := transformTool.AbsolutePos().Get(entity)
-						if !ok {
-							return collider.Ray{}
-						}
+						pos, _ := transformTool.AbsolutePos().Get(entity)
 						return mobilecamerasys.ShootRay(
 							getProjectionMatrix(),
 							getCameraTransformMatrix(),

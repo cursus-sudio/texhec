@@ -20,6 +20,7 @@ type AnyComponentArray interface {
 	SetAny(EntityID, any) error
 	Remove(EntityID)
 
+	// configuration
 	// on dependency change its also applied here
 	AddDependency(AnyComponentArray)
 	AddDirtySet(DirtySet)
@@ -31,12 +32,16 @@ type ComponentsArray[Component any] interface {
 	Get(entity EntityID) (Component, bool)
 
 	Set(EntityID, Component)
+
+	// configuration
+	SetEmpty(Component)
 }
 
 // impl
 
 type componentsArray[Component any] struct {
 	equal      func(Component, Component) bool
+	empty      Component
 	components datastructures.SparseArray[EntityID, Component]
 
 	dependencies []AnyComponentArray
@@ -82,6 +87,10 @@ func (c *componentsArray[Component]) SetAny(entity EntityID, anyComponent any) e
 	return nil
 }
 
+func (c *componentsArray[Component]) SetEmpty(empty Component) {
+	c.empty = empty
+}
+
 func (c *componentsArray[Component]) Remove(entity EntityID) {
 	entities := []EntityID{entity}
 	if _, ok := c.components.Get(entity); !ok {
@@ -99,9 +108,8 @@ func (c *componentsArray[Component]) Get(entity EntityID) (Component, bool) {
 	for _, beforeGet := range c.beforeGets {
 		beforeGet()
 	}
-	var zero Component
 	if value, ok := c.components.Get(entity); !ok {
-		return zero, false
+		return c.empty, false
 	} else {
 		return value, true
 	}

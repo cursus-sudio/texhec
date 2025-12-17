@@ -67,35 +67,35 @@ func (pkg pkg) Register(b ioc.Builder) {
 			componentArray := ecs.GetComponentsArray[transform.PosComponent](w)
 			return func(arg animation.TransitionFunctionArgument[transform.PosComponent]) {
 				comp := arg.From.Blend(arg.To, float32(arg.State))
-				componentArray.SaveComponent(arg.Entity, comp)
+				componentArray.Set(arg.Entity, comp)
 			}
 		})
 		animation.AddTransitionFunction(b, func(w ecs.World) animation.TransitionFunction[transform.RotationComponent] {
 			componentArray := ecs.GetComponentsArray[transform.RotationComponent](w)
 			return func(arg animation.TransitionFunctionArgument[transform.RotationComponent]) {
 				comp := arg.From.Blend(arg.To, float32(arg.State))
-				componentArray.SaveComponent(arg.Entity, comp)
+				componentArray.Set(arg.Entity, comp)
 			}
 		})
 		animation.AddTransitionFunction(b, func(w ecs.World) animation.TransitionFunction[transform.SizeComponent] {
 			componentArray := ecs.GetComponentsArray[transform.SizeComponent](w)
 			return func(arg animation.TransitionFunctionArgument[transform.SizeComponent]) {
 				comp := arg.From.Blend(arg.To, float32(arg.State))
-				componentArray.SaveComponent(arg.Entity, comp)
+				componentArray.Set(arg.Entity, comp)
 			}
 		})
 		animation.AddTransitionFunction(b, func(w ecs.World) animation.TransitionFunction[transform.PivotPointComponent] {
 			componentArray := ecs.GetComponentsArray[transform.PivotPointComponent](w)
 			return func(arg animation.TransitionFunctionArgument[transform.PivotPointComponent]) {
 				comp := arg.From.Blend(arg.To, float32(arg.State))
-				componentArray.SaveComponent(arg.Entity, comp)
+				componentArray.Set(arg.Entity, comp)
 			}
 		})
 		animation.AddTransitionFunction(b, func(w ecs.World) animation.TransitionFunction[transform.ParentPivotPointComponent] {
 			componentArray := ecs.GetComponentsArray[transform.ParentPivotPointComponent](w)
 			return func(arg animation.TransitionFunctionArgument[transform.ParentPivotPointComponent]) {
 				comp := arg.From.Blend(arg.To, float32(arg.State))
-				componentArray.SaveComponent(arg.Entity, comp)
+				componentArray.Set(arg.Entity, comp)
 			}
 		})
 		return b

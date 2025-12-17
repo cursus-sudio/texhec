@@ -44,7 +44,7 @@ func TestDirtyFlagsInWorld(t *testing.T) {
 	component := Component{}
 
 	components := ecs.GetComponentsArray[Component](world)
-	components.SaveComponent(entity, component)
+	components.Set(entity, component)
 
 	if dirty := set.Get(); len(dirty) != 0 {
 		t.Errorf("empty dirty flags have not expected dirty entities (%v)", dirty)
@@ -57,13 +57,13 @@ func TestDirtyFlagsInWorld(t *testing.T) {
 		return
 	}
 
-	components.RemoveComponent(entity)
+	components.Remove(entity)
 	if dirty := set.Get(); len(dirty) != 1 || dirty[0] != entity {
 		t.Errorf("expected in dirty flags dirty entity but go %v", dirty)
 		return
 	}
 
-	components.SaveComponent(entity, component)
+	components.Set(entity, component)
 	if dirty := set.Get(); len(dirty) != 1 || dirty[0] != entity {
 		t.Errorf("expected in dirty flags dirty entity but go %v", dirty)
 		return
@@ -86,7 +86,7 @@ func TestDependentDirtySet(t *testing.T) {
 	bComponents.AddDirtySet(set)
 	bComponents.AddDependency(aComponents)
 
-	aComponents.SaveComponent(entity, AComponent{})
+	aComponents.Set(entity, AComponent{})
 
 	if dirty := set.Get(); len(dirty) != 1 || dirty[0] != entity {
 		t.Errorf("expected in dirty flags dirty entity but go %v", dirty)
@@ -129,7 +129,7 @@ func benchmarkNEntitiesSaveWith7Systems(b *testing.B, entitiesCount int) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < entitiesCount; j++ {
-			arr1.SaveComponent(entity, Component1{})
+			arr1.Set(entity, Component1{})
 		}
 	}
 }

@@ -100,8 +100,8 @@ func addScene(
 		cols := 100
 		{
 			unit := world.NewEntity()
-			tilesPosArray.SaveComponent(unit, tile.NewPos(1, 1, tile.UnitLayer))
-			tilesTypeArray.SaveComponent(unit, definition.NewLink(definition.TileU1))
+			tilesPosArray.Set(unit, tile.NewPos(1, 1, tile.UnitLayer))
+			tilesTypeArray.Set(unit, definition.NewLink(definition.TileU1))
 		}
 		for i := 0; i < rows*cols; i++ {
 			row := i % cols
@@ -121,14 +121,14 @@ func addScene(
 			case 3:
 				tileType = definition.TileWater
 			}
-			tilesPosArray.SaveComponent(entity, tile.NewPos(int32(row), int32(col), tile.GroundLayer))
-			tilesTypeArray.SaveComponent(entity, definition.NewLink(tileType))
+			tilesPosArray.Set(entity, tile.NewPos(int32(row), int32(col), tile.GroundLayer))
+			tilesTypeArray.Set(entity, definition.NewLink(tileType))
 		}
 
 		{
 			unit := world.NewEntity()
-			tilesPosArray.SaveComponent(unit, tile.NewPos(0, 0, tile.UnitLayer))
-			tilesTypeArray.SaveComponent(unit, definition.NewLink(definition.TileU1))
+			tilesPosArray.Set(unit, tile.NewPos(0, 0, tile.UnitLayer))
+			tilesTypeArray.Set(unit, definition.NewLink(definition.TileU1))
 		}
 	}
 

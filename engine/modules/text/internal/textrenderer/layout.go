@@ -104,19 +104,19 @@ type line struct {
 func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	// TODO add overflow read, text align read and transform modification
 
-	size, ok := s.transform.AbsoluteSize().GetComponent(entity)
+	size, ok := s.transform.AbsoluteSize().Get(entity)
 	if !ok {
 		return Layout{}, nil
 	}
-	textComponent, ok := s.textArray.GetComponent(entity)
+	textComponent, ok := s.textArray.Get(entity)
 	if !ok {
 		return Layout{}, nil
 	}
-	fontFamily, ok := s.fontFamilyArray.GetComponent(entity)
+	fontFamily, ok := s.fontFamilyArray.Get(entity)
 	if !ok {
 		fontFamily = s.defaultFontFamily
 	}
-	fontSize, ok := s.fontSizeArray.GetComponent(entity)
+	fontSize, ok := s.fontSizeArray.Get(entity)
 	if !ok {
 		fontSize = s.defaultFontSize
 	}
@@ -124,11 +124,11 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	// if err != nil {
 	// 	overflow = s.defaultOverflow
 	// }
-	breakComponent, ok := s.breakArray.GetComponent(entity)
+	breakComponent, ok := s.breakArray.Get(entity)
 	if !ok {
 		breakComponent = s.defaultBreak
 	}
-	textAlign, ok := s.textAlignArray.GetComponent(entity)
+	textAlign, ok := s.textAlignArray.Get(entity)
 	if !ok {
 		textAlign = s.defaultTextAlign
 	}

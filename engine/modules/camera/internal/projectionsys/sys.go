@@ -89,7 +89,7 @@ func (s *updateProjetionsSystem) UpsertOrtho() {
 			continue
 		}
 		s.cameraTool.GetObject(entity)
-		resizeOrtho, ok := s.orthoArray.GetComponent(entity)
+		resizeOrtho, ok := s.orthoArray.Get(entity)
 		if !ok {
 			continue
 		}
@@ -109,7 +109,7 @@ func (s *updateProjetionsSystem) UpsertPerspective() {
 	ei := s.perspectivesDirtySet.Get()
 	aspectRatio := s.AspectRatio()
 	for _, entity := range ei {
-		resizePerspective, ok := s.dynamicPerspectivesArray.GetComponent(entity)
+		resizePerspective, ok := s.dynamicPerspectivesArray.Get(entity)
 		if !ok {
 			continue
 		}
@@ -117,7 +117,7 @@ func (s *updateProjetionsSystem) UpsertPerspective() {
 			resizePerspective.FovY, aspectRatio,
 			resizePerspective.Near, resizePerspective.Far,
 		)
-		s.perspectivesArray.SaveComponent(entity, perspective)
+		s.perspectivesArray.Set(entity, perspective)
 	}
 }
 

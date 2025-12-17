@@ -88,14 +88,14 @@ func (t tool) ApplyState(changes State) {
 		}
 		if !ok {
 			entity = t.world.NewEntity()
-			t.uuidArray.SaveComponent(entity, uuid.New(id))
+			t.uuidArray.Set(entity, uuid.New(id))
 		}
 		for i, array := range t.arrays {
 			if snapshot.Components[i] != nil {
-				err := array.SaveAnyComponent(entity, snapshot.Components[i])
+				err := array.SetAny(entity, snapshot.Components[i])
 				t.logger.Warn(err)
 			} else {
-				array.RemoveComponent(entity)
+				array.Remove(entity)
 			}
 		}
 	}
@@ -126,7 +126,7 @@ func (t tool) RecordEntitiesChange() {
 // private methods
 
 func (t tool) captureEntity(state State, entity ecs.EntityID) {
-	unique, ok := t.uuidArray.GetComponent(entity)
+	unique, ok := t.uuidArray.Get(entity)
 	if !ok {
 		return
 	}
@@ -140,7 +140,7 @@ func (t tool) captureEntity(state State, entity ecs.EntityID) {
 	}
 
 	for i, array := range t.arrays {
-		component, ok := array.GetAnyComponent(entity)
+		component, ok := array.GetAny(entity)
 		if ok {
 			snapshot.Components[i] = component
 		}

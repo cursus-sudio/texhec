@@ -11,10 +11,10 @@ func TestPos(t *testing.T) {
 	setup := NewSetup(t)
 	entity := setup.World.NewEntity()
 
-	setup.Transform.Pos().SaveComponent(entity, transform.NewPos(10, 10, 10))
+	setup.Transform.Pos().Set(entity, transform.NewPos(10, 10, 10))
 	setup.expectAbsolutePos(entity, transform.NewPos(10, 10, 10))
 
-	setup.Transform.Pos().SaveComponent(entity, transform.NewPos(15, 15, 15))
+	setup.Transform.Pos().Set(entity, transform.NewPos(15, 15, 15))
 	setup.expectAbsolutePos(entity, transform.NewPos(15, 15, 15))
 
 	setup.Transform.SetAbsolutePos(entity, transform.AbsolutePosComponent{Pos: mgl32.Vec3{5, 5, 5}})

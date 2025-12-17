@@ -13,12 +13,12 @@ var ErrInvalidType error = errors.New("expected an error component")
 type BeforeGet func()
 
 type AnyComponentArray interface {
-	GetAnyComponent(entity EntityID) (any, bool)
+	GetAny(entity EntityID) (any, bool)
 	GetEntities() []EntityID
 
 	// when type doesn't match error is returned
-	SaveAnyComponent(EntityID, any) error
-	RemoveComponent(EntityID)
+	SetAny(EntityID, any) error
+	Remove(EntityID)
 
 	// on dependency change its also applied here
 	AddDependency(AnyComponentArray)
@@ -28,9 +28,9 @@ type AnyComponentArray interface {
 
 type ComponentsArray[Component any] interface {
 	AnyComponentArray
-	GetComponent(entity EntityID) (Component, bool)
+	Get(entity EntityID) (Component, bool)
 
-	SaveComponent(EntityID, Component)
+	Set(EntityID, Component)
 }
 
 // impl
@@ -58,7 +58,7 @@ func NewComponentsArray[Component any](entities datastructures.SparseSet[EntityI
 	return array
 }
 
-func (c *componentsArray[Component]) SaveComponent(entity EntityID, component Component) {
+func (c *componentsArray[Component]) Set(entity EntityID, component Component) {
 	value, ok := c.components.Get(entity)
 	if ok && c.equal(value, component) {
 		return
@@ -73,16 +73,16 @@ func (c *componentsArray[Component]) SaveComponent(entity EntityID, component Co
 	return
 }
 
-func (c *componentsArray[Component]) SaveAnyComponent(entity EntityID, anyComponent any) error {
+func (c *componentsArray[Component]) SetAny(entity EntityID, anyComponent any) error {
 	component, ok := anyComponent.(Component)
 	if !ok {
 		return ErrInvalidType
 	}
-	c.SaveComponent(entity, component)
+	c.Set(entity, component)
 	return nil
 }
 
-func (c *componentsArray[Component]) RemoveComponent(entity EntityID) {
+func (c *componentsArray[Component]) Remove(entity EntityID) {
 	entities := []EntityID{entity}
 	if _, ok := c.components.Get(entity); !ok {
 		return
@@ -95,7 +95,7 @@ func (c *componentsArray[Component]) RemoveComponent(entity EntityID) {
 	}
 }
 
-func (c *componentsArray[Component]) GetComponent(entity EntityID) (Component, bool) {
+func (c *componentsArray[Component]) Get(entity EntityID) (Component, bool) {
 	for _, beforeGet := range c.beforeGets {
 		beforeGet()
 	}
@@ -114,11 +114,11 @@ func (c *componentsArray[Component]) GetEntities() []EntityID {
 	return c.components.GetIndices()
 }
 
-func (c *componentsArray[Component]) GetAnyComponent(entity EntityID) (any, bool) {
+func (c *componentsArray[Component]) GetAny(entity EntityID) (any, bool) {
 	for _, beforeGet := range c.beforeGets {
 		beforeGet()
 	}
-	return c.GetComponent(entity)
+	return c.Get(entity)
 }
 
 //

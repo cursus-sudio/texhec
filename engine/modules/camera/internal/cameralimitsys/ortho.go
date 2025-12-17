@@ -67,16 +67,16 @@ func (s *orthoSys) BeforeGet() {
 		if err != nil {
 			continue
 		}
-		limits, ok := s.limitsArray.GetComponent(entity)
+		limits, ok := s.limitsArray.Get(entity)
 		if !ok {
 			continue
 		}
-		ortho, ok := s.orthoArray.GetComponent(entity)
+		ortho, ok := s.orthoArray.Get(entity)
 		if !ok {
 			continue
 		}
 
-		pos, ok := s.transformTool.Pos().GetComponent(entity)
+		pos, ok := s.transformTool.Pos().Get(entity)
 		if !ok {
 			continue
 		}
@@ -118,6 +118,6 @@ func (s *orthoSys) BeforeGet() {
 		saves = append(saves, save{entity, pos})
 	}
 	for _, save := range saves {
-		s.transformTool.Pos().SaveComponent(save.entity, save.pos)
+		s.transformTool.Pos().Set(save.entity, save.pos)
 	}
 }

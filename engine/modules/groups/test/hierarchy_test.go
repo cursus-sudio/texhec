@@ -15,7 +15,7 @@ func TestHierarchy(t *testing.T) {
 	defaultGroups := groups.EmptyGroups().Ptr().Enable(G1).Val()
 
 	parent := setup.World.NewEntity()
-	setup.Groups.SaveComponent(parent, defaultGroups)
+	setup.Groups.Set(parent, defaultGroups)
 
 	child := setup.World.NewEntity()
 	setup.Hierarchy.SetParent(child, parent)
@@ -23,8 +23,8 @@ func TestHierarchy(t *testing.T) {
 	grandChild := setup.World.NewEntity()
 	setup.Hierarchy.SetParent(grandChild, child)
 
-	setup.InheritGroups.SaveComponent(grandChild, groups.InheritGroupsComponent{})
-	setup.InheritGroups.SaveComponent(child, groups.InheritGroupsComponent{})
+	setup.InheritGroups.Set(grandChild, groups.InheritGroupsComponent{})
+	setup.InheritGroups.Set(child, groups.InheritGroupsComponent{})
 
 	setup.expectGroups(child, defaultGroups)
 	setup.expectGroups(grandChild, defaultGroups)

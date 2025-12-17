@@ -164,7 +164,7 @@ func (t Tool) OnTransparentEvent(event any) {
 	}
 
 	for _, client := range t.clientArray.GetEntities() {
-		connComp, ok := t.connectionArray.GetComponent(client)
+		connComp, ok := t.connectionArray.Get(client)
 		if !ok {
 			return
 		}
@@ -178,7 +178,7 @@ func (t Tool) ListenFetchState(entity ecs.EntityID, dto clienttypes.FetchStateDT
 }
 
 func (t Tool) ListenEmitEvent(entity ecs.EntityID, dto clienttypes.EmitEventDTO) {
-	conn, ok := t.connectionArray.GetComponent(entity)
+	conn, ok := t.connectionArray.Get(entity)
 	if !ok {
 		return
 	}
@@ -193,7 +193,7 @@ func (t Tool) ListenEmitEvent(entity ecs.EntityID, dto clienttypes.EmitEventDTO)
 }
 
 func (t Tool) ListenTransparentEvent(entity ecs.EntityID, dto clienttypes.TransparentEventDTO) {
-	conn, ok := t.connectionArray.GetComponent(entity)
+	conn, ok := t.connectionArray.Get(entity)
 	if !ok {
 		return
 	}
@@ -214,11 +214,11 @@ func (t Tool) loadConnections() {
 			continue
 		}
 		t.listeners.Add(entity)
-		if _, ok := t.clientArray.GetComponent(entity); !ok {
+		if _, ok := t.clientArray.Get(entity); !ok {
 			continue
 		}
 
-		comp, ok := t.connectionArray.GetComponent(entity)
+		comp, ok := t.connectionArray.Get(entity)
 		if !ok {
 			continue
 		}
@@ -244,7 +244,7 @@ func (t Tool) loadConnections() {
 }
 
 func (t Tool) sendVisible(client ecs.EntityID, eventUUID *uuid.UUID, changes state.State) {
-	connComp, ok := t.connectionArray.GetComponent(client)
+	connComp, ok := t.connectionArray.Get(client)
 	if !ok {
 		return
 	}

@@ -52,8 +52,8 @@ func NewDragSystem(
 
 func (s *dragSystem) Listen(e inputs.DragEvent) {
 	for _, cameraEntity := range s.mobileCameraArray.GetEntities() {
-		pos, _ := s.transformTool.AbsolutePos().GetComponent(cameraEntity)
-		rot, ok := s.transformTool.AbsoluteRotation().GetComponent(cameraEntity)
+		pos, _ := s.transformTool.AbsolutePos().Get(cameraEntity)
+		rot, ok := s.transformTool.AbsoluteRotation().Get(cameraEntity)
 		if !ok {
 			rot.Rotation = mgl32.QuatIdent()
 		}

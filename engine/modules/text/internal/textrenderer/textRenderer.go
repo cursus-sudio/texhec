@@ -80,7 +80,7 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 		fonts := datastructures.NewSparseArray[FontKey, assets.AssetID]()
 		fonts.Set(s.fontKeys.GetKey(s.defaultTextAsset), s.defaultTextAsset)
 		for _, font := range s.text.FontFamily().GetEntities() {
-			family, ok := s.text.FontFamily().GetComponent(font)
+			family, ok := s.text.FontFamily().Get(font)
 			if !ok {
 				continue
 			}
@@ -136,24 +136,24 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 			continue
 		}
 
-		pos, ok := s.transform.AbsolutePos().GetComponent(entity)
+		pos, ok := s.transform.AbsolutePos().Get(entity)
 		if !ok {
 			continue
 		}
-		rot, ok := s.transform.AbsoluteRotation().GetComponent(entity)
+		rot, ok := s.transform.AbsoluteRotation().Get(entity)
 		if !ok {
 			continue
 		}
-		size, ok := s.transform.AbsoluteSize().GetComponent(entity)
+		size, ok := s.transform.AbsoluteSize().Get(entity)
 		if !ok {
 			continue
 		}
-		entityColor, ok := s.text.TextColor().GetComponent(entity)
+		entityColor, ok := s.text.TextColor().Get(entity)
 		if !ok {
 			entityColor = s.defaultColor
 		}
 
-		entityGroups, ok := s.groupsArray.GetComponent(entity)
+		entityGroups, ok := s.groupsArray.Get(entity)
 		if !ok {
 			entityGroups = groups.DefaultGroups()
 		}
@@ -186,7 +186,7 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 				continue
 			}
 
-			cameraGroups, ok := s.groupsArray.GetComponent(cameraEntity)
+			cameraGroups, ok := s.groupsArray.Get(cameraEntity)
 			if !ok {
 				cameraGroups = groups.DefaultGroups()
 			}

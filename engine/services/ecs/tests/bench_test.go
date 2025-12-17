@@ -19,7 +19,7 @@ func BenchmarkGetComponent(b *testing.B) {
 	arr := ecs.GetComponentsArray[Component](world)
 	for i := 0; i < entitiesCount; i++ {
 		entity := world.NewEntity()
-		arr.SaveComponent(entity, Component{})
+		arr.Set(entity, Component{})
 		entities[i] = entity
 	}
 
@@ -27,7 +27,7 @@ func BenchmarkGetComponent(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		entityIndex := i % entitiesCount
 		entity := entities[entityIndex]
-		arr.GetComponent(entity)
+		arr.Get(entity)
 	}
 }
 
@@ -44,7 +44,7 @@ func BenchmarkCreateComponents(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
-		arr.SaveComponent(entity, Component{})
+		arr.Set(entity, Component{})
 	}
 }
 
@@ -55,14 +55,14 @@ func BenchmarkUpdateComponents(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
 		entities.Add(entity)
-		arr.SaveComponent(entity, Component{})
+		arr.Set(entity, Component{})
 	}
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
-		arr.SaveComponent(entity, Component{})
+		arr.Set(entity, Component{})
 	}
 }
 
@@ -73,13 +73,13 @@ func BenchmarkRemoveComponent(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
 		entities.Add(entity)
-		arr.SaveComponent(entity, Component{})
+		arr.Set(entity, Component{})
 	}
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
-		arr.RemoveComponent(entity)
+		arr.Remove(entity)
 	}
 }

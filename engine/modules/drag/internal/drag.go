@@ -35,8 +35,8 @@ func (s s) Register(w ecs.World) error {
 		}
 		entity := event.Entity
 
-		pos, _ := transformTool.AbsolutePos().GetComponent(entity)
-		rot, _ := transformTool.AbsoluteRotation().GetComponent(entity)
+		pos, _ := transformTool.AbsolutePos().Get(entity)
+		rot, _ := transformTool.AbsoluteRotation().Get(entity)
 
 		fromRay := camera.ShootRay(event.Drag.From)
 		toRay := camera.ShootRay(event.Drag.To)

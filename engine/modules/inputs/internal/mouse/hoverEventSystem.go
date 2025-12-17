@@ -30,7 +30,7 @@ func NewHoverEventsSystem() ecs.SystemRegister {
 
 func (s *hoverEventSystem) Listen(event frames.FrameEvent) {
 	for _, entity := range s.hoveredArray.GetEntities() {
-		eventsComponent, ok := s.hoverEventArray.GetComponent(entity)
+		eventsComponent, ok := s.hoverEventArray.Get(entity)
 		if !ok {
 			continue
 		}

@@ -38,11 +38,11 @@ func TileColliderSystem(logger logger.Logger,
 				return
 			}
 			for _, entity := range ei {
-				if _, ok := uuidArray.GetComponent(entity); ok {
+				if _, ok := uuidArray.Get(entity); ok {
 					continue
 				}
 				comp := uuid.New(uuidFactory.NewUUID())
-				uuidArray.SaveComponent(entity, comp)
+				uuidArray.Set(entity, comp)
 			}
 		})
 
@@ -58,12 +58,12 @@ func TileColliderSystem(logger logger.Logger,
 			}
 			// groups
 			for _, entity := range ei {
-				groupsArray.SaveComponent(entity, tileGroups)
+				groupsArray.Set(entity, tileGroups)
 			}
 
 			// pos
 			for _, entity := range ei {
-				pos, ok := tilePosArray.GetComponent(entity)
+				pos, ok := tilePosArray.Get(entity)
 				if !ok {
 					continue
 				}
@@ -72,19 +72,19 @@ func TileColliderSystem(logger logger.Logger,
 					float32(tileSize)*float32(pos.Y)+float32(tileSize)/2,
 					gridDepth+float32(pos.Layer),
 				)
-				posArray.SaveComponent(entity, transformPos)
+				posArray.Set(entity, transformPos)
 				comp := inputs.NewMouseLeftClick(tile.NewTileClickEvent(pos))
-				leftClickArray.SaveComponent(entity, comp)
+				leftClickArray.Set(entity, comp)
 			}
 
 			// transform
 			for _, entity := range ei {
-				sizeArray.SaveComponent(entity, transform.NewSize(float32(tileSize), float32(tileSize), 1))
+				sizeArray.Set(entity, transform.NewSize(float32(tileSize), float32(tileSize), 1))
 			}
 
 			// collider
 			for _, entity := range ei {
-				collidersArray.SaveComponent(entity, colliderComponent)
+				collidersArray.Set(entity, colliderComponent)
 			}
 		}
 

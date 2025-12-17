@@ -162,12 +162,12 @@ func NewSystem(
 //
 
 func (m *system) getTexture(entity ecs.EntityID) (texture.Texture, error) {
-	textureComponent, ok := m.textureArray.GetComponent(entity)
+	textureComponent, ok := m.textureArray.Get(entity)
 	if !ok {
 		return nil, nil
 	}
 	imagesCount, okImagesCount := m.texturesImagesCount[textureComponent]
-	textureFrameComponent, ok := m.textureFrameArray.GetComponent(entity)
+	textureFrameComponent, ok := m.textureFrameArray.Get(entity)
 	if !ok {
 		textureFrameComponent = render.DefaultTextureFrameComponent()
 	}
@@ -222,7 +222,7 @@ func (m *system) Listen(render.RenderEvent) error {
 	m.program.Use()
 
 	for _, cameraEntity := range m.cameraArray.GetEntities() {
-		cameraGroups, ok := m.groupsArray.GetComponent(cameraEntity)
+		cameraGroups, ok := m.groupsArray.Get(cameraEntity)
 		if !ok {
 			cameraGroups = groups.DefaultGroups()
 		}
@@ -233,7 +233,7 @@ func (m *system) Listen(render.RenderEvent) error {
 		}
 
 		for _, entity := range m.genericRendererArray.GetEntities() {
-			entityGroups, ok := m.groupsArray.GetComponent(entity)
+			entityGroups, ok := m.groupsArray.Get(entity)
 			if !ok {
 				entityGroups = groups.DefaultGroups()
 			}
@@ -249,12 +249,12 @@ func (m *system) Listen(render.RenderEvent) error {
 				continue
 			}
 
-			colorComponent, ok := m.colorArray.GetComponent(entity)
+			colorComponent, ok := m.colorArray.Get(entity)
 			if !ok {
 				colorComponent = render.DefaultColor()
 			}
 
-			meshComponent, ok := m.meshArray.GetComponent(entity)
+			meshComponent, ok := m.meshArray.Get(entity)
 			if !ok {
 				continue
 			}

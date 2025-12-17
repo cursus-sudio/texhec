@@ -119,50 +119,50 @@ func (t tool) Init() error {
 	// menu
 	menu := t.world.NewEntity()
 	t.hierarchyTool.SetParent(menu, camera)
-	t.transformTool.Parent().SaveComponent(menu, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
-	t.transformTool.ParentPivotPoint().SaveComponent(menu, transform.NewParentPivotPoint(1, 1, .5))
-	t.transformTool.Pos().SaveComponent(menu, transform.NewPos(0, 0, 1))
-	t.transformTool.Size().SaveComponent(menu, transform.NewSize(.2, 1, 1))
-	t.transformTool.PivotPoint().SaveComponent(menu, transform.NewPivotPoint(0, 1, .5))
+	t.transformTool.Parent().Set(menu, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
+	t.transformTool.ParentPivotPoint().Set(menu, transform.NewParentPivotPoint(1, 1, .5))
+	t.transformTool.Pos().Set(menu, transform.NewPos(0, 0, 1))
+	t.transformTool.Size().Set(menu, transform.NewSize(.2, 1, 1))
+	t.transformTool.PivotPoint().Set(menu, transform.NewPivotPoint(0, 1, .5))
 
-	t.renderTool.Color().SaveComponent(menu, render.NewColor(mgl32.Vec4{1, 1, 1, .5}))
-	t.renderTool.Mesh().SaveComponent(menu, render.NewMesh(t.gameAssets.SquareMesh))
-	t.renderTool.Texture().SaveComponent(menu, render.NewTexture(t.gameAssets.Tiles.Water))
-	t.pipelineArray.SaveComponent(menu, genericrenderer.PipelineComponent{})
+	t.renderTool.Color().Set(menu, render.NewColor(mgl32.Vec4{1, 1, 1, .5}))
+	t.renderTool.Mesh().Set(menu, render.NewMesh(t.gameAssets.SquareMesh))
+	t.renderTool.Texture().Set(menu, render.NewTexture(t.gameAssets.Tiles.Water))
+	t.pipelineArray.Set(menu, genericrenderer.PipelineComponent{})
 
-	t.groupInheritArray.SaveComponent(menu, groups.InheritGroupsComponent{})
-	t.colliderArray.SaveComponent(menu, collider.NewCollider(t.gameAssets.SquareCollider))
-	t.keepSelectedArray.SaveComponent(menu, inputs.KeepSelectedComponent{})
+	t.groupInheritArray.Set(menu, groups.InheritGroupsComponent{})
+	t.colliderArray.Set(menu, collider.NewCollider(t.gameAssets.SquareCollider))
+	t.keepSelectedArray.Set(menu, inputs.KeepSelectedComponent{})
 
 	// quit btn
 	quit := t.world.NewEntity()
 
 	t.hierarchyTool.SetParent(quit, menu)
-	t.groupInheritArray.SaveComponent(quit, groups.InheritGroupsComponent{})
+	t.groupInheritArray.Set(quit, groups.InheritGroupsComponent{})
 
-	t.transformTool.Parent().SaveComponent(quit, transform.NewParent(transform.RelativePos))
-	t.transformTool.ParentPivotPoint().SaveComponent(quit, transform.NewParentPivotPoint(1, 1, 1))
-	t.transformTool.Size().SaveComponent(quit, transform.NewSize(25, 25, 1))
-	t.transformTool.PivotPoint().SaveComponent(quit, transform.NewPivotPoint(1, 1, 0))
+	t.transformTool.Parent().Set(quit, transform.NewParent(transform.RelativePos))
+	t.transformTool.ParentPivotPoint().Set(quit, transform.NewParentPivotPoint(1, 1, 1))
+	t.transformTool.Size().Set(quit, transform.NewSize(25, 25, 1))
+	t.transformTool.PivotPoint().Set(quit, transform.NewPivotPoint(1, 1, 0))
 
-	t.textTool.TextContent().SaveComponent(quit, text.TextComponent{Text: "X"})
-	t.textTool.FontSize().SaveComponent(quit, text.FontSizeComponent{FontSize: 25})
-	t.textTool.TextAlign().SaveComponent(quit, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+	t.textTool.Content().Set(quit, text.TextComponent{Text: "X"})
+	t.textTool.FontSize().Set(quit, text.FontSizeComponent{FontSize: 25})
+	t.textTool.TextAlign().Set(quit, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
 
-	t.renderTool.Color().SaveComponent(quit, render.NewColor(mgl32.Vec4{1, 0, 0, 1}))
-	t.renderTool.Mesh().SaveComponent(quit, render.NewMesh(t.gameAssets.SquareMesh))
-	t.renderTool.Texture().SaveComponent(quit, render.NewTexture(t.gameAssets.Tiles.Water))
-	t.pipelineArray.SaveComponent(quit, genericrenderer.PipelineComponent{})
+	t.renderTool.Color().Set(quit, render.NewColor(mgl32.Vec4{1, 0, 0, 1}))
+	t.renderTool.Mesh().Set(quit, render.NewMesh(t.gameAssets.SquareMesh))
+	t.renderTool.Texture().Set(quit, render.NewTexture(t.gameAssets.Tiles.Water))
+	t.pipelineArray.Set(quit, genericrenderer.PipelineComponent{})
 
-	t.leftClickArray.SaveComponent(quit, inputs.NewMouseLeftClick(ui.HideUiEvent{}))
-	t.keepSelectedArray.SaveComponent(quit, inputs.KeepSelectedComponent{})
-	t.colliderArray.SaveComponent(quit, collider.NewCollider(t.gameAssets.SquareCollider))
+	t.leftClickArray.Set(quit, inputs.NewMouseLeftClick(ui.HideUiEvent{}))
+	t.keepSelectedArray.Set(quit, inputs.KeepSelectedComponent{})
+	t.colliderArray.Set(quit, collider.NewCollider(t.gameAssets.SquareCollider))
 
 	// child wrapper
 	childWrapper := t.world.NewEntity()
 	t.hierarchyTool.SetParent(childWrapper, menu)
-	t.groupInheritArray.SaveComponent(childWrapper, groups.InheritGroupsComponent{})
-	t.transformTool.Parent().SaveComponent(childWrapper, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
+	t.groupInheritArray.Set(childWrapper, groups.InheritGroupsComponent{})
+	t.transformTool.Parent().Set(childWrapper, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
 
 	t.menu = menu
 	t.childWrapper = childWrapper
@@ -194,7 +194,7 @@ func (t tool) Show() ecs.EntityID {
 	t.logger.Warn(t.ResetChildWrapper())
 	if !t.active {
 		t.active = true
-		t.animationArray.SaveComponent(t.menu, animation.NewAnimationComponent(t.showAnimation, t.animationDuration))
+		t.animationArray.Set(t.menu, animation.NewAnimationComponent(t.showAnimation, t.animationDuration))
 	}
 	return t.childWrapper
 }
@@ -202,7 +202,7 @@ func (t tool) Show() ecs.EntityID {
 func (t tool) Hide() {
 	if t.active {
 		t.active = false
-		t.animationArray.SaveComponent(t.menu, animation.NewAnimationComponent(t.hideAnimation, t.animationDuration))
+		t.animationArray.Set(t.menu, animation.NewAnimationComponent(t.hideAnimation, t.animationDuration))
 	}
 }
 

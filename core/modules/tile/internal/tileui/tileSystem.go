@@ -37,20 +37,19 @@ func NewSystem(
 				logger.Warn(fmt.Errorf("entity with uuid should exist"))
 				return
 			}
-			pos, ok := tilePosArray.GetComponent(tileEntity)
+			pos, ok := tilePosArray.Get(tileEntity)
 			if !ok {
 				return
 			}
 			p := uiTool.Show()
 			entity := world.NewEntity()
 			hierarchyTool.SetParent(entity, p)
-			transformTool.Parent().SaveComponent(entity,
-				transform.NewParent(transform.RelativePos|transform.RelativeSizeXYZ))
-			inheritGroupsArray.SaveComponent(entity, groups.InheritGroupsComponent{})
+			transformTool.Parent().Set(entity, transform.NewParent(transform.RelativePos|transform.RelativeSizeXYZ))
+			inheritGroupsArray.Set(entity, groups.InheritGroupsComponent{})
 
-			textTool.TextContent().SaveComponent(entity, text.TextComponent{Text: fmt.Sprintf("TILE: %v", pos)})
-			textTool.FontSize().SaveComponent(entity, text.FontSizeComponent{FontSize: 25})
-			textTool.TextAlign().SaveComponent(entity, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+			textTool.Content().Set(entity, text.TextComponent{Text: fmt.Sprintf("TILE: %v", pos)})
+			textTool.FontSize().Set(entity, text.FontSizeComponent{FontSize: 25})
+			textTool.TextAlign().Set(entity, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
 		})
 		return nil
 	})

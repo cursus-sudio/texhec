@@ -8,7 +8,7 @@ type TextTool interface {
 
 type Interface interface {
 	Break() ecs.ComponentsArray[BreakComponent]
-	TextContent() ecs.ComponentsArray[TextComponent]
+	Content() ecs.ComponentsArray[TextComponent]
 	TextAlign() ecs.ComponentsArray[TextAlignComponent]
 	TextColor() ecs.ComponentsArray[TextColorComponent]
 	FontFamily() ecs.ComponentsArray[FontFamilyComponent]

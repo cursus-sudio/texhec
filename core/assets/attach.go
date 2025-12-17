@@ -154,7 +154,7 @@ func (pkg) Assets(b ioc.Builder) {
 		assets := ioc.Get[assets.Assets](c)
 		b.OnStop(func(r appruntime.Runtime) {
 			scene := ioc.Get[scenes.SceneManager](c).CurrentSceneWorld()
-			scene.Release()
+			scene.ReleaseGlobals()
 
 			assets.ReleaseAll()
 		})

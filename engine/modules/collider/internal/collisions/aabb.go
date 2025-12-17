@@ -9,15 +9,15 @@ import (
 )
 
 func TransformAABB(t transform.Interface, entity ecs.EntityID) collider.AABB {
-	pos, ok := t.AbsolutePos().GetComponent(entity)
+	pos, ok := t.AbsolutePos().Get(entity)
 	if !ok {
 		pos.Pos = mgl32.Vec3{}
 	}
-	rot, ok := t.AbsoluteRotation().GetComponent(entity)
+	rot, ok := t.AbsoluteRotation().Get(entity)
 	if !ok {
 		rot.Rotation = mgl32.QuatIdent()
 	}
-	size, ok := t.AbsoluteSize().GetComponent(entity)
+	size, ok := t.AbsoluteSize().Get(entity)
 	if !ok {
 		size.Size = mgl32.Vec3{1, 1, 1}
 	}

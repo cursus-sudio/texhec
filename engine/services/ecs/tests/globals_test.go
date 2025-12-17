@@ -51,7 +51,7 @@ func TestRegistry(t *testing.T) {
 		return
 	}
 
-	world.Release()
+	world.ReleaseGlobals()
 	if r2.value != 0 {
 		t.Errorf("register wasn't cleaned up properly on clean up")
 		return

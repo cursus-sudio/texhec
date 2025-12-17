@@ -62,13 +62,13 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) {
 	mousePos := s.window.GetMousePos()
 
 	for _, cameraEntity := range s.mobileCameraArray.GetEntities() {
-		ortho, ok := s.orthoArray.GetComponent(cameraEntity)
+		ortho, ok := s.orthoArray.Get(cameraEntity)
 		if !ok {
 			continue
 		}
 
-		pos, _ := s.transformTool.AbsolutePos().GetComponent(cameraEntity)
-		rot, ok := s.transformTool.AbsoluteRotation().GetComponent(cameraEntity)
+		pos, _ := s.transformTool.AbsolutePos().Get(cameraEntity)
+		rot, ok := s.transformTool.AbsoluteRotation().Get(cameraEntity)
 		if !ok {
 			rot.Rotation = mgl32.QuatIdent()
 		}
@@ -84,7 +84,7 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) {
 		ortho.Zoom *= mul
 		ortho.Zoom = max(min(ortho.Zoom, s.maxZoom), s.minZoom)
 
-		s.orthoArray.SaveComponent(cameraEntity, ortho)
+		s.orthoArray.Set(cameraEntity, ortho)
 
 		// read after
 		rayAfter := camera.ShootRay(mousePos)

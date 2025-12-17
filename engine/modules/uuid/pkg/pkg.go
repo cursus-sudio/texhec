@@ -34,7 +34,7 @@ func (pkg) Register(b ioc.Builder) {
 		func(w ecs.World) func(entity ecs.EntityID) (indexType uuid.UUID, ok bool) {
 			uniqueArray := ecs.GetComponentsArray[uuid.Component](w)
 			return func(entity ecs.EntityID) (indexType uuid.UUID, ok bool) {
-				component, ok := uniqueArray.GetComponent(entity)
+				component, ok := uniqueArray.Get(entity)
 				if !ok {
 					return uuid.UUID{}, false
 				}

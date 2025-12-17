@@ -8,23 +8,23 @@ import (
 )
 
 func (t tool) GetRelativeParentPos(entity ecs.EntityID) mgl32.Vec3 {
-	parent, ok := t.hierarchyArray.GetComponent(entity)
+	parent, ok := t.hierarchyArray.Get(entity)
 	if !ok {
 		return mgl32.Vec3{}
 	}
-	parentMask, ok := t.parentMaskArray.GetComponent(entity)
+	parentMask, ok := t.parentMaskArray.Get(entity)
 	if !ok || parentMask.RelativeMask&transform.RelativePos == 0 {
 		return mgl32.Vec3{}
 	}
-	parentPos, ok := t.absolutePosArray.GetComponent(parent.Parent)
+	parentPos, ok := t.absolutePosArray.Get(parent.Parent)
 	if !ok {
 		parentPos.Pos = t.CalculateAbsolutePos(parent.Parent).Pos
 	}
-	parentSize, ok := t.absoluteSizeArray.GetComponent(parent.Parent)
+	parentSize, ok := t.absoluteSizeArray.Get(parent.Parent)
 	if !ok {
 		parentSize.Size = t.CalculateAbsoluteSize(parent.Parent).Size
 	}
-	parentPivot, ok := t.parentPivotPointArray.GetComponent(entity)
+	parentPivot, ok := t.parentPivotPointArray.Get(entity)
 	if !ok {
 		parentPivot = t.defaultParentPivot
 	}
@@ -37,11 +37,11 @@ func (t tool) GetRelativeParentPos(entity ecs.EntityID) mgl32.Vec3 {
 }
 
 func (t tool) GetPivotPos(entity ecs.EntityID) mgl32.Vec3 {
-	pivot, ok := t.pivotPointArray.GetComponent(entity)
+	pivot, ok := t.pivotPointArray.Get(entity)
 	if !ok {
 		return mgl32.Vec3{}
 	}
-	size, ok := t.absoluteSizeArray.GetComponent(entity)
+	size, ok := t.absoluteSizeArray.Get(entity)
 	if !ok {
 		return mgl32.Vec3{}
 	}
@@ -56,15 +56,15 @@ func (t tool) GetPivotPos(entity ecs.EntityID) mgl32.Vec3 {
 //
 
 func (t tool) GetRelativeParentRotation(entity ecs.EntityID) mgl32.Quat {
-	parent, ok := t.hierarchyArray.GetComponent(entity)
+	parent, ok := t.hierarchyArray.Get(entity)
 	if !ok {
 		return mgl32.QuatIdent()
 	}
-	parentMask, ok := t.parentMaskArray.GetComponent(entity)
+	parentMask, ok := t.parentMaskArray.Get(entity)
 	if !ok || parentMask.RelativeMask&transform.RelativeRotation == 0 {
 		return mgl32.QuatIdent()
 	}
-	parentRot, ok := t.absoluteRotationArray.GetComponent(parent.Parent)
+	parentRot, ok := t.absoluteRotationArray.Get(parent.Parent)
 	if !ok {
 		return mgl32.QuatIdent()
 	}
@@ -75,15 +75,15 @@ func (t tool) GetRelativeParentRotation(entity ecs.EntityID) mgl32.Quat {
 
 func (t tool) GetRelativeParentSize(entity ecs.EntityID) mgl32.Vec3 {
 	size := mgl32.Vec3{1, 1, 1}
-	parent, ok := t.hierarchyArray.GetComponent(entity)
+	parent, ok := t.hierarchyArray.Get(entity)
 	if !ok {
 		return size
 	}
-	parentMask, ok := t.parentMaskArray.GetComponent(entity)
+	parentMask, ok := t.parentMaskArray.Get(entity)
 	if !ok {
 		return size
 	}
-	parentSize, ok := t.absoluteSizeArray.GetComponent(parent.Parent)
+	parentSize, ok := t.absoluteSizeArray.Get(parent.Parent)
 	if !ok {
 		return size
 	}
@@ -100,7 +100,7 @@ func (t tool) GetRelativeParentSize(entity ecs.EntityID) mgl32.Vec3 {
 }
 
 func (t tool) ApplyMinMaxSize(entity ecs.EntityID, size *transform.SizeComponent) {
-	if maxSize, ok := t.maxSizeArray.GetComponent(entity); ok {
+	if maxSize, ok := t.maxSizeArray.Get(entity); ok {
 		if maxSize.Size[0] != 0 && size.Size[0] > maxSize.Size[0] {
 			size.Size[0] = maxSize.Size[0]
 		}
@@ -111,7 +111,7 @@ func (t tool) ApplyMinMaxSize(entity ecs.EntityID, size *transform.SizeComponent
 			size.Size[2] = maxSize.Size[2]
 		}
 	}
-	if minSize, ok := t.minSizeArray.GetComponent(entity); ok {
+	if minSize, ok := t.minSizeArray.Get(entity); ok {
 		if minSize.Size[0] != 0 && size.Size[0] < minSize.Size[0] {
 			size.Size[0] = minSize.Size[0]
 		}
@@ -153,7 +153,7 @@ func (t tool) getAspectRatio(size transform.SizeComponent, ratio transform.Aspec
 
 // integrates min and max size
 func (t tool) ApplyAspectRatio(entity ecs.EntityID, size *transform.SizeComponent) {
-	ratio, ok := t.aspectRatioArray.GetComponent(entity)
+	ratio, ok := t.aspectRatioArray.Get(entity)
 	if !ok {
 		return
 	}
@@ -161,7 +161,7 @@ func (t tool) ApplyAspectRatio(entity ecs.EntityID, size *transform.SizeComponen
 		return
 	}
 	sizeRatio := t.getAspectRatio(*size, ratio)
-	if maxSize, ok := t.maxSizeArray.GetComponent(entity); ok {
+	if maxSize, ok := t.maxSizeArray.Get(entity); ok {
 		for i := 0; i < 3; i++ {
 			if maxSize.Size[i] == 0 {
 				maxSize.Size[i] = sizeRatio.Size[i]
@@ -190,7 +190,7 @@ func (t tool) ApplyAspectRatio(entity ecs.EntityID, size *transform.SizeComponen
 			}
 		}
 	}
-	if minSize, ok := t.minSizeArray.GetComponent(entity); ok {
+	if minSize, ok := t.minSizeArray.Get(entity); ok {
 		minSizeRatio := ratio
 
 		primaryAxisIndex := -1
@@ -220,7 +220,7 @@ func (t tool) ApplyAspectRatio(entity ecs.EntityID, size *transform.SizeComponen
 //
 
 func (t tool) CalculateAbsolutePos(entity ecs.EntityID) transform.AbsolutePosComponent {
-	pos, _ := t.posArray.GetComponent(entity)
+	pos, _ := t.posArray.Get(entity)
 	relativeToParentPos := t.GetRelativeParentPos(entity)
 
 	pos.Pos = pos.Pos.
@@ -230,7 +230,7 @@ func (t tool) CalculateAbsolutePos(entity ecs.EntityID) transform.AbsolutePosCom
 	return transform.AbsolutePosComponent(pos)
 }
 func (t tool) CalculateAbsoluteRot(entity ecs.EntityID) transform.AbsoluteRotationComponent {
-	rot, ok := t.rotationArray.GetComponent(entity)
+	rot, ok := t.rotationArray.Get(entity)
 	if !ok {
 		rot = t.defaultRot
 	}
@@ -241,7 +241,7 @@ func (t tool) CalculateAbsoluteRot(entity ecs.EntityID) transform.AbsoluteRotati
 	return transform.AbsoluteRotationComponent(rot)
 }
 func (t tool) CalculateAbsoluteSize(entity ecs.EntityID) transform.AbsoluteSizeComponent {
-	size, ok := t.sizeArray.GetComponent(entity)
+	size, ok := t.sizeArray.Get(entity)
 	if !ok {
 		size = t.defaultSize
 	}

@@ -103,7 +103,7 @@ func (t tool) ApplyChanges() {
 	entities := t.dirtySet.Get()
 	t.Remove(entities...)
 	for _, entity := range entities {
-		if _, ok := t.colliderArray.GetComponent(entity); !ok {
+		if _, ok := t.colliderArray.Get(entity); !ok {
 			continue
 		}
 		aabb := TransformAABB(t.transform, entity)
@@ -147,7 +147,7 @@ func (t tool) Collider() collider.Interface { return t }
 
 func (t tool) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) (collider.ObjectRayCollision, error) {
 	t.ApplyChanges()
-	entityGroups, ok := t.groupsArray.GetComponent(entity)
+	entityGroups, ok := t.groupsArray.Get(entity)
 	if !ok {
 		entityGroups = groups.DefaultGroups()
 	}
@@ -160,7 +160,7 @@ func (t tool) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) (collider.O
 		return nil, nil
 	}
 
-	colliderComponent, ok := t.colliderArray.GetComponent(entity)
+	colliderComponent, ok := t.colliderArray.Get(entity)
 	if !ok {
 		return nil, nil
 	}

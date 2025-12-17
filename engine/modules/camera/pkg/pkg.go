@@ -66,11 +66,11 @@ func (pkg pkg) Register(b ioc.Builder) {
 			normalizedViewportArray := ecs.GetComponentsArray[camera.NormalizedViewportComponent](w)
 			return func(entity ecs.EntityID) func() (x int32, y int32, w int32, h int32) {
 				return func() (rx int32, ry int32, rw int32, rh int32) { // r from result
-					viewportComponent, ok := viewportArray.GetComponent(entity)
+					viewportComponent, ok := viewportArray.Get(entity)
 					if ok {
 						return viewportComponent.Viewport()
 					}
-					normalizedViewportComponent, ok := normalizedViewportArray.GetComponent(entity)
+					normalizedViewportComponent, ok := normalizedViewportArray.Get(entity)
 					if ok {
 						return normalizedViewportComponent.Viewport(window.Window().GetSize())
 					}
@@ -88,11 +88,11 @@ func (pkg pkg) Register(b ioc.Builder) {
 			return func(entity ecs.EntityID) (camera.Object, error) {
 				viewport := viewport(entity)
 				getCameraTransformMatrix := func() mgl32.Mat4 {
-					pos, ok := transformTool.AbsolutePos().GetComponent(entity)
+					pos, ok := transformTool.AbsolutePos().Get(entity)
 					if !ok {
 						return mgl32.Mat4{}
 					}
-					rot, ok := transformTool.AbsoluteRotation().GetComponent(entity)
+					rot, ok := transformTool.AbsoluteRotation().Get(entity)
 					if !ok {
 						return mgl32.Mat4{}
 					}
@@ -102,7 +102,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 					return cameraRot.Mat4().Mul4(mgl32.Translate3D(cameraPos.X(), cameraPos.Y(), cameraPos.Z()))
 				}
 				getProjection := func() camera.OrthoComponent {
-					ortho, ok := orthoArray.GetComponent(entity)
+					ortho, ok := orthoArray.Get(entity)
 					if !ok {
 						return ortho
 					}
@@ -110,7 +110,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 				}
 				getProjectionMatrix := func() mgl32.Mat4 {
 					p := getProjection()
-					orthoResolution, ok := orthoResolutionArray.GetComponent(entity)
+					orthoResolution, ok := orthoResolutionArray.Get(entity)
 					if !ok {
 						orthoResolution = camera.GetViewportOrthoResolution(viewport())
 					}
@@ -152,11 +152,11 @@ func (pkg pkg) Register(b ioc.Builder) {
 			return func(entity ecs.EntityID) (camera.Object, error) {
 				viewport := viewport(entity)
 				getCameraTransformMatrix := func() mgl32.Mat4 {
-					pos, ok := transformTool.AbsolutePos().GetComponent(entity)
+					pos, ok := transformTool.AbsolutePos().Get(entity)
 					if !ok {
 						return mgl32.Mat4{}
 					}
-					rot, ok := transformTool.AbsoluteRotation().GetComponent(entity)
+					rot, ok := transformTool.AbsoluteRotation().Get(entity)
 					if !ok {
 						return mgl32.Mat4{}
 					}
@@ -169,7 +169,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 					)
 				}
 				getProjection := func() camera.Perspective {
-					perspective, ok := perspectiveArray.GetComponent(entity)
+					perspective, ok := perspectiveArray.Get(entity)
 					if !ok {
 						return perspective
 					}
@@ -192,7 +192,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 					},
 					viewport,
 					func(mousePos window.MousePos) collider.Ray {
-						pos, ok := transformTool.AbsolutePos().GetComponent(entity)
+						pos, ok := transformTool.AbsolutePos().Get(entity)
 						if !ok {
 							return collider.Ray{}
 						}
@@ -231,7 +231,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 					cameraArray.BeforeGet(func() {
 						entities := orthoDirtySet.Get()
 						for _, entity := range entities {
-							cameraArray.SaveComponent(entity, camera.NewCamera[camera.OrthoComponent]())
+							cameraArray.Set(entity, camera.NewCamera[camera.OrthoComponent]())
 						}
 					})
 
@@ -241,7 +241,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 					cameraArray.BeforeGet(func() {
 						entities := perspectiveDirtySet.Get()
 						for _, entity := range entities {
-							cameraArray.SaveComponent(entity, camera.NewCamera[camera.Perspective]())
+							cameraArray.Set(entity, camera.NewCamera[camera.Perspective]())
 						}
 					})
 

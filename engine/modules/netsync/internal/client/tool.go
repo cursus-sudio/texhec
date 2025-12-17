@@ -325,11 +325,11 @@ func (t Tool) loadConnections() {
 	if ok := t.listeners.Get(entity); ok {
 		return
 	}
-	if _, ok := t.serverArray.GetComponent(entity); !ok {
+	if _, ok := t.serverArray.Get(entity); !ok {
 		return
 	}
 	t.listeners.Add(entity)
-	comp, ok := t.connectionArray.GetComponent(entity)
+	comp, ok := t.connectionArray.Get(entity)
 	if !ok {
 		return
 	}
@@ -383,7 +383,7 @@ func (t Tool) getConnection() connection.Conn {
 	var conn connection.Conn
 	if entities := t.serverArray.GetEntities(); len(entities) == 1 {
 		server := entities[0]
-		comp, ok := t.connectionArray.GetComponent(server)
+		comp, ok := t.connectionArray.Get(server)
 		if ok {
 			conn = comp.Conn()
 		}

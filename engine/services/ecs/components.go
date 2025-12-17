@@ -58,7 +58,7 @@ func (components *componentsImpl) Components() ComponentsStorage { return compon
 
 func (components *componentsImpl) RemoveEntity(entity EntityID) {
 	for _, arr := range components.storage.arrays {
-		arr.RemoveComponent(entity)
+		arr.Remove(entity)
 	}
 }
 
@@ -115,7 +115,7 @@ func SaveComponent[Component any](
 	entity EntityID,
 	component Component,
 ) {
-	GetComponentsArray[Component](w).SaveComponent(entity, component)
+	GetComponentsArray[Component](w).Set(entity, component)
 }
 
 func GetComponent[Component any](
@@ -123,7 +123,7 @@ func GetComponent[Component any](
 	entity EntityID,
 ) (Component, bool) {
 	return GetComponentsArray[Component](w).
-		GetComponent(entity)
+		Get(entity)
 }
 
 func RemoveComponent[Component any](
@@ -131,7 +131,7 @@ func RemoveComponent[Component any](
 	entity EntityID,
 ) {
 	GetComponentsArray[Component](w).
-		RemoveComponent(entity)
+		Remove(entity)
 }
 
 func GetEntitiesWithComponents(
@@ -157,7 +157,7 @@ func GetEntitiesWithComponents(
 arrayEntities:
 	for _, entity := range arrayEntities {
 		for _, array := range arrays {
-			if _, ok := array.GetAnyComponent(entity); !ok {
+			if _, ok := array.GetAny(entity); !ok {
 				continue arrayEntities
 			}
 		}

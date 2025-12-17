@@ -33,9 +33,9 @@ func NewHoverSystem() ecs.SystemRegister {
 }
 
 func (s *hoverSystem) handleMouseLeave(entity ecs.EntityID) {
-	s.hoveredArray.RemoveComponent(entity)
+	s.hoveredArray.Remove(entity)
 
-	mouseLeave, ok := s.mouseLeaveArray.GetComponent(entity)
+	mouseLeave, ok := s.mouseLeaveArray.Get(entity)
 	if !ok {
 		return
 	}
@@ -53,9 +53,9 @@ func (s *hoverSystem) Listen(event RayChangedTargetEvent) {
 	s.target = event.EntityID
 	entity := *event.EntityID
 
-	s.hoveredArray.SaveComponent(entity, inputs.HoveredComponent{Camera: event.Camera})
+	s.hoveredArray.Set(entity, inputs.HoveredComponent{Camera: event.Camera})
 
-	if mouseEnter, ok := s.mouseEnterArray.GetComponent(entity); ok {
+	if mouseEnter, ok := s.mouseEnterArray.Get(entity); ok {
 		events.EmitAny(s.events, mouseEnter.Event)
 	}
 }

@@ -27,7 +27,7 @@ type globalsInterface interface {
 	SaveGlobal(Global) // upsert (create or update)
 	GetGlobal(GlobalType) (Global, bool)
 
-	Release()
+	ReleaseGlobals()
 }
 
 type Cleanable interface {
@@ -84,7 +84,7 @@ func (r *globalsImpl) GetGlobal(registerType GlobalType) (Global, bool) {
 	return value, true
 }
 
-func (r *globalsImpl) Release() {
+func (r *globalsImpl) ReleaseGlobals() {
 	for _, cleanable := range r.cleanables.Get() {
 		cleanable.Release()
 	}

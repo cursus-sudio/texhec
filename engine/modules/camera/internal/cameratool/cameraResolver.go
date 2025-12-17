@@ -16,7 +16,7 @@ type cameraResolver struct {
 func (c *cameraResolver) Camera() camera.Interface { return c }
 
 func (c *cameraResolver) GetObject(entity ecs.EntityID) (camera.Object, error) {
-	cameraComponent, ok := c.cameraArray.GetComponent(entity)
+	cameraComponent, ok := c.cameraArray.Get(entity)
 	if !ok {
 		return nil, camera.ErrNotCamera
 	}

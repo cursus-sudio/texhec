@@ -81,7 +81,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 								if colliderEntity, ok := posIndex.Get(key); ok {
 									collider, ok := finalColliders.Get(colliderEntity)
 									if !ok {
-										collider, ok = tileColliderArray.GetComponent(colliderEntity)
+										collider, ok = tileColliderArray.Get(colliderEntity)
 									}
 									if !ok {
 										collider = NewCollider()
@@ -92,7 +92,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 								}
 							}
 
-							pos, ok := posArray.GetComponent(entity)
+							pos, ok := posArray.Get(entity)
 							if !ok {
 								continue
 							}
@@ -101,7 +101,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 							if colliderEntity, ok := posIndex.Get(key); ok {
 								collider, ok := finalColliders.Get(colliderEntity)
 								if !ok {
-									collider, ok = tileColliderArray.GetComponent(colliderEntity)
+									collider, ok = tileColliderArray.Get(colliderEntity)
 								}
 								if !ok {
 									collider = NewCollider()
@@ -117,7 +117,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 							if !ok {
 								continue
 							}
-							tileColliderArray.SaveComponent(entity, value)
+							tileColliderArray.Set(entity, value)
 						}
 					})
 					return nil

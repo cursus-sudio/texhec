@@ -13,7 +13,7 @@ func TestIndexing(t *testing.T) {
 	}
 
 	entity := setup.W.NewEntity()
-	setup.Array.SaveComponent(entity, component)
+	setup.Array.Set(entity, component)
 
 	returnedEntity, ok := setup.Tool().Get(component.Index)
 	if !ok {

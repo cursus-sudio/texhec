@@ -55,7 +55,7 @@ func (t tool) BeforeGet() {
 	}
 	present := datastructures.NewSet[connection.Conn]()
 	for _, entity := range t.connectionArray.GetEntities() {
-		comp, ok := t.connectionArray.GetComponent(entity)
+		comp, ok := t.connectionArray.Get(entity)
 		if !ok {
 			continue
 		}
@@ -121,11 +121,11 @@ func (t tool) MockConnectionPair() (connection.ConnectionComponent, connection.C
 }
 
 func (t tool) TransferConnection(entityFrom, entityTo ecs.EntityID) error {
-	comp, ok := t.connectionArray.GetComponent(entityFrom)
+	comp, ok := t.connectionArray.Get(entityFrom)
 	if !ok {
 		return nil
 	}
-	t.connectionArray.RemoveComponent(entityFrom)
-	t.connectionArray.SaveComponent(entityTo, comp)
+	t.connectionArray.Remove(entityFrom)
+	t.connectionArray.Set(entityTo, comp)
 	return nil
 }

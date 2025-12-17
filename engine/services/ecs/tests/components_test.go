@@ -55,32 +55,32 @@ func TestComponentsArrays(t *testing.T) {
 	componentArray := ecs.GetComponentsArray[Component](world)
 
 	entityId := world.NewEntity()
-	componentArray.SaveComponent(entityId, component)
+	componentArray.Set(entityId, component)
 
-	if retrievedComponent, ok := componentArray.GetComponent(entityId); !ok {
+	if retrievedComponent, ok := componentArray.Get(entityId); !ok {
 		t.Errorf("expected component")
 	} else if retrievedComponent != component {
 		t.Errorf("retrieved component isn't equal to saved component")
 	}
 
-	componentArray.SaveComponent(entityId, secondComponent)
+	componentArray.Set(entityId, secondComponent)
 
-	if retrievedComponent, ok := componentArray.GetComponent(entityId); !ok {
+	if retrievedComponent, ok := componentArray.Get(entityId); !ok {
 		t.Errorf("expected component")
 	} else if retrievedComponent != secondComponent {
 		t.Errorf("retrieved component isn't equal to saved component")
 	}
 
-	componentArray.RemoveComponent(entityId)
+	componentArray.Remove(entityId)
 
-	if _, ok := componentArray.GetComponent(entityId); ok {
+	if _, ok := componentArray.Get(entityId); ok {
 		t.Errorf("retrieved removed component")
 	}
 
-	componentArray.SaveComponent(entityId, component)
+	componentArray.Set(entityId, component)
 	world.RemoveEntity(entityId)
 
-	if _, ok := componentArray.GetComponent(entityId); ok {
+	if _, ok := componentArray.Get(entityId); ok {
 		t.Errorf("retrieved removed component")
 	}
 }
@@ -103,25 +103,25 @@ func TestComponentsQuery(t *testing.T) {
 
 	entity := world.NewEntity()
 
-	component.SaveComponent(entity, Component{})
+	component.Set(entity, Component{})
 	if dirty := set.Get(); len(dirty) != 1 || dirty[0] != entity {
 		t.Errorf("expected entity to be dirty")
 		return
 	}
 
-	component.RemoveComponent(entity)
+	component.Remove(entity)
 	if dirty := set.Get(); len(dirty) != 1 || dirty[0] != entity {
 		t.Errorf("expected entity to be dirty")
 		return
 	}
 
-	component2.SaveComponent(entity, Component2{})
+	component2.Set(entity, Component2{})
 	if dirty := set.Get(); len(dirty) != 1 || dirty[0] != entity {
 		t.Errorf("expected entity to be dirty")
 		return
 	}
 
-	component2.RemoveComponent(entity)
+	component2.Remove(entity)
 	if dirty := set.Get(); len(dirty) != 1 || dirty[0] != entity {
 		t.Errorf("expected entity to be dirty")
 		return

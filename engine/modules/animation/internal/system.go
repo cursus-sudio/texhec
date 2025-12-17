@@ -116,7 +116,7 @@ func (s *system) ApplyAnimation(
 func (s *system) Listen(event frames.FrameEvent) {
 	animatedEntities := s.animationsArray.GetEntities()
 	for _, entity := range animatedEntities {
-		animationComp, ok := s.animationsArray.GetComponent(entity)
+		animationComp, ok := s.animationsArray.Get(entity)
 		if !ok {
 			continue
 		}
@@ -124,7 +124,7 @@ func (s *system) Listen(event frames.FrameEvent) {
 		animationComp.AddElapsedTime(event.Delta)
 
 		if animationComp.PreviousState == animationComp.State {
-			s.animationsArray.SaveComponent(entity, animationComp)
+			s.animationsArray.Set(entity, animationComp)
 			continue
 		}
 
@@ -134,24 +134,24 @@ func (s *system) Listen(event frames.FrameEvent) {
 				"expected animation data with id \"%v\" to exist",
 				animationComp.AnimationID,
 			))
-			s.animationsArray.SaveComponent(entity, animationComp)
+			s.animationsArray.Set(entity, animationComp)
 			continue
 		}
 
 		s.ApplyAnimation(entity, animationComp, animationData)
 
 		if animationComp.State < 1 {
-			s.animationsArray.SaveComponent(entity, animationComp)
+			s.animationsArray.Set(entity, animationComp)
 			continue
 		}
 
 		loop := true
-		if _, ok := s.loopArray.GetComponent(entity); !ok {
+		if _, ok := s.loopArray.Get(entity); !ok {
 			loop = false
 		}
 
 		if !loop {
-			s.animationsArray.RemoveComponent(entity)
+			s.animationsArray.Remove(entity)
 			continue
 		}
 
@@ -160,6 +160,6 @@ func (s *system) Listen(event frames.FrameEvent) {
 
 		s.ApplyAnimation(entity, animationComp, animationData)
 
-		s.animationsArray.SaveComponent(entity, animationComp)
+		s.animationsArray.Set(entity, animationComp)
 	}
 }

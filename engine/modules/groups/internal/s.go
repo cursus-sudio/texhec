@@ -41,7 +41,7 @@ func (s s) calculateGroup(entity ecs.EntityID) (groups.GroupsComponent, bool) {
 	if !ok {
 		return def, false
 	}
-	groups, ok := s.groupsArray.GetComponent(parent)
+	groups, ok := s.groupsArray.Get(parent)
 	if !ok {
 		return def, false
 	}
@@ -73,7 +73,7 @@ func (s s) Init() error {
 			if len(entities) == 0 {
 				entities = children
 				for _, save := range saves {
-					s.groupsArray.SaveComponent(save.entity, save.groups)
+					s.groupsArray.Set(save.entity, save.groups)
 				}
 
 				dirtySet.Clear()
@@ -87,7 +87,7 @@ func (s s) Init() error {
 			if !ok {
 				continue
 			}
-			if originalGroups, ok := s.groupsArray.GetComponent(entity); ok && groups == originalGroups {
+			if originalGroups, ok := s.groupsArray.Get(entity); ok && groups == originalGroups {
 				continue
 			}
 			saves = append(saves, save{
@@ -96,14 +96,14 @@ func (s s) Init() error {
 			})
 
 			for _, child := range s.hierarchy.Children(entity).GetIndices() {
-				if _, ok := s.inheritArray.GetComponent(child); ok {
+				if _, ok := s.inheritArray.Get(child); ok {
 					children = append(children, child)
 				}
 			}
 		}
 
 		for _, save := range saves {
-			s.groupsArray.SaveComponent(save.entity, save.groups)
+			s.groupsArray.Set(save.entity, save.groups)
 		}
 		dirtySet.Clear()
 	})

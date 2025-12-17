@@ -45,7 +45,7 @@ func Package(
 				func(w ecs.World) func(entity ecs.EntityID) (tile.PosComponent, bool) {
 					tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w)
 					return func(entity ecs.EntityID) (tile.PosComponent, bool) {
-						return tilePosArray.GetComponent(entity)
+						return tilePosArray.Get(entity)
 					}
 				},
 				func(index tile.PosComponent) uint32 {
@@ -64,7 +64,7 @@ func Package(
 				func(w ecs.World) func(entity ecs.EntityID) (tile.ColliderPos, bool) {
 					tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w)
 					return func(entity ecs.EntityID) (tile.ColliderPos, bool) {
-						tileComp, ok := tilePosArray.GetComponent(entity)
+						tileComp, ok := tilePosArray.Get(entity)
 						if !ok && tileComp.Layer != mainLayer {
 							return tile.ColliderPos{}, false
 						}

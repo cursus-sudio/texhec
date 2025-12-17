@@ -60,7 +60,7 @@ func (n *sceneBuilder) Build(sceneId SceneId) Scene {
 		for _, listener := range n.onUnload {
 			listener(world)
 		}
-		world.Release()
+		world.ReleaseGlobals()
 	}
 	onLoad := func() ecs.World {
 		world := ecs.NewWorld()

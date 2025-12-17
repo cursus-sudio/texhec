@@ -30,7 +30,7 @@ func NewSetup() Setup {
 			func(w ecs.World) func(entity ecs.EntityID) (uint32, bool) {
 				componentArray := ecs.GetComponentsArray[Component](w)
 				return func(entity ecs.EntityID) (uint32, bool) {
-					comp, ok := componentArray.GetComponent(entity)
+					comp, ok := componentArray.Get(entity)
 					return comp.Index, ok
 				}
 			},

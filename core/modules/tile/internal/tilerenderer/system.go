@@ -80,11 +80,11 @@ func (s *system) Listen(render.RenderEvent) {
 			layer.tiles.Remove(entity)
 			s.rendered.Remove(entity)
 		}
-		tileType, ok := s.linkArray.GetComponent(entity)
+		tileType, ok := s.linkArray.Get(entity)
 		if !ok {
 			continue
 		}
-		tilePos, ok := s.tilePosArray.GetComponent(entity)
+		tilePos, ok := s.tilePosArray.Get(entity)
 		if !ok {
 			continue
 		}
@@ -119,7 +119,7 @@ func (s *system) Listen(render.RenderEvent) {
 				continue
 			}
 
-			cameraGroups, ok := s.groupsArray.GetComponent(cameraEntity)
+			cameraGroups, ok := s.groupsArray.Get(cameraEntity)
 			if !ok {
 				cameraGroups = groups.DefaultGroups()
 			}

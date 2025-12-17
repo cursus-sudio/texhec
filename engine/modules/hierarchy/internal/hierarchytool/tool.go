@@ -69,11 +69,11 @@ func (t tool) IsChildOf(child ecs.EntityID, wantedParent ecs.EntityID) bool {
 }
 
 func (t tool) SetParent(child ecs.EntityID, parent ecs.EntityID) {
-	t.hierarchyArray.SaveComponent(child, hierarchy.NewParent(parent))
+	t.hierarchyArray.Set(child, hierarchy.NewParent(parent))
 }
 
 func (t tool) Parent(child ecs.EntityID) (ecs.EntityID, bool) {
-	comp, ok := t.hierarchyArray.GetComponent(child)
+	comp, ok := t.hierarchyArray.Get(child)
 	return comp.Parent, ok
 }
 
@@ -92,7 +92,7 @@ func (t tool) GetParents(child ecs.EntityID) datastructures.SparseSet[ecs.Entity
 func (t tool) GetOrderedParents(child ecs.EntityID) []ecs.EntityID {
 	parents := []ecs.EntityID{child}
 	for {
-		parent, ok := t.hierarchyArray.GetComponent(child)
+		parent, ok := t.hierarchyArray.Get(child)
 		if !ok {
 			return parents[1:]
 		}
@@ -140,8 +140,8 @@ func (t tool) BeforeGet() {
 
 func (t tool) handleEntityChange(entity ecs.EntityID) {
 	parent, parentOk := t.parents.Get(entity)
-	hierarchy, hierarchyOk := t.hierarchyArray.GetComponent(entity)
-	_, isParent := t.parentArray.GetComponent(entity)
+	hierarchy, hierarchyOk := t.hierarchyArray.Get(entity)
+	_, isParent := t.parentArray.Get(entity)
 
 	// children added to parents as flat children
 	inheritedChildren, ok := t.flatChildren.Get(entity)
@@ -193,7 +193,7 @@ skipRemovalInParents:
 		parentChildren, ok := t.children.Get(hierarchy.Parent)
 		if !ok {
 			// mark as parent
-			t.parentArray.SaveComponent(hierarchy.Parent, parentComponent{})
+			t.parentArray.Set(hierarchy.Parent, parentComponent{})
 
 			// add children
 			parentChildren = datastructures.NewSparseSet[ecs.EntityID]()

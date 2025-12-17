@@ -38,9 +38,9 @@ type cameraRaySystem struct {
 
 func NewCameraRaySystem(
 	logger logger.Logger,
-	colliderFactory ecs.ToolFactory[collider.Collider],
+	colliderFactory ecs.ToolFactory[collider.ColliderTool],
 	window window.Api,
-	cameraResolver ecs.ToolFactory[camera.Camera],
+	cameraResolver ecs.ToolFactory[camera.CameraTool],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := &cameraRaySystem{

@@ -13,7 +13,7 @@ var (
 	ErrNotCamera error = errors.New("this isn't a camera")
 )
 
-type Camera interface {
+type CameraTool interface {
 	Camera() Interface
 }
 

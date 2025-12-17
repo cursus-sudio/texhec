@@ -64,12 +64,12 @@ func NewTool(
 	world ecs.World,
 	gameAssets gameassets.GameAssets,
 	logger logger.Logger,
-	cameraToolFactory ecs.ToolFactory[camera.Camera],
-	transformToolFactory ecs.ToolFactory[transform.Transform],
+	cameraToolFactory ecs.ToolFactory[camera.CameraTool],
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
 	tileToolFactory ecs.ToolFactory[tile.Tile],
-	textToolFactory ecs.ToolFactory[text.Text],
-	renderToolFactory ecs.ToolFactory[render.Render],
-	hierarchyToolFactory ecs.ToolFactory[hierarchy.Hierarchy],
+	textToolFactory ecs.ToolFactory[text.TextTool],
+	renderToolFactory ecs.ToolFactory[render.RenderTool],
+	hierarchyToolFactory ecs.ToolFactory[hierarchy.HierarchyTool],
 ) tool {
 	t := tool{
 		changing: &changing{},
@@ -187,6 +187,8 @@ func (t tool) ResetChildWrapper() error {
 	}
 	return nil
 }
+
+func (t tool) Ui() ui.Interface { return t }
 
 func (t tool) Show() ecs.EntityID {
 	t.logger.Warn(t.ResetChildWrapper())

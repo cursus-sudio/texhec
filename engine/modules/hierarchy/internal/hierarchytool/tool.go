@@ -24,9 +24,9 @@ type tool struct {
 	flatChildren datastructures.SparseArray[ecs.EntityID, datastructures.SparseSet[ecs.EntityID]]
 }
 
-func NewTool(logger logger.Logger) ecs.ToolFactory[hierarchy.Hierarchy] {
+func NewTool(logger logger.Logger) ecs.ToolFactory[hierarchy.HierarchyTool] {
 	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(w ecs.World) hierarchy.Hierarchy {
+	return ecs.NewToolFactory(func(w ecs.World) hierarchy.HierarchyTool {
 		mutex.Lock()
 		defer mutex.Unlock()
 		if tool, ok := ecs.GetGlobal[tool](w); ok {

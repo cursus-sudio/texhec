@@ -19,14 +19,14 @@ type wasdMoveSystem struct {
 	orthoArray        ecs.ComponentsArray[camera.OrthoComponent]
 	mobileCameraArray ecs.ComponentsArray[camera.MobileCameraComponent]
 
-	cameraCtors camera.Camera
+	cameraCtors camera.CameraTool
 	cameraSpeed float32
 }
 
 func NewWasdSystem(
 	logger logger.Logger,
-	cameraCtors ecs.ToolFactory[camera.Camera],
-	transformToolFactory ecs.ToolFactory[transform.Transform],
+	cameraCtors ecs.ToolFactory[camera.CameraTool],
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
 	cameraSpeed float32,
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {

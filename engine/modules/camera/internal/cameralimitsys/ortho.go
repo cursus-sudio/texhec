@@ -21,8 +21,8 @@ type orthoSys struct {
 }
 
 func NewOrthoSys(
-	transformToolFactory ecs.ToolFactory[transform.Transform],
-	cameraToolFactory ecs.ToolFactory[camera.Camera],
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+	cameraToolFactory ecs.ToolFactory[camera.CameraTool],
 	logger logger.Logger,
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {

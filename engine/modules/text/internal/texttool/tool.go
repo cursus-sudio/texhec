@@ -21,8 +21,8 @@ type tool struct {
 
 func NewTool(
 	logger logger.Logger,
-) ecs.ToolFactory[text.Text] {
-	return ecs.NewToolFactory(func(w ecs.World) text.Text {
+) ecs.ToolFactory[text.TextTool] {
+	return ecs.NewToolFactory(func(w ecs.World) text.TextTool {
 		return tool{
 			logger,
 			w,

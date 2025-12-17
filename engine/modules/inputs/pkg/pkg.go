@@ -63,9 +63,9 @@ func (pkg) Register(b ioc.Builder) {
 
 				mouse.NewCameraRaySystem(
 					ioc.Get[logger.Logger](c),
-					ioc.Get[ecs.ToolFactory[collider.Collider]](c),
+					ioc.Get[ecs.ToolFactory[collider.ColliderTool]](c),
 					ioc.Get[window.Api](c),
-					ioc.Get[ecs.ToolFactory[camera.Camera]](c),
+					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
 				),
 				mouse.NewHoverSystem(),
 				mouse.NewHoverEventsSystem(),

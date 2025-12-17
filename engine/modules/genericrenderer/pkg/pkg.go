@@ -46,8 +46,8 @@ func (pkg) Register(b ioc.Builder) {
 			ioc.Get[logger.Logger](c),
 			ioc.Get[vbo.VBOFactory[genericrenderer.Vertex]](c),
 			ioc.Get[texture.Factory](c),
-			ioc.Get[ecs.ToolFactory[camera.Camera]](c),
-			ioc.Get[ecs.ToolFactory[transform.Transform]](c),
+			ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
+			ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
 		)
 	})
 }

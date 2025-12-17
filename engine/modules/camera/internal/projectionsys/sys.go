@@ -35,8 +35,8 @@ type updateProjetionsSystem struct {
 func NewUpdateProjectionsSystem(
 	window window.Api,
 	logger logger.Logger,
-	transformToolFactory ecs.ToolFactory[transform.Transform],
-	cameraToolFactory ecs.ToolFactory[camera.Camera],
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+	cameraToolFactory ecs.ToolFactory[camera.CameraTool],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := &updateProjetionsSystem{

@@ -44,7 +44,7 @@ func addScene(
 	world ecs.World,
 	gameAssets gameassets.GameAssets,
 	logger logger.Logger,
-	connectionTool connection.Connection,
+	connectionTool connection.Interface,
 	isServer bool,
 ) {
 	uiCamera := world.NewEntity()
@@ -156,7 +156,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				world,
 				ioc.Get[gameassets.GameAssets](c),
 				ioc.Get[logger.Logger](c),
-				ioc.Get[ecs.ToolFactory[connection.Connection]](c).Build(world),
+				ioc.Get[ecs.ToolFactory[connection.ConnectionTool]](c).Build(world).Connection(),
 				true, // is server
 			)
 		})
@@ -169,7 +169,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				world,
 				ioc.Get[gameassets.GameAssets](c),
 				ioc.Get[logger.Logger](c),
-				ioc.Get[ecs.ToolFactory[connection.Connection]](c).Build(world),
+				ioc.Get[ecs.ToolFactory[connection.ConnectionTool]](c).Build(world).Connection(),
 				false, // is server
 			)
 		})

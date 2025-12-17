@@ -9,8 +9,8 @@ import (
 
 func NewColliderSystem(
 	logger logger.Logger,
-	transformToolFactory ecs.ToolFactory[transform.Transform],
-	serviceFactory ecs.ToolFactory[collider.Collider],
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+	serviceFactory ecs.ToolFactory[collider.ColliderTool],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		serviceFactory.Build(w)

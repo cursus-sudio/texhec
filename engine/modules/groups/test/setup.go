@@ -44,7 +44,7 @@ func NewSetup(t *testing.T) Setup {
 	return Setup{
 		world{
 			w,
-			ioc.Get[ecs.ToolFactory[hierarchy.Hierarchy]](c).Build(w).Hierarchy(),
+			ioc.Get[ecs.ToolFactory[hierarchy.HierarchyTool]](c).Build(w).Hierarchy(),
 			ecs.GetComponentsArray[groups.GroupsComponent](w),
 			ecs.GetComponentsArray[groups.InheritGroupsComponent](w),
 		},

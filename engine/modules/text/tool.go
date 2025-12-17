@@ -2,7 +2,7 @@ package text
 
 import "engine/services/ecs"
 
-type Text interface {
+type TextTool interface {
 	Text() Interface
 }
 

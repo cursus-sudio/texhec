@@ -51,7 +51,7 @@ type layoutService struct {
 func NewLayoutService(
 	world ecs.World,
 
-	transformToolFactory ecs.ToolFactory[transform.Transform],
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
 
 	logger logger.Logger,
 	fontService FontService,

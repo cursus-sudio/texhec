@@ -16,15 +16,15 @@ import (
 
 func NewSystem(
 	logger logger.Logger,
-	uiToolFactory ecs.ToolFactory[ui.Tool],
-	textToolFactory ecs.ToolFactory[text.Text],
-	transformToolFactory ecs.ToolFactory[transform.Transform],
-	hierarchyToolFactory ecs.ToolFactory[hierarchy.Hierarchy],
+	uiToolFactory ecs.ToolFactory[ui.UiTool],
+	textToolFactory ecs.ToolFactory[text.TextTool],
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+	hierarchyToolFactory ecs.ToolFactory[hierarchy.HierarchyTool],
 	tileToolFactory ecs.ToolFactory[tile.Tile],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(world ecs.World) error {
 		tilePosArray := ecs.GetComponentsArray[tile.PosComponent](world)
-		uiTool := uiToolFactory.Build(world)
+		uiTool := uiToolFactory.Build(world).Ui()
 		textTool := textToolFactory.Build(world).Text()
 		transformTool := transformToolFactory.Build(world).Transform()
 		hierarchyTool := hierarchyToolFactory.Build(world).Hierarchy()

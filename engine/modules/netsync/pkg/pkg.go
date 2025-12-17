@@ -42,7 +42,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[state.Tool] {
 		return state.NewToolFactory(
 			*pkg.config.config,
-			ioc.Get[ecs.ToolFactory[uuid.Tool]](c),
+			ioc.Get[ecs.ToolFactory[uuid.UUIDTool]](c),
 			ioc.Get[logger.Logger](c),
 		)
 	})
@@ -50,7 +50,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 		return server.NewToolFactory(
 			*pkg.config.config,
 			ioc.Get[ecs.ToolFactory[state.Tool]](c),
-			ioc.Get[ecs.ToolFactory[uuid.Tool]](c),
+			ioc.Get[ecs.ToolFactory[uuid.UUIDTool]](c),
 			ioc.Get[logger.Logger](c),
 		)
 	})
@@ -58,7 +58,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 		return client.NewToolFactory(
 			*pkg.config.config,
 			ioc.Get[ecs.ToolFactory[state.Tool]](c),
-			ioc.Get[ecs.ToolFactory[uuid.Tool]](c),
+			ioc.Get[ecs.ToolFactory[uuid.UUIDTool]](c),
 			ioc.Get[logger.Logger](c),
 		)
 	})

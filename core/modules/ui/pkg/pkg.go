@@ -51,23 +51,23 @@ func (pkg pkg) Register(b ioc.Builder) {
 			Register(ui.HideUiEvent{})
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[ui.Tool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[ui.UiTool] {
 		return uitool.NewToolFactory(
 			pkg.animationDuration,
 			pkg.showAnimation,
 			pkg.hideAnimation,
 			ioc.Get[gameassets.GameAssets](c),
 			ioc.Get[logger.Logger](c),
-			ioc.Get[ecs.ToolFactory[camera.Camera]](c),
-			ioc.Get[ecs.ToolFactory[transform.Transform]](c),
+			ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
+			ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
 			ioc.Get[ecs.ToolFactory[tile.Tile]](c),
-			ioc.Get[ecs.ToolFactory[text.Text]](c),
-			ioc.Get[ecs.ToolFactory[render.Render]](c),
-			ioc.Get[ecs.ToolFactory[hierarchy.Hierarchy]](c),
+			ioc.Get[ecs.ToolFactory[text.TextTool]](c),
+			ioc.Get[ecs.ToolFactory[render.RenderTool]](c),
+			ioc.Get[ecs.ToolFactory[hierarchy.HierarchyTool]](c),
 		)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ui.System {
-		factory := ioc.Get[ecs.ToolFactory[ui.Tool]](c)
+		factory := ioc.Get[ecs.ToolFactory[ui.UiTool]](c)
 		return ecs.NewSystemRegister(func(w ecs.World) error {
 			events.Listen(w.EventsBuilder(), func(e sdl.MouseButtonEvent) {
 				if e.Button != sdl.BUTTON_RIGHT || e.State != sdl.RELEASED {

@@ -15,9 +15,9 @@ type tool struct {
 func NewToolFactory(
 	toolFactory ecs.ToolFactory[relation.EntityToKeyTool[uuid.UUID]],
 	uuidFactory uuid.Factory,
-) ecs.ToolFactory[uuid.Tool] {
+) ecs.ToolFactory[uuid.UUIDTool] {
 	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(w ecs.World) uuid.Tool {
+	return ecs.NewToolFactory(func(w ecs.World) uuid.UUIDTool {
 		mutex.Lock()
 		defer mutex.Unlock()
 		if t, ok := ecs.GetGlobal[tool](w); ok {

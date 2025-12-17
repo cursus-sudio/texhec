@@ -40,8 +40,8 @@ func NewSetup(t *testing.T) Setup {
 	return Setup{
 		world{
 			w,
-			ioc.Get[ecs.ToolFactory[transform.Transform]](c).Build(w).Transform(),
-			ioc.Get[ecs.ToolFactory[hierarchy.Hierarchy]](c).Build(w).Hierarchy(),
+			ioc.Get[ecs.ToolFactory[transform.TransformTool]](c).Build(w).Transform(),
+			ioc.Get[ecs.ToolFactory[hierarchy.HierarchyTool]](c).Build(w).Hierarchy(),
 		},
 		t,
 	}

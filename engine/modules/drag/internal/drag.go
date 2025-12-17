@@ -13,14 +13,14 @@ import (
 
 type s struct {
 	logger               logger.Logger
-	cameraToolFactory    ecs.ToolFactory[camera.Camera]
-	transformToolFactory ecs.ToolFactory[transform.Transform]
+	cameraToolFactory    ecs.ToolFactory[camera.CameraTool]
+	transformToolFactory ecs.ToolFactory[transform.TransformTool]
 }
 
 func NewSystem(
 	logger logger.Logger,
-	cameraToolFactory ecs.ToolFactory[camera.Camera],
-	transformToolFactory ecs.ToolFactory[transform.Transform],
+	cameraToolFactory ecs.ToolFactory[camera.CameraTool],
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
 ) ecs.SystemRegister {
 	return s{logger, cameraToolFactory, transformToolFactory}
 }

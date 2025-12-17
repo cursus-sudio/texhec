@@ -23,7 +23,7 @@ type toolState struct {
 	dirtySet        ecs.DirtySet
 
 	uuidArray  ecs.ComponentsArray[uuid.Component]
-	uniqueTool uuid.Tool
+	uniqueTool uuid.UUIDTool
 	logger     logger.Logger
 
 	world  ecs.World
@@ -37,7 +37,7 @@ type tool struct {
 
 func NewToolFactory(
 	config config.Config,
-	uuidToolFactory ecs.ToolFactory[uuid.Tool],
+	uuidToolFactory ecs.ToolFactory[uuid.UUIDTool],
 	logger logger.Logger,
 ) ecs.ToolFactory[Tool] {
 	// each factory client can get unique instance so mutex isn't necessary

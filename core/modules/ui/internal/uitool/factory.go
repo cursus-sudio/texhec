@@ -22,15 +22,15 @@ func NewToolFactory(
 	hideAnimation animation.AnimationID,
 	gameAssets gameassets.GameAssets,
 	logger logger.Logger,
-	cameraToolFactory ecs.ToolFactory[camera.Camera],
-	transformToolFactory ecs.ToolFactory[transform.Transform],
+	cameraToolFactory ecs.ToolFactory[camera.CameraTool],
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
 	tileToolFactory ecs.ToolFactory[tile.Tile],
-	textToolFactory ecs.ToolFactory[text.Text],
-	renderToolFactory ecs.ToolFactory[render.Render],
-	hierarchyToolFactory ecs.ToolFactory[hierarchy.Hierarchy],
-) ecs.ToolFactory[ui.Tool] {
+	textToolFactory ecs.ToolFactory[text.TextTool],
+	renderToolFactory ecs.ToolFactory[render.RenderTool],
+	hierarchyToolFactory ecs.ToolFactory[hierarchy.HierarchyTool],
+) ecs.ToolFactory[ui.UiTool] {
 	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(w ecs.World) ui.Tool {
+	return ecs.NewToolFactory(func(w ecs.World) ui.UiTool {
 		mutex.Lock()
 		defer mutex.Unlock()
 		if t, ok := ecs.GetGlobal[tool](w); ok {

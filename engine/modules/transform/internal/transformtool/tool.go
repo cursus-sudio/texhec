@@ -40,14 +40,14 @@ type tool struct {
 
 func NewTransformTool(
 	logger logger.Logger,
-	hierarchyToolFactory ecs.ToolFactory[hierarchy.Hierarchy],
+	hierarchyToolFactory ecs.ToolFactory[hierarchy.HierarchyTool],
 	defaultRot transform.RotationComponent,
 	defaultSize transform.SizeComponent,
 	defaultPivot transform.PivotPointComponent,
 	defaultParentPivot transform.ParentPivotPointComponent,
-) ecs.ToolFactory[transform.Transform] {
+) ecs.ToolFactory[transform.TransformTool] {
 	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(w ecs.World) transform.Transform {
+	return ecs.NewToolFactory(func(w ecs.World) transform.TransformTool {
 		mutex.Lock()
 		defer mutex.Unlock()
 

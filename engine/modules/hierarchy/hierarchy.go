@@ -18,7 +18,7 @@ func NewParent(parent ecs.EntityID) Component { return Component{parent} }
 
 //
 
-type Hierarchy interface {
+type HierarchyTool interface {
 	Hierarchy() Interface
 }
 

@@ -19,16 +19,16 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) collider.System {
 		return collisions.NewColliderSystem(
 			ioc.Get[logger.Logger](c),
-			ioc.Get[ecs.ToolFactory[transform.Transform]](c),
-			ioc.Get[ecs.ToolFactory[collider.Collider]](c),
+			ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
+			ioc.Get[ecs.ToolFactory[collider.ColliderTool]](c),
 		)
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[collider.Collider] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[collider.ColliderTool] {
 		return collisions.NewToolFactory(
 			ioc.Get[logger.Logger](c),
 			ioc.Get[assets.Assets](c),
-			ioc.Get[ecs.ToolFactory[transform.Transform]](c),
+			ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
 			100,
 		)
 	})

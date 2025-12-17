@@ -15,8 +15,8 @@ type tool struct {
 	textureArray ecs.ComponentsArray[render.TextureComponent]
 }
 
-func NewTool() ecs.ToolFactory[render.Render] {
-	return ecs.NewToolFactory(func(w ecs.World) render.Render {
+func NewTool() ecs.ToolFactory[render.RenderTool] {
+	return ecs.NewToolFactory(func(w ecs.World) render.RenderTool {
 		return &tool{
 			w,
 			ecs.GetComponentsArray[render.ColorComponent](w),

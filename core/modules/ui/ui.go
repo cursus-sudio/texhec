@@ -20,7 +20,11 @@ func NewButton(text string, event any) Button {
 	return Button{text, event}
 }
 
-type Tool interface {
+type UiTool interface {
+	Ui() Interface
+}
+
+type Interface interface {
 	// returns parent to attach ui elements
 	// potentially with enter animation
 	Show() (parent ecs.EntityID)

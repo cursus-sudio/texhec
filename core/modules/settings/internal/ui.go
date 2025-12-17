@@ -32,7 +32,7 @@ type system struct {
 	logger logger.Logger
 	world  ecs.World
 
-	uiTool        ui.Tool
+	uiTool        ui.Interface
 	transformTool transform.Interface
 	renderTool    render.Interface
 	textTool      text.Interface
@@ -52,10 +52,10 @@ func NewSystem(
 	assets assets.Assets,
 	logger logger.Logger,
 	gameAssets gameassets.GameAssets,
-	transformToolFactory ecs.ToolFactory[transform.Transform],
-	renderToolFactory ecs.ToolFactory[render.Render],
-	uiToolFactory ecs.ToolFactory[ui.Tool],
-	textToolFactory ecs.ToolFactory[text.Text],
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+	renderToolFactory ecs.ToolFactory[render.RenderTool],
+	uiToolFactory ecs.ToolFactory[ui.UiTool],
+	textToolFactory ecs.ToolFactory[text.TextTool],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(world ecs.World) error {
 		s := system{
@@ -64,7 +64,7 @@ func NewSystem(
 
 			logger,
 			world,
-			uiToolFactory.Build(world),
+			uiToolFactory.Build(world).Ui(),
 			transformToolFactory.Build(world).Transform(),
 			renderToolFactory.Build(world).Render(),
 			textToolFactory.Build(world).Text(),

@@ -52,7 +52,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) cameratool.CameraResolverFactory {
 		return cameratool.NewCameraResolverFactory()
 	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[camera.Camera] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[camera.CameraTool] {
 		return ioc.Get[cameratool.CameraResolverFactory](c)
 	})
 
@@ -81,7 +81,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			}
 		}
 		s.Register(reflect.TypeFor[camera.OrthoComponent](), func(world ecs.World) func(entity ecs.EntityID) (camera.Object, error) {
-			transformTool := ioc.Get[ecs.ToolFactory[transform.Transform]](c).Build(world).Transform()
+			transformTool := ioc.Get[ecs.ToolFactory[transform.TransformTool]](c).Build(world).Transform()
 			orthoArray := ecs.GetComponentsArray[camera.OrthoComponent](world)
 			orthoResolutionArray := ecs.GetComponentsArray[camera.OrthoResolutionComponent](world)
 			viewport := viewport(world)
@@ -146,7 +146,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 		//
 
 		s.Register(reflect.TypeFor[camera.Perspective](), func(world ecs.World) func(entity ecs.EntityID) (camera.Object, error) {
-			transformTool := ioc.Get[ecs.ToolFactory[transform.Transform]](c).Build(world).Transform()
+			transformTool := ioc.Get[ecs.ToolFactory[transform.TransformTool]](c).Build(world).Transform()
 			perspectiveArray := ecs.GetComponentsArray[camera.Perspective](world)
 			viewport := viewport(world)
 			return func(entity ecs.EntityID) (camera.Object, error) {
@@ -256,32 +256,32 @@ func (pkg pkg) Register(b ioc.Builder) {
 				projectionsys.NewUpdateProjectionsSystem(
 					ioc.Get[window.Api](c),
 					logger,
-					ioc.Get[ecs.ToolFactory[transform.Transform]](c),
-					ioc.Get[ecs.ToolFactory[camera.Camera]](c),
+					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
+					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
 				),
 				mobilecamerasys.NewScrollSystem(
 					logger,
-					ioc.Get[ecs.ToolFactory[camera.Camera]](c),
-					ioc.Get[ecs.ToolFactory[transform.Transform]](c),
+					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
+					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
 					ioc.Get[window.Api](c),
 					pkg.minZoom, pkg.maxZoom, // min and max zoom
 				),
 				mobilecamerasys.NewDragSystem(
 					sdl.BUTTON_LEFT,
-					ioc.Get[ecs.ToolFactory[camera.Camera]](c),
-					ioc.Get[ecs.ToolFactory[transform.Transform]](c),
+					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
+					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
 					ioc.Get[window.Api](c),
 					logger,
 				),
 				mobilecamerasys.NewWasdSystem(
 					logger,
-					ioc.Get[ecs.ToolFactory[camera.Camera]](c),
-					ioc.Get[ecs.ToolFactory[transform.Transform]](c),
+					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
+					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
 					1.0, // speed
 				),
 				cameralimitsys.NewOrthoSys(
-					ioc.Get[ecs.ToolFactory[transform.Transform]](c),
-					ioc.Get[ecs.ToolFactory[camera.Camera]](c),
+					ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
+					ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
 					logger,
 				),
 			)

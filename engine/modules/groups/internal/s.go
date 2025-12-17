@@ -20,7 +20,7 @@ type s struct {
 
 func NewSystem(
 	logger logger.Logger,
-	parentToolFactory ecs.ToolFactory[hierarchy.Hierarchy],
+	parentToolFactory ecs.ToolFactory[hierarchy.HierarchyTool],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := s{

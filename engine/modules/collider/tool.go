@@ -2,7 +2,7 @@ package collider
 
 import "engine/services/ecs"
 
-type Collider interface {
+type ColliderTool interface {
 	Collider() Interface
 }
 

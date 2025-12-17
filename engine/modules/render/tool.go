@@ -2,7 +2,7 @@ package render
 
 import "engine/services/ecs"
 
-type Render interface {
+type RenderTool interface {
 	Render() Interface
 }
 

@@ -90,8 +90,8 @@ func NewSystem(
 	logger logger.Logger,
 	vboFactory vbo.VBOFactory[genericrenderer.Vertex],
 	textureFactory texture.Factory,
-	camerasCtors ecs.ToolFactory[camera.Camera],
-	transformToolFactory ecs.ToolFactory[transform.Transform],
+	camerasCtors ecs.ToolFactory[camera.CameraTool],
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
 ) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		vert, err := shader.NewShader(vertSource, shader.VertexShader)

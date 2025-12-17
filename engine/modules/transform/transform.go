@@ -8,7 +8,7 @@ import (
 
 type System ecs.SystemRegister
 
-type Transform interface {
+type TransformTool interface {
 	Transform() Interface
 }
 

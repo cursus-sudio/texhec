@@ -39,7 +39,7 @@ type toolState struct {
 	connectionArray ecs.ComponentsArray[connection.ConnectionComponent]
 	uuidArray       ecs.ComponentsArray[uuid.Component]
 	stateTool       state.Tool
-	uniqueTool      uuid.Tool
+	uniqueTool      uuid.UUIDTool
 	logger          logger.Logger
 }
 
@@ -50,7 +50,7 @@ type Tool struct {
 
 func NewTool(
 	config config.Config,
-	uniqueToolFactory ecs.ToolFactory[uuid.Tool],
+	uniqueToolFactory ecs.ToolFactory[uuid.UUIDTool],
 	stateToolFactory ecs.ToolFactory[state.Tool],
 	logger logger.Logger,
 	world ecs.World,

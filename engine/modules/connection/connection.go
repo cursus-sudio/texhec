@@ -34,7 +34,11 @@ func (comp ConnectionComponent) Conn() Conn {
 
 // tool
 
-type Connection interface {
+type ConnectionTool interface {
+	Connection() Interface
+}
+
+type Interface interface {
 	Host(addr string, conn func(ConnectionComponent)) error
 	Connect(addr string) (ConnectionComponent, error)
 	MockConnectionPair() (c1, c2 ConnectionComponent)

@@ -35,11 +35,11 @@ type tool struct {
 func NewToolFactory(
 	logger logger.Logger,
 	assets assets.Assets,
-	transformToolFactory ecs.ToolFactory[transform.Transform],
+	transformToolFactory ecs.ToolFactory[transform.TransformTool],
 	chunkSize float32,
-) ecs.ToolFactory[collider.Collider] {
+) ecs.ToolFactory[collider.ColliderTool] {
 	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(world ecs.World) collider.Collider {
+	return ecs.NewToolFactory(func(world ecs.World) collider.ColliderTool {
 		mutex.Lock()
 		defer mutex.Unlock()
 		if t, ok := ecs.GetGlobal[tool](world); ok {

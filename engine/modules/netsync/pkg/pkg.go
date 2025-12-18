@@ -52,6 +52,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[netsync.World, server.Tool] {
 		return server.NewToolFactory(
 			*pkg.config.config,
+			ioc.Get[ecs.ToolFactory[netsync.World, netsync.NetSyncTool]](c),
 			ioc.Get[ecs.ToolFactory[netsync.World, state.Tool]](c),
 			ioc.Get[logger.Logger](c),
 		)
@@ -60,6 +61,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 		return client.NewToolFactory(
 			*pkg.config.config,
 			ioc.Get[ecs.ToolFactory[netsync.World, state.Tool]](c),
+			ioc.Get[ecs.ToolFactory[netsync.World, netsync.NetSyncTool]](c),
 			ioc.Get[logger.Logger](c),
 		)
 	})

@@ -16,19 +16,14 @@ import (
 // system
 
 type updateProjetionsSystem struct {
-	world  camera.World
+	camera.World
+	camera.CameraTool
+
 	window window.Api
 	logger logger.Logger
 
-	cameraTool camera.Interface
-
 	perspectivesDirtySet ecs.DirtySet
 	orthoDirtySet        ecs.DirtySet
-
-	cameraArray              ecs.ComponentsArray[camera.Component]
-	dynamicPerspectivesArray ecs.ComponentsArray[camera.DynamicPerspectiveComponent]
-	perspectivesArray        ecs.ComponentsArray[camera.PerspectiveComponent]
-	orthoArray               ecs.ComponentsArray[camera.OrthoComponent]
 }
 
 func NewUpdateProjectionsSystem(
@@ -38,30 +33,26 @@ func NewUpdateProjectionsSystem(
 ) ecs.SystemRegister[camera.World] {
 	return ecs.NewSystemRegister(func(w camera.World) error {
 		s := &updateProjetionsSystem{
-			world:  w,
+			World:      w,
+			CameraTool: cameraToolFactory.Build(w),
+
 			window: window,
 			logger: logger,
 
-			cameraTool: cameraToolFactory.Build(w).Camera(),
-
 			perspectivesDirtySet: ecs.NewDirtySet(),
 			orthoDirtySet:        ecs.NewDirtySet(),
-
-			dynamicPerspectivesArray: ecs.GetComponentsArray[camera.DynamicPerspectiveComponent](w),
-			perspectivesArray:        ecs.GetComponentsArray[camera.PerspectiveComponent](w),
-			orthoArray:               ecs.GetComponentsArray[camera.OrthoComponent](w),
 		}
 
-		s.perspectivesArray.BeforeGet(s.UpsertPerspective)
-		s.dynamicPerspectivesArray.AddDirtySet(s.perspectivesDirtySet)
+		s.Camera().Perspective().BeforeGet(s.UpsertPerspective)
+		s.Camera().DynamicPerspective().AddDirtySet(s.perspectivesDirtySet)
 
 		ecs.GetComponentsArray[camera.OrthoComponent](w).AddDirtySet(s.orthoDirtySet)
 		ecs.GetComponentsArray[camera.OrthoResolutionComponent](w).AddDirtySet(s.orthoDirtySet)
 		ecs.GetComponentsArray[camera.ViewportComponent](w).AddDirtySet(s.orthoDirtySet)
 		ecs.GetComponentsArray[camera.NormalizedViewportComponent](w).AddDirtySet(s.orthoDirtySet)
 
-		s.orthoArray.AddDirtySet(s.orthoDirtySet)
-		s.orthoArray.BeforeGet(s.UpsertOrtho)
+		s.Camera().Ortho().AddDirtySet(s.orthoDirtySet)
+		s.Camera().Ortho().BeforeGet(s.UpsertOrtho)
 
 		events.Listen(w.EventsBuilder(), s.Listen)
 		return nil
@@ -81,12 +72,12 @@ func (s *updateProjetionsSystem) AspectRatio() float32 {
 func (s *updateProjetionsSystem) UpsertOrtho() {
 	ei := s.orthoDirtySet.Get()
 	for _, entity := range ei {
-		camera, err := s.cameraTool.GetObject(entity)
+		camera, err := s.Camera().GetObject(entity)
 		if err != nil {
 			continue
 		}
-		s.cameraTool.GetObject(entity)
-		resizeOrtho, ok := s.orthoArray.Get(entity)
+		s.Camera().GetObject(entity)
+		resizeOrtho, ok := s.Camera().Ortho().Get(entity)
 		if !ok {
 			continue
 		}
@@ -98,7 +89,7 @@ func (s *updateProjetionsSystem) UpsertOrtho() {
 			float32(h-y)/resizeOrtho.Zoom,
 			mgl32.Abs(resizeOrtho.Far-resizeOrtho.Near),
 		)
-		s.world.Transform().SetAbsoluteSize(entity, transform.AbsoluteSizeComponent(size))
+		s.Transform().SetAbsoluteSize(entity, transform.AbsoluteSizeComponent(size))
 	}
 }
 
@@ -106,7 +97,7 @@ func (s *updateProjetionsSystem) UpsertPerspective() {
 	ei := s.perspectivesDirtySet.Get()
 	aspectRatio := s.AspectRatio()
 	for _, entity := range ei {
-		resizePerspective, ok := s.dynamicPerspectivesArray.Get(entity)
+		resizePerspective, ok := s.Camera().DynamicPerspective().Get(entity)
 		if !ok {
 			continue
 		}
@@ -114,17 +105,17 @@ func (s *updateProjetionsSystem) UpsertPerspective() {
 			resizePerspective.FovY, aspectRatio,
 			resizePerspective.Near, resizePerspective.Far,
 		)
-		s.perspectivesArray.Set(entity, perspective)
+		s.Camera().Perspective().Set(entity, perspective)
 	}
 }
 
 func (s *updateProjetionsSystem) Listen(e camera.ChangedResolutionEvent) {
-	for _, entity := range s.orthoArray.GetEntities() {
+	for _, entity := range s.Camera().Ortho().GetEntities() {
 		s.orthoDirtySet.Dirty(entity)
 	}
 	s.UpsertOrtho()
 
-	for _, entity := range s.dynamicPerspectivesArray.GetEntities() {
+	for _, entity := range s.Camera().DynamicPerspective().GetEntities() {
 		s.perspectivesDirtySet.Dirty(entity)
 	}
 	s.UpsertPerspective()

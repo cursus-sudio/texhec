@@ -39,6 +39,7 @@ func (pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) genericrenderer.System {
 		return renderer.NewSystem(
+			ioc.Get[ecs.ToolFactory[genericrenderer.World, genericrenderer.GenericRendererTool]](c),
 			ioc.Get[window.Api](c),
 			ioc.Get[assets.AssetsStorage](c),
 			ioc.Get[logger.Logger](c),

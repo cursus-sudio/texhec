@@ -15,12 +15,11 @@ type dragSystem struct {
 	isHeld bool
 	button uint8
 
-	world             camera.World
-	mobileCameraArray ecs.ComponentsArray[camera.MobileCameraComponent]
+	camera.World
+	camera.CameraTool
 
-	cameraCtors camera.Interface
-	window      window.Api
-	logger      logger.Logger
+	window window.Api
+	logger logger.Logger
 }
 
 func NewDragSystem(
@@ -34,12 +33,11 @@ func NewDragSystem(
 			isHeld: false,
 			button: dragButton,
 
-			world:             w,
-			mobileCameraArray: ecs.GetComponentsArray[camera.MobileCameraComponent](w),
+			World:      w,
+			CameraTool: cameraCtors.Build(w),
 
-			cameraCtors: cameraCtors.Build(w).Camera(),
-			window:      window,
-			logger:      logger,
+			window: window,
+			logger: logger,
 		}
 		events.Listen(w.EventsBuilder(), s.Listen)
 		return nil
@@ -47,11 +45,11 @@ func NewDragSystem(
 }
 
 func (s *dragSystem) Listen(e inputs.DragEvent) {
-	for _, cameraEntity := range s.mobileCameraArray.GetEntities() {
-		pos, _ := s.world.Transform().AbsolutePos().Get(cameraEntity)
-		rot, _ := s.world.Transform().AbsoluteRotation().Get(cameraEntity)
+	for _, cameraEntity := range s.Camera().Mobile().GetEntities() {
+		pos, _ := s.Transform().AbsolutePos().Get(cameraEntity)
+		rot, _ := s.Transform().AbsoluteRotation().Get(cameraEntity)
 
-		camera, err := s.cameraCtors.GetObject(cameraEntity)
+		camera, err := s.Camera().GetObject(cameraEntity)
 		if err != nil {
 			continue
 		}
@@ -64,7 +62,7 @@ func (s *dragSystem) Listen(e inputs.DragEvent) {
 		rotationDifference := mgl32.QuatBetweenVectors(rayBefore.Direction, rayAfter.Direction)
 		rot.Rotation = rotationDifference.Mul(rot.Rotation)
 
-		s.world.Transform().SetAbsolutePos(cameraEntity, pos)
-		s.world.Transform().SetAbsoluteRotation(cameraEntity, rot)
+		s.Transform().SetAbsolutePos(cameraEntity, pos)
+		s.Transform().SetAbsoluteRotation(cameraEntity, rot)
 	}
 }

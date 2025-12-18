@@ -62,7 +62,7 @@ func (r releasable) Release() {
 
 type system struct {
 	genericrenderer.World
-	genericRendererArray ecs.ComponentsArray[genericrenderer.PipelineComponent]
+	genericrenderer.GenericRendererTool
 
 	window         window.Api
 	assetsStorage  assets.AssetsStorage
@@ -74,6 +74,7 @@ type system struct {
 }
 
 func NewSystem(
+	genericRendererToolFactory ecs.ToolFactory[genericrenderer.World, genericrenderer.GenericRendererTool],
 	window window.Api,
 	assetsStorage assets.AssetsStorage,
 	logger logger.Logger,
@@ -118,8 +119,8 @@ func NewSystem(
 		w.SaveGlobal(releasable)
 
 		system := &system{
-			World:                w,
-			genericRendererArray: ecs.GetComponentsArray[genericrenderer.PipelineComponent](w),
+			World:               w,
+			GenericRendererTool: genericRendererToolFactory.Build(w),
 
 			window:         window,
 			assetsStorage:  assetsStorage,
@@ -209,7 +210,7 @@ func (m *system) Listen(render.RenderEvent) error {
 			continue
 		}
 
-		for _, entity := range m.genericRendererArray.GetEntities() {
+		for _, entity := range m.GenericRenderer().Pipeline().GetEntities() {
 			entityGroups, ok := m.Groups().Component().Get(entity)
 			if !ok {
 				entityGroups = groups.DefaultGroups()

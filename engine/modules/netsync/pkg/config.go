@@ -24,7 +24,7 @@ func NewConfig(maxPredictions int) Config {
 
 func AddEvent[EventType any](config Config) {
 	eventType := reflect.TypeFor[EventType]()
-	config.config.Events = append(config.config.Events, eventType)
+	config.config.EventTypes = append(config.config.EventTypes, eventType)
 	config.config.ListenToEvents = append(config.config.ListenToEvents, func(b events.Builder, f func(any)) {
 		events.Listen(b, func(e EventType) { f(e) })
 	})
@@ -33,7 +33,7 @@ func AddEvent[EventType any](config Config) {
 
 // these event are sent from server to client regurally but they aren't sent from client to server
 func AddSimulatedEvent[EventType any](config Config) {
-	config.config.SimulatedEvents = append(config.config.Events, reflect.TypeFor[EventType]())
+	config.config.SimulatedEvents = append(config.config.EventTypes, reflect.TypeFor[EventType]())
 	config.config.ListenToSimulatedEvents = append(config.config.ListenToEvents, func(b events.Builder, f func(any)) {
 		events.Listen(b, func(e EventType) { f(e) })
 	})

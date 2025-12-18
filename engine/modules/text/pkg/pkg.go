@@ -77,6 +77,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) textrenderer.LayoutServiceFactory {
 		return textrenderer.NewLayoutServiceFactory(
+			ioc.Get[ecs.ToolFactory[text.World, text.TextTool]](c),
 			ioc.Get[logger.Logger](c),
 			ioc.Get[textrenderer.FontService](c),
 			ioc.Get[textrenderer.FontKeys](c),

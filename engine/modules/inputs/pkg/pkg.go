@@ -68,9 +68,15 @@ func (pkg) Register(b ioc.Builder) {
 					ioc.Get[logger.Logger](c),
 					ioc.Get[window.Api](c),
 				),
-				mouse.NewHoverSystem(),
+				mouse.NewHoverSystem(
+					ioc.Get[ecs.ToolFactory[inputs.World, inputs.InputsTool]](c),
+				),
 				mouse.NewHoverEventsSystem(),
-				mouse.NewClickSystem(ioc.Get[logger.Logger](c), ioc.Get[window.Api](c)),
+				mouse.NewClickSystem(
+					ioc.Get[logger.Logger](c),
+					ioc.Get[window.Api](c),
+					ioc.Get[ecs.ToolFactory[inputs.World, inputs.InputsTool]](c),
+				),
 				ecs.NewSystemRegister(func(w ecs.World) error {
 					events.Listen(w.EventsBuilder(), func(frames.FrameEvent) {
 						events.Emit(w.Events(), mouse.NewShootRayEvent())

@@ -1,7 +1,6 @@
 package mouse
 
 import (
-	"engine/modules/camera"
 	"engine/modules/collider"
 	"engine/modules/inputs"
 	"engine/services/assets"
@@ -26,11 +25,10 @@ type RayChangedTargetEvent struct {
 
 type cameraRaySystem struct {
 	inputs.World
-	logger      logger.Logger
-	cameraArray ecs.ComponentsArray[camera.Component]
-	window      window.Api
-	events      events.Events
-	assets      assets.Assets
+	logger logger.Logger
+	window window.Api
+	events events.Events
+	assets assets.Assets
 
 	hoversOverEntity *ecs.EntityID
 }
@@ -41,11 +39,10 @@ func NewCameraRaySystem(
 ) ecs.SystemRegister[inputs.World] {
 	return ecs.NewSystemRegister(func(w inputs.World) error {
 		s := &cameraRaySystem{
-			World:       w,
-			logger:      logger,
-			cameraArray: ecs.GetComponentsArray[camera.Component](w),
-			window:      window,
-			events:      w.Events(),
+			World:  w,
+			logger: logger,
+			window: window,
+			events: w.Events(),
 
 			hoversOverEntity: nil,
 		}
@@ -63,7 +60,7 @@ func (s *cameraRaySystem) Listen(args ShootRayEvent) error {
 
 	var nearestCollision collider.ObjectRayCollision
 	var nearestCamera ecs.EntityID
-	for _, cameraEntity := range s.cameraArray.GetEntities() {
+	for _, cameraEntity := range s.Camera().Component().GetEntities() {
 		camera, err := s.Camera().GetObject(cameraEntity)
 		if err != nil {
 			return err

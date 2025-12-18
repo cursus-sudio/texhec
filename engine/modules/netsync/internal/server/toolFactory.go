@@ -11,6 +11,7 @@ import (
 
 func NewToolFactory(
 	config config.Config,
+	netSyncToolFactory ecs.ToolFactory[netsync.World, netsync.NetSyncTool],
 	stateToolFactory ecs.ToolFactory[netsync.World, state.Tool],
 	logger logger.Logger,
 ) ecs.ToolFactory[netsync.World, Tool] {
@@ -23,6 +24,7 @@ func NewToolFactory(
 		}
 		t := NewTool(
 			config,
+			netSyncToolFactory,
 			stateToolFactory,
 			logger,
 			w,

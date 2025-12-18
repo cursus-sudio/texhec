@@ -43,12 +43,10 @@ type toolState struct {
 	toRemove           []ecs.EntityID
 	listeners          datastructures.SparseSet[ecs.EntityID]
 
-	world           netsync.World
-	serverArray     ecs.ComponentsArray[netsync.ServerComponent]
-	connectionArray ecs.ComponentsArray[connection.ConnectionComponent]
-	uuidArray       ecs.ComponentsArray[uuid.Component]
-	stateTool       state.Tool
-	logger          logger.Logger
+	netsync.World
+	netsync.NetSyncTool
+	stateTool state.Tool
+	logger    logger.Logger
 }
 
 // can:
@@ -62,6 +60,7 @@ type Tool struct {
 func NewTool(
 	config config.Config,
 	stateToolFactory ecs.ToolFactory[netsync.World, state.Tool],
+	netSyncToolFactory ecs.ToolFactory[netsync.World, netsync.NetSyncTool],
 	logger logger.Logger,
 	world netsync.World,
 ) Tool {
@@ -82,9 +81,7 @@ func NewTool(
 			datastructures.NewSparseSet[ecs.EntityID](),
 
 			world,
-			ecs.GetComponentsArray[netsync.ServerComponent](world),
-			ecs.GetComponentsArray[connection.ConnectionComponent](world),
-			ecs.GetComponentsArray[uuid.Component](world),
+			netSyncToolFactory.Build(world),
 			stateToolFactory.Build(world),
 			logger,
 		},
@@ -101,7 +98,7 @@ func NewTool(
 			t.ListenTransparentEvent(a.(servertypes.TransparentEventDTO))
 		},
 	}
-	events.Listen(t.world.EventsBuilder(), func(frames.FrameEvent) {
+	events.Listen(t.EventsBuilder(), func(frames.FrameEvent) {
 		t.loadConnections()
 		conn := t.getConnection()
 		if conn == nil {
@@ -113,7 +110,7 @@ func NewTool(
 		for len(t.toRemove) != 0 {
 			entity := t.toRemove[0]
 			t.toRemove = t.toRemove[1:]
-			t.world.RemoveEntity(entity)
+			t.RemoveEntity(entity)
 			t.listeners.Remove(entity)
 		}
 		for len(t.messagesFromServer) != 0 {
@@ -131,8 +128,8 @@ func NewTool(
 		}
 	})
 
-	t.serverArray.AddDirtySet(t.dirtySet)
-	t.connectionArray.AddDirtySet(t.dirtySet)
+	t.NetSync().Server().AddDirtySet(t.dirtySet)
+	t.Connection().Component().AddDirtySet(t.dirtySet)
 
 	// listen to entities changes
 	for _, arrayCtor := range config.ArraysOfComponents {
@@ -170,7 +167,7 @@ func (t Tool) BeforeEventRecord(event any) {
 	t.stateTool.StartRecording()
 	t.recordedPrediction = &recordedPrediction{
 		PredictedEvent: clienttypes.PredictedEvent{
-			ID:    t.world.UUID().NewUUID(),
+			ID:    t.UUID().NewUUID(),
 			Event: event,
 		},
 	}
@@ -304,7 +301,7 @@ func (t Tool) ListenTransparentEvent(dto servertypes.TransparentEventDTO) {
 		return
 	}
 	t.receivedTransparentEvent = true
-	events.EmitAny(t.world.Events(), dto.Event)
+	events.EmitAny(t.Events(), dto.Event)
 }
 
 // private methods
@@ -322,11 +319,11 @@ func (t Tool) loadConnections() {
 	if ok := t.listeners.Get(entity); ok {
 		return
 	}
-	if _, ok := t.serverArray.Get(entity); !ok {
+	if _, ok := t.NetSync().Server().Get(entity); !ok {
 		return
 	}
 	t.listeners.Add(entity)
-	comp, ok := t.connectionArray.Get(entity)
+	comp, ok := t.Connection().Component().Get(entity)
 	if !ok {
 		return
 	}
@@ -372,15 +369,15 @@ func (t Tool) undoPredictions() []clienttypes.PredictedEvent {
 func (t Tool) applyPredictedEvents(predictedEvents []clienttypes.PredictedEvent) {
 	for _, predictedEvent := range predictedEvents[1:] {
 		t.recordNextEvent = false
-		events.EmitAny(t.world.Events(), predictedEvent.Event)
+		events.EmitAny(t.Events(), predictedEvent.Event)
 	}
 }
 
 func (t Tool) getConnection() connection.Conn {
 	var conn connection.Conn
-	if entities := t.serverArray.GetEntities(); len(entities) == 1 {
+	if entities := t.NetSync().Server().GetEntities(); len(entities) == 1 {
 		server := entities[0]
-		comp, ok := t.connectionArray.Get(server)
+		comp, ok := t.Connection().Component().Get(server)
 		if ok {
 			conn = comp.Conn()
 		}

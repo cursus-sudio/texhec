@@ -12,12 +12,10 @@ import (
 )
 
 type wasdMoveSystem struct {
-	logger            logger.Logger
-	world             camera.World
-	orthoArray        ecs.ComponentsArray[camera.OrthoComponent]
-	mobileCameraArray ecs.ComponentsArray[camera.MobileCameraComponent]
+	logger logger.Logger
+	camera.World
+	camera.CameraTool
 
-	cameraCtors camera.CameraTool
 	cameraSpeed float32
 }
 
@@ -28,12 +26,10 @@ func NewWasdSystem(
 ) ecs.SystemRegister[camera.World] {
 	return ecs.NewSystemRegister(func(w camera.World) error {
 		s := &wasdMoveSystem{
-			logger:            logger,
-			world:             w,
-			orthoArray:        ecs.GetComponentsArray[camera.OrthoComponent](w),
-			mobileCameraArray: ecs.GetComponentsArray[camera.MobileCameraComponent](w),
+			logger:     logger,
+			World:      w,
+			CameraTool: cameraCtors.Build(w),
 
-			cameraCtors: cameraCtors.Build(w),
 			cameraSpeed: cameraSpeed,
 		}
 		events.Listen(w.EventsBuilder(), s.Listen)
@@ -66,9 +62,9 @@ func (s *wasdMoveSystem) Listen(event frames.FrameEvent) {
 		moveVerticaly *= float32(event.Delta.Milliseconds()) * s.cameraSpeed
 	}
 
-	for _, camera := range s.mobileCameraArray.GetEntities() {
-		pos, _ := s.world.Transform().AbsolutePos().Get(camera)
-		ortho, ok := s.orthoArray.Get(camera)
+	for _, camera := range s.Camera().Mobile().GetEntities() {
+		pos, _ := s.Transform().AbsolutePos().Get(camera)
+		ortho, ok := s.Camera().Ortho().Get(camera)
 		if !ok {
 			continue
 		}
@@ -78,6 +74,6 @@ func (s *wasdMoveSystem) Listen(event frames.FrameEvent) {
 			pos.Pos.Y() + moveVerticaly/ortho.Zoom,
 			pos.Pos.Z(),
 		}
-		s.world.Transform().SetAbsolutePos(camera, pos)
+		s.Transform().SetAbsolutePos(camera, pos)
 	}
 }

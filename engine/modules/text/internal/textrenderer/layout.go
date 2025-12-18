@@ -28,12 +28,7 @@ type LayoutService interface {
 
 type layoutService struct {
 	text.World
-	textArray       ecs.ComponentsArray[text.TextComponent]
-	fontFamilyArray ecs.ComponentsArray[text.FontFamilyComponent]
-	fontSizeArray   ecs.ComponentsArray[text.FontSizeComponent]
-	// overflowArray   ecs.ComponentsArray[text.Overflow]
-	breakArray     ecs.ComponentsArray[text.BreakComponent]
-	textAlignArray ecs.ComponentsArray[text.TextAlignComponent]
+	text.TextTool
 
 	logger      logger.Logger
 	fontService FontService
@@ -48,6 +43,7 @@ type layoutService struct {
 
 func NewLayoutService(
 	world text.World,
+	textToolFactory ecs.ToolFactory[text.World, text.TextTool],
 
 	logger logger.Logger,
 	fontService FontService,
@@ -60,13 +56,8 @@ func NewLayoutService(
 	defaultTextAlign text.TextAlignComponent,
 ) LayoutService {
 	return &layoutService{
-		World:           world,
-		textArray:       ecs.GetComponentsArray[text.TextComponent](world),
-		fontFamilyArray: ecs.GetComponentsArray[text.FontFamilyComponent](world),
-		fontSizeArray:   ecs.GetComponentsArray[text.FontSizeComponent](world),
-		// overflowArray:   ecs.GetComponentsArray[text.Overflow](world),
-		breakArray:     ecs.GetComponentsArray[text.BreakComponent](world),
-		textAlignArray: ecs.GetComponentsArray[text.TextAlignComponent](world),
+		World:    world,
+		TextTool: textToolFactory.Build(world),
 
 		logger:      logger,
 		fontService: fontService,
@@ -100,15 +91,15 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	// TODO add overflow read, text align read and transform modification
 
 	size, _ := s.Transform().AbsoluteSize().Get(entity)
-	textComponent, ok := s.textArray.Get(entity)
+	textComponent, ok := s.Text().Content().Get(entity)
 	if !ok {
 		return Layout{}, nil
 	}
-	fontFamily, ok := s.fontFamilyArray.Get(entity)
+	fontFamily, ok := s.Text().FontFamily().Get(entity)
 	if !ok {
 		fontFamily = s.defaultFontFamily
 	}
-	fontSize, ok := s.fontSizeArray.Get(entity)
+	fontSize, ok := s.Text().FontSize().Get(entity)
 	if !ok {
 		fontSize = s.defaultFontSize
 	}
@@ -116,11 +107,11 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	// if err != nil {
 	// 	overflow = s.defaultOverflow
 	// }
-	breakComponent, ok := s.breakArray.Get(entity)
+	breakComponent, ok := s.Text().Break().Get(entity)
 	if !ok {
 		breakComponent = s.defaultBreak
 	}
-	textAlign, ok := s.textAlignArray.Get(entity)
+	textAlign, ok := s.Text().Align().Get(entity)
 	if !ok {
 		textAlign = s.defaultTextAlign
 	}

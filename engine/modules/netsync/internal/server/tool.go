@@ -1,7 +1,6 @@
 package server
 
 import (
-	"engine/modules/connection"
 	"engine/modules/netsync"
 	"engine/modules/netsync/internal/clienttypes"
 	"engine/modules/netsync/internal/config"
@@ -34,12 +33,10 @@ type toolState struct {
 	toRemove               []ecs.EntityID
 	listeners              datastructures.SparseSet[ecs.EntityID]
 
-	world           netsync.World
-	clientArray     ecs.ComponentsArray[netsync.ClientComponent]
-	connectionArray ecs.ComponentsArray[connection.ConnectionComponent]
-	uuidArray       ecs.ComponentsArray[uuid.Component]
-	stateTool       state.Tool
-	logger          logger.Logger
+	netsync.World
+	netsync.NetSyncTool
+	stateTool state.Tool
+	logger    logger.Logger
 }
 
 type Tool struct {
@@ -49,6 +46,7 @@ type Tool struct {
 
 func NewTool(
 	config config.Config,
+	netSyncToolFactory ecs.ToolFactory[netsync.World, netsync.NetSyncTool],
 	stateToolFactory ecs.ToolFactory[netsync.World, state.Tool],
 	logger logger.Logger,
 	world netsync.World,
@@ -66,9 +64,7 @@ func NewTool(
 			datastructures.NewSparseSet[ecs.EntityID](),
 
 			world,
-			ecs.GetComponentsArray[netsync.ClientComponent](world),
-			ecs.GetComponentsArray[connection.ConnectionComponent](world),
-			ecs.GetComponentsArray[uuid.Component](world),
+			netSyncToolFactory.Build(world),
 			stateToolFactory.Build(world),
 			logger,
 		},
@@ -86,7 +82,7 @@ func NewTool(
 			t.ListenTransparentEvent(entity, a.(clienttypes.TransparentEventDTO))
 		},
 	}
-	events.Listen(t.world.EventsBuilder(), func(frames.FrameEvent) {
+	events.Listen(t.EventsBuilder(), func(frames.FrameEvent) {
 		t.loadConnections()
 		for len(t.toRemove) != 0 {
 			entity := t.toRemove[0]
@@ -95,7 +91,7 @@ func NewTool(
 			t.mutex.Unlock()
 
 			t.listeners.Remove(entity)
-			t.world.RemoveEntity(entity)
+			t.RemoveEntity(entity)
 		}
 
 		for len(t.messagesSentFromClient) != 0 {
@@ -113,8 +109,8 @@ func NewTool(
 			listener(message.Client, message.Message)
 		}
 	})
-	t.clientArray.AddDirtySet(t.dirtySet)
-	t.connectionArray.AddDirtySet(t.dirtySet)
+	t.NetSync().Client().AddDirtySet(t.dirtySet)
+	t.Connection().Component().AddDirtySet(t.dirtySet)
 
 	// listen to entities changes
 
@@ -131,12 +127,12 @@ func NewTool(
 
 func (t Tool) BeforeEvent(event any) {
 	t.loadConnections()
-	if len(t.clientArray.GetEntities()) == 0 {
+	if len(t.NetSync().Client().GetEntities()) == 0 {
 		return
 	}
 
 	if t.recordedEventUUID == nil {
-		uuid := t.world.UUID().NewUUID()
+		uuid := t.UUID().NewUUID()
 		t.recordedEventUUID = &uuid
 	}
 	t.stateTool.StartRecording()
@@ -144,7 +140,7 @@ func (t Tool) BeforeEvent(event any) {
 
 func (t Tool) AfterEvent(event any) {
 	t.loadConnections()
-	if len(t.clientArray.GetEntities()) == 0 {
+	if len(t.NetSync().Client().GetEntities()) == 0 {
 		return
 	}
 
@@ -156,12 +152,12 @@ func (t Tool) AfterEvent(event any) {
 }
 
 func (t Tool) OnTransparentEvent(event any) {
-	if len(t.clientArray.GetEntities()) == 0 {
+	if len(t.NetSync().Client().GetEntities()) == 0 {
 		return
 	}
 
-	for _, client := range t.clientArray.GetEntities() {
-		connComp, ok := t.connectionArray.Get(client)
+	for _, client := range t.NetSync().Client().GetEntities() {
+		connComp, ok := t.Connection().Component().Get(client)
 		if !ok {
 			return
 		}
@@ -175,7 +171,7 @@ func (t Tool) ListenFetchState(entity ecs.EntityID, dto clienttypes.FetchStateDT
 }
 
 func (t Tool) ListenEmitEvent(entity ecs.EntityID, dto clienttypes.EmitEventDTO) {
-	conn, ok := t.connectionArray.Get(entity)
+	conn, ok := t.Connection().Component().Get(entity)
 	if !ok {
 		return
 	}
@@ -186,11 +182,11 @@ func (t Tool) ListenEmitEvent(entity ecs.EntityID, dto clienttypes.EmitEventDTO)
 		return
 	}
 	t.recordedEventUUID = &dto.ID
-	events.EmitAny(t.world.Events(), event)
+	events.EmitAny(t.Events(), event)
 }
 
 func (t Tool) ListenTransparentEvent(entity ecs.EntityID, dto clienttypes.TransparentEventDTO) {
-	conn, ok := t.connectionArray.Get(entity)
+	conn, ok := t.Connection().Component().Get(entity)
 	if !ok {
 		return
 	}
@@ -200,7 +196,7 @@ func (t Tool) ListenTransparentEvent(entity ecs.EntityID, dto clienttypes.Transp
 		t.logger.Warn(err)
 		return
 	}
-	events.EmitAny(t.world.Events(), event)
+	events.EmitAny(t.Events(), event)
 }
 
 // private methods
@@ -211,11 +207,11 @@ func (t Tool) loadConnections() {
 			continue
 		}
 		t.listeners.Add(entity)
-		if _, ok := t.clientArray.Get(entity); !ok {
+		if _, ok := t.NetSync().Client().Get(entity); !ok {
 			continue
 		}
 
-		comp, ok := t.connectionArray.Get(entity)
+		comp, ok := t.Connection().Component().Get(entity)
 		if !ok {
 			continue
 		}
@@ -241,7 +237,7 @@ func (t Tool) loadConnections() {
 }
 
 func (t Tool) sendVisible(client ecs.EntityID, eventUUID *uuid.UUID, changes state.State) {
-	connComp, ok := t.connectionArray.Get(client)
+	connComp, ok := t.Connection().Component().Get(client)
 	if !ok {
 		return
 	}
@@ -284,7 +280,7 @@ func (t Tool) sendVisible(client ecs.EntityID, eventUUID *uuid.UUID, changes sta
 }
 
 func (t Tool) emitChanges(eventUUID uuid.UUID, changes state.State) {
-	for _, client := range t.clientArray.GetEntities() {
+	for _, client := range t.NetSync().Client().GetEntities() {
 		t.sendVisible(client, &eventUUID, changes)
 	}
 }

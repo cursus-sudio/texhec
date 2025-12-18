@@ -13,13 +13,11 @@ import (
 )
 
 type scrollSystem struct {
-	window      window.Api
-	cameraCtors camera.Interface
-	logger      logger.Logger
+	window window.Api
+	logger logger.Logger
 
-	world             camera.World
-	orthoArray        ecs.ComponentsArray[camera.OrthoComponent]
-	mobileCameraArray ecs.ComponentsArray[camera.MobileCameraComponent]
+	camera.World
+	camera.CameraTool
 
 	minZoom, maxZoom float32
 }
@@ -32,13 +30,11 @@ func NewScrollSystem(
 ) ecs.SystemRegister[camera.World] {
 	return ecs.NewSystemRegister(func(w camera.World) error {
 		s := &scrollSystem{
-			window:      window,
-			cameraCtors: cameraCtors.Build(w).Camera(),
-			logger:      logger,
+			window: window,
+			logger: logger,
 
-			world:             w,
-			orthoArray:        ecs.GetComponentsArray[camera.OrthoComponent](w),
-			mobileCameraArray: ecs.GetComponentsArray[camera.MobileCameraComponent](w),
+			World:      w,
+			CameraTool: cameraCtors.Build(w),
 
 			minZoom: minZoom, // e.g. 0.1
 			maxZoom: maxZoom, // e.g. 5
@@ -57,16 +53,16 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) {
 
 	mousePos := s.window.GetMousePos()
 
-	for _, cameraEntity := range s.mobileCameraArray.GetEntities() {
-		ortho, ok := s.orthoArray.Get(cameraEntity)
+	for _, cameraEntity := range s.Camera().Mobile().GetEntities() {
+		ortho, ok := s.Camera().Ortho().Get(cameraEntity)
 		if !ok {
 			continue
 		}
 
-		pos, _ := s.world.Transform().AbsolutePos().Get(cameraEntity)
-		rot, _ := s.world.Transform().AbsoluteRotation().Get(cameraEntity)
+		pos, _ := s.Transform().AbsolutePos().Get(cameraEntity)
+		rot, _ := s.Transform().AbsoluteRotation().Get(cameraEntity)
 
-		camera, err := s.cameraCtors.GetObject(cameraEntity)
+		camera, err := s.Camera().GetObject(cameraEntity)
 		if err != nil {
 			continue
 		}
@@ -77,7 +73,7 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) {
 		ortho.Zoom *= mul
 		ortho.Zoom = max(min(ortho.Zoom, s.maxZoom), s.minZoom)
 
-		s.orthoArray.Set(cameraEntity, ortho)
+		s.Camera().Ortho().Set(cameraEntity, ortho)
 
 		// read after
 		rayAfter := camera.ShootRay(mousePos)
@@ -88,7 +84,7 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) {
 		rotationDifference := mgl32.QuatBetweenVectors(rayBefore.Direction, rayAfter.Direction)
 		rot.Rotation = rotationDifference.Mul(rot.Rotation)
 
-		s.world.Transform().SetAbsolutePos(cameraEntity, pos)
-		s.world.Transform().SetAbsoluteRotation(cameraEntity, rot)
+		s.Transform().SetAbsolutePos(cameraEntity, pos)
+		s.Transform().SetAbsoluteRotation(cameraEntity, rot)
 	}
 }

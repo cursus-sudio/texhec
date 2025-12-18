@@ -10,11 +10,10 @@ import (
 )
 
 type orthoSys struct {
-	world       camera.World
-	dirtySet    ecs.DirtySet
-	limitsArray ecs.ComponentsArray[camera.CameraLimitsComponent]
-	orthoArray  ecs.ComponentsArray[camera.OrthoComponent]
-	cameraTool  camera.Interface
+	camera.World
+	camera.CameraTool
+
+	dirtySet ecs.DirtySet
 
 	logger logger.Logger
 }
@@ -24,23 +23,19 @@ func NewOrthoSys(
 	logger logger.Logger,
 ) ecs.SystemRegister[camera.World] {
 	return ecs.NewSystemRegister(func(w camera.World) error {
-		cameraTool := cameraToolFactory.Build(w).Camera()
-
-		dirtySet := ecs.NewDirtySet()
-		w.Transform().AddDirtySet(dirtySet)
-		ecs.GetComponentsArray[camera.CameraLimitsComponent](w).AddDirtySet(dirtySet)
-		ecs.GetComponentsArray[camera.OrthoComponent](w).AddDirtySet(dirtySet)
-		ecs.GetComponentsArray[camera.ViewportComponent](w).AddDirtySet(dirtySet)
-		ecs.GetComponentsArray[camera.NormalizedViewportComponent](w).AddDirtySet(dirtySet)
+		cameraTool := cameraToolFactory.Build(w)
 
 		s := &orthoSys{
-			world:       w,
-			dirtySet:    dirtySet,
-			limitsArray: ecs.GetComponentsArray[camera.CameraLimitsComponent](w),
-			orthoArray:  ecs.GetComponentsArray[camera.OrthoComponent](w),
-			cameraTool:  cameraTool,
-			logger:      logger,
+			World:      w,
+			dirtySet:   ecs.NewDirtySet(),
+			CameraTool: cameraTool,
+			logger:     logger,
 		}
+		s.Transform().AddDirtySet(s.dirtySet)
+		s.Camera().Limits().AddDirtySet(s.dirtySet)
+		s.Camera().Ortho().AddDirtySet(s.dirtySet)
+		s.Camera().Viewport().AddDirtySet(s.dirtySet)
+		s.Camera().NormalizedViewport().AddDirtySet(s.dirtySet)
 		w.Transform().AbsolutePos().BeforeGet(s.BeforeGet)
 
 		return nil
@@ -59,20 +54,20 @@ func (s *orthoSys) BeforeGet() {
 	saves := []save{}
 
 	for _, entity := range ei {
-		camera, err := s.cameraTool.GetObject(entity)
+		camera, err := s.Camera().GetObject(entity)
 		if err != nil {
 			continue
 		}
-		limits, ok := s.limitsArray.Get(entity)
+		limits, ok := s.Camera().Limits().Get(entity)
 		if !ok {
 			continue
 		}
-		ortho, ok := s.orthoArray.Get(entity)
+		ortho, ok := s.Camera().Ortho().Get(entity)
 		if !ok {
 			continue
 		}
 
-		pos, ok := s.world.Transform().AbsolutePos().Get(entity)
+		pos, ok := s.Transform().AbsolutePos().Get(entity)
 		if !ok {
 			continue
 		}
@@ -114,6 +109,6 @@ func (s *orthoSys) BeforeGet() {
 		saves = append(saves, save{entity, pos})
 	}
 	for _, save := range saves {
-		s.world.Transform().AbsolutePos().Set(save.entity, save.pos)
+		s.Transform().AbsolutePos().Set(save.entity, save.pos)
 	}
 }

@@ -23,9 +23,9 @@ type tool struct {
 func NewToolFactory(
 	codec codec.Codec,
 	logger logger.Logger,
-) ecs.ToolFactory[connection.ConnectionTool] {
+) ecs.ToolFactory[connection.World, connection.ConnectionTool] {
 	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(w ecs.World) connection.ConnectionTool {
+	return ecs.NewToolFactory(func(w connection.World) connection.ConnectionTool {
 		mutex.Lock()
 		defer mutex.Unlock()
 		if t, ok := ecs.GetGlobal[tool](w); ok {
@@ -77,6 +77,10 @@ func (t tool) BeforeGet() {
 }
 
 func (t tool) Connection() connection.Interface { return t }
+
+func (t tool) Component() ecs.ComponentsArray[connection.ConnectionComponent] {
+	return t.connectionArray
+}
 
 func (t tool) Host(addr string, onConn func(connection.ConnectionComponent)) error {
 	listener, err := net.Listen("tcp", addr)

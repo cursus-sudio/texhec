@@ -1,15 +1,19 @@
 package transform
 
 import (
+	"engine/modules/hierarchy"
 	"engine/services/ecs"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-type System ecs.SystemRegister
-
 type TransformTool interface {
 	Transform() Interface
+}
+
+type World interface { // these are dependencies of transform package
+	ecs.World
+	hierarchy.HierarchyTool
 }
 
 type Interface interface {

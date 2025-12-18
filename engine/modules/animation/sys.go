@@ -5,7 +5,18 @@ import (
 	"reflect"
 )
 
-type System ecs.SystemRegister
+type System ecs.SystemRegister[World]
+
+type AnimationTool interface {
+	Animation() Interface
+}
+type World interface {
+	ecs.World
+}
+type Interface interface {
+	Component() ecs.ComponentsArray[AnimationComponent]
+	Loop() ecs.ComponentsArray[LoopComponent]
+}
 
 //
 

@@ -8,22 +8,24 @@ import (
 )
 
 type tool struct {
+	uuidArray ecs.ComponentsArray[uuid.Component]
 	relation.EntityToKeyTool[uuid.UUID]
 	uuid.Factory
 }
 
 func NewToolFactory(
-	toolFactory ecs.ToolFactory[relation.EntityToKeyTool[uuid.UUID]],
+	toolFactory ecs.ToolFactory[ecs.World, relation.EntityToKeyTool[uuid.UUID]],
 	uuidFactory uuid.Factory,
-) ecs.ToolFactory[uuid.UUIDTool] {
+) ecs.ToolFactory[uuid.World, uuid.UUIDTool] {
 	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(w ecs.World) uuid.UUIDTool {
+	return ecs.NewToolFactory(func(w uuid.World) uuid.UUIDTool {
 		mutex.Lock()
 		defer mutex.Unlock()
 		if t, ok := ecs.GetGlobal[tool](w); ok {
 			return t
 		}
 		t := tool{
+			ecs.GetComponentsArray[uuid.Component](w),
 			toolFactory.Build(w),
 			uuidFactory,
 		}
@@ -34,6 +36,8 @@ func NewToolFactory(
 }
 
 func (t tool) UUID() uuid.Interface { return t }
+
+func (t tool) Component() ecs.ComponentsArray[uuid.Component] { return t.uuidArray }
 
 func (t tool) Entity(uuid uuid.UUID) (ecs.EntityID, bool) {
 	return t.Get(uuid)

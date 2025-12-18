@@ -2,46 +2,16 @@ package internal
 
 import (
 	"engine/modules/groups"
-	"engine/modules/hierarchy"
 	"engine/services/ecs"
-	"engine/services/logger"
 )
 
-type s struct {
-	logger logger.Logger
-
-	world     ecs.World
-	hierarchy hierarchy.Interface
-
-	hierarchyArray ecs.ComponentsArray[hierarchy.Component]
-	inheritArray   ecs.ComponentsArray[groups.InheritGroupsComponent]
-	groupsArray    ecs.ComponentsArray[groups.GroupsComponent]
-}
-
-func NewSystem(
-	logger logger.Logger,
-	parentToolFactory ecs.ToolFactory[hierarchy.HierarchyTool],
-) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
-		s := s{
-			logger,
-			w,
-			parentToolFactory.Build(w).Hierarchy(),
-			ecs.GetComponentsArray[hierarchy.Component](w),
-			ecs.GetComponentsArray[groups.InheritGroupsComponent](w),
-			ecs.GetComponentsArray[groups.GroupsComponent](w),
-		}
-		return s.Init()
-	})
-}
-
-func (s s) calculateGroup(entity ecs.EntityID) (groups.GroupsComponent, bool) {
+func (t tool) calculateGroup(entity ecs.EntityID) (groups.GroupsComponent, bool) {
 	def := groups.GroupsComponent{}
-	parent, ok := s.hierarchy.Parent(entity)
+	parent, ok := t.world.Hierarchy().Parent(entity)
 	if !ok {
 		return def, false
 	}
-	groups, ok := s.groupsArray.Get(parent)
+	groups, ok := t.groupsArray.Get(parent)
 	if !ok {
 		return def, false
 	}
@@ -53,10 +23,10 @@ type save struct {
 	groups groups.GroupsComponent
 }
 
-func (s s) Init() error {
+func (s tool) Init() {
 	dirtySet := ecs.NewDirtySet()
 	s.groupsArray.AddDependency(s.inheritArray)
-	s.groupsArray.AddDependency(s.hierarchyArray)
+	s.groupsArray.AddDependency(s.world.Hierarchy().Component())
 
 	s.groupsArray.AddDirtySet(dirtySet)
 
@@ -95,7 +65,7 @@ func (s s) Init() error {
 				groups: groups,
 			})
 
-			for _, child := range s.hierarchy.Children(entity).GetIndices() {
+			for _, child := range s.world.Hierarchy().Children(entity).GetIndices() {
 				if _, ok := s.inheritArray.Get(child); ok {
 					children = append(children, child)
 				}
@@ -107,6 +77,4 @@ func (s s) Init() error {
 		}
 		dirtySet.Clear()
 	})
-
-	return nil
 }

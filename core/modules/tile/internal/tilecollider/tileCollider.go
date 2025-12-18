@@ -15,34 +15,25 @@ func TileColliderSystem(logger logger.Logger,
 	tileSize int32, // transform
 	gridDepth float32,
 	tileGroups groups.GroupsComponent, // groups
-	colliderComponent collider.ColliderComponent, // collider
+	colliderComponent collider.Component, // collider
 	uuidFactory uuid.Factory, // tools
-) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
-		uuidArray := ecs.GetComponentsArray[uuid.Component](w)
+) ecs.SystemRegister[tile.World] {
+	return ecs.NewSystemRegister(func(w tile.World) error {
 		tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w)
-
-		leftClickArray := ecs.GetComponentsArray[inputs.MouseLeftClickComponent](w)
-		collidersArray := ecs.GetComponentsArray[collider.ColliderComponent](w)
-
-		posArray := ecs.GetComponentsArray[transform.PosComponent](w)
-		sizeArray := ecs.GetComponentsArray[transform.SizeComponent](w)
-
-		groupsArray := ecs.GetComponentsArray[groups.GroupsComponent](w)
 
 		tilePosDirtySet := ecs.NewDirtySet()
 		tilePosArray.AddDirtySet(tilePosDirtySet)
-		uuidArray.BeforeGet(func() {
+		w.UUID().Component().BeforeGet(func() {
 			ei := tilePosDirtySet.Get()
 			if len(ei) == 0 {
 				return
 			}
 			for _, entity := range ei {
-				if _, ok := uuidArray.Get(entity); ok {
+				if _, ok := w.UUID().Component().Get(entity); ok {
 					continue
 				}
 				comp := uuid.New(uuidFactory.NewUUID())
-				uuidArray.Set(entity, comp)
+				w.UUID().Component().Set(entity, comp)
 			}
 		})
 
@@ -58,7 +49,7 @@ func TileColliderSystem(logger logger.Logger,
 			}
 			// groups
 			for _, entity := range ei {
-				groupsArray.Set(entity, tileGroups)
+				w.Groups().Component().Set(entity, tileGroups)
 			}
 
 			// pos
@@ -72,27 +63,27 @@ func TileColliderSystem(logger logger.Logger,
 					float32(tileSize)*float32(pos.Y)+float32(tileSize)/2,
 					gridDepth+float32(pos.Layer),
 				)
-				posArray.Set(entity, transformPos)
+				w.Transform().Pos().Set(entity, transformPos)
 				comp := inputs.NewMouseLeftClick(tile.NewTileClickEvent(pos))
-				leftClickArray.Set(entity, comp)
+				w.Inputs().MouseLeft().Set(entity, comp)
 			}
 
 			// transform
 			for _, entity := range ei {
-				sizeArray.Set(entity, transform.NewSize(float32(tileSize), float32(tileSize), 1))
+				w.Transform().Size().Set(entity, transform.NewSize(float32(tileSize), float32(tileSize), 1))
 			}
 
 			// collider
 			for _, entity := range ei {
-				collidersArray.Set(entity, colliderComponent)
+				w.Collider().Component().Set(entity, colliderComponent)
 			}
 		}
 
-		collidersArray.BeforeGet(applyTileCollider)
-		sizeArray.BeforeGet(applyTileCollider)
-		posArray.BeforeGet(applyTileCollider)
-		leftClickArray.BeforeGet(applyTileCollider)
-		groupsArray.BeforeGet(applyTileCollider)
+		w.Collider().Component().BeforeGet(applyTileCollider)
+		w.Transform().Size().BeforeGet(applyTileCollider)
+		w.Transform().Pos().BeforeGet(applyTileCollider)
+		w.Inputs().MouseLeft().BeforeGet(applyTileCollider)
+		w.Groups().Component().BeforeGet(applyTileCollider)
 
 		return nil
 	})

@@ -15,10 +15,9 @@ import (
 )
 
 type world struct {
-	World         ecs.World
-	Hierarchy     hierarchy.Interface
-	Groups        ecs.ComponentsArray[groups.GroupsComponent]
-	InheritGroups ecs.ComponentsArray[groups.InheritGroupsComponent]
+	ecs.World
+	hierarchy.HierarchyTool
+	groups.GroupsTool
 }
 
 type Setup struct {
@@ -37,23 +36,21 @@ func NewSetup(t *testing.T) Setup {
 		pkg.Register(b)
 	}
 	c := b.Build()
-	w := ecs.NewWorld()
-	ecs.RegisterSystems(w,
-		ioc.Get[groups.System](c),
-	)
+
+	w := world{
+		World: ecs.NewWorld(),
+	}
+	w.HierarchyTool = ioc.Get[ecs.ToolFactory[hierarchy.World, hierarchy.HierarchyTool]](c).Build(w)
+	w.GroupsTool = ioc.Get[ecs.ToolFactory[groups.World, groups.GroupsTool]](c).Build(w)
+
 	return Setup{
-		world{
-			w,
-			ioc.Get[ecs.ToolFactory[hierarchy.HierarchyTool]](c).Build(w).Hierarchy(),
-			ecs.GetComponentsArray[groups.GroupsComponent](w),
-			ecs.GetComponentsArray[groups.InheritGroupsComponent](w),
-		},
+		w,
 		t,
 	}
 }
 
 func (setup Setup) expectGroups(entity ecs.EntityID, expectedGroups groups.GroupsComponent) {
-	groups, _ := setup.Groups.Get(entity)
+	groups, _ := setup.Groups().Component().Get(entity)
 	if groups != expectedGroups {
 		setup.T.Errorf("expected pos %v but has %v", expectedGroups, groups)
 	}

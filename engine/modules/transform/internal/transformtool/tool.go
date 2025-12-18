@@ -1,7 +1,6 @@
 package transformtool
 
 import (
-	"engine/modules/hierarchy"
 	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/logger"
@@ -13,9 +12,8 @@ import (
 type tool struct {
 	logger logger.Logger
 
-	world     ecs.World
-	dirtySet  ecs.DirtySet
-	hierarchy hierarchy.Interface
+	world    transform.World
+	dirtySet ecs.DirtySet
 
 	defaultRot         transform.RotationComponent
 	defaultSize        transform.SizeComponent
@@ -26,7 +24,6 @@ type tool struct {
 	absoluteRotationArray ecs.ComponentsArray[transform.AbsoluteRotationComponent]
 	absoluteSizeArray     ecs.ComponentsArray[transform.AbsoluteSizeComponent]
 
-	hierarchyArray        ecs.ComponentsArray[hierarchy.Component]
 	posArray              ecs.ComponentsArray[transform.PosComponent]
 	rotationArray         ecs.ComponentsArray[transform.RotationComponent]
 	sizeArray             ecs.ComponentsArray[transform.SizeComponent]
@@ -40,14 +37,13 @@ type tool struct {
 
 func NewTransformTool(
 	logger logger.Logger,
-	hierarchyToolFactory ecs.ToolFactory[hierarchy.HierarchyTool],
 	defaultRot transform.RotationComponent,
 	defaultSize transform.SizeComponent,
 	defaultPivot transform.PivotPointComponent,
 	defaultParentPivot transform.ParentPivotPointComponent,
-) ecs.ToolFactory[transform.TransformTool] {
+) ecs.ToolFactory[transform.World, transform.TransformTool] {
 	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(w ecs.World) transform.TransformTool {
+	return ecs.NewToolFactory(func(w transform.World) transform.TransformTool {
 		mutex.Lock()
 		defer mutex.Unlock()
 
@@ -58,7 +54,6 @@ func NewTransformTool(
 			logger,
 			w,
 			ecs.NewDirtySet(),
-			hierarchyToolFactory.Build(w).Hierarchy(),
 			defaultRot,
 			defaultSize,
 			defaultPivot,
@@ -66,7 +61,6 @@ func NewTransformTool(
 			ecs.GetComponentsArray[transform.AbsolutePosComponent](w),
 			ecs.GetComponentsArray[transform.AbsoluteRotationComponent](w),
 			ecs.GetComponentsArray[transform.AbsoluteSizeComponent](w),
-			ecs.GetComponentsArray[hierarchy.Component](w),
 			ecs.GetComponentsArray[transform.PosComponent](w),
 			ecs.GetComponentsArray[transform.RotationComponent](w),
 			ecs.GetComponentsArray[transform.SizeComponent](w),
@@ -115,7 +109,7 @@ func (t tool) BeforeGet() {
 			size:   t.CalculateAbsoluteSize(entity),
 		})
 
-		for _, child := range t.hierarchy.Children(entity).GetIndices() {
+		for _, child := range t.world.Hierarchy().Children(entity).GetIndices() {
 			comparedMask := transform.RelativePos | transform.RelativeRotation | transform.RelativeSizeXYZ
 			mask, ok := t.parentMaskArray.Get(child)
 			if !ok || mask.RelativeMask&comparedMask == 0 {

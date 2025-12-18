@@ -2,10 +2,7 @@ package textrenderer
 
 import (
 	_ "embed"
-	"engine/modules/camera"
-	"engine/modules/groups"
 	"engine/modules/text"
-	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
@@ -29,9 +26,7 @@ var geomSource string
 var fragSource string
 
 type textRendererRegister struct {
-	cameraCtorsFactory   ecs.ToolFactory[camera.CameraTool]
-	transformToolFactory ecs.ToolFactory[transform.TransformTool]
-	textToolFactory      ecs.ToolFactory[text.TextTool]
+	textToolFactory      ecs.ToolFactory[text.World, text.TextTool]
 	fontService          FontService
 	vboFactory           vbo.VBOFactory[Glyph]
 	layoutServiceFactory LayoutServiceFactory
@@ -47,9 +42,7 @@ type textRendererRegister struct {
 }
 
 func NewTextRendererRegister(
-	cameraCtorsFactory ecs.ToolFactory[camera.CameraTool],
-	transformToolFactory ecs.ToolFactory[transform.TransformTool],
-	textToolFactory ecs.ToolFactory[text.TextTool],
+	textToolFactory ecs.ToolFactory[text.World, text.TextTool],
 	fontService FontService,
 	vboFactory vbo.VBOFactory[Glyph],
 	layoutServiceFactory LayoutServiceFactory,
@@ -61,8 +54,6 @@ func NewTextRendererRegister(
 	removeOncePerNCalls uint16,
 ) text.System {
 	return &textRendererRegister{
-		cameraCtorsFactory:   cameraCtorsFactory,
-		transformToolFactory: transformToolFactory,
 		textToolFactory:      textToolFactory,
 		fontService:          fontService,
 		vboFactory:           vboFactory,
@@ -78,7 +69,7 @@ func NewTextRendererRegister(
 	}
 }
 
-func (f *textRendererRegister) Register(w ecs.World) error {
+func (f *textRendererRegister) Register(w text.World) error {
 	vert, err := shader.NewShader(vertSource, shader.VertexShader)
 	if err != nil {
 		return err
@@ -113,18 +104,13 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 		return err
 	}
 
-	transformTool := f.transformToolFactory.Build(w).Transform()
 	renderer := textRenderer{
 		textRendererRegister: f,
 
-		world:       w,
-		cameraArray: ecs.GetComponentsArray[camera.CameraComponent](w),
-		groupsArray: ecs.GetComponentsArray[groups.GroupsComponent](w),
-		text:        f.textToolFactory.Build(w).Text(),
-		transform:   transformTool,
+		World: w,
+		text:  f.textToolFactory.Build(w).Text(),
 
 		logger:      f.logger,
-		cameraCtors: f.cameraCtorsFactory.Build(w).Camera(),
 		fontService: f.fontService,
 
 		program:   p,
@@ -141,7 +127,7 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 		layoutsBatches: datastructures.NewSparseArray[ecs.EntityID, layoutBatch](),
 	}
 
-	transformTool.AddDirtySet(renderer.dirtyEntities)
+	renderer.Transform().AddDirtySet(renderer.dirtyEntities)
 
 	arrays := []ecs.AnyComponentArray{
 		ecs.GetComponentsArray[text.TextComponent](w),

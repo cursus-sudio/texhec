@@ -2,7 +2,6 @@ package mobilecamerasys
 
 import (
 	"engine/modules/camera"
-	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/frames"
 	"engine/services/logger"
@@ -14,8 +13,7 @@ import (
 
 type wasdMoveSystem struct {
 	logger            logger.Logger
-	world             ecs.World
-	transformTool     transform.Interface
+	world             camera.World
 	orthoArray        ecs.ComponentsArray[camera.OrthoComponent]
 	mobileCameraArray ecs.ComponentsArray[camera.MobileCameraComponent]
 
@@ -25,16 +23,13 @@ type wasdMoveSystem struct {
 
 func NewWasdSystem(
 	logger logger.Logger,
-	cameraCtors ecs.ToolFactory[camera.CameraTool],
-	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+	cameraCtors ecs.ToolFactory[camera.World, camera.CameraTool],
 	cameraSpeed float32,
-) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
-		transformTool := transformToolFactory.Build(w)
+) ecs.SystemRegister[camera.World] {
+	return ecs.NewSystemRegister(func(w camera.World) error {
 		s := &wasdMoveSystem{
 			logger:            logger,
 			world:             w,
-			transformTool:     transformTool.Transform(),
 			orthoArray:        ecs.GetComponentsArray[camera.OrthoComponent](w),
 			mobileCameraArray: ecs.GetComponentsArray[camera.MobileCameraComponent](w),
 
@@ -72,7 +67,7 @@ func (s *wasdMoveSystem) Listen(event frames.FrameEvent) {
 	}
 
 	for _, camera := range s.mobileCameraArray.GetEntities() {
-		pos, _ := s.transformTool.AbsolutePos().Get(camera)
+		pos, _ := s.world.Transform().AbsolutePos().Get(camera)
 		ortho, ok := s.orthoArray.Get(camera)
 		if !ok {
 			continue
@@ -83,6 +78,6 @@ func (s *wasdMoveSystem) Listen(event frames.FrameEvent) {
 			pos.Pos.Y() + moveVerticaly/ortho.Zoom,
 			pos.Pos.Z(),
 		}
-		s.transformTool.SetAbsolutePos(camera, pos)
+		s.world.Transform().SetAbsolutePos(camera, pos)
 	}
 }

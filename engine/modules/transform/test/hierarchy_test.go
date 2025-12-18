@@ -12,22 +12,22 @@ func TestHierarchy(t *testing.T) {
 	parent := setup.World.NewEntity()
 	child := setup.World.NewEntity()
 
-	setup.Hierarchy.SetParent(child, parent)
-	setup.Transform.Pos().Set(parent, transform.NewPos(5, 5, 5))
-	setup.Transform.Parent().Set(child, transform.NewParent(transform.RelativePos))
+	setup.Hierarchy().SetParent(child, parent)
+	setup.Transform().Pos().Set(parent, transform.NewPos(5, 5, 5))
+	setup.Transform().Parent().Set(child, transform.NewParent(transform.RelativePos))
 
-	setup.Transform.Pos().Set(child, transform.NewPos(5, 5, 5))
+	setup.Transform().Pos().Set(child, transform.NewPos(5, 5, 5))
 	setup.expectAbsolutePos(child, transform.NewPos(10, 10, 10))
 
-	setup.Transform.SetAbsolutePos(child, transform.AbsolutePosComponent{Pos: mgl32.Vec3{5, 5, 5}})
+	setup.Transform().SetAbsolutePos(child, transform.AbsolutePosComponent{Pos: mgl32.Vec3{5, 5, 5}})
 	setup.expectAbsolutePos(child, transform.NewPos(5, 5, 5))
 
-	setup.Transform.Pos().Set(child, transform.NewPos(10, 10, 10))
+	setup.Transform().Pos().Set(child, transform.NewPos(10, 10, 10))
 	setup.expectAbsolutePos(child, transform.NewPos(15, 15, 15))
 
-	setup.Transform.Pos().Set(parent, transform.NewPos(10, 10, 10))
+	setup.Transform().Pos().Set(parent, transform.NewPos(10, 10, 10))
 	setup.expectAbsolutePos(child, transform.NewPos(20, 20, 20))
 
-	setup.Transform.Pos().Set(child, transform.NewPos(0, 0, 0))
+	setup.Transform().Pos().Set(child, transform.NewPos(0, 0, 0))
 	setup.expectAbsolutePos(child, transform.NewPos(10, 10, 10))
 }

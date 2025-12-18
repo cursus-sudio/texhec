@@ -1,9 +1,21 @@
 package text
 
-import "engine/services/ecs"
+import (
+	"engine/modules/camera"
+	"engine/modules/groups"
+	"engine/modules/transform"
+	"engine/services/ecs"
+)
 
 type TextTool interface {
 	Text() Interface
+}
+
+type World interface {
+	ecs.World
+	groups.GroupsTool
+	camera.CameraTool
+	transform.TransformTool
 }
 
 type Interface interface {

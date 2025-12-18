@@ -2,17 +2,15 @@ package collisions
 
 import (
 	"engine/modules/collider"
-	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/logger"
 )
 
 func NewColliderSystem(
 	logger logger.Logger,
-	transformToolFactory ecs.ToolFactory[transform.TransformTool],
-	serviceFactory ecs.ToolFactory[collider.ColliderTool],
-) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
+	serviceFactory ecs.ToolFactory[collider.World, collider.ColliderTool],
+) ecs.SystemRegister[collider.World] {
+	return ecs.NewSystemRegister(func(w collider.World) error {
 		serviceFactory.Build(w)
 		return nil
 	})

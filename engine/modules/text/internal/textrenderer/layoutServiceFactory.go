@@ -2,21 +2,17 @@ package textrenderer
 
 import (
 	"engine/modules/text"
-	"engine/modules/transform"
-	"engine/services/ecs"
 	"engine/services/logger"
 )
 
 type LayoutServiceFactory interface {
-	New(ecs.World) LayoutService
+	New(text.World) LayoutService
 }
 
 type layoutServiceFactory struct {
 	logger      logger.Logger
 	fontService FontService
 	fontsKeys   FontKeys
-
-	transformToolFactory ecs.ToolFactory[transform.TransformTool]
 
 	defaultFontFamily text.FontFamilyComponent
 	defaultFontSize   text.FontSizeComponent
@@ -30,8 +26,6 @@ func NewLayoutServiceFactory(
 	fontService FontService,
 	fontsKeys FontKeys,
 
-	transformToolFactory ecs.ToolFactory[transform.TransformTool],
-
 	defaultFontFamily text.FontFamilyComponent,
 	defaultFontSize text.FontSizeComponent,
 	// defaultOverflow text.Overflow,
@@ -43,8 +37,6 @@ func NewLayoutServiceFactory(
 		fontService: fontService,
 		fontsKeys:   fontsKeys,
 
-		transformToolFactory: transformToolFactory,
-
 		defaultFontFamily: defaultFontFamily,
 		defaultFontSize:   defaultFontSize,
 		// defaultOverflow:   defaultOverflow,
@@ -53,10 +45,9 @@ func NewLayoutServiceFactory(
 	}
 }
 
-func (f *layoutServiceFactory) New(world ecs.World) LayoutService {
+func (f *layoutServiceFactory) New(world text.World) LayoutService {
 	return NewLayoutService(
 		world,
-		f.transformToolFactory,
 		f.logger,
 		f.fontService,
 		f.fontsKeys,

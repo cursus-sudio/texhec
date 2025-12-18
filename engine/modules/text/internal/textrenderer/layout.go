@@ -2,7 +2,6 @@ package textrenderer
 
 import (
 	"engine/modules/text"
-	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"unicode/utf8"
@@ -28,8 +27,7 @@ type LayoutService interface {
 }
 
 type layoutService struct {
-	world           ecs.World
-	transform       transform.Interface
+	text.World
 	textArray       ecs.ComponentsArray[text.TextComponent]
 	fontFamilyArray ecs.ComponentsArray[text.FontFamilyComponent]
 	fontSizeArray   ecs.ComponentsArray[text.FontSizeComponent]
@@ -49,9 +47,7 @@ type layoutService struct {
 }
 
 func NewLayoutService(
-	world ecs.World,
-
-	transformToolFactory ecs.ToolFactory[transform.TransformTool],
+	world text.World,
 
 	logger logger.Logger,
 	fontService FontService,
@@ -64,8 +60,7 @@ func NewLayoutService(
 	defaultTextAlign text.TextAlignComponent,
 ) LayoutService {
 	return &layoutService{
-		world:           world,
-		transform:       transformToolFactory.Build(world).Transform(),
+		World:           world,
 		textArray:       ecs.GetComponentsArray[text.TextComponent](world),
 		fontFamilyArray: ecs.GetComponentsArray[text.FontFamilyComponent](world),
 		fontSizeArray:   ecs.GetComponentsArray[text.FontSizeComponent](world),
@@ -104,7 +99,7 @@ type line struct {
 func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	// TODO add overflow read, text align read and transform modification
 
-	size, _ := s.transform.AbsoluteSize().Get(entity)
+	size, _ := s.Transform().AbsoluteSize().Get(entity)
 	textComponent, ok := s.textArray.Get(entity)
 	if !ok {
 		return Layout{}, nil

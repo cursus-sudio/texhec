@@ -34,12 +34,11 @@ type toolState struct {
 	toRemove               []ecs.EntityID
 	listeners              datastructures.SparseSet[ecs.EntityID]
 
-	world           ecs.World
+	world           netsync.World
 	clientArray     ecs.ComponentsArray[netsync.ClientComponent]
 	connectionArray ecs.ComponentsArray[connection.ConnectionComponent]
 	uuidArray       ecs.ComponentsArray[uuid.Component]
 	stateTool       state.Tool
-	uniqueTool      uuid.Interface
 	logger          logger.Logger
 }
 
@@ -50,10 +49,9 @@ type Tool struct {
 
 func NewTool(
 	config config.Config,
-	uniqueToolFactory ecs.ToolFactory[uuid.UUIDTool],
-	stateToolFactory ecs.ToolFactory[state.Tool],
+	stateToolFactory ecs.ToolFactory[netsync.World, state.Tool],
 	logger logger.Logger,
-	world ecs.World,
+	world netsync.World,
 ) Tool {
 	t := Tool{
 		config,
@@ -72,7 +70,6 @@ func NewTool(
 			ecs.GetComponentsArray[connection.ConnectionComponent](world),
 			ecs.GetComponentsArray[uuid.Component](world),
 			stateToolFactory.Build(world),
-			uniqueToolFactory.Build(world).UUID(),
 			logger,
 		},
 	}
@@ -139,7 +136,7 @@ func (t Tool) BeforeEvent(event any) {
 	}
 
 	if t.recordedEventUUID == nil {
-		uuid := t.uniqueTool.NewUUID()
+		uuid := t.world.UUID().NewUUID()
 		t.recordedEventUUID = &uuid
 	}
 	t.stateTool.StartRecording()

@@ -9,19 +9,21 @@ import (
 )
 
 type tool struct {
-	world        ecs.World
-	colorArray   ecs.ComponentsArray[render.ColorComponent]
-	meshArray    ecs.ComponentsArray[render.MeshComponent]
-	textureArray ecs.ComponentsArray[render.TextureComponent]
+	world             ecs.World
+	colorArray        ecs.ComponentsArray[render.ColorComponent]
+	meshArray         ecs.ComponentsArray[render.MeshComponent]
+	textureArray      ecs.ComponentsArray[render.TextureComponent]
+	textureFrameArray ecs.ComponentsArray[render.TextureFrameComponent]
 }
 
-func NewTool() ecs.ToolFactory[render.RenderTool] {
-	return ecs.NewToolFactory(func(w ecs.World) render.RenderTool {
+func NewTool() ecs.ToolFactory[render.World, render.RenderTool] {
+	return ecs.NewToolFactory(func(w render.World) render.RenderTool {
 		return &tool{
 			w,
 			ecs.GetComponentsArray[render.ColorComponent](w),
 			ecs.GetComponentsArray[render.MeshComponent](w),
 			ecs.GetComponentsArray[render.TextureComponent](w),
+			ecs.GetComponentsArray[render.TextureFrameComponent](w),
 		}
 	})
 }
@@ -53,6 +55,9 @@ func (t *tool) Mesh() ecs.ComponentsArray[render.MeshComponent] {
 }
 func (t *tool) Texture() ecs.ComponentsArray[render.TextureComponent] {
 	return t.textureArray
+}
+func (t *tool) TextureFrame() ecs.ComponentsArray[render.TextureFrameComponent] {
+	return t.textureFrameArray
 }
 
 func (*tool) Error() error {

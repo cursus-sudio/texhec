@@ -23,7 +23,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			Register(hierarchy.Component{})
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[hierarchy.HierarchyTool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[hierarchy.World, hierarchy.HierarchyTool] {
 		return hierarchytool.NewTool(
 			ioc.Get[logger.Logger](c),
 		)

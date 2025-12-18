@@ -1,11 +1,9 @@
 package textrenderer
 
 import (
-	"engine/modules/camera"
 	"engine/modules/groups"
 	rendersys "engine/modules/render"
 	"engine/modules/text"
-	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
@@ -26,14 +24,10 @@ type locations struct {
 type textRenderer struct {
 	*textRendererRegister
 
-	world       ecs.World
-	cameraArray ecs.ComponentsArray[camera.CameraComponent]
-	groupsArray ecs.ComponentsArray[groups.GroupsComponent]
-	text        text.Interface
-	transform   transform.Interface
+	text.World
+	text text.Interface
 
 	logger      logger.Logger
-	cameraCtors camera.Interface
 	fontService FontService
 
 	program   program.Program
@@ -115,7 +109,7 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 			s.layoutsBatches.Remove(entity)
 		}
 
-		layout, err := s.layoutServiceFactory.New(s.world).EntityLayout(entity)
+		layout, err := s.layoutServiceFactory.New(s).EntityLayout(entity)
 		if err != nil {
 			continue
 		}
@@ -136,15 +130,15 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 			continue
 		}
 
-		pos, _ := s.transform.AbsolutePos().Get(entity)
-		rot, _ := s.transform.AbsoluteRotation().Get(entity)
-		size, _ := s.transform.AbsoluteSize().Get(entity)
+		pos, _ := s.Transform().AbsolutePos().Get(entity)
+		rot, _ := s.Transform().AbsoluteRotation().Get(entity)
+		size, _ := s.Transform().AbsoluteSize().Get(entity)
 		entityColor, ok := s.text.Color().Get(entity)
 		if !ok {
 			entityColor = s.defaultColor
 		}
 
-		entityGroups, ok := s.groupsArray.Get(entity)
+		entityGroups, ok := s.Groups().Component().Get(entity)
 		if !ok {
 			entityGroups = groups.DefaultGroups()
 		}
@@ -171,13 +165,13 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 		)
 		entityMvp := translation.Mul4(rotation).Mul4(scale)
 
-		for _, cameraEntity := range s.cameraArray.GetEntities() {
-			camera, err := s.cameraCtors.GetObject(cameraEntity)
+		for _, cameraEntity := range s.Camera().Component().GetEntities() {
+			camera, err := s.Camera().GetObject(cameraEntity)
 			if err != nil {
 				continue
 			}
 
-			cameraGroups, ok := s.groupsArray.Get(cameraEntity)
+			cameraGroups, ok := s.Groups().Component().Get(cameraEntity)
 			if !ok {
 				cameraGroups = groups.DefaultGroups()
 			}

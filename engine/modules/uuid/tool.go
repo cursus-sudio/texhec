@@ -21,8 +21,13 @@ type UUIDTool interface {
 	UUID() Interface
 }
 
+type World interface {
+	ecs.World
+}
+
 type Interface interface {
 	Factory
+	Component() ecs.ComponentsArray[Component]
 	Entity(UUID) (ecs.EntityID, bool)
 }
 

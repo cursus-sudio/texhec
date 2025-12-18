@@ -2,7 +2,6 @@ package mobilecamerasys
 
 import (
 	"engine/modules/camera"
-	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"engine/services/media/window"
@@ -18,8 +17,7 @@ type scrollSystem struct {
 	cameraCtors camera.Interface
 	logger      logger.Logger
 
-	world             ecs.World
-	transformTool     transform.Interface
+	world             camera.World
 	orthoArray        ecs.ComponentsArray[camera.OrthoComponent]
 	mobileCameraArray ecs.ComponentsArray[camera.MobileCameraComponent]
 
@@ -28,19 +26,17 @@ type scrollSystem struct {
 
 func NewScrollSystem(
 	logger logger.Logger,
-	cameraCtors ecs.ToolFactory[camera.CameraTool],
-	transformTool ecs.ToolFactory[transform.TransformTool],
+	cameraCtors ecs.ToolFactory[camera.World, camera.CameraTool],
 	window window.Api,
 	minZoom, maxZoom float32,
-) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
+) ecs.SystemRegister[camera.World] {
+	return ecs.NewSystemRegister(func(w camera.World) error {
 		s := &scrollSystem{
 			window:      window,
 			cameraCtors: cameraCtors.Build(w).Camera(),
 			logger:      logger,
 
 			world:             w,
-			transformTool:     transformTool.Build(w).Transform(),
 			orthoArray:        ecs.GetComponentsArray[camera.OrthoComponent](w),
 			mobileCameraArray: ecs.GetComponentsArray[camera.MobileCameraComponent](w),
 
@@ -67,8 +63,8 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) {
 			continue
 		}
 
-		pos, _ := s.transformTool.AbsolutePos().Get(cameraEntity)
-		rot, _ := s.transformTool.AbsoluteRotation().Get(cameraEntity)
+		pos, _ := s.world.Transform().AbsolutePos().Get(cameraEntity)
+		rot, _ := s.world.Transform().AbsoluteRotation().Get(cameraEntity)
 
 		camera, err := s.cameraCtors.GetObject(cameraEntity)
 		if err != nil {
@@ -92,7 +88,7 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) {
 		rotationDifference := mgl32.QuatBetweenVectors(rayBefore.Direction, rayAfter.Direction)
 		rot.Rotation = rotationDifference.Mul(rot.Rotation)
 
-		s.transformTool.SetAbsolutePos(cameraEntity, pos)
-		s.transformTool.SetAbsoluteRotation(cameraEntity, rot)
+		s.world.Transform().SetAbsolutePos(cameraEntity, pos)
+		s.world.Transform().SetAbsoluteRotation(cameraEntity, rot)
 	}
 }

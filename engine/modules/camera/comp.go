@@ -6,12 +6,12 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-type CameraComponent struct {
+type Component struct {
 	Projection reflect.Type
 }
 
-func NewCamera[Projection any]() CameraComponent {
-	return CameraComponent{reflect.TypeFor[Projection]()}
+func NewCamera[Projection any]() Component {
+	return Component{reflect.TypeFor[Projection]()}
 }
 
 //

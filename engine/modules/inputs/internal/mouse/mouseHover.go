@@ -8,22 +8,20 @@ import (
 )
 
 type hoverSystem struct {
-	world           ecs.World
+	inputs.World
 	hoveredArray    ecs.ComponentsArray[inputs.HoveredComponent]
 	mouseEnterArray ecs.ComponentsArray[inputs.MouseEnterComponent]
 	mouseLeaveArray ecs.ComponentsArray[inputs.MouseLeaveComponent]
-	events          events.Events
 	target          *ecs.EntityID
 }
 
-func NewHoverSystem() ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
+func NewHoverSystem() ecs.SystemRegister[inputs.World] {
+	return ecs.NewSystemRegister(func(w inputs.World) error {
 		s := &hoverSystem{
-			world:           w,
+			World:           w,
 			hoveredArray:    ecs.GetComponentsArray[inputs.HoveredComponent](w),
 			mouseEnterArray: ecs.GetComponentsArray[inputs.MouseEnterComponent](w),
 			mouseLeaveArray: ecs.GetComponentsArray[inputs.MouseLeaveComponent](w),
-			events:          w.Events(),
 			target:          nil,
 		}
 
@@ -39,7 +37,7 @@ func (s *hoverSystem) handleMouseLeave(entity ecs.EntityID) {
 	if !ok {
 		return
 	}
-	events.EmitAny(s.events, mouseLeave.Event)
+	events.EmitAny(s.Events(), mouseLeave.Event)
 }
 
 func (s *hoverSystem) Listen(event RayChangedTargetEvent) {
@@ -56,6 +54,6 @@ func (s *hoverSystem) Listen(event RayChangedTargetEvent) {
 	s.hoveredArray.Set(entity, inputs.HoveredComponent{Camera: event.Camera})
 
 	if mouseEnter, ok := s.mouseEnterArray.Get(entity); ok {
-		events.EmitAny(s.events, mouseEnter.Event)
+		events.EmitAny(s.Events(), mouseEnter.Event)
 	}
 }

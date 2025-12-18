@@ -1,11 +1,9 @@
 package textpkg
 
 import (
-	"engine/modules/camera"
 	"engine/modules/text"
 	"engine/modules/text/internal/textrenderer"
 	"engine/modules/text/internal/texttool"
-	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
@@ -63,7 +61,7 @@ func Package(
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[text.TextTool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[text.World, text.TextTool] {
 		return texttool.NewTool(ioc.Get[logger.Logger](c))
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) textrenderer.FontService {
@@ -82,7 +80,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 			ioc.Get[logger.Logger](c),
 			ioc.Get[textrenderer.FontService](c),
 			ioc.Get[textrenderer.FontKeys](c),
-			ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
 			pkg.defaultFontFamily(c),
 			pkg.defaultFontSize,
 			// pkg.defaultOverflow,
@@ -97,9 +94,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) text.System {
 		return textrenderer.NewTextRendererRegister(
-			ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
-			ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
-			ioc.Get[ecs.ToolFactory[text.TextTool]](c),
+			ioc.Get[ecs.ToolFactory[text.World, text.TextTool]](c),
 			ioc.Get[textrenderer.FontService](c),
 			ioc.Get[vbo.VBOFactory[textrenderer.Glyph]](c),
 			ioc.Get[textrenderer.LayoutServiceFactory](c),

@@ -2,7 +2,6 @@ package transformpkg
 
 import (
 	"engine/modules/animation"
-	"engine/modules/hierarchy"
 	"engine/modules/transform"
 	"engine/modules/transform/internal/transformtool"
 	"engine/services/codec"
@@ -43,18 +42,9 @@ func (pkg pkg) Register(b ioc.Builder) {
 			Register(transform.ParentComponent{})
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) transform.System {
-		toolFactory := ioc.Get[ecs.ToolFactory[transform.TransformTool]](c)
-		return ecs.NewSystemRegister(func(w ecs.World) error {
-			toolFactory.Build(w)
-			return nil
-		})
-	})
-
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[transform.TransformTool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[transform.World, transform.TransformTool] {
 		return transformtool.NewTransformTool(
 			ioc.Get[logger.Logger](c),
-			ioc.Get[ecs.ToolFactory[hierarchy.HierarchyTool]](c),
 			pkg.defaultRot,
 			pkg.defaultSize,
 			pkg.defaultPivot,

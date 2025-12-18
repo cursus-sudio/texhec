@@ -1,6 +1,7 @@
 package state
 
 import (
+	"engine/modules/netsync"
 	"engine/modules/netsync/internal/config"
 	"engine/modules/uuid"
 	"engine/services/ecs"
@@ -22,11 +23,9 @@ type toolState struct {
 	recordedChanges *State
 	dirtySet        ecs.DirtySet
 
-	uuidArray  ecs.ComponentsArray[uuid.Component]
-	uniqueTool uuid.Interface
-	logger     logger.Logger
+	logger logger.Logger
 
-	world  ecs.World
+	world  netsync.World
 	arrays []ecs.AnyComponentArray
 }
 
@@ -37,11 +36,10 @@ type tool struct {
 
 func NewToolFactory(
 	config config.Config,
-	uuidToolFactory ecs.ToolFactory[uuid.UUIDTool],
 	logger logger.Logger,
-) ecs.ToolFactory[Tool] {
+) ecs.ToolFactory[netsync.World, Tool] {
 	// each factory client can get unique instance so mutex isn't necessary
-	return ecs.NewToolFactory(func(world ecs.World) Tool {
+	return ecs.NewToolFactory(func(world netsync.World) Tool {
 		arrayCtors := config.ArraysOfComponents
 		dirtySet := ecs.NewDirtySet()
 		arrays := make([]ecs.AnyComponentArray, len(arrayCtors))
@@ -57,8 +55,6 @@ func NewToolFactory(
 				nil,
 				dirtySet,
 
-				ecs.GetComponentsArray[uuid.Component](world),
-				uuidToolFactory.Build(world).UUID(),
 				logger,
 
 				world,
@@ -73,7 +69,7 @@ func (t tool) GetState() State {
 	state := State{
 		Entities: make(map[uuid.UUID]EntitySnapshot),
 	}
-	for _, entity := range t.uuidArray.GetEntities() {
+	for _, entity := range t.world.UUID().Component().GetEntities() {
 		t.captureEntity(state, entity)
 	}
 	return state
@@ -81,14 +77,14 @@ func (t tool) GetState() State {
 
 func (t tool) ApplyState(changes State) {
 	for id, snapshot := range changes.Entities {
-		entity, ok := t.uniqueTool.Entity(id)
+		entity, ok := t.world.UUID().Entity(id)
 		if snapshot.Components == nil {
 			t.world.RemoveEntity(entity)
 			continue
 		}
 		if !ok {
 			entity = t.world.NewEntity()
-			t.uuidArray.Set(entity, uuid.New(id))
+			t.world.UUID().Component().Set(entity, uuid.New(id))
 		}
 		for i, array := range t.arrays {
 			if snapshot.Components[i] != nil {
@@ -126,7 +122,7 @@ func (t tool) RecordEntitiesChange() {
 // private methods
 
 func (t tool) captureEntity(state State, entity ecs.EntityID) {
-	unique, ok := t.uuidArray.Get(entity)
+	unique, ok := t.world.UUID().Component().Get(entity)
 	if !ok {
 		return
 	}

@@ -44,23 +44,23 @@ func (c *OrthoResolutionComponent) Elem() (w, h int32) { return c.W, c.H }
 type CameraUp mgl32.Vec3
 type CameraForward mgl32.Vec3
 
-type Perspective struct {
+type PerspectiveComponent struct {
 	FovY        float32
 	AspectRatio float32
 	Near, Far   float32
 }
 
-func NewPerspective(fovY float32, aspectRatio float32, near, far float32) Perspective {
-	return Perspective{FovY: fovY, AspectRatio: aspectRatio, Near: near, Far: far}
+func NewPerspective(fovY float32, aspectRatio float32, near, far float32) PerspectiveComponent {
+	return PerspectiveComponent{FovY: fovY, AspectRatio: aspectRatio, Near: near, Far: far}
 }
 
-type DynamicPerspective struct {
+type DynamicPerspectiveComponent struct {
 	FovY      float32
 	Near, Far float32
 }
 
-func NewDynamicPerspective(fovY float32, near, far float32) DynamicPerspective {
-	return DynamicPerspective{
+func NewDynamicPerspective(fovY float32, near, far float32) DynamicPerspectiveComponent {
+	return DynamicPerspectiveComponent{
 		FovY: fovY,
 		Near: near,
 		Far:  far,

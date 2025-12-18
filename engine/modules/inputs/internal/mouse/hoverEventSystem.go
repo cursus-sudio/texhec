@@ -9,19 +9,17 @@ import (
 )
 
 type hoverEventSystem struct {
-	world           ecs.World
+	inputs.World
 	hoverEventArray ecs.ComponentsArray[inputs.MouseHoverComponent]
 	hoveredArray    ecs.ComponentsArray[inputs.HoveredComponent]
-	events          events.Events
 }
 
-func NewHoverEventsSystem() ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
+func NewHoverEventsSystem() ecs.SystemRegister[inputs.World] {
+	return ecs.NewSystemRegister(func(w inputs.World) error {
 		s := &hoverEventSystem{
-			world:           w,
+			World:           w,
 			hoverEventArray: ecs.GetComponentsArray[inputs.MouseHoverComponent](w),
 			hoveredArray:    ecs.GetComponentsArray[inputs.HoveredComponent](w),
-			events:          w.Events(),
 		}
 		events.Listen(w.EventsBuilder(), s.Listen)
 		return nil
@@ -35,6 +33,6 @@ func (s *hoverEventSystem) Listen(event frames.FrameEvent) {
 			continue
 		}
 
-		events.EmitAny(s.events, eventsComponent.Event)
+		events.EmitAny(s.Events(), eventsComponent.Event)
 	}
 }

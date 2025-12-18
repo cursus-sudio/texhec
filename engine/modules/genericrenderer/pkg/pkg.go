@@ -1,10 +1,8 @@
 package genericrendererpkg
 
 import (
-	"engine/modules/camera"
 	"engine/modules/genericrenderer"
 	"engine/modules/genericrenderer/internal/renderer"
-	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/ecs"
 	"engine/services/graphics/texture"
@@ -46,8 +44,10 @@ func (pkg) Register(b ioc.Builder) {
 			ioc.Get[logger.Logger](c),
 			ioc.Get[vbo.VBOFactory[genericrenderer.Vertex]](c),
 			ioc.Get[texture.Factory](c),
-			ioc.Get[ecs.ToolFactory[camera.CameraTool]](c),
-			ioc.Get[ecs.ToolFactory[transform.TransformTool]](c),
 		)
+	})
+
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[genericrenderer.World, genericrenderer.GenericRendererTool] {
+		return renderer.NewToolFactory()
 	})
 }

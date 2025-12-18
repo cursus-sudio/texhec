@@ -85,11 +85,12 @@ func (pkg pkg) Register(b ioc.Builder) {
 	for _, pkg := range pkg.relationPkgs {
 		pkg.Register(b)
 	}
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[tile.Tile] {
-		return ecs.NewToolFactory(func(w ecs.World) tile.Tile {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[tile.World, tile.TileTool] {
+		return ecs.NewToolFactory(func(w tile.World) tile.TileTool {
 			return &tool{
-				ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[tile.PosComponent]]](c).Build(w),
-				ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[tile.ColliderPos]]](c).Build(w),
+				ioc.Get[ecs.ToolFactory[ecs.World, relation.EntityToKeyTool[tile.PosComponent]]](c).Build(w),
+				ioc.Get[ecs.ToolFactory[ecs.World, relation.EntityToKeyTool[tile.ColliderPos]]](c).Build(w),
+				ecs.GetComponentsArray[tile.PosComponent](w),
 			}
 		})
 	})

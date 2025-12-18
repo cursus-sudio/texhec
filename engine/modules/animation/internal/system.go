@@ -17,15 +17,15 @@ type system struct {
 	animations      datastructures.SparseArray[animation.AnimationID, Animation]
 
 	logger          logger.Logger
-	world           ecs.World
+	world           animation.World
 	animationsArray ecs.ComponentsArray[animation.AnimationComponent]
 	loopArray       ecs.ComponentsArray[animation.LoopComponent]
 }
 
 func NewSystem(
 	b AnimationSystemBuilder,
-) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
+) ecs.SystemRegister[animation.World] {
+	return ecs.NewSystemRegister(func(w animation.World) error {
 		transitionFunctions := make(map[reflect.Type]animation.AnyTransitionFunction, len(b.transitionFunctions))
 		for key, transitionFunction := range b.transitionFunctions {
 			transitionFunctions[key] = transitionFunction(w)

@@ -1,22 +1,23 @@
 package systems
 
 import (
+	"engine/modules/inputs"
 	"engine/services/ecs"
 	"engine/services/frames"
-	"engine/services/media/inputs"
+	mediainputs "engine/services/media/inputs"
 
 	"github.com/ogiusek/events"
 )
 
 type inputsSystem struct {
-	inputs inputs.Api
+	inputs mediainputs.Api
 }
 
 func NewInputsSystem(
-	inputs inputs.Api,
-) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
-		s := &inputsSystem{inputs: inputs}
+	mediainputs mediainputs.Api,
+) ecs.SystemRegister[inputs.World] {
+	return ecs.NewSystemRegister(func(w inputs.World) error {
+		s := &inputsSystem{inputs: mediainputs}
 		events.Listen(w.EventsBuilder(), s.Listen)
 		return nil
 	})

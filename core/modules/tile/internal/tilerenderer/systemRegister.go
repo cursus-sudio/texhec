@@ -3,7 +3,6 @@ package tilerenderer
 import (
 	"core/modules/definition"
 	"core/modules/tile"
-	"engine/modules/camera"
 	"engine/modules/groups"
 	"engine/modules/render"
 	"engine/services/assets"
@@ -56,8 +55,8 @@ type TileRenderSystemRegister struct {
 	gridDepth float32
 	layers    int32
 
-	groups             groups.GroupsComponent
-	cameraCtorsFactory ecs.ToolFactory[camera.CameraTool]
+	world  tile.World
+	groups groups.GroupsComponent
 }
 
 func NewTileRenderSystemRegister(
@@ -70,7 +69,6 @@ func NewTileRenderSystemRegister(
 	gridDepth float32,
 	layers int32,
 	groups groups.GroupsComponent,
-	cameraCtorsFactory ecs.ToolFactory[camera.CameraTool],
 ) TileRenderSystemRegister {
 	return TileRenderSystemRegister{
 		logger:              logger,
@@ -84,8 +82,7 @@ func NewTileRenderSystemRegister(
 		gridDepth: gridDepth,
 		layers:    layers,
 
-		groups:             groups,
-		cameraCtorsFactory: cameraCtorsFactory,
+		groups: groups,
 	}
 }
 
@@ -101,7 +98,7 @@ func (service TileRenderSystemRegister) AddType(addedAssets datastructures.Spars
 	}
 }
 
-func (factory TileRenderSystemRegister) Register(w ecs.World) error {
+func (factory TileRenderSystemRegister) Register(w tile.World) error {
 	vert, err := shader.NewShader(vertSource, shader.VertexShader)
 	if err != nil {
 		return err
@@ -159,8 +156,9 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 	w.SaveGlobal(g)
 
 	dirtySet := ecs.NewDirtySet()
-	ecs.GetComponentsArray[definition.DefinitionLinkComponent](w).AddDirtySet(dirtySet)
-	ecs.GetComponentsArray[tile.PosComponent](w).AddDirtySet(dirtySet)
+	tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w)
+	w.Definition().Link().AddDirtySet(dirtySet)
+	tilePosArray.AddDirtySet(dirtySet)
 
 	s := system{
 		program:   p,
@@ -179,11 +177,7 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 		dirtySet:     dirtySet,
 		world:        w,
 		gridGroups:   factory.groups,
-		groupsArray:  ecs.GetComponentsArray[groups.GroupsComponent](w),
-		cameraArray:  ecs.GetComponentsArray[camera.CameraComponent](w),
-		tilePosArray: ecs.GetComponentsArray[tile.PosComponent](w),
-		linkArray:    ecs.GetComponentsArray[definition.DefinitionLinkComponent](w),
-		cameraCtors:  factory.cameraCtorsFactory.Build(w).Camera(),
+		tilePosArray: tilePosArray,
 	}
 
 	events.Listen(w.EventsBuilder(), s.Listen)

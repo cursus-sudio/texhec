@@ -20,7 +20,7 @@ var (
 type clickSystem struct {
 	logger logger.Logger
 
-	world        ecs.World
+	world        inputs.World
 	hoveredArray ecs.ComponentsArray[inputs.HoveredComponent]
 
 	dragArray             ecs.ComponentsArray[inputs.MouseDragComponent]
@@ -40,8 +40,8 @@ type clickSystem struct {
 	movedFrom    *window.MousePos
 }
 
-func NewClickSystem(logger logger.Logger, window window.Api) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
+func NewClickSystem(logger logger.Logger, window window.Api) ecs.SystemRegister[inputs.World] {
+	return ecs.NewSystemRegister(func(w inputs.World) error {
 		s := &clickSystem{
 			logger:       logger,
 			world:        w,

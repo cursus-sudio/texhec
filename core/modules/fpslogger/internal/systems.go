@@ -22,7 +22,7 @@ type logsSystem struct {
 func NewFpsLoggerSystem(
 	sceneMagener scenes.SceneManager,
 	console console.Console,
-) ecs.SystemRegister {
+) ecs.SystemRegister[ecs.World] {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := &logsSystem{
 			SceneManager: sceneMagener,

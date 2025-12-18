@@ -12,7 +12,6 @@ import (
 	"engine/modules/connection"
 	"engine/modules/genericrenderer"
 	"engine/modules/groups"
-	"engine/modules/hierarchy"
 	"engine/modules/inputs"
 	"engine/modules/netsync"
 	"engine/modules/render"
@@ -41,56 +40,55 @@ const (
 )
 
 func addScene(
-	world ecs.World,
+	world gamescenes.World,
 	gameAssets gameassets.GameAssets,
 	logger logger.Logger,
-	connectionTool connection.Interface,
 	isServer bool,
 ) {
 	uiCamera := world.NewEntity()
-	ecs.SaveComponent(world, uiCamera, camera.NewOrtho(-1000, +1000))
-	ecs.SaveComponent(world, uiCamera, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
-	ecs.SaveComponent(world, uiCamera, ui.UiCameraComponent{})
+	world.Camera().Ortho().Set(uiCamera, camera.NewOrtho(-1000, +1000))
+	world.Groups().Component().Set(uiCamera, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
+	world.Ui().UiCamera().Set(uiCamera, ui.UiCameraComponent{})
 
 	gameCamera := world.NewEntity()
-	ecs.SaveComponent(world, gameCamera, uuid.New([16]byte{48}))
-	ecs.SaveComponent(world, gameCamera, camera.NewOrtho(-1000, +1000))
-	ecs.SaveComponent(world, gameCamera, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
-	ecs.SaveComponent(world, gameCamera, camera.NewMobileCamera())
-	ecs.SaveComponent(world, gameCamera, camera.NewCameraLimits(
-		mgl32.Vec3{0, 0, -1000},                // min
-		mgl32.Vec3{100 * 100, 100 * 100, 1000}, // max
+	world.UUID().Component().Set(gameCamera, uuid.New([16]byte{48}))
+	world.Camera().Ortho().Set(gameCamera, camera.NewOrtho(-1000, +1000))
+	world.Groups().Component().Set(gameCamera, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
+	world.Camera().Mobile().Set(gameCamera, camera.NewMobileCamera())
+	world.Camera().Limits().Set(gameCamera, camera.NewCameraLimits(
+		mgl32.Vec3{0, 0, -1000},
+		mgl32.Vec3{100 * 100, 100 * 100, 1000},
 	))
 
 	signature := world.NewEntity()
-	ecs.SaveComponent(world, signature, transform.NewPos(5, 5, 1))
-	ecs.SaveComponent(world, signature, transform.NewSize(100, 50, 1))
-	ecs.SaveComponent(world, signature, transform.NewPivotPoint(0, .5, 0))
-	ecs.SaveComponent(world, signature, hierarchy.NewParent(uiCamera))
-	ecs.SaveComponent(world, signature, transform.NewParent(transform.RelativePos))
-	ecs.SaveComponent(world, signature, transform.NewParentPivotPoint(0, 0, .5))
-	ecs.SaveComponent(world, signature, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
+	world.Transform().Pos().Set(signature, transform.NewPos(5, 5, 1))
+	world.Transform().Size().Set(signature, transform.NewSize(100, 50, 1))
+	world.Transform().PivotPoint().Set(signature, transform.NewPivotPoint(0, .5, 0))
+	world.Hierarchy().SetParent(signature, uiCamera)
+	world.Transform().Parent().Set(signature, transform.NewParent(transform.RelativePos))
+	world.Transform().ParentPivotPoint().Set(signature, transform.NewParentPivotPoint(0, 0, .5))
+	world.Groups().Component().Set(signature, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
-	ecs.SaveComponent(world, signature, text.TextComponent{Text: "game"})
-	ecs.SaveComponent(world, signature, text.FontSizeComponent{FontSize: 32})
-	ecs.SaveComponent(world, signature, text.BreakComponent{Break: text.BreakNone})
+	world.Text().FontSize().Set(signature, text.FontSizeComponent{FontSize: 32})
+	world.Text().Break().Set(signature, text.BreakComponent{Break: text.BreakNone})
 
 	settingsEntity := world.NewEntity()
-	ecs.SaveComponent(world, settingsEntity, transform.NewPos(10, -10, 0))
-	ecs.SaveComponent(world, settingsEntity, transform.NewSize(50, 50, 1))
-	ecs.SaveComponent(world, settingsEntity, transform.NewPivotPoint(0, 1, .5))
-	ecs.SaveComponent(world, settingsEntity, hierarchy.NewParent(uiCamera))
-	ecs.SaveComponent(world, settingsEntity, transform.NewParent(transform.RelativePos))
-	ecs.SaveComponent(world, settingsEntity, transform.NewParentPivotPoint(0, 1, .5))
-	ecs.SaveComponent(world, settingsEntity, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
+	world.Transform().Pos().Set(settingsEntity, transform.NewPos(10, -10, 0))
+	world.Transform().Size().Set(settingsEntity, transform.NewSize(50, 50, 1))
+	world.Transform().PivotPoint().Set(settingsEntity, transform.NewPivotPoint(0, 1, .5))
+	world.Hierarchy().SetParent(settingsEntity, uiCamera)
+	world.Transform().Parent().Set(settingsEntity, transform.NewParent(transform.RelativePos))
+	world.Transform().ParentPivotPoint().Set(settingsEntity, transform.NewParentPivotPoint(0, 1, .5))
+	world.Groups().Component().Set(settingsEntity, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
-	ecs.SaveComponent(world, settingsEntity, render.NewMesh(gameAssets.SquareMesh))
-	ecs.SaveComponent(world, settingsEntity, render.NewTexture(gameAssets.Hud.Settings))
-	ecs.SaveComponent(world, settingsEntity, genericrenderer.PipelineComponent{})
+	world.Render().Mesh().Set(settingsEntity, render.NewMesh(gameAssets.SquareMesh))
+	world.Render().Texture().Set(settingsEntity, render.NewTexture(gameAssets.Hud.Settings))
+	world.GenericRenderer().Pipeline().Set(settingsEntity, genericrenderer.PipelineComponent{})
 
-	ecs.SaveComponent(world, settingsEntity, inputs.NewMouseLeftClick(settings.EnterSettingsEvent{}))
-	ecs.SaveComponent(world, settingsEntity, inputs.KeepSelectedComponent{})
-	ecs.SaveComponent(world, settingsEntity, collider.NewCollider(gameAssets.SquareCollider))
+	world.Inputs().MouseLeft().Set(settingsEntity, inputs.NewMouseLeftClick(settings.EnterSettingsEvent{}))
+	world.Inputs().KeepSelected().Set(settingsEntity, inputs.KeepSelectedComponent{})
+	world.Collider().Component().Set(settingsEntity, collider.NewCollider(gameAssets.SquareCollider))
+
 	if isServer {
 		rand := rand.New(rand.NewPCG(2077, 7137))
 
@@ -100,8 +98,8 @@ func addScene(
 		cols := 100
 		{
 			unit := world.NewEntity()
-			tilesPosArray.Set(unit, tile.NewPos(1, 1, tile.UnitLayer))
-			tilesTypeArray.Set(unit, definition.NewLink(definition.TileU1))
+			world.Tile().Pos().Set(unit, tile.NewPos(1, 1, tile.UnitLayer))
+			world.Definition().Link().Set(unit, definition.NewLink(definition.TileU1))
 		}
 		for i := 0; i < rows*cols; i++ {
 			row := i % cols
@@ -133,30 +131,30 @@ func addScene(
 	}
 
 	if isServer {
-		connectionTool.Host(":8080", func(cc connection.ConnectionComponent) {
+		world.Connection().Host(":8080", func(cc connection.ConnectionComponent) {
 			entity := world.NewEntity()
-			ecs.SaveComponent(world, entity, netsync.ClientComponent{})
-			ecs.SaveComponent(world, entity, cc)
+			world.NetSync().Client().Set(entity, netsync.ClientComponent{})
+			world.Connection().Component().Set(entity, cc)
 		})
 	} else {
-		comp, err := connectionTool.Connect(":8080")
+		comp, err := world.Connection().Connect(":8080")
 		if err != nil {
 			logger.Warn(errors.New("there is no server"))
 		}
 		entity := world.NewEntity()
-		ecs.SaveComponent(world, entity, netsync.ServerComponent{})
-		ecs.SaveComponent(world, entity, comp)
+		world.NetSync().Server().Set(entity, netsync.ServerComponent{})
+		world.Connection().Component().Set(entity, comp)
 	}
 }
 
 func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.GameBuilder) gamescenes.GameBuilder {
-		b.OnLoad(func(world ecs.World) {
+		b.OnLoad(func(rawWorld ecs.World) {
+			world := ioc.Get[gamescenes.WorldResolver](c)(rawWorld)
 			addScene(
 				world,
 				ioc.Get[gameassets.GameAssets](c),
 				ioc.Get[logger.Logger](c),
-				ioc.Get[ecs.ToolFactory[connection.ConnectionTool]](c).Build(world).Connection(),
 				true, // is server
 			)
 		})
@@ -164,12 +162,12 @@ func (pkg) LoadObjects(b ioc.Builder) {
 		return b
 	})
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.GameClientBuilder) gamescenes.GameClientBuilder {
-		b.OnLoad(func(world ecs.World) {
+		b.OnLoad(func(rawWorld ecs.World) {
+			world := ioc.Get[gamescenes.WorldResolver](c)(rawWorld)
 			addScene(
 				world,
 				ioc.Get[gameassets.GameAssets](c),
 				ioc.Get[logger.Logger](c),
-				ioc.Get[ecs.ToolFactory[connection.ConnectionTool]](c).Build(world).Connection(),
 				false, // is server
 			)
 		})

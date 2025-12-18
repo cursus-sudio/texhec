@@ -7,7 +7,7 @@ import (
 
 // change scene should happen after rendering
 // because on scene change everything is cleaned up
-type System ecs.SystemRegister
+type System ecs.SystemRegister[ecs.World]
 
 type ChangeSceneEvent struct {
 	ID scenes.SceneId

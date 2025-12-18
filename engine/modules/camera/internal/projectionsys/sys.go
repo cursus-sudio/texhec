@@ -16,42 +16,39 @@ import (
 // system
 
 type updateProjetionsSystem struct {
-	world  ecs.World
+	world  camera.World
 	window window.Api
 	logger logger.Logger
 
-	transformTool transform.Interface
-	cameraTool    camera.Interface
+	cameraTool camera.Interface
 
 	perspectivesDirtySet ecs.DirtySet
 	orthoDirtySet        ecs.DirtySet
 
-	cameraArray              ecs.ComponentsArray[camera.CameraComponent]
-	dynamicPerspectivesArray ecs.ComponentsArray[camera.DynamicPerspective]
-	perspectivesArray        ecs.ComponentsArray[camera.Perspective]
+	cameraArray              ecs.ComponentsArray[camera.Component]
+	dynamicPerspectivesArray ecs.ComponentsArray[camera.DynamicPerspectiveComponent]
+	perspectivesArray        ecs.ComponentsArray[camera.PerspectiveComponent]
 	orthoArray               ecs.ComponentsArray[camera.OrthoComponent]
 }
 
 func NewUpdateProjectionsSystem(
 	window window.Api,
 	logger logger.Logger,
-	transformToolFactory ecs.ToolFactory[transform.TransformTool],
-	cameraToolFactory ecs.ToolFactory[camera.CameraTool],
-) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
+	cameraToolFactory ecs.ToolFactory[camera.World, camera.CameraTool],
+) ecs.SystemRegister[camera.World] {
+	return ecs.NewSystemRegister(func(w camera.World) error {
 		s := &updateProjetionsSystem{
 			world:  w,
 			window: window,
 			logger: logger,
 
-			transformTool: transformToolFactory.Build(w).Transform(),
-			cameraTool:    cameraToolFactory.Build(w).Camera(),
+			cameraTool: cameraToolFactory.Build(w).Camera(),
 
 			perspectivesDirtySet: ecs.NewDirtySet(),
 			orthoDirtySet:        ecs.NewDirtySet(),
 
-			dynamicPerspectivesArray: ecs.GetComponentsArray[camera.DynamicPerspective](w),
-			perspectivesArray:        ecs.GetComponentsArray[camera.Perspective](w),
+			dynamicPerspectivesArray: ecs.GetComponentsArray[camera.DynamicPerspectiveComponent](w),
+			perspectivesArray:        ecs.GetComponentsArray[camera.PerspectiveComponent](w),
 			orthoArray:               ecs.GetComponentsArray[camera.OrthoComponent](w),
 		}
 
@@ -101,7 +98,7 @@ func (s *updateProjetionsSystem) UpsertOrtho() {
 			float32(h-y)/resizeOrtho.Zoom,
 			mgl32.Abs(resizeOrtho.Far-resizeOrtho.Near),
 		)
-		s.transformTool.SetAbsoluteSize(entity, transform.AbsoluteSizeComponent(size))
+		s.world.Transform().SetAbsoluteSize(entity, transform.AbsoluteSizeComponent(size))
 	}
 }
 

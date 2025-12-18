@@ -8,7 +8,7 @@ import (
 )
 
 func (t tool) GetRelativeParentPos(entity ecs.EntityID) mgl32.Vec3 {
-	parent, ok := t.hierarchyArray.Get(entity)
+	parent, ok := t.world.Hierarchy().Component().Get(entity)
 	if !ok {
 		return mgl32.Vec3{}
 	}
@@ -44,7 +44,7 @@ func (t tool) GetPivotPos(entity ecs.EntityID) mgl32.Vec3 {
 //
 
 func (t tool) GetRelativeParentRotation(entity ecs.EntityID) mgl32.Quat {
-	parent, ok := t.hierarchyArray.Get(entity)
+	parent, ok := t.world.Hierarchy().Component().Get(entity)
 	if !ok {
 		return mgl32.QuatIdent()
 	}
@@ -60,7 +60,7 @@ func (t tool) GetRelativeParentRotation(entity ecs.EntityID) mgl32.Quat {
 
 func (t tool) GetRelativeParentSize(entity ecs.EntityID) mgl32.Vec3 {
 	size := t.defaultSize.Size
-	parent, ok := t.hierarchyArray.Get(entity)
+	parent, ok := t.world.Hierarchy().Component().Get(entity)
 	if !ok {
 		return size
 	}

@@ -7,7 +7,7 @@ import (
 	"engine/modules/netsync/internal/server"
 	"engine/modules/netsync/internal/servertypes"
 	"engine/modules/netsync/internal/state"
-	"engine/modules/uuid"
+	"engine/modules/netsync/internal/tool"
 	"engine/services/codec"
 	"engine/services/ecs"
 	"engine/services/logger"
@@ -39,33 +39,34 @@ func (pkg pkg) Register(b ioc.Builder) {
 			Register(servertypes.TransparentEventDTO{})
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[state.Tool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[netsync.World, netsync.NetSyncTool] {
+		return tool.NewToolFactory()
+	})
+
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[netsync.World, state.Tool] {
 		return state.NewToolFactory(
 			*pkg.config.config,
-			ioc.Get[ecs.ToolFactory[uuid.UUIDTool]](c),
 			ioc.Get[logger.Logger](c),
 		)
 	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[server.Tool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[netsync.World, server.Tool] {
 		return server.NewToolFactory(
 			*pkg.config.config,
-			ioc.Get[ecs.ToolFactory[state.Tool]](c),
-			ioc.Get[ecs.ToolFactory[uuid.UUIDTool]](c),
+			ioc.Get[ecs.ToolFactory[netsync.World, state.Tool]](c),
 			ioc.Get[logger.Logger](c),
 		)
 	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[client.Tool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[netsync.World, client.Tool] {
 		return client.NewToolFactory(
 			*pkg.config.config,
-			ioc.Get[ecs.ToolFactory[state.Tool]](c),
-			ioc.Get[ecs.ToolFactory[uuid.UUIDTool]](c),
+			ioc.Get[ecs.ToolFactory[netsync.World, state.Tool]](c),
 			ioc.Get[logger.Logger](c),
 		)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) netsync.StartSystem {
-		clientToolFactory := ioc.Get[ecs.ToolFactory[client.Tool]](c)
-		serverToolFactory := ioc.Get[ecs.ToolFactory[server.Tool]](c)
-		return ecs.NewSystemRegister(func(w ecs.World) error {
+		clientToolFactory := ioc.Get[ecs.ToolFactory[netsync.World, client.Tool]](c)
+		serverToolFactory := ioc.Get[ecs.ToolFactory[netsync.World, server.Tool]](c)
+		return ecs.NewSystemRegister(func(w netsync.World) error {
 			clientTool := clientToolFactory.Build(w)
 			for _, listen := range clientTool.ListenToEvents {
 				listen(w.EventsBuilder(), clientTool.BeforeEvent)
@@ -91,9 +92,9 @@ func (pkg pkg) Register(b ioc.Builder) {
 		})
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) netsync.StopSystem {
-		clientToolFactory := ioc.Get[ecs.ToolFactory[client.Tool]](c)
-		serverToolFactory := ioc.Get[ecs.ToolFactory[server.Tool]](c)
-		return ecs.NewSystemRegister(func(w ecs.World) error {
+		clientToolFactory := ioc.Get[ecs.ToolFactory[netsync.World, client.Tool]](c)
+		serverToolFactory := ioc.Get[ecs.ToolFactory[netsync.World, server.Tool]](c)
+		return ecs.NewSystemRegister(func(w netsync.World) error {
 			clientTool := clientToolFactory.Build(w)
 			for _, listen := range clientTool.ListenToEvents {
 				listen(w.EventsBuilder(), clientTool.AfterEvent)

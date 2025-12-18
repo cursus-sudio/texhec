@@ -2,11 +2,9 @@ package renderer
 
 import (
 	_ "embed"
-	"engine/modules/camera"
 	"engine/modules/genericrenderer"
 	"engine/modules/groups"
 	"engine/modules/render"
-	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/ecs"
 	"engine/services/graphics/program"
@@ -63,23 +61,14 @@ func (r releasable) Release() {
 //
 
 type system struct {
-	world                ecs.World
-	transform            transform.Interface
+	genericrenderer.World
 	genericRendererArray ecs.ComponentsArray[genericrenderer.PipelineComponent]
-	groupsArray          ecs.ComponentsArray[groups.GroupsComponent]
-	textureArray         ecs.ComponentsArray[render.TextureComponent]
-	textureFrameArray    ecs.ComponentsArray[render.TextureFrameComponent]
-	colorArray           ecs.ComponentsArray[render.ColorComponent]
-	meshArray            ecs.ComponentsArray[render.MeshComponent]
-
-	cameraArray ecs.ComponentsArray[camera.CameraComponent]
 
 	window         window.Api
 	assetsStorage  assets.AssetsStorage
 	logger         logger.Logger
 	vboFactory     vbo.VBOFactory[genericrenderer.Vertex]
 	textureFactory texture.Factory
-	camerasCtors   camera.Interface
 
 	releasable
 }
@@ -90,10 +79,8 @@ func NewSystem(
 	logger logger.Logger,
 	vboFactory vbo.VBOFactory[genericrenderer.Vertex],
 	textureFactory texture.Factory,
-	camerasCtors ecs.ToolFactory[camera.CameraTool],
-	transformToolFactory ecs.ToolFactory[transform.TransformTool],
-) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
+) ecs.SystemRegister[genericrenderer.World] {
+	return ecs.NewSystemRegister(func(w genericrenderer.World) error {
 		vert, err := shader.NewShader(vertSource, shader.VertexShader)
 		if err != nil {
 			return err
@@ -130,25 +117,15 @@ func NewSystem(
 
 		w.SaveGlobal(releasable)
 
-		transformTool := transformToolFactory.Build(w)
 		system := &system{
-			world:                w,
-			transform:            transformTool.Transform(),
+			World:                w,
 			genericRendererArray: ecs.GetComponentsArray[genericrenderer.PipelineComponent](w),
-			groupsArray:          ecs.GetComponentsArray[groups.GroupsComponent](w),
-			textureArray:         ecs.GetComponentsArray[render.TextureComponent](w),
-			textureFrameArray:    ecs.GetComponentsArray[render.TextureFrameComponent](w),
-			colorArray:           ecs.GetComponentsArray[render.ColorComponent](w),
-			meshArray:            ecs.GetComponentsArray[render.MeshComponent](w),
-
-			cameraArray: ecs.GetComponentsArray[camera.CameraComponent](w),
 
 			window:         window,
 			assetsStorage:  assetsStorage,
 			logger:         logger,
 			vboFactory:     vboFactory,
 			textureFactory: textureFactory,
-			camerasCtors:   camerasCtors.Build(w).Camera(),
 
 			releasable: releasable,
 		}
@@ -162,12 +139,12 @@ func NewSystem(
 //
 
 func (m *system) getTexture(entity ecs.EntityID) (texture.Texture, error) {
-	textureComponent, ok := m.textureArray.Get(entity)
+	textureComponent, ok := m.Render().Texture().Get(entity)
 	if !ok {
 		return nil, nil
 	}
 	imagesCount, okImagesCount := m.texturesImagesCount[textureComponent]
-	textureFrameComponent, ok := m.textureFrameArray.Get(entity)
+	textureFrameComponent, ok := m.Render().TextureFrame().Get(entity)
 	if !ok {
 		textureFrameComponent = render.DefaultTextureFrameComponent()
 	}
@@ -221,19 +198,19 @@ func (m *system) getMesh(asset assets.AssetID) (vao.VAO, error) {
 func (m *system) Listen(render.RenderEvent) error {
 	m.program.Use()
 
-	for _, cameraEntity := range m.cameraArray.GetEntities() {
-		cameraGroups, ok := m.groupsArray.Get(cameraEntity)
+	for _, cameraEntity := range m.Camera().Component().GetEntities() {
+		cameraGroups, ok := m.Groups().Component().Get(cameraEntity)
 		if !ok {
 			cameraGroups = groups.DefaultGroups()
 		}
 
-		camera, err := m.camerasCtors.GetObject(cameraEntity)
+		camera, err := m.Camera().GetObject(cameraEntity)
 		if err != nil {
 			continue
 		}
 
 		for _, entity := range m.genericRendererArray.GetEntities() {
-			entityGroups, ok := m.groupsArray.Get(entity)
+			entityGroups, ok := m.Groups().Component().Get(entity)
 			if !ok {
 				entityGroups = groups.DefaultGroups()
 			}
@@ -241,7 +218,7 @@ func (m *system) Listen(render.RenderEvent) error {
 				continue
 			}
 
-			model := m.transform.Mat4(entity)
+			model := m.Transform().Mat4(entity)
 
 			textureAsset, err := m.getTexture(entity)
 			if textureAsset == nil || err != nil {
@@ -249,12 +226,12 @@ func (m *system) Listen(render.RenderEvent) error {
 				continue
 			}
 
-			colorComponent, ok := m.colorArray.Get(entity)
+			colorComponent, ok := m.Render().Color().Get(entity)
 			if !ok {
 				colorComponent = render.DefaultColor()
 			}
 
-			meshComponent, ok := m.meshArray.Get(entity)
+			meshComponent, ok := m.Render().Mesh().Get(entity)
 			if !ok {
 				continue
 			}

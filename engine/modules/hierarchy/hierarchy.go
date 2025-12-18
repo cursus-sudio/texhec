@@ -22,7 +22,13 @@ type HierarchyTool interface {
 	Hierarchy() Interface
 }
 
+type World interface {
+	ecs.World
+}
+
 type Interface interface {
+	Component() ecs.ComponentsArray[Component]
+
 	// returns true if is child of any parent doesn't matter the depth
 	IsChildOf(child ecs.EntityID, parent ecs.EntityID) bool
 	SetParent(child ecs.EntityID, parent ecs.EntityID)

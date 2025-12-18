@@ -3,7 +3,6 @@ package mobilecamerasys
 import (
 	"engine/modules/camera"
 	"engine/modules/inputs"
-	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"engine/services/media/window"
@@ -16,8 +15,7 @@ type dragSystem struct {
 	isHeld bool
 	button uint8
 
-	world             ecs.World
-	transformTool     transform.Interface
+	world             camera.World
 	mobileCameraArray ecs.ComponentsArray[camera.MobileCameraComponent]
 
 	cameraCtors camera.Interface
@@ -27,18 +25,16 @@ type dragSystem struct {
 
 func NewDragSystem(
 	dragButton uint8,
-	cameraCtors ecs.ToolFactory[camera.CameraTool],
-	transformTool ecs.ToolFactory[transform.TransformTool],
+	cameraCtors ecs.ToolFactory[camera.World, camera.CameraTool],
 	window window.Api,
 	logger logger.Logger,
-) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
+) ecs.SystemRegister[camera.World] {
+	return ecs.NewSystemRegister(func(w camera.World) error {
 		s := &dragSystem{
 			isHeld: false,
 			button: dragButton,
 
 			world:             w,
-			transformTool:     transformTool.Build(w).Transform(),
 			mobileCameraArray: ecs.GetComponentsArray[camera.MobileCameraComponent](w),
 
 			cameraCtors: cameraCtors.Build(w).Camera(),
@@ -52,8 +48,8 @@ func NewDragSystem(
 
 func (s *dragSystem) Listen(e inputs.DragEvent) {
 	for _, cameraEntity := range s.mobileCameraArray.GetEntities() {
-		pos, _ := s.transformTool.AbsolutePos().Get(cameraEntity)
-		rot, _ := s.transformTool.AbsoluteRotation().Get(cameraEntity)
+		pos, _ := s.world.Transform().AbsolutePos().Get(cameraEntity)
+		rot, _ := s.world.Transform().AbsoluteRotation().Get(cameraEntity)
 
 		camera, err := s.cameraCtors.GetObject(cameraEntity)
 		if err != nil {
@@ -68,7 +64,7 @@ func (s *dragSystem) Listen(e inputs.DragEvent) {
 		rotationDifference := mgl32.QuatBetweenVectors(rayBefore.Direction, rayAfter.Direction)
 		rot.Rotation = rotationDifference.Mul(rot.Rotation)
 
-		s.transformTool.SetAbsolutePos(cameraEntity, pos)
-		s.transformTool.SetAbsoluteRotation(cameraEntity, rot)
+		s.world.Transform().SetAbsolutePos(cameraEntity, pos)
+		s.world.Transform().SetAbsoluteRotation(cameraEntity, rot)
 	}
 }

@@ -1,9 +1,9 @@
 package client
 
 import (
+	"engine/modules/netsync"
 	"engine/modules/netsync/internal/config"
 	"engine/modules/netsync/internal/state"
-	"engine/modules/uuid"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"sync"
@@ -11,12 +11,11 @@ import (
 
 func NewToolFactory(
 	config config.Config,
-	stateToolFactory ecs.ToolFactory[state.Tool],
-	uniqueToolFactory ecs.ToolFactory[uuid.UUIDTool],
+	stateToolFactory ecs.ToolFactory[netsync.World, state.Tool],
 	logger logger.Logger,
-) ecs.ToolFactory[Tool] {
+) ecs.ToolFactory[netsync.World, Tool] {
 	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(w ecs.World) Tool {
+	return ecs.NewToolFactory(func(w netsync.World) Tool {
 		mutex.Lock()
 		defer mutex.Unlock()
 		if t, ok := ecs.GetGlobal[Tool](w); ok {
@@ -24,7 +23,6 @@ func NewToolFactory(
 		}
 		t := NewTool(
 			config,
-			uniqueToolFactory,
 			stateToolFactory,
 			logger,
 			w,

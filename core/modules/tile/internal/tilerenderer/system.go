@@ -1,10 +1,8 @@
 package tilerenderer
 
 import (
-	"core/modules/definition"
 	"core/modules/tile"
 	_ "embed"
-	"engine/modules/camera"
 	"engine/modules/groups"
 	"engine/modules/render"
 	"engine/services/datastructures"
@@ -56,13 +54,9 @@ type system struct {
 	gridDepth float32
 
 	dirtySet     ecs.DirtySet
-	world        ecs.World
-	cameraArray  ecs.ComponentsArray[camera.CameraComponent]
-	groupsArray  ecs.ComponentsArray[groups.GroupsComponent]
+	world        tile.World
 	tilePosArray ecs.ComponentsArray[tile.PosComponent]
-	linkArray    ecs.ComponentsArray[definition.DefinitionLinkComponent]
 	gridGroups   groups.GroupsComponent
-	cameraCtors  camera.Interface
 }
 
 type locations struct {
@@ -80,7 +74,7 @@ func (s *system) Listen(render.RenderEvent) {
 			layer.tiles.Remove(entity)
 			s.rendered.Remove(entity)
 		}
-		tileType, ok := s.linkArray.Get(entity)
+		tileType, ok := s.world.Definition().Link().Get(entity)
 		if !ok {
 			continue
 		}
@@ -113,13 +107,13 @@ func (s *system) Listen(render.RenderEvent) {
 		gl.Uniform1i(s.locations.TileSize, s.tileSize)
 		gl.Uniform1f(s.locations.GridDepth, s.gridDepth)
 
-		for _, cameraEntity := range s.cameraArray.GetEntities() {
-			camera, err := s.cameraCtors.GetObject(cameraEntity)
+		for _, cameraEntity := range s.world.Camera().Component().GetEntities() {
+			camera, err := s.world.Camera().GetObject(cameraEntity)
 			if err != nil {
 				continue
 			}
 
-			cameraGroups, ok := s.groupsArray.Get(cameraEntity)
+			cameraGroups, ok := s.world.Groups().Component().Get(cameraEntity)
 			if !ok {
 				cameraGroups = groups.DefaultGroups()
 			}

@@ -15,9 +15,9 @@ import (
 )
 
 type world struct {
-	World     ecs.World
-	Transform transform.Interface
-	Hierarchy hierarchy.Interface
+	ecs.World
+	hierarchy.HierarchyTool
+	transform.TransformTool
 }
 
 type Setup struct {
@@ -36,26 +36,26 @@ func NewSetup(t *testing.T) Setup {
 		pkg.Register(b)
 	}
 	c := b.Build()
-	w := ecs.NewWorld()
+	world := world{
+		World: ecs.NewWorld(),
+	}
+	world.HierarchyTool = ioc.Get[ecs.ToolFactory[hierarchy.World, hierarchy.HierarchyTool]](c).Build(world)
+	world.TransformTool = ioc.Get[ecs.ToolFactory[transform.World, transform.TransformTool]](c).Build(world)
 	return Setup{
-		world{
-			w,
-			ioc.Get[ecs.ToolFactory[transform.TransformTool]](c).Build(w).Transform(),
-			ioc.Get[ecs.ToolFactory[hierarchy.HierarchyTool]](c).Build(w).Hierarchy(),
-		},
+		world,
 		t,
 	}
 }
 
 func (setup Setup) expectAbsolutePos(entity ecs.EntityID, expectedPos transform.PosComponent) {
-	pos, _ := setup.Transform.AbsolutePos().Get(entity)
+	pos, _ := setup.Transform().AbsolutePos().Get(entity)
 	if pos.Pos != expectedPos.Pos {
 		setup.T.Errorf("expected pos %v but has %v", expectedPos, pos)
 	}
 }
 
 func (setup Setup) expectAbsoluteSize(entity ecs.EntityID, expectedSize transform.SizeComponent) {
-	size, _ := setup.Transform.AbsoluteSize().Get(entity)
+	size, _ := setup.Transform().AbsoluteSize().Get(entity)
 	if size.Size != expectedSize.Size {
 		setup.T.Errorf("expected size %v but has %v", expectedSize, size)
 	}

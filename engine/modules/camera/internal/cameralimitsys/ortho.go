@@ -10,42 +10,38 @@ import (
 )
 
 type orthoSys struct {
-	world         ecs.World
-	dirtySet      ecs.DirtySet
-	limitsArray   ecs.ComponentsArray[camera.CameraLimitsComponent]
-	orthoArray    ecs.ComponentsArray[camera.OrthoComponent]
-	transformTool transform.Interface
-	cameraTool    camera.Interface
+	world       camera.World
+	dirtySet    ecs.DirtySet
+	limitsArray ecs.ComponentsArray[camera.CameraLimitsComponent]
+	orthoArray  ecs.ComponentsArray[camera.OrthoComponent]
+	cameraTool  camera.Interface
 
 	logger logger.Logger
 }
 
 func NewOrthoSys(
-	transformToolFactory ecs.ToolFactory[transform.TransformTool],
-	cameraToolFactory ecs.ToolFactory[camera.CameraTool],
+	cameraToolFactory ecs.ToolFactory[camera.World, camera.CameraTool],
 	logger logger.Logger,
-) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
-		transformTool := transformToolFactory.Build(w).Transform()
+) ecs.SystemRegister[camera.World] {
+	return ecs.NewSystemRegister(func(w camera.World) error {
 		cameraTool := cameraToolFactory.Build(w).Camera()
 
 		dirtySet := ecs.NewDirtySet()
-		transformTool.AddDirtySet(dirtySet)
+		w.Transform().AddDirtySet(dirtySet)
 		ecs.GetComponentsArray[camera.CameraLimitsComponent](w).AddDirtySet(dirtySet)
 		ecs.GetComponentsArray[camera.OrthoComponent](w).AddDirtySet(dirtySet)
 		ecs.GetComponentsArray[camera.ViewportComponent](w).AddDirtySet(dirtySet)
 		ecs.GetComponentsArray[camera.NormalizedViewportComponent](w).AddDirtySet(dirtySet)
 
 		s := &orthoSys{
-			world:         w,
-			dirtySet:      dirtySet,
-			limitsArray:   ecs.GetComponentsArray[camera.CameraLimitsComponent](w),
-			orthoArray:    ecs.GetComponentsArray[camera.OrthoComponent](w),
-			transformTool: transformTool,
-			cameraTool:    cameraTool,
-			logger:        logger,
+			world:       w,
+			dirtySet:    dirtySet,
+			limitsArray: ecs.GetComponentsArray[camera.CameraLimitsComponent](w),
+			orthoArray:  ecs.GetComponentsArray[camera.OrthoComponent](w),
+			cameraTool:  cameraTool,
+			logger:      logger,
 		}
-		s.transformTool.Pos().BeforeGet(s.BeforeGet)
+		w.Transform().Pos().BeforeGet(s.BeforeGet)
 
 		return nil
 	})
@@ -76,7 +72,7 @@ func (s *orthoSys) BeforeGet() {
 			continue
 		}
 
-		pos, ok := s.transformTool.Pos().Get(entity)
+		pos, ok := s.world.Transform().Pos().Get(entity)
 		if !ok {
 			continue
 		}
@@ -118,6 +114,6 @@ func (s *orthoSys) BeforeGet() {
 		saves = append(saves, save{entity, pos})
 	}
 	for _, save := range saves {
-		s.transformTool.Pos().Set(save.entity, save.pos)
+		s.world.Transform().Pos().Set(save.entity, save.pos)
 	}
 }

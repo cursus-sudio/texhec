@@ -49,7 +49,7 @@ func (t tool) Init() {
 		arr.AddDependency(t.aspectRatioArray)
 		arr.AddDependency(t.pivotPointArray)
 
-		arr.AddDependency(t.hierarchyArray)
+		arr.AddDependency(t.world.Hierarchy().Component())
 		arr.AddDependency(t.parentMaskArray)
 		arr.AddDependency(t.parentPivotPointArray)
 	}

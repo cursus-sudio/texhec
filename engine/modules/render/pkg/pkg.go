@@ -18,17 +18,17 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[render.RenderTool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[render.World, render.RenderTool] {
 		return internal.NewTool()
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) render.System {
-		return ecs.NewSystemRegister(func(w ecs.World) error {
+		return ecs.NewSystemRegister(func(w render.World) error {
 			ecs.RegisterSystems(w,
 				internal.NewClearSystem(),
 				internal.NewErrorLogger(
 					ioc.Get[logger.Logger](c),
-					ioc.Get[ecs.ToolFactory[render.RenderTool]](c).Build(w),
+					ioc.Get[ecs.ToolFactory[render.World, render.RenderTool]](c).Build(w),
 				),
 				internal.NewRenderSystem(ioc.Get[window.Api](c)),
 			)

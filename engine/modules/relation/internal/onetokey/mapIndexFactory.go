@@ -9,7 +9,7 @@ import (
 func NewMapRelationFactory[IndexType comparable](
 	dirtySetFactory func(ecs.World) ecs.DirtySet,
 	componentIndexFactory func(ecs.World) func(ecs.EntityID) (IndexType, bool),
-) ecs.ToolFactory[relation.EntityToKeyTool[IndexType]] {
+) ecs.ToolFactory[ecs.World, relation.EntityToKeyTool[IndexType]] {
 	mutex := &sync.Mutex{}
 	return ecs.NewToolFactory(func(w ecs.World) relation.EntityToKeyTool[IndexType] {
 		if index, ok := ecs.GetGlobal[mapRelation[IndexType]](w); ok {

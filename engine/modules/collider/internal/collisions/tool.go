@@ -3,7 +3,6 @@ package collisions
 import (
 	"engine/modules/collider"
 	"engine/modules/groups"
-	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
@@ -17,13 +16,11 @@ import (
 type tool struct {
 	// shared
 	logger        logger.Logger
-	world         ecs.World
-	transform     transform.Interface
-	colliderArray ecs.ComponentsArray[collider.ColliderComponent]
+	world         collider.World
+	colliderArray ecs.ComponentsArray[collider.Component]
 
 	// detection
-	groupsArray ecs.ComponentsArray[groups.GroupsComponent]
-	assets      assets.Assets
+	assets assets.Assets
 
 	// tracking
 	dirtySet          ecs.DirtySet
@@ -35,28 +32,25 @@ type tool struct {
 func NewToolFactory(
 	logger logger.Logger,
 	assets assets.Assets,
-	transformToolFactory ecs.ToolFactory[transform.TransformTool],
 	chunkSize float32,
-) ecs.ToolFactory[collider.ColliderTool] {
+) ecs.ToolFactory[collider.World, collider.ColliderTool] {
 	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(world ecs.World) collider.ColliderTool {
+	return ecs.NewToolFactory(func(world collider.World) collider.ColliderTool {
 		mutex.Lock()
 		defer mutex.Unlock()
 		if t, ok := ecs.GetGlobal[tool](world); ok {
 			return t
 		}
 		dirtySet := ecs.NewDirtySet()
-		transform := transformToolFactory.Build(world).Transform()
-		transform.AddDirtySet(dirtySet)
-		ecs.GetComponentsArray[collider.ColliderComponent](world).AddDirtySet(dirtySet)
+		world.Transform().AddDirtySet(dirtySet)
+		colliderArray := ecs.GetComponentsArray[collider.Component](world)
+		colliderArray.AddDirtySet(dirtySet)
 		t := tool{
 			logger:        logger,
 			world:         world,
-			transform:     transform,
-			colliderArray: ecs.GetComponentsArray[collider.ColliderComponent](world),
+			colliderArray: colliderArray,
 
-			groupsArray: ecs.GetComponentsArray[groups.GroupsComponent](world),
-			assets:      assets,
+			assets: assets,
 
 			dirtySet:          dirtySet,
 			chunkSize:         chunkSize,
@@ -106,7 +100,7 @@ func (t tool) ApplyChanges() {
 		if _, ok := t.colliderArray.Get(entity); !ok {
 			continue
 		}
-		aabb := TransformAABB(t.transform, entity)
+		aabb := TransformAABB(t.world.Transform(), entity)
 		positions := t.getPositions(aabb)
 		t.entitiesPositions[entity] = positions
 		for _, position := range positions {
@@ -145,9 +139,11 @@ func (t tool) Remove(entities ...ecs.EntityID) {
 
 func (t tool) Collider() collider.Interface { return t }
 
+func (t tool) Component() ecs.ComponentsArray[collider.Component] { return t.colliderArray }
+
 func (t tool) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) (collider.ObjectRayCollision, error) {
 	t.ApplyChanges()
-	entityGroups, ok := t.groupsArray.Get(entity)
+	entityGroups, ok := t.world.Groups().Component().Get(entity)
 	if !ok {
 		entityGroups = groups.DefaultGroups()
 	}
@@ -155,7 +151,7 @@ func (t tool) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) (collider.O
 		return nil, nil
 	}
 
-	aabb := TransformAABB(t.transform, entity)
+	aabb := TransformAABB(t.world.Transform(), entity)
 	if ok, _ := RayAABBIntersect(ray, aabb); !ok {
 		return nil, nil
 	}
@@ -171,7 +167,7 @@ func (t tool) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) (collider.O
 
 	//
 
-	ray.Apply(t.transform.Mat4(entity).Inv())
+	ray.Apply(t.world.Transform().Mat4(entity).Inv())
 
 	aabbs := colliderAsset.AABBs()
 	ranges := colliderAsset.Ranges()

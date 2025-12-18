@@ -42,13 +42,13 @@ func Package(
 
 func (pkg pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.System) tile.System {
-		tileToolFactory := ioc.Get[ecs.ToolFactory[tile.Tile]](c)
+		tileToolFactory := ioc.Get[ecs.ToolFactory[tile.World, tile.TileTool]](c)
 		logger := ioc.Get[logger.Logger](c)
-		return ecs.NewSystemRegister(func(w ecs.World) error {
+		return ecs.NewSystemRegister(func(w tile.World) error {
 			if err := s.Register(w); err != nil {
 				return err
 			}
-			posIndex := tileToolFactory.Build(w).Tile().TilePos()
+			posIndex := tileToolFactory.Build(w).Tile().PosKey()
 			errs := ecs.RegisterSystems(w,
 				TileColliderSystem(
 					logger,
@@ -58,17 +58,16 @@ func (pkg pkg) Register(b ioc.Builder) {
 					collider.NewCollider(ioc.Get[gameassets.GameAssets](c).SquareCollider),
 					ioc.Get[uuid.Factory](c),
 				),
-				ecs.NewSystemRegister(func(w ecs.World) error {
+				ecs.NewSystemRegister(func(w tile.World) error {
 					entitiesPositions := datastructures.NewSparseArray[ecs.EntityID, tile.PosComponent]()
 					dirtyEntities := ecs.NewDirtySet()
 
 					posArray := ecs.GetComponentsArray[tile.PosComponent](w)
 					tileColliderArray := ecs.GetComponentsArray[ColliderComponent](w)
-					colliderArray := ecs.GetComponentsArray[collider.ColliderComponent](w)
 
 					posArray.AddDirtySet(dirtyEntities)
 
-					colliderArray.BeforeGet(func() {
+					w.Collider().Component().BeforeGet(func() {
 						entities := dirtyEntities.Get()
 						if len(entities) == 0 {
 							return

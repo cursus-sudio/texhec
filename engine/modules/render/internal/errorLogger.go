@@ -13,11 +13,11 @@ import (
 
 type errorLogger struct {
 	logger logger.Logger
-	render.Tool
+	render.RenderTool
 }
 
-func NewErrorLogger(logger logger.Logger, t render.Tool) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
+func NewErrorLogger(logger logger.Logger, t render.RenderTool) ecs.SystemRegister[render.World] {
+	return ecs.NewSystemRegister(func(w render.World) error {
 		s := &errorLogger{logger, t}
 		events.Listen(w.EventsBuilder(), s.Listen)
 		return nil

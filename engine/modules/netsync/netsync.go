@@ -1,11 +1,26 @@
 package netsync
 
 import (
+	"engine/modules/connection"
+	"engine/modules/uuid"
 	"engine/services/ecs"
 )
 
-type StartSystem ecs.SystemRegister
-type StopSystem ecs.SystemRegister
+type NetSyncTool interface {
+	NetSync() Interface
+}
+type World interface {
+	ecs.World
+	uuid.UUIDTool
+	connection.ConnectionTool
+}
+type Interface interface {
+	Server() ecs.ComponentsArray[ServerComponent]
+	Client() ecs.ComponentsArray[ClientComponent]
+}
+
+type StartSystem ecs.SystemRegister[World]
+type StopSystem ecs.SystemRegister[World]
 
 // entity with this component and with connection component will be one with which we'll synchronize
 type ServerComponent struct{}

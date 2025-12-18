@@ -39,13 +39,17 @@ import (
 	"engine/modules/transform/pkg"
 	"engine/modules/uuid/pkg"
 	"engine/services/assets"
+	"engine/services/clock"
+	"engine/services/codec"
 	"engine/services/console"
 	"engine/services/datastructures"
+	"engine/services/eventspkg"
 	"engine/services/frames"
 	"engine/services/graphics/texture"
 	"engine/services/graphics/texturearray"
 	"engine/services/logger"
 	"engine/services/media"
+	"engine/services/runtime"
 	"engine/services/scenes"
 	"errors"
 	"fmt"
@@ -62,9 +66,7 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-func frontendDic(
-	sharedPkg SharedPkg,
-) ioc.Dic {
+func getDic() ioc.Dic {
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		panic(fmt.Errorf("Failed to initialize SDL: %s", err))
 	}
@@ -124,7 +126,11 @@ func frontendDic(
 	engineDir = filepath.Dir(engineDir)
 
 	pkgs := []ioc.Pkg{
-		sharedPkg,
+		clock.Package(time.RFC3339Nano),
+		eventspkg.Package(),
+		codec.Package(),
+		runtime.Package(),
+
 		assets.Package("assets/files/"),
 		logger.Package(true, func(c ioc.Dic, message string) {
 			ioc.Get[console.Console](c).PrintPermanent(message)

@@ -4,16 +4,14 @@ import (
 	"engine/modules/relation"
 	"engine/services/datastructures"
 	"engine/services/ecs"
-	"sync"
 )
 
 type spatialRelation[IndexType any] struct {
-	world   ecs.World
-	mutex   *sync.Mutex
-	indices datastructures.SparseArray[uint32, ecs.EntityID]
+	world    ecs.World
+	dirtySet ecs.DirtySet
 
-	upsertListeners []func([]ecs.EntityID)
-	removeListeners []func([]ecs.EntityID)
+	entities datastructures.SparseArray[ecs.EntityID, uint32]
+	indices  datastructures.SparseArray[uint32, ecs.EntityID]
 
 	componentIndex func(ecs.EntityID) (IndexType, bool)
 	indexNumber    func(IndexType) uint32
@@ -21,84 +19,40 @@ type spatialRelation[IndexType any] struct {
 
 func newSpatialIndex[IndexType any](
 	w ecs.World,
-	query ecs.LiveQuery,
+	dirtySet ecs.DirtySet,
 	componentIndex func(ecs.EntityID) (IndexType, bool),
 	indexNumber func(IndexType) uint32,
 ) relation.EntityToKeyTool[IndexType] {
 	indexGlobal := spatialRelation[IndexType]{
-		world:   w,
-		mutex:   &sync.Mutex{},
-		indices: datastructures.NewSparseArray[uint32, ecs.EntityID](),
+		world:    w,
+		dirtySet: dirtySet,
 
-		upsertListeners: make([]func([]ecs.EntityID), 0),
-		removeListeners: make([]func([]ecs.EntityID), 0),
+		entities: datastructures.NewSparseArray[ecs.EntityID, uint32](),
+		indices:  datastructures.NewSparseArray[uint32, ecs.EntityID](),
 
 		componentIndex: componentIndex,
 		indexNumber:    indexNumber,
 	}
 	w.SaveGlobal(indexGlobal)
 
-	query.OnAdd(indexGlobal.Upsert)
-	query.OnChange(indexGlobal.Upsert)
-	query.OnRemove(indexGlobal.Remove)
-
 	return indexGlobal
 }
 
 func (i spatialRelation[IndexType]) Get(index IndexType) (ecs.EntityID, bool) {
-	number := i.indexNumber(index)
-	return i.indices.Get(number)
-}
-
-func (i spatialRelation[IndexType]) OnUpsert(listener func([]ecs.EntityID)) {
-	if values := i.indices.GetValues(); len(values) != 0 {
-		listener(values)
-	}
-	i.upsertListeners = append(i.upsertListeners, listener)
-	i.world.SaveGlobal(i)
-}
-
-func (i spatialRelation[IndexType]) OnRemove(listener func([]ecs.EntityID)) {
-	i.removeListeners = append(i.removeListeners, listener)
-	i.world.SaveGlobal(i)
-}
-
-func (i spatialRelation[IndexType]) Upsert(ei []ecs.EntityID) {
-	i.mutex.Lock()
-	defer i.mutex.Unlock()
-	added := make([]ecs.EntityID, 0, len(ei))
-	for _, entity := range ei {
+	for _, entity := range i.dirtySet.Get() {
 		indexType, ok := i.componentIndex(entity)
 		if !ok {
+			if number, ok := i.entities.Get(entity); ok {
+				i.entities.Remove(entity)
+				i.indices.Remove(number)
+			}
 			continue
 		}
-		added = append(added, entity)
 		number := i.indexNumber(indexType)
+		i.entities.Set(entity, number)
 		i.indices.Set(number, entity)
 	}
-	if len(added) != 0 {
-		for _, listener := range i.upsertListeners {
-			listener(added)
-		}
-	}
-}
 
-func (i spatialRelation[IndexType]) Remove(ei []ecs.EntityID) {
-	i.mutex.Lock()
-	defer i.mutex.Unlock()
-	removed := make([]ecs.EntityID, 0, len(ei))
-	for _, entity := range ei {
-		indexType, ok := i.componentIndex(entity)
-		if !ok {
-			continue
-		}
-		number := i.indexNumber(indexType)
-		i.indices.Remove(number)
-		removed = append(removed, entity)
-	}
-	if len(removed) != 0 {
-		for _, listener := range i.removeListeners {
-			listener(removed)
-		}
-	}
+	number := i.indexNumber(index)
+	return i.indices.Get(number)
 }

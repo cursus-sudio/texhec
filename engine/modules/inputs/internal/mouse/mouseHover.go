@@ -8,23 +8,19 @@ import (
 )
 
 type hoverSystem struct {
-	world           ecs.World
-	hoveredArray    ecs.ComponentsArray[inputs.HoveredComponent]
-	mouseEnterArray ecs.ComponentsArray[inputs.MouseEnterComponent]
-	mouseLeaveArray ecs.ComponentsArray[inputs.MouseLeaveComponent]
-	events          events.Events
-	target          *ecs.EntityID
+	inputs.World
+	inputs.InputsTool
+	target *ecs.EntityID
 }
 
-func NewHoverSystem() ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
+func NewHoverSystem(
+	inputsToolFactory ecs.ToolFactory[inputs.World, inputs.InputsTool],
+) ecs.SystemRegister[inputs.World] {
+	return ecs.NewSystemRegister(func(w inputs.World) error {
 		s := &hoverSystem{
-			world:           w,
-			hoveredArray:    ecs.GetComponentsArray[inputs.HoveredComponent](w),
-			mouseEnterArray: ecs.GetComponentsArray[inputs.MouseEnterComponent](w),
-			mouseLeaveArray: ecs.GetComponentsArray[inputs.MouseLeaveComponent](w),
-			events:          w.Events(),
-			target:          nil,
+			World:      w,
+			InputsTool: inputsToolFactory.Build(w),
+			target:     nil,
 		}
 
 		events.Listen(w.EventsBuilder(), s.Listen)
@@ -33,13 +29,13 @@ func NewHoverSystem() ecs.SystemRegister {
 }
 
 func (s *hoverSystem) handleMouseLeave(entity ecs.EntityID) {
-	s.hoveredArray.RemoveComponent(entity)
+	s.Inputs().Hovered().Remove(entity)
 
-	mouseLeave, err := s.mouseLeaveArray.GetComponent(entity)
-	if err != nil {
+	mouseLeave, ok := s.Inputs().MouseLeave().Get(entity)
+	if !ok {
 		return
 	}
-	events.EmitAny(s.events, mouseLeave.Event)
+	events.EmitAny(s.Events(), mouseLeave.Event)
 }
 
 func (s *hoverSystem) Listen(event RayChangedTargetEvent) {
@@ -53,9 +49,9 @@ func (s *hoverSystem) Listen(event RayChangedTargetEvent) {
 	s.target = event.EntityID
 	entity := *event.EntityID
 
-	s.hoveredArray.SaveComponent(entity, inputs.HoveredComponent{Camera: event.Camera})
+	s.Inputs().Hovered().Set(entity, inputs.HoveredComponent{Camera: event.Camera})
 
-	if mouseEnter, err := s.mouseEnterArray.GetComponent(entity); err == nil {
-		events.EmitAny(s.events, mouseEnter.Event)
+	if mouseEnter, ok := s.Inputs().MouseEnter().Get(entity); ok {
+		events.EmitAny(s.Events(), mouseEnter.Event)
 	}
 }

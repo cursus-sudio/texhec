@@ -27,14 +27,14 @@ func (t Transition) NormalizedState(state animation.AnimationState) animation.An
 	return state / duration
 }
 
-func (t Transition) CallTransitionFunction(entity ecs.EntityID, normalizedState animation.AnimationState) error {
+func (t Transition) CallTransitionFunction(entity ecs.EntityID, normalizedState animation.AnimationState) {
 	args := animation.TransitionFunctionAnyArgument{
 		Entity: entity,
 		From:   t.From,
 		To:     t.To,
 		State:  normalizedState,
 	}
-	return t.TransitionFunction(args)
+	t.TransitionFunction(args)
 }
 
 type Animation struct {

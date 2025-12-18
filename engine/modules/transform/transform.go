@@ -1,8 +1,46 @@
 package transform
 
 import (
+	"engine/modules/hierarchy"
+	"engine/services/ecs"
+
 	"github.com/go-gl/mathgl/mgl32"
 )
+
+type TransformTool interface {
+	Transform() Interface
+}
+
+type World interface { // these are dependencies of transform package
+	ecs.World
+	hierarchy.HierarchyTool
+}
+
+type Interface interface {
+	SetAbsolutePos(ecs.EntityID, AbsolutePosComponent)
+	SetAbsoluteRotation(ecs.EntityID, AbsoluteRotationComponent)
+	SetAbsoluteSize(ecs.EntityID, AbsoluteSizeComponent)
+
+	AbsolutePos() ecs.ComponentsArray[AbsolutePosComponent]
+	AbsoluteRotation() ecs.ComponentsArray[AbsoluteRotationComponent]
+	AbsoluteSize() ecs.ComponentsArray[AbsoluteSizeComponent]
+
+	Pos() ecs.ComponentsArray[PosComponent]
+	Rotation() ecs.ComponentsArray[RotationComponent]
+	Size() ecs.ComponentsArray[SizeComponent]
+
+	MaxSize() ecs.ComponentsArray[MaxSizeComponent]
+	MinSize() ecs.ComponentsArray[MinSizeComponent]
+
+	AspectRatio() ecs.ComponentsArray[AspectRatioComponent]
+	PivotPoint() ecs.ComponentsArray[PivotPointComponent]
+
+	Parent() ecs.ComponentsArray[ParentComponent]
+	ParentPivotPoint() ecs.ComponentsArray[ParentPivotPointComponent]
+
+	Mat4(ecs.EntityID) mgl32.Mat4
+	AddDirtySet(ecs.DirtySet)
+}
 
 // components
 
@@ -36,6 +74,10 @@ const (
 type PosComponent struct{ Pos mgl32.Vec3 }
 type RotationComponent struct{ Rotation mgl32.Quat }
 type SizeComponent struct{ Size mgl32.Vec3 }
+
+type AbsolutePosComponent struct{ Pos mgl32.Vec3 }
+type AbsoluteRotationComponent struct{ Rotation mgl32.Quat }
+type AbsoluteSizeComponent struct{ Size mgl32.Vec3 }
 
 type MinSizeComponent SizeComponent // refers to absolute size. 0 means ignore axis
 type MaxSizeComponent SizeComponent // refers to absolute size. 0 means ignore axis

@@ -4,6 +4,7 @@ import (
 	"engine/modules/animation"
 	"engine/modules/animation/internal"
 	"engine/services/codec"
+	"engine/services/ecs"
 	"engine/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
@@ -35,6 +36,10 @@ func (pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) animation.AnimationSystemBuilder {
 		return ioc.Get[internal.AnimationSystemBuilder](c)
+	})
+
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[animation.World, animation.AnimationTool] {
+		return internal.NewToolFactory()
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) animation.System {

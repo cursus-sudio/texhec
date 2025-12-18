@@ -1,14 +1,18 @@
 package connection
 
-import "engine/services/ecs"
+import (
+	"engine/modules/uuid"
+	"engine/services/ecs"
+)
 
 // system
 
-type System ecs.SystemRegister
+type System ecs.SystemRegister[World]
 
 // types
 
-type Connection interface {
+// singular connection interface
+type Conn interface {
 	// send has block behavior
 	Send(message any) error
 
@@ -20,20 +24,31 @@ type Connection interface {
 // components
 
 type ConnectionComponent struct {
-	conn Connection
+	conn Conn
 }
 
-func NewConnection(conn Connection) ConnectionComponent {
+func NewConnection(conn Conn) ConnectionComponent {
 	return ConnectionComponent{conn}
 }
 
-func (comp ConnectionComponent) Conn() Connection {
+func (comp ConnectionComponent) Conn() Conn {
 	return comp.conn
 }
 
 // tool
 
-type Tool interface {
+type ConnectionTool interface {
+	Connection() Interface
+}
+
+type World interface {
+	ecs.World
+	uuid.UUIDTool
+}
+
+type Interface interface {
+	Component() ecs.ComponentsArray[ConnectionComponent]
+
 	Host(addr string, conn func(ConnectionComponent)) error
 	Connect(addr string) (ConnectionComponent, error)
 	MockConnectionPair() (c1, c2 ConnectionComponent)

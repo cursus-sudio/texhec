@@ -3,77 +3,59 @@ package transformtool
 import (
 	"engine/modules/transform"
 	"engine/services/ecs"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
+type save struct {
+	entity ecs.EntityID
+	pos    transform.AbsolutePosComponent
+	rot    transform.AbsoluteRotationComponent
+	size   transform.AbsoluteSizeComponent
+}
+
 func (t tool) Init() {
-	onPosUpsert := func(ei []ecs.EntityID) {
-		posTransaction := t.posArray.Transaction()
-		for _, entity := range ei {
-			parentObj := t.hierarchyTransaction.GetObject(entity)
-			for _, child := range parentObj.Children().GetIndices() {
-				mask, err := t.parentMaskArray.GetComponent(child)
-				if err != nil {
-					continue
-				}
-				if mask.RelativeMask&transform.RelativePos != 0 {
-					posTransaction.TriggerChangeListener(child)
-				}
-			}
-		}
-		t.logger.Warn(ecs.FlushMany(posTransaction))
+	arrays := []ecs.AnyComponentArray{
+		t.absolutePosArray,
+		t.absoluteRotationArray,
+		t.absoluteSizeArray,
 	}
 
-	onRotUpsert := func(ei []ecs.EntityID) {
-		posTransaction := t.posArray.Transaction()
-		rotTransaction := t.posArray.Transaction()
-		for _, entity := range ei {
-			parentObj := t.hierarchyTransaction.GetObject(entity)
-			for _, child := range parentObj.Children().GetIndices() {
-				mask, err := t.parentMaskArray.GetComponent(child)
-				if err != nil {
-					continue
-				}
-				if mask.RelativeMask&transform.RelativePos != 0 {
-					posTransaction.TriggerChangeListener(child)
-				}
-				if mask.RelativeMask&transform.RelativeRotation != 0 {
-					rotTransaction.TriggerChangeListener(child)
-				}
-			}
-		}
-		t.logger.Warn(ecs.FlushMany(posTransaction, rotTransaction))
+	t.posArray.SetEmpty(transform.PosComponent{Pos: mgl32.Vec3{0, 0, 0}})
+	t.rotationArray.SetEmpty(t.defaultRot)
+	t.sizeArray.SetEmpty(t.defaultSize)
+
+	t.maxSizeArray.SetEmpty(transform.NewMaxSize(0, 0, 0)) // 0 means not set
+	t.minSizeArray.SetEmpty(transform.NewMinSize(0, 0, 0)) // 0 means not set
+
+	t.aspectRatioArray.SetEmpty(transform.NewAspectRatio(0, 0, 0, 0)) // 0 means not set
+	t.pivotPointArray.SetEmpty(t.defaultPivot)
+
+	t.parentMaskArray.SetEmpty(transform.NewParent(transform.RelativePos))
+	t.parentPivotPointArray.SetEmpty(t.defaultParentPivot)
+
+	t.absolutePosArray.SetEmpty(transform.AbsolutePosComponent{Pos: mgl32.Vec3{0, 0, 0}})
+	t.absoluteRotationArray.SetEmpty(transform.AbsoluteRotationComponent(t.defaultRot))
+	t.absoluteSizeArray.SetEmpty(transform.AbsoluteSizeComponent(t.defaultSize))
+
+	for _, arr := range arrays {
+		arr.AddDependency(t.posArray)
+		arr.AddDependency(t.rotationArray)
+		arr.AddDependency(t.sizeArray)
+
+		arr.AddDependency(t.maxSizeArray)
+		arr.AddDependency(t.minSizeArray)
+
+		arr.AddDependency(t.aspectRatioArray)
+		arr.AddDependency(t.pivotPointArray)
+
+		arr.AddDependency(t.world.Hierarchy().Component())
+		arr.AddDependency(t.parentMaskArray)
+		arr.AddDependency(t.parentPivotPointArray)
 	}
 
-	onSizeUpsert := func(ei []ecs.EntityID) {
-		posTransaction := t.posArray.Transaction()
-		sizeTransaction := t.posArray.Transaction()
-		for _, entity := range ei {
-			parentObj := t.hierarchyTransaction.GetObject(entity)
-			for _, child := range parentObj.Children().GetIndices() {
-				mask, err := t.parentMaskArray.GetComponent(child)
-				if err != nil {
-					continue
-				}
-				if mask.RelativeMask&transform.RelativePos != 0 {
-					posTransaction.TriggerChangeListener(child)
-				}
-				if mask.RelativeMask&transform.RelativeSizeXYZ != 0 {
-					sizeTransaction.TriggerChangeListener(child)
-				}
-			}
-		}
-		t.logger.Warn(ecs.FlushMany(posTransaction, sizeTransaction))
+	for _, array := range arrays {
+		array.AddDirtySet(t.dirtySet)
+		array.BeforeGet(t.BeforeGet)
 	}
-
-	t.posArray.OnChange(onPosUpsert)
-	t.pivotPointArray.OnChange(onPosUpsert)
-	t.parentPivotPointArray.OnChange(onPosUpsert)
-	t.rotationArray.OnChange(onRotUpsert)
-	t.sizeArray.OnChange(onSizeUpsert)
-
-	// t.posArray.OnAdd(onPosUpsert)
-	// t.pivotPointArray.OnAdd(onPosUpsert)
-	// t.parentPivotPointArray.OnAdd(onPosUpsert)
-	// t.rotationArray.OnAdd(onRotUpsert)
-	// t.sizeArray.OnAdd(onSizeUpsert)
 }

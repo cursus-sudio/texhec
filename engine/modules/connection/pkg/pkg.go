@@ -18,13 +18,13 @@ func Package() ioc.Pkg {
 
 func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) connection.System {
-		return ecs.NewSystemRegister(func(w ecs.World) error {
-			ioc.Get[ecs.ToolFactory[connection.Tool]](c).
+		return ecs.NewSystemRegister(func(w connection.World) error {
+			ioc.Get[ecs.ToolFactory[connection.World, connection.ConnectionTool]](c).
 				Build(w)
 			return nil
 		})
 	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[connection.Tool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[connection.World, connection.ConnectionTool] {
 		return internal.NewToolFactory(
 			ioc.Get[codec.Codec](c),
 			ioc.Get[logger.Logger](c),

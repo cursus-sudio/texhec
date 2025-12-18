@@ -6,11 +6,6 @@ import (
 	"core/modules/ui"
 	"core/modules/ui/internal/uitool"
 	"engine/modules/animation"
-	"engine/modules/camera"
-	"engine/modules/hierarchy"
-	"engine/modules/render"
-	"engine/modules/text"
-	"engine/modules/transform"
 	"engine/services/codec"
 	"engine/services/ecs"
 	"engine/services/logger"
@@ -51,24 +46,18 @@ func (pkg pkg) Register(b ioc.Builder) {
 			Register(ui.HideUiEvent{})
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[ui.Tool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[ui.World, ui.UiTool] {
 		return uitool.NewToolFactory(
 			pkg.animationDuration,
 			pkg.showAnimation,
 			pkg.hideAnimation,
 			ioc.Get[gameassets.GameAssets](c),
 			ioc.Get[logger.Logger](c),
-			ioc.Get[ecs.ToolFactory[camera.Tool]](c),
-			ioc.Get[ecs.ToolFactory[transform.Tool]](c),
-			ioc.Get[ecs.ToolFactory[tile.Tool]](c),
-			ioc.Get[ecs.ToolFactory[text.Tool]](c),
-			ioc.Get[ecs.ToolFactory[render.Tool]](c),
-			ioc.Get[ecs.ToolFactory[hierarchy.Tool]](c),
 		)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ui.System {
-		factory := ioc.Get[ecs.ToolFactory[ui.Tool]](c)
-		return ecs.NewSystemRegister(func(w ecs.World) error {
+		factory := ioc.Get[ecs.ToolFactory[ui.World, ui.UiTool]](c)
+		return ecs.NewSystemRegister(func(w ui.World) error {
 			events.Listen(w.EventsBuilder(), func(e sdl.MouseButtonEvent) {
 				if e.Button != sdl.BUTTON_RIGHT || e.State != sdl.RELEASED {
 					return

@@ -1,9 +1,9 @@
 package server
 
 import (
+	"engine/modules/netsync"
 	"engine/modules/netsync/internal/config"
 	"engine/modules/netsync/internal/state"
-	"engine/modules/uuid"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"sync"
@@ -11,23 +11,20 @@ import (
 
 func NewToolFactory(
 	config config.Config,
-	stateToolFactory ecs.ToolFactory[state.Tool],
-	uniqueToolFactory ecs.ToolFactory[uuid.Tool],
+	netSyncToolFactory ecs.ToolFactory[netsync.World, netsync.NetSyncTool],
+	stateToolFactory ecs.ToolFactory[netsync.World, state.Tool],
 	logger logger.Logger,
-) ecs.ToolFactory[Tool] {
+) ecs.ToolFactory[netsync.World, Tool] {
 	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(w ecs.World) Tool {
-		if t, err := ecs.GetGlobal[Tool](w); err == nil {
-			return t
-		}
+	return ecs.NewToolFactory(func(w netsync.World) Tool {
 		mutex.Lock()
 		defer mutex.Unlock()
-		if t, err := ecs.GetGlobal[Tool](w); err == nil {
+		if t, ok := ecs.GetGlobal[Tool](w); ok {
 			return t
 		}
 		t := NewTool(
 			config,
-			uniqueToolFactory,
+			netSyncToolFactory,
 			stateToolFactory,
 			logger,
 			w,

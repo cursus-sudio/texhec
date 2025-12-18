@@ -6,7 +6,6 @@ import (
 	"engine/services/ecs"
 	"engine/services/frames"
 	"engine/services/logger"
-	"errors"
 	"fmt"
 	"reflect"
 
@@ -17,17 +16,16 @@ type system struct {
 	easingFunctions datastructures.SparseArray[animation.EasingFunctionID, animation.EasingFunction]
 	animations      datastructures.SparseArray[animation.AnimationID, Animation]
 
-	logger                logger.Logger
-	world                 ecs.World
-	animationsArray       ecs.ComponentsArray[animation.AnimationComponent]
-	loopArray             ecs.ComponentsArray[animation.LoopComponent]
-	animationsTransaction ecs.ComponentsArrayTransaction[animation.AnimationComponent]
+	logger          logger.Logger
+	world           animation.World
+	animationsArray ecs.ComponentsArray[animation.AnimationComponent]
+	loopArray       ecs.ComponentsArray[animation.LoopComponent]
 }
 
 func NewSystem(
 	b AnimationSystemBuilder,
-) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
+) ecs.SystemRegister[animation.World] {
+	return ecs.NewSystemRegister(func(w animation.World) error {
 		transitionFunctions := make(map[reflect.Type]animation.AnyTransitionFunction, len(b.transitionFunctions))
 		for key, transitionFunction := range b.transitionFunctions {
 			transitionFunctions[key] = transitionFunction(w)
@@ -78,14 +76,13 @@ func NewSystem(
 			easingFunctions: b.easingFunctions,
 			animations:      animations,
 
-			logger:                b.logger,
-			world:                 w,
-			animationsArray:       animationsArray,
-			loopArray:             loopArray,
-			animationsTransaction: animationsArray.Transaction(),
+			logger:          b.logger,
+			world:           w,
+			animationsArray: animationsArray,
+			loopArray:       loopArray,
 		}
 
-		events.ListenE(w.EventsBuilder(), s.ListenE)
+		events.Listen(w.EventsBuilder(), s.Listen)
 
 		return nil
 	})
@@ -112,27 +109,22 @@ func (s *system) ApplyAnimation(
 			continue
 		}
 		currentState = transition.EasingFunction(currentState)
-		if err := transition.CallTransitionFunction(entity, currentState); err != nil {
-			s.logger.Warn(errors.Join(
-				fmt.Errorf("unexpected error when calling transition function"),
-				err,
-			))
-			continue
-		}
+		transition.CallTransitionFunction(entity, currentState)
 	}
 }
 
-func (s *system) ListenE(event frames.FrameEvent) error {
-	for _, entity := range s.animationsArray.GetEntities() {
-		animationComp, err := s.animationsArray.GetComponent(entity)
-		if err != nil {
+func (s *system) Listen(event frames.FrameEvent) {
+	animatedEntities := s.animationsArray.GetEntities()
+	for _, entity := range animatedEntities {
+		animationComp, ok := s.animationsArray.Get(entity)
+		if !ok {
 			continue
 		}
 		originalAnimationComp := animationComp
 		animationComp.AddElapsedTime(event.Delta)
 
 		if animationComp.PreviousState == animationComp.State {
-			s.animationsTransaction.SaveComponent(entity, animationComp)
+			s.animationsArray.Set(entity, animationComp)
 			continue
 		}
 
@@ -142,24 +134,24 @@ func (s *system) ListenE(event frames.FrameEvent) error {
 				"expected animation data with id \"%v\" to exist",
 				animationComp.AnimationID,
 			))
-			s.animationsTransaction.SaveComponent(entity, animationComp)
+			s.animationsArray.Set(entity, animationComp)
 			continue
 		}
 
 		s.ApplyAnimation(entity, animationComp, animationData)
 
 		if animationComp.State < 1 {
-			s.animationsTransaction.SaveComponent(entity, animationComp)
+			s.animationsArray.Set(entity, animationComp)
 			continue
 		}
 
 		loop := true
-		if _, err := s.loopArray.GetComponent(entity); err != nil {
+		if _, ok := s.loopArray.Get(entity); !ok {
 			loop = false
 		}
 
 		if !loop {
-			s.animationsArray.RemoveComponent(entity)
+			s.animationsArray.Remove(entity)
 			continue
 		}
 
@@ -168,7 +160,6 @@ func (s *system) ListenE(event frames.FrameEvent) error {
 
 		s.ApplyAnimation(entity, animationComp, animationData)
 
-		s.animationsTransaction.SaveComponent(entity, animationComp)
+		s.animationsArray.Set(entity, animationComp)
 	}
-	return ecs.FlushMany(s.animationsTransaction)
 }

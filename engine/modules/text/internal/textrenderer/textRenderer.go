@@ -1,17 +1,14 @@
 package textrenderer
 
 import (
-	"engine/modules/camera"
 	"engine/modules/groups"
 	rendersys "engine/modules/render"
 	"engine/modules/text"
-	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/graphics/program"
 	"engine/services/graphics/texturearray"
-	"engine/services/httperrors"
 	"engine/services/logger"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -25,14 +22,12 @@ type locations struct {
 }
 
 type textRenderer struct {
-	world                ecs.World
-	groupsArray          ecs.ComponentsArray[groups.GroupsComponent]
-	colorArray           ecs.ComponentsArray[text.TextColorComponent]
-	transformTransaction transform.Transaction
-	cameraQuery          ecs.LiveQuery
+	*textRendererRegister
+
+	text.World
+	text text.Interface
 
 	logger      logger.Logger
-	cameraCtors camera.Tool
 	fontService FontService
 
 	program   program.Program
@@ -45,73 +40,8 @@ type textRenderer struct {
 	fontKeys     FontKeys
 	fontsBatches datastructures.SparseArray[FontKey, fontBatch]
 
+	dirtyEntities  ecs.DirtySet
 	layoutsBatches datastructures.SparseArray[ecs.EntityID, layoutBatch]
-}
-
-func (s *textRenderer) ensureOnlyFontsExist(assets []assets.AssetID) error {
-	wantedKeys := datastructures.NewSparseSet[FontKey]()
-	for _, asset := range assets {
-		wantedKeys.Add(s.fontKeys.GetKey(asset))
-	}
-	existingKeys := datastructures.NewSparseSet[FontKey]()
-	for _, key := range s.fontsBatches.GetIndices() {
-		existingKeys.Add(key)
-	}
-
-	notUsedkeys := datastructures.NewSparseSet[FontKey]()
-	for _, existingKey := range existingKeys.GetIndices() {
-		isWanted := wantedKeys.Get(existingKey)
-		if isWanted {
-			continue
-		}
-		notUsedkeys.Add(existingKey)
-	}
-
-	keysToAdd := datastructures.NewSparseSet[FontKey]()
-	for _, wantedKey := range wantedKeys.GetIndices() {
-		exists := existingKeys.Get(wantedKey)
-		if exists {
-			continue
-		}
-		keysToAdd.Add(wantedKey)
-	}
-
-	for _, key := range notUsedkeys.GetIndices() {
-		batch, _ := s.fontsBatches.Get(key)
-		batch.Release()
-		s.fontsBatches.Remove(key)
-
-	}
-
-	for _, key := range wantedKeys.GetIndices() {
-		if err := s.ensureFontKeyExists(key); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (s *textRenderer) ensureFontKeyExists(key FontKey) error {
-	asset, ok := s.fontKeys.GetAsset(key)
-	if !ok {
-		return httperrors.Err500
-	}
-	if batch, ok := s.fontsBatches.Get(key); ok {
-		batch.Release()
-		s.fontsBatches.Remove(key)
-	}
-
-	font, err := s.fontService.AssetFont(asset)
-	if err != nil {
-		return err
-	}
-	batch, err := NewFontBatch(s.textureFactory, font)
-	if err != nil {
-		return err
-	}
-	s.fontsBatches.Set(key, batch)
-	return nil
 }
 
 func (s *textRenderer) ensureFontExists(asset assets.AssetID) error {
@@ -136,37 +66,80 @@ func (s *textRenderer) ensureFontExists(asset assets.AssetID) error {
 func (s *textRenderer) Listen(rendersys.RenderEvent) {
 	s.program.Use()
 
+	dirtyEntities := s.dirtyEntities.Get()
+
+	// ensure fonts exist
+	if len(dirtyEntities) != 0 {
+		// get used fonts
+		fonts := datastructures.NewSparseArray[FontKey, assets.AssetID]()
+		fonts.Set(s.fontKeys.GetKey(s.defaultTextAsset), s.defaultTextAsset)
+		for _, font := range s.text.FontFamily().GetEntities() {
+			family, ok := s.text.FontFamily().Get(font)
+			if !ok {
+				continue
+			}
+			fonts.Set(s.fontKeys.GetKey(family.FontFamily), family.FontFamily)
+		}
+
+		// remove unused fonts
+		for _, key := range s.fontsBatches.GetIndices() {
+			if _, ok := fonts.Get(key); ok {
+				continue
+			}
+			batch, ok := s.fontsBatches.Get(key)
+			if !ok {
+				continue
+			}
+			fonts.Remove(key)
+			batch.Release()
+			s.fontsBatches.Remove(key)
+		}
+
+		// add freshly added fonts
+		for _, value := range fonts.GetValues() {
+			s.logger.Warn(s.ensureFontExists(value))
+		}
+	}
+
+	// ensure layouts exist
+	// add batches
+	for _, entity := range dirtyEntities {
+		if prevBatch, ok := s.layoutsBatches.Get(entity); ok {
+			prevBatch.Release()
+			s.layoutsBatches.Remove(entity)
+		}
+
+		layout, err := s.layoutServiceFactory.New(s).EntityLayout(entity)
+		if err != nil {
+			continue
+		}
+
+		batch := NewLayoutBatch(s.vboFactory, layout)
+		s.layoutsBatches.Set(entity, batch)
+	}
+
+	// render layouts
 	for _, entity := range s.layoutsBatches.GetIndices() {
 		layout, _ := s.layoutsBatches.Get(entity)
 		font, ok := s.fontsBatches.Get(layout.Layout.Font)
 		if !ok {
-			s.layoutsBatches.Remove(entity)
+			if prevBatch, ok := s.layoutsBatches.Get(entity); ok {
+				prevBatch.Release()
+				s.layoutsBatches.Remove(entity)
+			}
 			continue
 		}
 
-		entityTransform := s.transformTransaction.GetObject(entity)
-		pos, err := entityTransform.AbsolutePos().Get()
-		if err != nil {
-			s.logger.Warn(err)
-			continue
-		}
-		rot, err := entityTransform.AbsoluteRotation().Get()
-		if err != nil {
-			s.logger.Warn(err)
-			continue
-		}
-		size, err := entityTransform.AbsoluteSize().Get()
-		if err != nil {
-			s.logger.Warn(err)
-			continue
-		}
-		entityColor, err := s.colorArray.GetComponent(entity)
-		if err != nil {
+		pos, _ := s.Transform().AbsolutePos().Get(entity)
+		rot, _ := s.Transform().AbsoluteRotation().Get(entity)
+		size, _ := s.Transform().AbsoluteSize().Get(entity)
+		entityColor, ok := s.text.Color().Get(entity)
+		if !ok {
 			entityColor = s.defaultColor
 		}
 
-		entityGroups, err := s.groupsArray.GetComponent(entity)
-		if err != nil {
+		entityGroups, ok := s.Groups().Component().Get(entity)
+		if !ok {
 			entityGroups = groups.DefaultGroups()
 		}
 
@@ -192,14 +165,14 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 		)
 		entityMvp := translation.Mul4(rotation).Mul4(scale)
 
-		for _, cameraEntity := range s.cameraQuery.Entities() {
-			camera, err := s.cameraCtors.GetObject(cameraEntity)
+		for _, cameraEntity := range s.Camera().Component().GetEntities() {
+			camera, err := s.Camera().GetObject(cameraEntity)
 			if err != nil {
 				continue
 			}
 
-			cameraGroups, err := s.groupsArray.GetComponent(cameraEntity)
-			if err != nil {
+			cameraGroups, ok := s.Groups().Component().Get(cameraEntity)
+			if !ok {
 				cameraGroups = groups.DefaultGroups()
 			}
 

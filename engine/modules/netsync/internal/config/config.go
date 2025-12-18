@@ -9,7 +9,7 @@ import (
 )
 
 type Config struct {
-	Events         []reflect.Type
+	EventTypes     []reflect.Type
 	ListenToEvents []func(events.Builder, func(any))
 
 	SimulatedEvents         []reflect.Type

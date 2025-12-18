@@ -2,10 +2,7 @@ package textrenderer
 
 import (
 	_ "embed"
-	"engine/modules/camera"
-	"engine/modules/groups"
 	"engine/modules/text"
-	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
@@ -29,8 +26,7 @@ var geomSource string
 var fragSource string
 
 type textRendererRegister struct {
-	cameraCtorsFactory   ecs.ToolFactory[camera.Tool]
-	transformToolFactory ecs.ToolFactory[transform.Tool]
+	textToolFactory      ecs.ToolFactory[text.World, text.TextTool]
 	fontService          FontService
 	vboFactory           vbo.VBOFactory[Glyph]
 	layoutServiceFactory LayoutServiceFactory
@@ -46,8 +42,7 @@ type textRendererRegister struct {
 }
 
 func NewTextRendererRegister(
-	cameraCtorsFactory ecs.ToolFactory[camera.Tool],
-	transformToolFactory ecs.ToolFactory[transform.Tool],
+	textToolFactory ecs.ToolFactory[text.World, text.TextTool],
 	fontService FontService,
 	vboFactory vbo.VBOFactory[Glyph],
 	layoutServiceFactory LayoutServiceFactory,
@@ -59,8 +54,7 @@ func NewTextRendererRegister(
 	removeOncePerNCalls uint16,
 ) text.System {
 	return &textRendererRegister{
-		cameraCtorsFactory:   cameraCtorsFactory,
-		transformToolFactory: transformToolFactory,
+		textToolFactory:      textToolFactory,
 		fontService:          fontService,
 		vboFactory:           vboFactory,
 		layoutServiceFactory: layoutServiceFactory,
@@ -75,7 +69,7 @@ func NewTextRendererRegister(
 	}
 }
 
-func (f *textRendererRegister) Register(w ecs.World) error {
+func (f *textRendererRegister) Register(w text.World) error {
 	vert, err := shader.NewShader(vertSource, shader.VertexShader)
 	if err != nil {
 		return err
@@ -110,16 +104,13 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 		return err
 	}
 
-	transformTool := f.transformToolFactory.Build(w)
 	renderer := textRenderer{
-		world:                w,
-		colorArray:           ecs.GetComponentsArray[text.TextColorComponent](w),
-		groupsArray:          ecs.GetComponentsArray[groups.GroupsComponent](w),
-		transformTransaction: transformTool.Transaction(),
-		cameraQuery:          w.Query().Require(camera.OrthoComponent{}).Build(),
+		textRendererRegister: f,
+
+		World: w,
+		text:  f.textToolFactory.Build(w).Text(),
 
 		logger:      f.logger,
-		cameraCtors: f.cameraCtorsFactory.Build(w),
 		fontService: f.fontService,
 
 		program:   p,
@@ -132,43 +123,14 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 		fontKeys:     f.fontsKeys,
 		fontsBatches: datastructures.NewSparseArray[FontKey, fontBatch](),
 
+		dirtyEntities:  ecs.NewDirtySet(),
 		layoutsBatches: datastructures.NewSparseArray[ecs.EntityID, layoutBatch](),
 	}
 
-	query := transformTool.Query(w.Query()).
-		Require(text.TextComponent{}).
-		Build()
-
-	addOrChangeListener := func(ei []ecs.EntityID) {
-		for _, entity := range ei {
-			if prevBatch, ok := renderer.layoutsBatches.Get(entity); ok {
-				prevBatch.Release()
-				renderer.layoutsBatches.Remove(entity)
-			}
-
-			layout, err := f.layoutServiceFactory.New(w).EntityLayout(entity)
-			if err != nil {
-				continue
-			}
-
-			batch := NewLayoutBatch(f.vboFactory, layout)
-			renderer.layoutsBatches.Set(entity, batch)
-		}
-	}
-	rmListener := func(ei []ecs.EntityID) {
-		for _, entity := range ei {
-			if prevBatch, ok := renderer.layoutsBatches.Get(entity); ok {
-				prevBatch.Release()
-			}
-			renderer.layoutsBatches.Remove(entity)
-		}
-	}
-
-	query.OnAdd(addOrChangeListener)
-	query.OnChange(addOrChangeListener)
-	query.OnRemove(rmListener)
+	renderer.Transform().AddDirtySet(renderer.dirtyEntities)
 
 	arrays := []ecs.AnyComponentArray{
+		ecs.GetComponentsArray[text.TextComponent](w),
 		ecs.GetComponentsArray[text.BreakComponent](w),
 		ecs.GetComponentsArray[text.FontFamilyComponent](w),
 		// ecs.GetComponentsArray[text.Overflow](w),
@@ -177,51 +139,7 @@ func (f *textRendererRegister) Register(w ecs.World) error {
 	}
 
 	for _, array := range arrays {
-		array.OnAdd(addOrChangeListener)
-		array.OnChange(addOrChangeListener)
-		array.OnRemove(rmListener)
-	}
-
-	fontArray := ecs.GetComponentsArray[text.FontFamilyComponent](w)
-	addFonts := func(ei []ecs.EntityID) {
-		for _, entity := range ei {
-			family, err := fontArray.GetComponent(entity)
-			if err != nil {
-				continue
-			}
-
-			f.logger.Warn(renderer.ensureFontExists(family.FontFamily))
-		}
-	}
-	if err := renderer.ensureFontExists(f.defaultTextAsset); err != nil {
-		p.Release()
-		return err
-	}
-	fontArray.OnAdd(addFonts)
-	fontArray.OnChange(addFonts)
-	{
-		fontFamilyArray := ecs.GetComponentsArray[text.FontFamilyComponent](w)
-		var i uint16 = 0
-		removeUnused := func(_ []ecs.EntityID) {
-			i++
-			if i < f.removeOncePerNCalls {
-				return
-			}
-
-			i = 0
-			entities := query.Entities()
-			assets := []assets.AssetID{f.defaultTextAsset}
-			for _, entity := range entities {
-				comp, err := fontFamilyArray.GetComponent(entity)
-				if err != nil {
-					continue
-				}
-				assets = append(assets, comp.FontFamily)
-			}
-			f.logger.Warn(renderer.ensureOnlyFontsExist(assets))
-		}
-		fontArray.OnChange(removeUnused)
-		fontArray.OnRemove(removeUnused)
+		array.AddDirtySet(renderer.dirtyEntities)
 	}
 
 	w.SaveGlobal(renderer)

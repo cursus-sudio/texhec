@@ -4,13 +4,8 @@ import (
 	gameassets "core/assets"
 	"core/modules/settings"
 	"core/modules/settings/internal"
-	"core/modules/ui"
-	"engine/modules/render"
-	"engine/modules/text"
-	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/codec"
-	"engine/services/ecs"
 	"engine/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
@@ -34,10 +29,6 @@ func (pkg) Register(b ioc.Builder) {
 			ioc.Get[assets.Assets](c),
 			ioc.Get[logger.Logger](c),
 			ioc.Get[gameassets.GameAssets](c),
-			ioc.Get[ecs.ToolFactory[transform.Tool]](c),
-			ioc.Get[ecs.ToolFactory[render.Tool]](c),
-			ioc.Get[ecs.ToolFactory[ui.Tool]](c),
-			ioc.Get[ecs.ToolFactory[text.Tool]](c),
 		)
 		return system
 	})

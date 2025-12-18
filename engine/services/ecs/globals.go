@@ -2,16 +2,10 @@ package ecs
 
 import (
 	"engine/services/datastructures"
-	"errors"
-	"fmt"
 	"reflect"
 )
 
 // interface
-
-var (
-	ErrGlobalNotFound error = errors.New("globl not found")
-)
 
 type GlobalType struct {
 	registerType reflect.Type
@@ -31,23 +25,23 @@ func GetGlobalType(register Global) GlobalType {
 
 type globalsInterface interface {
 	SaveGlobal(Global) // upsert (create or update)
-	GetGlobal(GlobalType) (Global, error)
+	GetGlobal(GlobalType) (Global, bool)
 
-	Release()
+	ReleaseGlobals()
 }
 
 type Cleanable interface {
 	Release()
 }
 
-func GetGlobal[GlobalT Global](w World) (GlobalT, error) {
+func GetGlobal[GlobalT Global](w World) (GlobalT, bool) {
 	var zero GlobalT
 	registerType := GetGlobalType(zero)
-	value, err := w.GetGlobal(registerType)
-	if err != nil {
-		return zero, err
+	value, ok := w.GetGlobal(registerType)
+	if !ok {
+		return zero, ok
 	}
-	return value.(GlobalT), nil
+	return value.(GlobalT), true
 }
 
 // impl
@@ -82,18 +76,15 @@ func (r *globalsImpl) SaveGlobal(register Global) {
 	r.registry[registerType] = register
 }
 
-func (r *globalsImpl) GetGlobal(registerType GlobalType) (Global, error) {
+func (r *globalsImpl) GetGlobal(registerType GlobalType) (Global, bool) {
 	value, ok := r.registry[registerType]
 	if !ok {
-		return nil, errors.Join(
-			ErrGlobalNotFound,
-			fmt.Errorf("haven't found global \"%s\" of type", registerType.String()),
-		)
+		return nil, false
 	}
-	return value, nil
+	return value, true
 }
 
-func (r *globalsImpl) Release() {
+func (r *globalsImpl) ReleaseGlobals() {
 	for _, cleanable := range r.cleanables.Get() {
 		cleanable.Release()
 	}

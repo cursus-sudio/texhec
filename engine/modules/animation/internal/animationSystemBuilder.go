@@ -45,6 +45,6 @@ func (b AnimationSystemBuilder) AddAnimation(
 	b.animations.Set(animationID, animationData)
 }
 
-func (b AnimationSystemBuilder) Build() ecs.SystemRegister {
+func (b AnimationSystemBuilder) Build() ecs.SystemRegister[animation.World] {
 	return NewSystem(b)
 }

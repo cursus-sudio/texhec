@@ -9,13 +9,13 @@ import (
 )
 
 type spatialRelationPkg[IndexType any] struct {
-	queryFactory   func(ecs.World) ecs.LiveQuery
+	queryFactory   func(ecs.World) ecs.DirtySet
 	componentIndex func(ecs.World) func(ecs.EntityID) (IndexType, bool)
 	indexNumber    func(IndexType) uint32
 }
 
 func SpatialRelationPackage[IndexType any](
-	queryFactory func(ecs.World) ecs.LiveQuery,
+	queryFactory func(ecs.World) ecs.DirtySet,
 	componentIndex func(ecs.World) func(entity ecs.EntityID) (indexType IndexType, ok bool),
 	indexNumber func(index IndexType) uint32,
 ) ioc.Pkg {
@@ -27,7 +27,7 @@ func SpatialRelationPackage[IndexType any](
 }
 
 func (pkg spatialRelationPkg[IndexType]) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[relation.EntityToKeyTool[IndexType]] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[ecs.World, relation.EntityToKeyTool[IndexType]] {
 		return onetokey.NewSpatialRelationFactory(
 			pkg.queryFactory,
 			pkg.componentIndex,

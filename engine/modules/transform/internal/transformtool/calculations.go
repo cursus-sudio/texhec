@@ -7,28 +7,18 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-func (t object) GetRelativeParentPos() mgl32.Vec3 {
-	parent, err := t.parent.Get()
-	if err != nil {
+func (t tool) GetRelativeParentPos(entity ecs.EntityID) mgl32.Vec3 {
+	parent, ok := t.world.Hierarchy().Component().Get(entity)
+	if !ok {
 		return mgl32.Vec3{}
 	}
-	parentMask, err := t.parentMask.Get()
-	if err != nil || parentMask.RelativeMask&transform.RelativePos == 0 {
+	parentMask, _ := t.parentMaskArray.Get(entity)
+	if parentMask.RelativeMask&transform.RelativePos == 0 {
 		return mgl32.Vec3{}
 	}
-	parentTransform := t.GetObject(parent.Parent)
-	parentPos, err := parentTransform.AbsolutePos().Get()
-	if err != nil {
-		parentPos = t.defaultPos
-	}
-	parentSize, err := parentTransform.AbsoluteSize().Get()
-	if err != nil {
-		parentSize = t.defaultSize
-	}
-	parentPivot, err := t.parentPivotPoint.Get()
-	if err != nil {
-		parentPivot = t.defaultParentPivot
-	}
+	parentPos, _ := t.absolutePosArray.Get(parent.Parent)
+	parentSize, _ := t.absoluteSizeArray.Get(parent.Parent)
+	parentPivot, _ := t.parentPivotPointArray.Get(entity)
 	parentPivot.Point = parentPivot.Point.Sub(t.defaultParentPivot.Point)
 	return parentPos.Pos.Add(mgl32.Vec3{
 		parentSize.Size[0] * parentPivot.Point[0],
@@ -37,15 +27,12 @@ func (t object) GetRelativeParentPos() mgl32.Vec3 {
 	})
 }
 
-func (t object) GetPivotPos() mgl32.Vec3 {
-	pivot, err := t.pivotPoint.Get()
-	if err != nil {
+func (t tool) GetPivotPos(entity ecs.EntityID) mgl32.Vec3 {
+	pivot, _ := t.pivotPointArray.Get(entity)
+	if pivot == t.defaultPivot {
 		return mgl32.Vec3{}
 	}
-	size, err := t.absoluteSize.Get()
-	if err != nil {
-		return mgl32.Vec3{}
-	}
+	size, _ := t.absoluteSizeArray.Get(entity)
 	pivot.Point = pivot.Point.Sub(t.defaultPivot.Point)
 	return mgl32.Vec3{
 		size.Size[0] * (-pivot.Point[0]),
@@ -56,40 +43,29 @@ func (t object) GetPivotPos() mgl32.Vec3 {
 
 //
 
-func (t object) GetRelativeParentRotation() mgl32.Quat {
-	parent, err := t.parent.Get()
-	if err != nil {
+func (t tool) GetRelativeParentRotation(entity ecs.EntityID) mgl32.Quat {
+	parent, ok := t.world.Hierarchy().Component().Get(entity)
+	if !ok {
 		return mgl32.QuatIdent()
 	}
-	parentMask, err := t.parentMask.Get()
-	if err != nil || parentMask.RelativeMask&transform.RelativeRotation == 0 {
+	parentMask, _ := t.parentMaskArray.Get(entity)
+	if parentMask.RelativeMask&transform.RelativeRotation == 0 {
 		return mgl32.QuatIdent()
 	}
-	parentTransform := t.GetObject(parent.Parent)
-	parentRot, err := parentTransform.AbsoluteRotation().Get()
-	if err != nil {
-		return mgl32.QuatIdent()
-	}
+	parentRot, _ := t.absoluteRotationArray.Get(parent.Parent)
 	return parentRot.Rotation
 }
 
 //
 
-func (t object) GetRelativeParentSize() mgl32.Vec3 {
-	size := mgl32.Vec3{1, 1, 1}
-	parent, err := t.parent.Get()
-	if err != nil {
+func (t tool) GetRelativeParentSize(entity ecs.EntityID) mgl32.Vec3 {
+	size := t.defaultSize.Size
+	parent, ok := t.world.Hierarchy().Component().Get(entity)
+	if !ok {
 		return size
 	}
-	parentMask, err := t.parentMask.Get()
-	if err != nil {
-		return size
-	}
-	parentTransform := t.GetObject(parent.Parent)
-	parentSize, err := parentTransform.AbsoluteSize().Get()
-	if err != nil {
-		return size
-	}
+	parentMask, _ := t.parentMaskArray.Get(entity)
+	parentSize, _ := t.absoluteSizeArray.Get(parent.Parent)
 	if parentMask.RelativeMask&transform.RelativeSizeX != 0 {
 		size[0] = parentSize.Size[0]
 	}
@@ -102,8 +78,8 @@ func (t object) GetRelativeParentSize() mgl32.Vec3 {
 	return size
 }
 
-func (t object) ApplyMinMaxSize(size *transform.SizeComponent) {
-	if maxSize, err := t.maxSize.Get(); err == nil {
+func (t tool) ApplyMinMaxSize(entity ecs.EntityID, size *transform.SizeComponent) {
+	if maxSize, ok := t.maxSizeArray.Get(entity); ok {
 		if maxSize.Size[0] != 0 && size.Size[0] > maxSize.Size[0] {
 			size.Size[0] = maxSize.Size[0]
 		}
@@ -114,7 +90,7 @@ func (t object) ApplyMinMaxSize(size *transform.SizeComponent) {
 			size.Size[2] = maxSize.Size[2]
 		}
 	}
-	if minSize, err := t.minSize.Get(); err == nil {
+	if minSize, ok := t.minSizeArray.Get(entity); ok {
 		if minSize.Size[0] != 0 && size.Size[0] < minSize.Size[0] {
 			size.Size[0] = minSize.Size[0]
 		}
@@ -130,7 +106,7 @@ func (t object) ApplyMinMaxSize(size *transform.SizeComponent) {
 // its used by full ApplyAspectRatio method.
 // ignores min and max size.
 // also concludes that aspect ratio is verified.
-func (t object) getAspectRatio(size transform.SizeComponent, ratio transform.AspectRatioComponent) transform.SizeComponent {
+func (t tool) getAspectRatio(size transform.SizeComponent, ratio transform.AspectRatioComponent) transform.SizeComponent {
 	var base float32
 	switch ratio.PrimaryAxis {
 	case transform.PrimaryAxisX:
@@ -155,16 +131,13 @@ func (t object) getAspectRatio(size transform.SizeComponent, ratio transform.Asp
 }
 
 // integrates min and max size
-func (t object) ApplyAspectRatio(size *transform.SizeComponent) {
-	ratio, err := t.aspectRatio.Get()
-	if err != nil {
-		return
-	}
+func (t tool) ApplyAspectRatio(entity ecs.EntityID, size *transform.SizeComponent) {
+	ratio, _ := t.aspectRatioArray.Get(entity)
 	if ratio.PrimaryAxis == 0 || ratio.PrimaryAxis > 3 || ratio.AspectRatio[ratio.PrimaryAxis-1] == 0 {
 		return
 	}
 	sizeRatio := t.getAspectRatio(*size, ratio)
-	if maxSize, err := t.maxSize.Get(); err == nil {
+	if maxSize, ok := t.maxSizeArray.Get(entity); ok {
 		for i := 0; i < 3; i++ {
 			if maxSize.Size[i] == 0 {
 				maxSize.Size[i] = sizeRatio.Size[i]
@@ -193,7 +166,7 @@ func (t object) ApplyAspectRatio(size *transform.SizeComponent) {
 			}
 		}
 	}
-	if minSize, err := t.minSize.Get(); err == nil {
+	if minSize, ok := t.minSizeArray.Get(entity); ok {
 		minSizeRatio := ratio
 
 		primaryAxisIndex := -1
@@ -222,90 +195,34 @@ func (t object) ApplyAspectRatio(size *transform.SizeComponent) {
 
 //
 
-func (t *object) Init() {
-	t.absolutePos = ecs.NewEntityComponent(
-		func() (transform.PosComponent, error) {
-			pos, err := t.pos.Get()
-			if err != nil {
-				pos = t.defaultPos
-			}
-			relativeToParentPos := t.GetRelativeParentPos()
+func (t tool) CalculateAbsolutePos(entity ecs.EntityID) transform.AbsolutePosComponent {
+	pos, _ := t.posArray.Get(entity)
+	relativeToParentPos := t.GetRelativeParentPos(entity)
 
-			pos.Pos = pos.Pos.
-				Add(relativeToParentPos).
-				Add(t.GetPivotPos())
+	pos.Pos = pos.Pos.
+		Add(relativeToParentPos).
+		Add(t.GetPivotPos(entity))
 
-			return pos, nil
-		},
-		func(absolutePos transform.PosComponent) {
-			pos, err := t.pos.Get()
-			if err != nil {
-				pos.Pos = t.defaultPos.Pos
-			}
-			relativeToParentPos := t.GetRelativeParentPos()
+	return transform.AbsolutePosComponent(pos)
+}
+func (t tool) CalculateAbsoluteRot(entity ecs.EntityID) transform.AbsoluteRotationComponent {
+	rot, _ := t.rotationArray.Get(entity)
+	rot.Rotation = rot.Rotation.
+		Mul(t.GetRelativeParentRotation(entity))
 
-			pos.Pos = absolutePos.Pos.
-				Sub(relativeToParentPos).
-				Sub(t.GetPivotPos())
+	return transform.AbsoluteRotationComponent(rot)
+}
+func (t tool) CalculateAbsoluteSize(entity ecs.EntityID) transform.AbsoluteSizeComponent {
+	size, _ := t.sizeArray.Get(entity)
 
-			t.pos.Set(pos)
-		},
-		t.pos.Remove,
-	)
-	t.absoluteRot = ecs.NewEntityComponent(
-		func() (transform.RotationComponent, error) {
-			rot, err := t.rot.Get()
-			if err != nil {
-				rot = t.defaultRot
-			}
+	relativeParentSize := t.GetRelativeParentSize(entity)
+	size.Size = mgl32.Vec3{
+		size.Size[0] * relativeParentSize[0],
+		size.Size[1] * relativeParentSize[1],
+		size.Size[2] * relativeParentSize[2],
+	}
+	t.ApplyAspectRatio(entity, &size)
+	t.ApplyMinMaxSize(entity, &size)
 
-			rot.Rotation = rot.Rotation.
-				Mul(t.GetRelativeParentRotation())
-
-			return rot, nil
-		},
-		func(absoluteRot transform.RotationComponent) {
-			rot, err := t.rot.Get()
-			if err != nil {
-				rot = t.defaultRot
-			}
-
-			rot.Rotation = absoluteRot.Rotation.
-				Mul(t.GetRelativeParentRotation().Inverse())
-
-			t.rot.Set(rot)
-		},
-		t.rot.Remove,
-	)
-	t.absoluteSize = ecs.NewEntityComponent(
-		func() (transform.SizeComponent, error) {
-			size, err := t.size.Get()
-			if err != nil {
-				size = t.defaultSize
-			}
-
-			relativeParentSize := t.GetRelativeParentSize()
-			size.Size = mgl32.Vec3{
-				size.Size[0] * relativeParentSize[0],
-				size.Size[1] * relativeParentSize[1],
-				size.Size[2] * relativeParentSize[2],
-			}
-			t.ApplyAspectRatio(&size)
-			t.ApplyMinMaxSize(&size)
-
-			return size, nil
-		},
-		func(absoluteSize transform.SizeComponent) {
-			size, err := t.size.Get()
-			if err != nil {
-				size = t.defaultSize
-			}
-
-			size.Size = absoluteSize.Size.
-				Sub(t.GetRelativeParentSize())
-
-			t.size.Set(size)
-		},
-		t.size.Remove,
-	)
+	return transform.AbsoluteSizeComponent(size)
 }

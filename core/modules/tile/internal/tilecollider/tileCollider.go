@@ -15,46 +15,47 @@ func TileColliderSystem(logger logger.Logger,
 	tileSize int32, // transform
 	gridDepth float32,
 	tileGroups groups.GroupsComponent, // groups
-	colliderComponent collider.ColliderComponent, // collider
+	colliderComponent collider.Component, // collider
 	uuidFactory uuid.Factory, // tools
-) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
-		uuidArray := ecs.GetComponentsArray[uuid.Component](w)
+) ecs.SystemRegister[tile.World] {
+	return ecs.NewSystemRegister(func(w tile.World) error {
 		tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w)
 
-		leftClickArray := ecs.GetComponentsArray[inputs.MouseLeftClickComponent](w)
-		collidersArray := ecs.GetComponentsArray[collider.ColliderComponent](w)
-
-		posArray := ecs.GetComponentsArray[transform.PosComponent](w)
-		sizeArray := ecs.GetComponentsArray[transform.SizeComponent](w)
-
-		groupsArray := ecs.GetComponentsArray[groups.GroupsComponent](w)
-
-		tilePosArray.OnAdd(func(ei []ecs.EntityID) {
-			uuidTransaction := uuidArray.Transaction()
+		tilePosDirtySet := ecs.NewDirtySet()
+		tilePosArray.AddDirtySet(tilePosDirtySet)
+		w.UUID().Component().BeforeGet(func() {
+			ei := tilePosDirtySet.Get()
+			if len(ei) == 0 {
+				return
+			}
 			for _, entity := range ei {
-				if _, err := uuidArray.GetComponent(entity); err == nil {
+				if _, ok := w.UUID().Component().Get(entity); ok {
 					continue
 				}
 				comp := uuid.New(uuidFactory.NewUUID())
-				uuidTransaction.SaveComponent(entity, comp)
+				w.UUID().Component().Set(entity, comp)
 			}
-			logger.Warn(ecs.FlushMany(uuidTransaction))
 		})
 
-		onUpsert := func(ei []ecs.EntityID) {
+		//
+
+		tileColliderDirtySet := ecs.NewDirtySet()
+		tileColliderArray := ecs.GetComponentsArray[ColliderComponent](w)
+		tileColliderArray.AddDirtySet(tileColliderDirtySet)
+		applyTileCollider := func() {
+			ei := tileColliderDirtySet.Get()
+			if len(ei) == 0 {
+				return
+			}
 			// groups
-			groupsTransaction := groupsArray.Transaction()
 			for _, entity := range ei {
-				groupsTransaction.SaveComponent(entity, tileGroups)
+				w.Groups().Component().Set(entity, tileGroups)
 			}
 
 			// pos
-			posTransaction := posArray.Transaction()
-			leftClickTransaction := leftClickArray.Transaction()
 			for _, entity := range ei {
-				pos, err := tilePosArray.GetComponent(entity)
-				if err != nil {
+				pos, ok := tilePosArray.Get(entity)
+				if !ok {
 					continue
 				}
 				transformPos := transform.NewPos(
@@ -62,36 +63,28 @@ func TileColliderSystem(logger logger.Logger,
 					float32(tileSize)*float32(pos.Y)+float32(tileSize)/2,
 					gridDepth+float32(pos.Layer),
 				)
-				posTransaction.SaveComponent(entity, transformPos)
+				w.Transform().Pos().Set(entity, transformPos)
 				comp := inputs.NewMouseLeftClick(tile.NewTileClickEvent(pos))
-				leftClickTransaction.SaveComponent(entity, comp)
+				w.Inputs().MouseLeft().Set(entity, comp)
 			}
 
 			// transform
-			sizeTransaction := sizeArray.Transaction()
 			for _, entity := range ei {
-				sizeTransaction.SaveComponent(entity, transform.NewSize(float32(tileSize), float32(tileSize), 1))
+				w.Transform().Size().Set(entity, transform.NewSize(float32(tileSize), float32(tileSize), 1))
 			}
 
 			// collider
-			colliderTransaction := collidersArray.Transaction()
 			for _, entity := range ei {
-				colliderTransaction.SaveComponent(entity, colliderComponent)
+				w.Collider().Component().Set(entity, colliderComponent)
 			}
-
-			// mouse
-			logger.Warn(ecs.FlushMany(
-				groupsTransaction,
-				posTransaction,
-				sizeTransaction,
-				leftClickTransaction,
-				colliderTransaction,
-			))
 		}
 
-		tileColliderArray := ecs.GetComponentsArray[ColliderComponent](w)
-		tileColliderArray.OnAdd(onUpsert)
-		tileColliderArray.OnChange(onUpsert)
+		w.Collider().Component().BeforeGet(applyTileCollider)
+		w.Transform().Size().BeforeGet(applyTileCollider)
+		w.Transform().Pos().BeforeGet(applyTileCollider)
+		w.Inputs().MouseLeft().BeforeGet(applyTileCollider)
+		w.Groups().Component().BeforeGet(applyTileCollider)
+
 		return nil
 	})
 }

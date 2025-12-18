@@ -1,8 +1,8 @@
 package tilerenderer
 
 import (
+	"core/modules/tile"
 	_ "embed"
-	"engine/modules/camera"
 	"engine/modules/groups"
 	"engine/modules/render"
 	"engine/services/datastructures"
@@ -47,16 +47,16 @@ type system struct {
 	logger logger.Logger
 
 	textureArray texturearray.TextureArray
+	rendered     datastructures.SparseArray[ecs.EntityID, tile.PosComponent]
 	layers       []*layer
 
 	tileSize  int32
 	gridDepth float32
 
-	world       ecs.World
-	cameraQuery ecs.LiveQuery
-	groupsArray ecs.ComponentsArray[groups.GroupsComponent]
-	gridGroups  groups.GroupsComponent
-	cameraCtors camera.Tool
+	dirtySet     ecs.DirtySet
+	world        tile.World
+	tilePosArray ecs.ComponentsArray[tile.PosComponent]
+	gridGroups   groups.GroupsComponent
 }
 
 type locations struct {
@@ -66,6 +66,29 @@ type locations struct {
 }
 
 func (s *system) Listen(render.RenderEvent) {
+	dirtyEntities := s.dirtySet.Get()
+	for _, entity := range dirtyEntities {
+		if tilePos, ok := s.rendered.Get(entity); ok {
+			layer := s.layers[tilePos.Layer]
+			layer.changed = true
+			layer.tiles.Remove(entity)
+			s.rendered.Remove(entity)
+		}
+		tileType, ok := s.world.Definition().Link().Get(entity)
+		if !ok {
+			continue
+		}
+		tilePos, ok := s.tilePosArray.Get(entity)
+		if !ok {
+			continue
+		}
+		layer := s.layers[tilePos.Layer]
+		layer.changed = true
+		tile := TileData{tilePos.X, tilePos.Y, tileType.DefinitionID}
+		layer.tiles.Set(entity, tile)
+		s.rendered.Set(entity, tilePos)
+	}
+
 	w, h := s.window.Window().GetSize()
 	defer func() { gl.Viewport(0, 0, w, h) }()
 	for _, layer := range s.layers {
@@ -84,14 +107,14 @@ func (s *system) Listen(render.RenderEvent) {
 		gl.Uniform1i(s.locations.TileSize, s.tileSize)
 		gl.Uniform1f(s.locations.GridDepth, s.gridDepth)
 
-		for _, cameraEntity := range s.cameraQuery.Entities() {
-			camera, err := s.cameraCtors.GetObject(cameraEntity)
+		for _, cameraEntity := range s.world.Camera().Component().GetEntities() {
+			camera, err := s.world.Camera().GetObject(cameraEntity)
 			if err != nil {
 				continue
 			}
 
-			cameraGroups, err := s.groupsArray.GetComponent(cameraEntity)
-			if err != nil {
+			cameraGroups, ok := s.world.Groups().Component().Get(cameraEntity)
+			if !ok {
 				cameraGroups = groups.DefaultGroups()
 			}
 

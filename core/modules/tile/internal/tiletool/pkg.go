@@ -37,16 +37,15 @@ func Package(
 		minZ:      minZ,
 		relationPkgs: []ioc.Pkg{
 			relationpkg.SpatialRelationPackage(
-				func(w ecs.World) ecs.LiveQuery {
-					return w.Query().
-						Require(tile.PosComponent{}).
-						Build()
+				func(w ecs.World) ecs.DirtySet {
+					dirtySet := ecs.NewDirtySet()
+					ecs.GetComponentsArray[tile.PosComponent](w).AddDirtySet(dirtySet)
+					return dirtySet
 				},
 				func(w ecs.World) func(entity ecs.EntityID) (tile.PosComponent, bool) {
 					tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w)
 					return func(entity ecs.EntityID) (tile.PosComponent, bool) {
-						comp, err := tilePosArray.GetComponent(entity)
-						return comp, err == nil
+						return tilePosArray.Get(entity)
 					}
 				},
 				func(index tile.PosComponent) uint32 {
@@ -57,16 +56,16 @@ func Package(
 				},
 			),
 			relationpkg.SpatialRelationPackage(
-				func(w ecs.World) ecs.LiveQuery {
-					return w.Query().
-						Require(tile.PosComponent{}).
-						Build()
+				func(w ecs.World) ecs.DirtySet {
+					dirtySet := ecs.NewDirtySet()
+					ecs.GetComponentsArray[tile.PosComponent](w).AddDirtySet(dirtySet)
+					return dirtySet
 				},
 				func(w ecs.World) func(entity ecs.EntityID) (tile.ColliderPos, bool) {
 					tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w)
 					return func(entity ecs.EntityID) (tile.ColliderPos, bool) {
-						tileComp, err := tilePosArray.GetComponent(entity)
-						if err != nil && tileComp.Layer != mainLayer {
+						tileComp, ok := tilePosArray.Get(entity)
+						if !ok && tileComp.Layer != mainLayer {
 							return tile.ColliderPos{}, false
 						}
 						return tileComp.GetColliderPos(), true
@@ -86,11 +85,12 @@ func (pkg pkg) Register(b ioc.Builder) {
 	for _, pkg := range pkg.relationPkgs {
 		pkg.Register(b)
 	}
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[tile.Tool] {
-		return ecs.NewToolFactory(func(w ecs.World) tile.Tool {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[tile.World, tile.TileTool] {
+		return ecs.NewToolFactory(func(w tile.World) tile.TileTool {
 			return &tool{
-				ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[tile.PosComponent]]](c).Build(w),
-				ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[tile.ColliderPos]]](c).Build(w),
+				ioc.Get[ecs.ToolFactory[ecs.World, relation.EntityToKeyTool[tile.PosComponent]]](c).Build(w),
+				ioc.Get[ecs.ToolFactory[ecs.World, relation.EntityToKeyTool[tile.ColliderPos]]](c).Build(w),
+				ecs.GetComponentsArray[tile.PosComponent](w),
 			}
 		})
 	})

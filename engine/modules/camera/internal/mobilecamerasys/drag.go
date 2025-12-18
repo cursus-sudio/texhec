@@ -3,7 +3,6 @@ package mobilecamerasys
 import (
 	"engine/modules/camera"
 	"engine/modules/inputs"
-	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"engine/services/media/window"
@@ -16,36 +15,29 @@ type dragSystem struct {
 	isHeld bool
 	button uint8
 
-	world         ecs.World
-	transformTool transform.Tool
-	query         ecs.LiveQuery
+	camera.World
+	camera.CameraTool
 
-	cameraCtors camera.Tool
-	window      window.Api
-	logger      logger.Logger
+	window window.Api
+	logger logger.Logger
 }
 
 func NewDragSystem(
 	dragButton uint8,
-	cameraCtors ecs.ToolFactory[camera.Tool],
-	transformTool ecs.ToolFactory[transform.Tool],
+	cameraCtors ecs.ToolFactory[camera.World, camera.CameraTool],
 	window window.Api,
 	logger logger.Logger,
-) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
+) ecs.SystemRegister[camera.World] {
+	return ecs.NewSystemRegister(func(w camera.World) error {
 		s := &dragSystem{
 			isHeld: false,
 			button: dragButton,
 
-			world:         w,
-			transformTool: transformTool.Build(w),
-			query: w.Query().Require(
-				camera.MobileCameraComponent{},
-			).Build(),
+			World:      w,
+			CameraTool: cameraCtors.Build(w),
 
-			cameraCtors: cameraCtors.Build(w),
-			window:      window,
-			logger:      logger,
+			window: window,
+			logger: logger,
 		}
 		events.Listen(w.EventsBuilder(), s.Listen)
 		return nil
@@ -53,22 +45,11 @@ func NewDragSystem(
 }
 
 func (s *dragSystem) Listen(e inputs.DragEvent) {
-	transformTransaction := s.transformTool.Transaction()
+	for _, cameraEntity := range s.Camera().Mobile().GetEntities() {
+		pos, _ := s.Transform().AbsolutePos().Get(cameraEntity)
+		rot, _ := s.Transform().AbsoluteRotation().Get(cameraEntity)
 
-	for _, cameraEntity := range s.query.Entities() {
-		transform := transformTransaction.GetObject(cameraEntity)
-		pos, err := transform.AbsolutePos().Get()
-		if err != nil {
-			s.logger.Warn(err)
-			continue
-		}
-		rot, err := transform.AbsoluteRotation().Get()
-		if err != nil {
-			s.logger.Warn(err)
-			continue
-		}
-
-		camera, err := s.cameraCtors.GetObject(cameraEntity)
+		camera, err := s.Camera().GetObject(cameraEntity)
 		if err != nil {
 			continue
 		}
@@ -81,9 +62,7 @@ func (s *dragSystem) Listen(e inputs.DragEvent) {
 		rotationDifference := mgl32.QuatBetweenVectors(rayBefore.Direction, rayAfter.Direction)
 		rot.Rotation = rotationDifference.Mul(rot.Rotation)
 
-		transform.AbsolutePos().Set(pos)
-		transform.AbsoluteRotation().Set(rot)
+		s.Transform().SetAbsolutePos(cameraEntity, pos)
+		s.Transform().SetAbsoluteRotation(cameraEntity, rot)
 	}
-
-	ecs.FlushMany(transformTransaction.Transactions()...)
 }

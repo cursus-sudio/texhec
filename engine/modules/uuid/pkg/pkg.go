@@ -26,16 +26,16 @@ func (pkg) Register(b ioc.Builder) {
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) uuid.Factory { return internal.NewFactory() })
 	relationpkg.MapRelationPackage(
-		func(w ecs.World) ecs.LiveQuery {
-			return w.Query().
-				Require(uuid.Component{}).
-				Build()
+		func(w ecs.World) ecs.DirtySet {
+			set := ecs.NewDirtySet()
+			ecs.GetComponentsArray[uuid.Component](w).AddDirtySet(set)
+			return set
 		},
 		func(w ecs.World) func(entity ecs.EntityID) (indexType uuid.UUID, ok bool) {
 			uniqueArray := ecs.GetComponentsArray[uuid.Component](w)
 			return func(entity ecs.EntityID) (indexType uuid.UUID, ok bool) {
-				component, err := uniqueArray.GetComponent(entity)
-				if err != nil {
+				component, ok := uniqueArray.Get(entity)
+				if !ok {
 					return uuid.UUID{}, false
 				}
 				return component.ID, true
@@ -43,9 +43,9 @@ func (pkg) Register(b ioc.Builder) {
 		},
 	).Register(b)
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[uuid.Tool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[uuid.World, uuid.UUIDTool] {
 		return internal.NewToolFactory(
-			ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[uuid.UUID]]](c),
+			ioc.Get[ecs.ToolFactory[ecs.World, relation.EntityToKeyTool[uuid.UUID]]](c),
 			ioc.Get[uuid.Factory](c),
 		)
 	})

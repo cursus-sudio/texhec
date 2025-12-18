@@ -7,22 +7,19 @@ import (
 )
 
 func NewSpatialRelationFactory[IndexType any](
-	queryFactory func(ecs.World) ecs.LiveQuery,
+	dirtySetFactory func(ecs.World) ecs.DirtySet,
 	componentIndexFactory func(ecs.World) func(ecs.EntityID) (IndexType, bool),
 	indexNumber func(IndexType) uint32,
-) ecs.ToolFactory[relation.EntityToKeyTool[IndexType]] {
+) ecs.ToolFactory[ecs.World, relation.EntityToKeyTool[IndexType]] {
 	mutex := &sync.Mutex{}
 	return ecs.NewToolFactory(func(w ecs.World) relation.EntityToKeyTool[IndexType] {
-		if index, err := ecs.GetGlobal[spatialRelation[IndexType]](w); err == nil {
-			return index
-		}
 		mutex.Lock()
 		defer mutex.Unlock()
-		if index, err := ecs.GetGlobal[spatialRelation[IndexType]](w); err == nil {
+		if index, ok := ecs.GetGlobal[spatialRelation[IndexType]](w); ok {
 			return index
 		}
-		query := queryFactory(w)
+		dirtySet := dirtySetFactory(w)
 		componentIndex := componentIndexFactory(w)
-		return newSpatialIndex(w, query, componentIndex, indexNumber)
+		return newSpatialIndex(w, dirtySet, componentIndex, indexNumber)
 	})
 }

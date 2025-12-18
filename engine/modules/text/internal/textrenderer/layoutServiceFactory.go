@@ -2,21 +2,19 @@ package textrenderer
 
 import (
 	"engine/modules/text"
-	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/logger"
 )
 
 type LayoutServiceFactory interface {
-	New(ecs.World) LayoutService
+	New(text.World) LayoutService
 }
 
 type layoutServiceFactory struct {
-	logger      logger.Logger
-	fontService FontService
-	fontsKeys   FontKeys
-
-	transformToolFactory ecs.ToolFactory[transform.Tool]
+	logger          logger.Logger
+	textToolFactory ecs.ToolFactory[text.World, text.TextTool]
+	fontService     FontService
+	fontsKeys       FontKeys
 
 	defaultFontFamily text.FontFamilyComponent
 	defaultFontSize   text.FontSizeComponent
@@ -26,11 +24,10 @@ type layoutServiceFactory struct {
 }
 
 func NewLayoutServiceFactory(
+	textToolFactory ecs.ToolFactory[text.World, text.TextTool],
 	logger logger.Logger,
 	fontService FontService,
 	fontsKeys FontKeys,
-
-	transformToolFactory ecs.ToolFactory[transform.Tool],
 
 	defaultFontFamily text.FontFamilyComponent,
 	defaultFontSize text.FontSizeComponent,
@@ -39,11 +36,10 @@ func NewLayoutServiceFactory(
 	defaultTextAlign text.TextAlignComponent,
 ) LayoutServiceFactory {
 	return &layoutServiceFactory{
-		logger:      logger,
-		fontService: fontService,
-		fontsKeys:   fontsKeys,
-
-		transformToolFactory: transformToolFactory,
+		textToolFactory: textToolFactory,
+		logger:          logger,
+		fontService:     fontService,
+		fontsKeys:       fontsKeys,
 
 		defaultFontFamily: defaultFontFamily,
 		defaultFontSize:   defaultFontSize,
@@ -53,10 +49,10 @@ func NewLayoutServiceFactory(
 	}
 }
 
-func (f *layoutServiceFactory) New(world ecs.World) LayoutService {
+func (f *layoutServiceFactory) New(world text.World) LayoutService {
 	return NewLayoutService(
 		world,
-		f.transformToolFactory,
+		f.textToolFactory,
 		f.logger,
 		f.fontService,
 		f.fontsKeys,

@@ -6,9 +6,7 @@ import (
 	"core/modules/tile/internal/tilerenderer"
 	"core/modules/tile/internal/tiletool"
 	"core/modules/tile/internal/tileui"
-	"core/modules/ui"
 	"engine/modules/groups"
-	"engine/modules/text"
 	"engine/services/codec"
 	"engine/services/ecs"
 	"engine/services/logger"
@@ -68,15 +66,13 @@ func (pkg pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.System {
-		systems := []ecs.SystemRegister{
+		systems := []ecs.SystemRegister[tile.World]{
 			tileui.NewSystem(
 				ioc.Get[logger.Logger](c),
-				ioc.Get[ecs.ToolFactory[ui.Tool]](c),
-				ioc.Get[ecs.ToolFactory[text.Tool]](c),
-				ioc.Get[ecs.ToolFactory[tile.Tool]](c),
+				ioc.Get[ecs.ToolFactory[tile.World, tile.TileTool]](c),
 			),
 		}
-		return ecs.NewSystemRegister(func(world ecs.World) error {
+		return ecs.NewSystemRegister(func(world tile.World) error {
 			for _, system := range systems {
 				system.Register(world)
 			}

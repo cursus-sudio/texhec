@@ -1,6 +1,7 @@
 package state
 
 import (
+	"engine/modules/netsync"
 	"engine/modules/netsync/internal/config"
 	"engine/modules/uuid"
 	"engine/services/ecs"
@@ -13,19 +14,18 @@ type Tool interface {
 
 	StartRecording()
 	FinishRecording() *State
-	RecordEntitiesChange(ei []ecs.EntityID)
+	RecordEntitiesChange()
 }
 
 //
 
 type toolState struct {
 	recordedChanges *State
+	dirtySet        ecs.DirtySet
 
-	uuidArray  ecs.ComponentsArray[uuid.Component]
-	uniqueTool uuid.Tool
-	logger     logger.Logger
+	logger logger.Logger
 
-	world  ecs.World
+	world  netsync.World
 	arrays []ecs.AnyComponentArray
 }
 
@@ -36,28 +36,25 @@ type tool struct {
 
 func NewToolFactory(
 	config config.Config,
-	uuidToolFactory ecs.ToolFactory[uuid.Tool],
 	logger logger.Logger,
-) ecs.ToolFactory[Tool] {
+) ecs.ToolFactory[netsync.World, Tool] {
 	// each factory client can get unique instance so mutex isn't necessary
-	return ecs.NewToolFactory(func(world ecs.World) Tool {
+	return ecs.NewToolFactory(func(world netsync.World) Tool {
 		arrayCtors := config.ArraysOfComponents
+		dirtySet := ecs.NewDirtySet()
 		arrays := make([]ecs.AnyComponentArray, len(arrayCtors))
 		for i, ctor := range arrayCtors {
-			arrays[i] = ctor(world)
+			array := ctor(world)
+			array.AddDirtySet(dirtySet)
+			arrays[i] = array
 		}
 
-		transactions := make([]ecs.AnyComponentsArrayTransaction, len(arrays))
-		for i, array := range arrays {
-			transactions[i] = array.AnyTransaction()
-		}
 		t := tool{
 			config,
 			&toolState{
 				nil,
+				dirtySet,
 
-				ecs.GetComponentsArray[uuid.Component](world),
-				uuidToolFactory.Build(world),
 				logger,
 
 				world,
@@ -72,33 +69,32 @@ func (t tool) GetState() State {
 	state := State{
 		Entities: make(map[uuid.UUID]EntitySnapshot),
 	}
-	for _, entity := range t.uuidArray.GetEntities() {
+	for _, entity := range t.world.UUID().Component().GetEntities() {
 		t.captureEntity(state, entity)
 	}
 	return state
 }
 
 func (t tool) ApplyState(changes State) {
-	transactions := make([]ecs.AnyComponentsArrayTransaction, len(t.arrays))
-	for i, array := range t.arrays {
-		transactions[i] = array.AnyTransaction()
-	}
-	uuidTransaction := t.uuidArray.Transaction()
 	for id, snapshot := range changes.Entities {
-		entity, ok := t.uniqueTool.Entity(id)
+		entity, ok := t.world.UUID().Entity(id)
 		if snapshot.Components == nil {
 			t.world.RemoveEntity(entity)
 			continue
 		}
 		if !ok {
 			entity = t.world.NewEntity()
-			uuidTransaction.SaveComponent(entity, uuid.New(id))
+			t.world.UUID().Component().Set(entity, uuid.New(id))
 		}
-		for i, transaction := range transactions {
-			transaction.SaveAnyComponent(entity, snapshot.Components[i])
+		for i, array := range t.arrays {
+			if snapshot.Components[i] != nil {
+				err := array.SetAny(entity, snapshot.Components[i])
+				t.logger.Warn(err)
+			} else {
+				array.Remove(entity)
+			}
 		}
 	}
-	t.logger.Warn(ecs.FlushMany(append(transactions, uuidTransaction)...))
 }
 
 func (t tool) StartRecording() {
@@ -113,12 +109,12 @@ func (t tool) FinishRecording() *State {
 	return changes
 }
 
-func (t tool) RecordEntitiesChange(ei []ecs.EntityID) {
+func (t tool) RecordEntitiesChange() {
 	recording := t.recordedChanges
 	if recording == nil {
 		return
 	}
-	for _, entity := range ei {
+	for _, entity := range t.dirtySet.Get() {
 		t.captureEntity(*recording, entity)
 	}
 }
@@ -126,8 +122,8 @@ func (t tool) RecordEntitiesChange(ei []ecs.EntityID) {
 // private methods
 
 func (t tool) captureEntity(state State, entity ecs.EntityID) {
-	unique, err := t.uuidArray.GetComponent(entity)
-	if err != nil {
+	unique, ok := t.world.UUID().Component().Get(entity)
+	if !ok {
 		return
 	}
 
@@ -140,8 +136,8 @@ func (t tool) captureEntity(state State, entity ecs.EntityID) {
 	}
 
 	for i, array := range t.arrays {
-		component, err := array.GetAnyComponent(entity)
-		if err == nil {
+		component, ok := array.GetAny(entity)
+		if ok {
 			snapshot.Components[i] = component
 		}
 	}

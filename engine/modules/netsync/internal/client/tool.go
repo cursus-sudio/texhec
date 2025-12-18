@@ -8,6 +8,7 @@ import (
 	"engine/modules/netsync/internal/servertypes"
 	"engine/modules/netsync/internal/state"
 	"engine/modules/uuid"
+	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/frames"
 	"engine/services/logger"
@@ -35,16 +36,17 @@ type toolState struct {
 	sentTransparentEvent,
 	receivedTransparentEvent bool
 
-	mutex              *sync.Mutex
-	messagesFromServer []any
+	mutex *sync.Mutex
 
-	world           ecs.World
-	serverArray     ecs.ComponentsArray[netsync.ServerComponent]
-	connectionArray ecs.ComponentsArray[connection.ConnectionComponent]
-	uuidArray       ecs.ComponentsArray[uuid.Component]
-	stateTool       state.Tool
-	uniqueTool      uuid.Tool
-	logger          logger.Logger
+	dirtySet           ecs.DirtySet
+	messagesFromServer []any
+	toRemove           []ecs.EntityID
+	listeners          datastructures.SparseSet[ecs.EntityID]
+
+	netsync.World
+	netsync.NetSyncTool
+	stateTool state.Tool
+	logger    logger.Logger
 }
 
 // can:
@@ -57,10 +59,10 @@ type Tool struct {
 
 func NewTool(
 	config config.Config,
-	uniqueToolFactory ecs.ToolFactory[uuid.Tool],
-	stateToolFactory ecs.ToolFactory[state.Tool],
+	stateToolFactory ecs.ToolFactory[netsync.World, state.Tool],
+	netSyncToolFactory ecs.ToolFactory[netsync.World, netsync.NetSyncTool],
 	logger logger.Logger,
-	world ecs.World,
+	world netsync.World,
 ) Tool {
 	t := Tool{
 		config,
@@ -72,14 +74,15 @@ func NewTool(
 			false,
 
 			&sync.Mutex{},
+
+			ecs.NewDirtySet(),
 			nil,
+			nil,
+			datastructures.NewSparseSet[ecs.EntityID](),
 
 			world,
-			ecs.GetComponentsArray[netsync.ServerComponent](world),
-			ecs.GetComponentsArray[connection.ConnectionComponent](world),
-			ecs.GetComponentsArray[uuid.Component](world),
+			netSyncToolFactory.Build(world),
 			stateToolFactory.Build(world),
-			uniqueToolFactory.Build(world),
 			logger,
 		},
 	}
@@ -95,13 +98,21 @@ func NewTool(
 			t.ListenTransparentEvent(a.(servertypes.TransparentEventDTO))
 		},
 	}
-	events.Listen(t.world.EventsBuilder(), func(frames.FrameEvent) {
+	events.Listen(t.EventsBuilder(), func(frames.FrameEvent) {
+		t.loadConnections()
 		conn := t.getConnection()
 		if conn == nil {
 			return
 		}
 		t.mutex.Lock()
 		defer t.mutex.Unlock()
+
+		for len(t.toRemove) != 0 {
+			entity := t.toRemove[0]
+			t.toRemove = t.toRemove[1:]
+			t.RemoveEntity(entity)
+			t.listeners.Remove(entity)
+		}
 		for len(t.messagesFromServer) != 0 {
 			message := t.messagesFromServer[0]
 			t.messagesFromServer = t.messagesFromServer[1:]
@@ -117,47 +128,13 @@ func NewTool(
 		}
 	})
 
-	// listen to server messages
-	t.world.Query().
-		Require(netsync.ServerComponent{}).
-		Require(connection.ConnectionComponent{}).
-		Build().OnAdd(func(ei []ecs.EntityID) {
-		if len(ei) != 1 {
-			t.logger.Warn(errors.New("has more than one server"))
-			return
-		}
-		entity := ei[0]
-		comp, err := t.connectionArray.GetComponent(entity)
-		if err != nil {
-			t.logger.Warn(err)
-			return
-		}
-		conn := comp.Conn()
-		messages := conn.Messages()
-		if err := conn.Send(clienttypes.FetchStateDTO{}); err != nil {
-			logger.Warn(err)
-			return
-		}
-		go func(entity ecs.EntityID) {
-			for {
-				message, ok := <-messages
-				if !ok {
-					break
-				}
-				t.mutex.Lock()
-				t.messagesFromServer = append(t.messagesFromServer, message)
-				t.mutex.Unlock()
-			}
-			world.RemoveEntity(entity)
-		}(entity)
-	})
+	t.NetSync().Server().AddDirtySet(t.dirtySet)
+	t.Connection().Component().AddDirtySet(t.dirtySet)
 
 	// listen to entities changes
 	for _, arrayCtor := range config.ArraysOfComponents {
 		array := arrayCtor(world)
-		array.BeforeAdd(t.stateTool.RecordEntitiesChange)
-		array.BeforeChange(t.stateTool.RecordEntitiesChange)
-		array.BeforeRemove(t.stateTool.RecordEntitiesChange)
+		array.BeforeGet(t.stateTool.RecordEntitiesChange)
 	}
 
 	return t
@@ -167,6 +144,7 @@ func NewTool(
 
 // doesn't send event to server
 func (t Tool) BeforeEventRecord(event any) {
+	t.loadConnections()
 	clientConn := t.getConnection()
 	if clientConn == nil {
 		return
@@ -189,13 +167,14 @@ func (t Tool) BeforeEventRecord(event any) {
 	t.stateTool.StartRecording()
 	t.recordedPrediction = &recordedPrediction{
 		PredictedEvent: clienttypes.PredictedEvent{
-			ID:    t.uniqueTool.NewUUID(),
+			ID:    t.UUID().NewUUID(),
 			Event: event,
 		},
 	}
 }
 
 func (t Tool) BeforeEvent(event any) {
+	t.loadConnections()
 	clientConn := t.getConnection()
 	if clientConn == nil {
 		return
@@ -322,10 +301,53 @@ func (t Tool) ListenTransparentEvent(dto servertypes.TransparentEventDTO) {
 		return
 	}
 	t.receivedTransparentEvent = true
-	events.EmitAny(t.world.Events(), dto.Event)
+	events.EmitAny(t.Events(), dto.Event)
 }
 
 // private methods
+
+func (t Tool) loadConnections() {
+	ei := t.dirtySet.Get()
+	if len(ei) == 0 {
+		return
+	}
+	if len(ei) != 1 {
+		t.logger.Warn(errors.New("has more than one server"))
+		return
+	}
+	entity := ei[0]
+	if ok := t.listeners.Get(entity); ok {
+		return
+	}
+	if _, ok := t.NetSync().Server().Get(entity); !ok {
+		return
+	}
+	t.listeners.Add(entity)
+	comp, ok := t.Connection().Component().Get(entity)
+	if !ok {
+		return
+	}
+	conn := comp.Conn()
+	messages := conn.Messages()
+	if err := conn.Send(clienttypes.FetchStateDTO{}); err != nil {
+		t.logger.Warn(err)
+		return
+	}
+	go func(entity ecs.EntityID) {
+		for {
+			message, ok := <-messages
+			if !ok {
+				break
+			}
+			t.mutex.Lock()
+			t.messagesFromServer = append(t.messagesFromServer, message)
+			t.mutex.Unlock()
+		}
+		t.mutex.Lock()
+		t.toRemove = append(t.toRemove, entity)
+		t.mutex.Unlock()
+	}(entity)
+}
 
 func (t Tool) undoPredictions() []clienttypes.PredictedEvent {
 	// add events to the list
@@ -347,16 +369,16 @@ func (t Tool) undoPredictions() []clienttypes.PredictedEvent {
 func (t Tool) applyPredictedEvents(predictedEvents []clienttypes.PredictedEvent) {
 	for _, predictedEvent := range predictedEvents[1:] {
 		t.recordNextEvent = false
-		events.EmitAny(t.world.Events(), predictedEvent.Event)
+		events.EmitAny(t.Events(), predictedEvent.Event)
 	}
 }
 
-func (t Tool) getConnection() connection.Connection {
-	var conn connection.Connection
-	if entities := t.serverArray.GetEntities(); len(entities) == 1 {
+func (t Tool) getConnection() connection.Conn {
+	var conn connection.Conn
+	if entities := t.NetSync().Server().GetEntities(); len(entities) == 1 {
 		server := entities[0]
-		comp, err := t.connectionArray.GetComponent(server)
-		if err == nil {
+		comp, ok := t.Connection().Component().Get(server)
+		if ok {
 			conn = comp.Conn()
 		}
 	}

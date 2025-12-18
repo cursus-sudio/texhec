@@ -9,71 +9,24 @@ import (
 )
 
 type tool struct {
-	world        ecs.World
-	colorArray   ecs.ComponentsArray[render.ColorComponent]
-	meshArray    ecs.ComponentsArray[render.MeshComponent]
-	textureArray ecs.ComponentsArray[render.TextureComponent]
+	world             ecs.World
+	colorArray        ecs.ComponentsArray[render.ColorComponent]
+	meshArray         ecs.ComponentsArray[render.MeshComponent]
+	textureArray      ecs.ComponentsArray[render.TextureComponent]
+	textureFrameArray ecs.ComponentsArray[render.TextureFrameComponent]
 }
 
-func NewTool() ecs.ToolFactory[render.Tool] {
-	return ecs.NewToolFactory(func(w ecs.World) render.Tool {
+func NewTool() ecs.ToolFactory[render.World, render.RenderTool] {
+	return ecs.NewToolFactory(func(w render.World) render.RenderTool {
 		return &tool{
 			w,
 			ecs.GetComponentsArray[render.ColorComponent](w),
 			ecs.GetComponentsArray[render.MeshComponent](w),
 			ecs.GetComponentsArray[render.TextureComponent](w),
+			ecs.GetComponentsArray[render.TextureFrameComponent](w),
 		}
 	})
 }
-
-type transaction struct {
-	*tool
-
-	colorTransaction   ecs.ComponentsArrayTransaction[render.ColorComponent]
-	meshTransaction    ecs.ComponentsArrayTransaction[render.MeshComponent]
-	textureTransaction ecs.ComponentsArrayTransaction[render.TextureComponent]
-}
-
-func (t *tool) Transaction() render.Transaction {
-	return &transaction{
-		t,
-		t.colorArray.Transaction(),
-		t.meshArray.Transaction(),
-		t.textureArray.Transaction(),
-	}
-}
-
-//
-
-type object struct {
-	color   ecs.EntityComponent[render.ColorComponent]
-	mesh    ecs.EntityComponent[render.MeshComponent]
-	texture ecs.EntityComponent[render.TextureComponent]
-}
-
-func (t *transaction) GetObject(entity ecs.EntityID) render.Object {
-	return &object{
-		t.colorTransaction.GetEntityComponent(entity),
-		t.meshTransaction.GetEntityComponent(entity),
-		t.textureTransaction.GetEntityComponent(entity),
-	}
-}
-func (t *transaction) Transactions() []ecs.AnyComponentsArrayTransaction {
-	return []ecs.AnyComponentsArrayTransaction{
-		t.colorTransaction,
-		t.meshTransaction,
-		t.textureTransaction,
-	}
-}
-func (t *transaction) Flush() error {
-	return ecs.FlushMany(t.Transactions()...)
-}
-
-//
-
-func (o *object) Color() ecs.EntityComponent[render.ColorComponent]     { return o.color }
-func (o *object) Mesh() ecs.EntityComponent[render.MeshComponent]       { return o.mesh }
-func (o *object) Texture() ecs.EntityComponent[render.TextureComponent] { return o.texture }
 
 //
 
@@ -88,6 +41,23 @@ var glErrorStrings = map[uint32]string{
 	gl.INVALID_FRAMEBUFFER_OPERATION: "GL_INVALID_FRAMEBUFFER_OPERATION",
 	gl.CONTEXT_LOST:                  "GL_CONTEXT_LOST",
 	// gl.TABLE_TOO_LARGE:               "GL_TABLE_TOO_LARGE", // Less common in modern GL
+}
+
+func (t *tool) Render() render.Interface {
+	return t
+}
+
+func (t *tool) Color() ecs.ComponentsArray[render.ColorComponent] {
+	return t.colorArray
+}
+func (t *tool) Mesh() ecs.ComponentsArray[render.MeshComponent] {
+	return t.meshArray
+}
+func (t *tool) Texture() ecs.ComponentsArray[render.TextureComponent] {
+	return t.textureArray
+}
+func (t *tool) TextureFrame() ecs.ComponentsArray[render.TextureFrameComponent] {
+	return t.textureFrameArray
 }
 
 func (*tool) Error() error {

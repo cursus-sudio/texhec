@@ -3,7 +3,6 @@ package tilerenderer
 import (
 	"core/modules/definition"
 	"core/modules/tile"
-	"engine/modules/camera"
 	"engine/modules/groups"
 	"engine/modules/render"
 	"engine/services/assets"
@@ -18,7 +17,6 @@ import (
 	"engine/services/logger"
 	"engine/services/media/window"
 	"image"
-	"sync"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/ogiusek/events"
@@ -51,14 +49,14 @@ type TileRenderSystemRegister struct {
 	textures            datastructures.SparseArray[uint32, image.Image]
 	textureArrayFactory texturearray.Factory
 	vboFactory          vbo.VBOFactory[TileData]
-	assetsStorage       assets.AssetsStorage
+	assets              assets.Assets
 
 	tileSize  int32
 	gridDepth float32
 	layers    int32
 
-	groups             groups.GroupsComponent
-	cameraCtorsFactory ecs.ToolFactory[camera.Tool]
+	world  tile.World
+	groups groups.GroupsComponent
 }
 
 func NewTileRenderSystemRegister(
@@ -66,12 +64,11 @@ func NewTileRenderSystemRegister(
 	logger logger.Logger,
 	window window.Api,
 	vboFactory vbo.VBOFactory[TileData],
-	assetsStorage assets.AssetsStorage,
+	assets assets.Assets,
 	tileSize int32,
 	gridDepth float32,
 	layers int32,
 	groups groups.GroupsComponent,
-	cameraCtorsFactory ecs.ToolFactory[camera.Tool],
 ) TileRenderSystemRegister {
 	return TileRenderSystemRegister{
 		logger:              logger,
@@ -79,21 +76,20 @@ func NewTileRenderSystemRegister(
 		textures:            datastructures.NewSparseArray[uint32, image.Image](),
 		textureArrayFactory: textureArrayFactory,
 		vboFactory:          vboFactory,
-		assetsStorage:       assetsStorage,
+		assets:              assets,
 
 		tileSize:  tileSize,
 		gridDepth: gridDepth,
 		layers:    layers,
 
-		groups:             groups,
-		cameraCtorsFactory: cameraCtorsFactory,
+		groups: groups,
 	}
 }
 
 func (service TileRenderSystemRegister) AddType(addedAssets datastructures.SparseArray[definition.DefinitionID, assets.AssetID]) {
 	for _, assetIndex := range addedAssets.GetIndices() {
 		asset, _ := addedAssets.Get(assetIndex)
-		texture, err := assets.StorageGet[render.TextureAsset](service.assetsStorage, asset)
+		texture, err := assets.GetAsset[render.TextureAsset](service.assets, asset)
 		if err != nil {
 			continue
 		}
@@ -102,7 +98,7 @@ func (service TileRenderSystemRegister) AddType(addedAssets datastructures.Spars
 	}
 }
 
-func (factory TileRenderSystemRegister) Register(w ecs.World) error {
+func (factory TileRenderSystemRegister) Register(w tile.World) error {
 	vert, err := shader.NewShader(vertSource, shader.VertexShader)
 	if err != nil {
 		return err
@@ -141,7 +137,6 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 		return err
 	}
 
-	changeMutex := &sync.Mutex{}
 	layers := []*layer{}
 	for i := 0; i < int(factory.layers); i++ {
 		VBO := factory.vboFactory()
@@ -160,6 +155,11 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 	g := global{p, textureArray, layers}
 	w.SaveGlobal(g)
 
+	dirtySet := ecs.NewDirtySet()
+	tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w)
+	w.Definition().Link().AddDirtySet(dirtySet)
+	tilePosArray.AddDirtySet(dirtySet)
+
 	s := system{
 		program:   p,
 		locations: locations,
@@ -168,60 +168,17 @@ func (factory TileRenderSystemRegister) Register(w ecs.World) error {
 		logger: factory.logger,
 
 		textureArray: textureArray,
+		rendered:     datastructures.NewSparseArray[ecs.EntityID, tile.PosComponent](),
 		layers:       layers,
 
 		tileSize:  factory.tileSize,
 		gridDepth: factory.gridDepth,
 
-		world:       w,
-		groupsArray: ecs.GetComponentsArray[groups.GroupsComponent](w),
-		gridGroups:  factory.groups,
-		cameraQuery: w.Query().Require(camera.OrthoComponent{}).Build(),
-		cameraCtors: factory.cameraCtorsFactory.Build(w),
+		dirtySet:     dirtySet,
+		world:        w,
+		gridGroups:   factory.groups,
+		tilePosArray: tilePosArray,
 	}
-
-	linkArray := ecs.GetComponentsArray[definition.DefinitionLinkComponent](w)
-	posArray := ecs.GetComponentsArray[tile.PosComponent](w)
-
-	onChangeOrAdd := func(ei []ecs.EntityID) {
-		changeMutex.Lock()
-		defer changeMutex.Unlock()
-
-		for _, entity := range ei {
-			tileType, err := linkArray.GetComponent(entity)
-			if err != nil {
-				continue
-			}
-			tilePos, err := posArray.GetComponent(entity)
-			if err != nil {
-				continue
-			}
-			layer := s.layers[tilePos.Layer]
-			layer.changed = true
-			tile := TileData{tilePos.X, tilePos.Y, tileType.DefinitionID}
-			layer.tiles.Set(entity, tile)
-		}
-	}
-	query := w.Query().
-		Require(definition.DefinitionLinkComponent{}).
-		Require(tile.PosComponent{}).
-		Build()
-	query.OnAdd(onChangeOrAdd)
-	query.OnChange(onChangeOrAdd)
-	query.OnRemove(func(ei []ecs.EntityID) {
-		changeMutex.Lock()
-		defer changeMutex.Unlock()
-
-		for _, entity := range ei {
-			tilePos, err := posArray.GetComponent(entity)
-			if err != nil {
-				continue
-			}
-			layer := s.layers[tilePos.Layer]
-			layer.changed = true
-			layer.tiles.Remove(entity)
-		}
-	})
 
 	events.Listen(w.EventsBuilder(), s.Listen)
 	return nil

@@ -1,6 +1,7 @@
 package systems
 
 import (
+	"engine/modules/inputs"
 	"engine/services/ecs"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -10,8 +11,8 @@ import (
 
 type resizeSystem struct{}
 
-func NewResizeSystem() ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
+func NewResizeSystem() ecs.SystemRegister[inputs.World] {
+	return ecs.NewSystemRegister(func(w inputs.World) error {
 		s := &resizeSystem{}
 		events.Listen(w.EventsBuilder(), s.Listen)
 		return nil

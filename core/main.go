@@ -4,7 +4,9 @@ import (
 	_ "embed"
 	"engine/services/ecs"
 	appruntime "engine/services/runtime"
+	"os"
 	"runtime"
+	"runtime/pprof"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/ogiusek/ioc/v2"
@@ -13,13 +15,20 @@ import (
 func main() {
 	print("started\n")
 
+	{ // go tool pprof -http=:8080 cpu.pprof.cp
+		f, err := os.Create("cpu.pprof.cp")
+		if err != nil {
+			panic(err)
+		}
+		if err := pprof.StartCPUProfile(f); err != nil {
+			panic(err)
+		}
+		defer pprof.StopCPUProfile()
+	}
+
 	runtime.LockOSThread()
 
-	sharedPkg := SharedPackage()
-
-	c := frontendDic(
-		sharedPkg,
-	)
+	c := getDic()
 
 	gl.ClearColor(0.2, 0.3, 0.3, 1.0)
 	// load world before starting timer

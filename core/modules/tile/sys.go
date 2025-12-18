@@ -4,8 +4,8 @@ import (
 	"engine/services/ecs"
 )
 
-type System ecs.SystemRegister
-type SystemRenderer ecs.SystemRegister
+type System ecs.SystemRegister[World]
+type SystemRenderer ecs.SystemRegister[World]
 
 type TileClickEvent struct{ Tile PosComponent }
 

@@ -1,13 +1,11 @@
 package inputspkg
 
 import (
-	"engine/modules/camera"
-	"engine/modules/collider"
 	"engine/modules/inputs"
 	engineinputs "engine/modules/inputs"
 	"engine/modules/inputs/internal/mouse"
 	"engine/modules/inputs/internal/systems"
-	inputstool "engine/modules/inputs/internal/tool"
+	"engine/modules/inputs/internal/tool"
 	"engine/services/codec"
 	"engine/services/ecs"
 	"engine/services/frames"
@@ -48,9 +46,12 @@ func (pkg) Register(b ioc.Builder) {
 			Register(inputs.SynchronizePositionEvent{})
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[engineinputs.Tool] { return inputstool.NewTool() })
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[inputs.World, inputs.InputsTool] {
+		return tool.NewToolFactory()
+	})
+
 	ioc.RegisterSingleton(b, func(c ioc.Dic) engineinputs.System {
-		return ecs.NewSystemRegister(func(w ecs.World) error {
+		return ecs.NewSystemRegister(func(w inputs.World) error {
 			ecs.RegisterSystems(w,
 				systems.NewInputsSystem(ioc.Get[inputsapi.Api](c)),
 				systems.NewResizeSystem(),
@@ -65,13 +66,17 @@ func (pkg) Register(b ioc.Builder) {
 
 				mouse.NewCameraRaySystem(
 					ioc.Get[logger.Logger](c),
-					ioc.Get[ecs.ToolFactory[collider.CollisionTool]](c),
 					ioc.Get[window.Api](c),
-					ioc.Get[ecs.ToolFactory[camera.Tool]](c),
 				),
-				mouse.NewHoverSystem(),
+				mouse.NewHoverSystem(
+					ioc.Get[ecs.ToolFactory[inputs.World, inputs.InputsTool]](c),
+				),
 				mouse.NewHoverEventsSystem(),
-				mouse.NewClickSystem(ioc.Get[logger.Logger](c), ioc.Get[window.Api](c)),
+				mouse.NewClickSystem(
+					ioc.Get[logger.Logger](c),
+					ioc.Get[window.Api](c),
+					ioc.Get[ecs.ToolFactory[inputs.World, inputs.InputsTool]](c),
+				),
 				ecs.NewSystemRegister(func(w ecs.World) error {
 					events.Listen(w.EventsBuilder(), func(frames.FrameEvent) {
 						events.Emit(w.Events(), mouse.NewShootRayEvent())

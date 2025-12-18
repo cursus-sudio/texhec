@@ -3,7 +3,6 @@ package groupspkg
 import (
 	"engine/modules/groups"
 	"engine/modules/groups/internal"
-	"engine/modules/hierarchy"
 	"engine/services/codec"
 	"engine/services/ecs"
 	"engine/services/logger"
@@ -24,11 +23,7 @@ func (pkg) Register(b ioc.Builder) {
 			// components
 			Register(groups.GroupsComponent{})
 	})
-
-	ioc.RegisterSingleton(b, func(c ioc.Dic) groups.System {
-		return internal.NewSystem(
-			ioc.Get[logger.Logger](c),
-			ioc.Get[ecs.ToolFactory[hierarchy.Tool]](c),
-		)
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[groups.World, groups.GroupsTool] {
+		return internal.NewToolFactory(ioc.Get[logger.Logger](c))
 	})
 }

@@ -136,7 +136,7 @@ func (pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) WorldResolver {
 		return func(w ecs.World) World {
-			world := world{World: w}
+			world := &world{World: w}
 			world.AnimationTool = ioc.Get[ecs.ToolFactory[animation.World, animation.AnimationTool]](c).Build(world)
 			world.UUIDTool = ioc.Get[ecs.ToolFactory[uuid.World, uuid.UUIDTool]](c).Build(world)
 
@@ -202,7 +202,6 @@ func (pkg) Register(b ioc.Builder) {
 				// update
 				ioc.Get[animation.System](c),
 				ioc.Get[camera.System](c),
-				ioc.Get[collider.System](c),
 				ioc.Get[drag.System](c),
 				temporaryInlineSystems,
 

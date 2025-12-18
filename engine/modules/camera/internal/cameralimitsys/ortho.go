@@ -41,7 +41,7 @@ func NewOrthoSys(
 			cameraTool:  cameraTool,
 			logger:      logger,
 		}
-		w.Transform().Pos().BeforeGet(s.BeforeGet)
+		w.Transform().AbsolutePos().BeforeGet(s.BeforeGet)
 
 		return nil
 	})
@@ -54,7 +54,7 @@ func (s *orthoSys) BeforeGet() {
 	}
 	type save struct {
 		entity ecs.EntityID
-		pos    transform.PosComponent
+		pos    transform.AbsolutePosComponent
 	}
 	saves := []save{}
 
@@ -72,7 +72,7 @@ func (s *orthoSys) BeforeGet() {
 			continue
 		}
 
-		pos, ok := s.world.Transform().Pos().Get(entity)
+		pos, ok := s.world.Transform().AbsolutePos().Get(entity)
 		if !ok {
 			continue
 		}
@@ -114,6 +114,6 @@ func (s *orthoSys) BeforeGet() {
 		saves = append(saves, save{entity, pos})
 	}
 	for _, save := range saves {
-		s.world.Transform().Pos().Set(save.entity, save.pos)
+		s.world.Transform().AbsolutePos().Set(save.entity, save.pos)
 	}
 }

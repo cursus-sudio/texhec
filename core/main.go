@@ -28,11 +28,7 @@ func main() {
 
 	runtime.LockOSThread()
 
-	sharedPkg := SharedPackage()
-
-	c := frontendDic(
-		sharedPkg,
-	)
+	c := getDic()
 
 	gl.ClearColor(0.2, 0.3, 0.3, 1.0)
 	// load world before starting timer

@@ -19,11 +19,13 @@ type Frames interface {
 }
 
 type frames struct {
-	Running  bool
-	FPS      int
-	RunMutex sync.RWMutex
-	Events   events.Events
-	Clock    clock.Clock
+	Running bool
+	TPS,
+	FPS int
+	TickProgress time.Duration
+	RunMutex     sync.RWMutex
+	Events       events.Events
+	Clock        clock.Clock
 }
 
 func (frames *frames) StartLoop() {
@@ -31,6 +33,7 @@ func (frames *frames) StartLoop() {
 	defer frames.RunMutex.Unlock()
 
 	frameDuration := time.Second / time.Duration(frames.FPS)
+	tickDuration := time.Second / time.Duration(frames.TPS)
 	ticker := time.NewTicker(frameDuration)
 	defer ticker.Stop()
 
@@ -43,6 +46,11 @@ func (frames *frames) StartLoop() {
 
 		delta := currentTime.Sub(lastFrameTime)
 		event := NewFrameEvent(delta)
+		frames.TickProgress += delta
+		for frames.TickProgress > tickDuration {
+			frames.TickProgress -= tickDuration
+			events.Emit(frames.Events, TickEvent{tickDuration})
+		}
 		events.Emit(frames.Events, event)
 
 		lastFrameTime = currentTime

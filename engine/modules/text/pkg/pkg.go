@@ -67,6 +67,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) textrenderer.FontService {
 		return textrenderer.NewFontService(
 			ioc.Get[assets.Assets](c),
+			ioc.Get[assets.AssetsCache](c),
 			pkg.usedGlyphs,
 			pkg.faceOptions,
 			ioc.Get[logger.Logger](c),

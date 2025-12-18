@@ -49,7 +49,7 @@ type TileRenderSystemRegister struct {
 	textures            datastructures.SparseArray[uint32, image.Image]
 	textureArrayFactory texturearray.Factory
 	vboFactory          vbo.VBOFactory[TileData]
-	assetsStorage       assets.AssetsStorage
+	assets              assets.Assets
 
 	tileSize  int32
 	gridDepth float32
@@ -64,7 +64,7 @@ func NewTileRenderSystemRegister(
 	logger logger.Logger,
 	window window.Api,
 	vboFactory vbo.VBOFactory[TileData],
-	assetsStorage assets.AssetsStorage,
+	assets assets.Assets,
 	tileSize int32,
 	gridDepth float32,
 	layers int32,
@@ -76,7 +76,7 @@ func NewTileRenderSystemRegister(
 		textures:            datastructures.NewSparseArray[uint32, image.Image](),
 		textureArrayFactory: textureArrayFactory,
 		vboFactory:          vboFactory,
-		assetsStorage:       assetsStorage,
+		assets:              assets,
 
 		tileSize:  tileSize,
 		gridDepth: gridDepth,
@@ -89,7 +89,7 @@ func NewTileRenderSystemRegister(
 func (service TileRenderSystemRegister) AddType(addedAssets datastructures.SparseArray[definition.DefinitionID, assets.AssetID]) {
 	for _, assetIndex := range addedAssets.GetIndices() {
 		asset, _ := addedAssets.Get(assetIndex)
-		texture, err := assets.StorageGet[render.TextureAsset](service.assetsStorage, asset)
+		texture, err := assets.GetAsset[render.TextureAsset](service.assets, asset)
 		if err != nil {
 			continue
 		}

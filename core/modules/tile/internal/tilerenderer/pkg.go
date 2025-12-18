@@ -40,7 +40,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			ioc.Get[logger.Logger](c),
 			ioc.Get[window.Api](c),
 			ioc.Get[vbo.VBOFactory[TileData]](c),
-			ioc.Get[assets.AssetsStorage](c),
+			ioc.Get[assets.Assets](c),
 			pkg.tileSize,
 			pkg.gridDepth,
 			pkg.layers,

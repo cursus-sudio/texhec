@@ -146,7 +146,6 @@ func (pkg) Assets(b ioc.Builder) {
 
 		gameAssets := GameAssets{}
 		logger.Warn(assetsService.InitializeProperties(&gameAssets))
-		// gameAssets.Hud.BtnAspectRatio = mgl32.Vec3{33, 13}
 		return gameAssets
 	})
 

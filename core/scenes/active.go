@@ -19,6 +19,7 @@ import (
 	"engine/modules/netsync"
 	"engine/modules/render"
 	scenesys "engine/modules/scenes"
+	"engine/modules/slerp"
 	"engine/modules/text"
 	"engine/modules/transform"
 	"engine/modules/uuid"
@@ -203,6 +204,7 @@ func (pkg) Register(b ioc.Builder) {
 				ioc.Get[animation.System](c),
 				ioc.Get[camera.System](c),
 				ioc.Get[drag.System](c),
+				ioc.Get[slerp.System](c),
 				temporaryInlineSystems,
 
 				ioc.Get[tile.System](c),

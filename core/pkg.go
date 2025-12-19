@@ -3,8 +3,8 @@ package main
 import (
 	gameassets "core/assets"
 	"core/modules/definition"
-	definitionpkg "core/modules/definition/pkg"
-	"core/modules/fpslogger/pkg"
+	"core/modules/definition/pkg"
+	fpsloggerpkg "core/modules/fpslogger/pkg"
 	"core/modules/settings"
 	settingspkg "core/modules/settings/pkg"
 	"core/modules/tile"
@@ -33,6 +33,8 @@ import (
 	"engine/modules/netsync/pkg"
 	"engine/modules/render/pkg"
 	"engine/modules/scenes/pkg"
+	"engine/modules/slerp"
+	"engine/modules/slerp/pkg"
 	"engine/modules/text"
 	"engine/modules/text/pkg"
 	"engine/modules/transform"
@@ -245,6 +247,10 @@ func getDic() ioc.Dic {
 
 			return config
 		}()),
+		slerppkg.Package(),
+		slerppkg.PackageT(func(c1, c2 transform.SizeComponent, progress slerp.Progress) transform.SizeComponent {
+			return c1.Blend(c2, float32(progress))
+		}),
 
 		// game packages
 		fpsloggerpkg.Package(),

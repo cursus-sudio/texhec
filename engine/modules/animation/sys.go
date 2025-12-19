@@ -7,6 +7,7 @@ import (
 
 type System ecs.SystemRegister[World]
 
+type ToolFactory ecs.ToolFactory[World, AnimationTool]
 type AnimationTool interface {
 	Animation() Interface
 }

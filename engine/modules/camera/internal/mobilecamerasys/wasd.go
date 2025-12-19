@@ -21,9 +21,9 @@ type wasdMoveSystem struct {
 
 func NewWasdSystem(
 	logger logger.Logger,
-	cameraCtors ecs.ToolFactory[camera.World, camera.CameraTool],
+	cameraCtors camera.ToolFactory,
 	cameraSpeed float32,
-) ecs.SystemRegister[camera.World] {
+) camera.System {
 	return ecs.NewSystemRegister(func(w camera.World) error {
 		s := &wasdMoveSystem{
 			logger:     logger,

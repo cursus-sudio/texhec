@@ -6,16 +6,15 @@ import (
 	"engine/services/ecs"
 )
 
+type ToolFactory ecs.ToolFactory[World, InputsTool]
 type InputsTool interface {
 	Inputs() Interface
 }
-
 type World interface {
 	ecs.World
 	collider.ColliderTool
 	camera.CameraTool
 }
-
 type Interface interface {
 	Hovered() ecs.ComponentsArray[HoveredComponent]
 	Dragged() ecs.ComponentsArray[DraggedComponent]

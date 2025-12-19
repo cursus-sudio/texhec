@@ -11,7 +11,7 @@ type tool struct {
 	definitionLinkArray ecs.ComponentsArray[definition.DefinitionLinkComponent]
 }
 
-func NewToolFactory() ecs.ToolFactory[definition.World, definition.DefinitionTool] {
+func NewToolFactory() definition.ToolFactory {
 	mutex := &sync.Mutex{}
 	return ecs.NewToolFactory(func(w definition.World) definition.DefinitionTool {
 		mutex.Lock()

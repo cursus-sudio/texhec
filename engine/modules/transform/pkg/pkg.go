@@ -42,7 +42,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			Register(transform.ParentComponent{})
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[transform.World, transform.TransformTool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) transform.ToolFactory {
 		return transformtool.NewTransformTool(
 			ioc.Get[logger.Logger](c),
 			pkg.defaultRot,

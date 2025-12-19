@@ -51,7 +51,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) cameratool.CameraResolverFactory {
 		return cameratool.NewCameraResolverFactory()
 	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[camera.World, camera.CameraTool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) camera.ToolFactory {
 		return ioc.Get[cameratool.CameraResolverFactory](c)
 	})
 
@@ -238,27 +238,27 @@ func (pkg pkg) Register(b ioc.Builder) {
 				projectionsys.NewUpdateProjectionsSystem(
 					ioc.Get[window.Api](c),
 					logger,
-					ioc.Get[ecs.ToolFactory[camera.World, camera.CameraTool]](c),
+					ioc.Get[camera.ToolFactory](c),
 				),
 				mobilecamerasys.NewScrollSystem(
 					logger,
-					ioc.Get[ecs.ToolFactory[camera.World, camera.CameraTool]](c),
+					ioc.Get[camera.ToolFactory](c),
 					ioc.Get[window.Api](c),
 					pkg.minZoom, pkg.maxZoom, // min and max zoom
 				),
 				mobilecamerasys.NewDragSystem(
 					sdl.BUTTON_LEFT,
-					ioc.Get[ecs.ToolFactory[camera.World, camera.CameraTool]](c),
+					ioc.Get[camera.ToolFactory](c),
 					ioc.Get[window.Api](c),
 					logger,
 				),
 				mobilecamerasys.NewWasdSystem(
 					logger,
-					ioc.Get[ecs.ToolFactory[camera.World, camera.CameraTool]](c),
+					ioc.Get[camera.ToolFactory](c),
 					1.0, // speed
 				),
 				cameralimitsys.NewOrthoSys(
-					ioc.Get[ecs.ToolFactory[camera.World, camera.CameraTool]](c),
+					ioc.Get[camera.ToolFactory](c),
 					logger,
 				),
 			)

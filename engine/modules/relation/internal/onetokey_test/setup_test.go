@@ -42,7 +42,7 @@ func NewSetup() Setup {
 	}
 
 	c := b.Build()
-	toolFactory := ioc.Get[ecs.ToolFactory[ecs.World, relation.EntityToKeyTool[uint32]]](c)
+	toolFactory := ioc.Get[relation.ToolFactory[uint32]](c)
 
 	w := ecs.NewWorld()
 	return Setup{

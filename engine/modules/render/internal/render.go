@@ -15,7 +15,7 @@ type renderSystem struct {
 	window window.Api
 }
 
-func NewRenderSystem(window window.Api) ecs.SystemRegister[render.World] {
+func NewRenderSystem(window window.Api) render.System {
 	return ecs.NewSystemRegister(func(w render.World) error {
 		s := &renderSystem{
 			world:  w,

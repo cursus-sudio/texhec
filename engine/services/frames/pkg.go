@@ -9,18 +9,20 @@ import (
 )
 
 type pkg struct {
+	tps,
 	fps int
 }
 
-func Package(fps int) ioc.Pkg {
+func Package(tps, fps int) ioc.Pkg {
 	return pkg{
+		tps: tps,
 		fps: fps,
 	}
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) Builder {
-		return NewBuilder(pkg.fps)
+		return NewBuilder(pkg.tps, pkg.fps)
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) Frames {

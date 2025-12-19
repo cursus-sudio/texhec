@@ -6,7 +6,6 @@ import (
 	"engine/modules/text/internal/texttool"
 	"engine/services/assets"
 	"engine/services/datastructures"
-	"engine/services/ecs"
 	"engine/services/graphics/texturearray"
 	"engine/services/graphics/vao/vbo"
 	"engine/services/logger"
@@ -61,7 +60,7 @@ func Package(
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[text.World, text.TextTool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) text.ToolFactory {
 		return texttool.NewTool(ioc.Get[logger.Logger](c))
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) textrenderer.FontService {
@@ -78,7 +77,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) textrenderer.LayoutServiceFactory {
 		return textrenderer.NewLayoutServiceFactory(
-			ioc.Get[ecs.ToolFactory[text.World, text.TextTool]](c),
+			ioc.Get[text.ToolFactory](c),
 			ioc.Get[logger.Logger](c),
 			ioc.Get[textrenderer.FontService](c),
 			ioc.Get[textrenderer.FontKeys](c),
@@ -96,7 +95,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) text.System {
 		return textrenderer.NewTextRendererRegister(
-			ioc.Get[ecs.ToolFactory[text.World, text.TextTool]](c),
+			ioc.Get[text.ToolFactory](c),
 			ioc.Get[textrenderer.FontService](c),
 			ioc.Get[vbo.VBOFactory[textrenderer.Glyph]](c),
 			ioc.Get[textrenderer.LayoutServiceFactory](c),

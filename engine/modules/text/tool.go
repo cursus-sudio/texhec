@@ -7,17 +7,16 @@ import (
 	"engine/services/ecs"
 )
 
+type ToolFactory ecs.ToolFactory[World, TextTool]
 type TextTool interface {
 	Text() Interface
 }
-
 type World interface {
 	ecs.World
 	groups.GroupsTool
 	camera.CameraTool
 	transform.TransformTool
 }
-
 type Interface interface {
 	Break() ecs.ComponentsArray[BreakComponent]
 	Content() ecs.ComponentsArray[TextComponent]

@@ -14,7 +14,7 @@ type hoverEventSystem struct {
 	hoveredArray    ecs.ComponentsArray[inputs.HoveredComponent]
 }
 
-func NewHoverEventsSystem() ecs.SystemRegister[inputs.World] {
+func NewHoverEventsSystem() inputs.System {
 	return ecs.NewSystemRegister(func(w inputs.World) error {
 		s := &hoverEventSystem{
 			World:           w,

@@ -10,7 +10,7 @@ import (
 
 type clearSystem struct{}
 
-func NewClearSystem() ecs.SystemRegister[render.World] {
+func NewClearSystem() render.System {
 	return ecs.NewSystemRegister(func(w render.World) error {
 		s := &clearSystem{}
 		events.Listen(w.EventsBuilder(), s.Listen)

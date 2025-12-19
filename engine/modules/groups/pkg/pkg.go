@@ -4,7 +4,6 @@ import (
 	"engine/modules/groups"
 	"engine/modules/groups/internal"
 	"engine/services/codec"
-	"engine/services/ecs"
 	"engine/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
@@ -23,7 +22,7 @@ func (pkg) Register(b ioc.Builder) {
 			// components
 			Register(groups.GroupsComponent{})
 	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[groups.World, groups.GroupsTool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) groups.ToolFactory {
 		return internal.NewToolFactory(ioc.Get[logger.Logger](c))
 	})
 }

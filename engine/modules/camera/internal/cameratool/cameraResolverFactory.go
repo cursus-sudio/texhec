@@ -11,7 +11,7 @@ type CameraResolverFactory interface {
 		reflect.Type,
 		func(camera.World) func(ecs.EntityID) (camera.Object, error),
 	)
-	ecs.ToolFactory[camera.World, camera.CameraTool]
+	camera.ToolFactory
 }
 
 type cameraResolverFactory struct {

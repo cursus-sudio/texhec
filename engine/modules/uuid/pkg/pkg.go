@@ -43,9 +43,9 @@ func (pkg) Register(b ioc.Builder) {
 		},
 	).Register(b)
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[uuid.World, uuid.UUIDTool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) uuid.ToolFactory {
 		return internal.NewToolFactory(
-			ioc.Get[ecs.ToolFactory[ecs.World, relation.EntityToKeyTool[uuid.UUID]]](c),
+			ioc.Get[relation.ToolFactory[uuid.UUID]](c),
 			ioc.Get[uuid.Factory](c),
 		)
 	})

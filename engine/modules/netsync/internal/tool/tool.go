@@ -11,7 +11,7 @@ type tool struct {
 	client ecs.ComponentsArray[netsync.ClientComponent]
 }
 
-func NewToolFactory() ecs.ToolFactory[netsync.World, netsync.NetSyncTool] {
+func NewToolFactory() netsync.ToolFactory {
 	mutex := &sync.Mutex{}
 	return ecs.NewToolFactory(func(w netsync.World) netsync.NetSyncTool {
 		mutex.Lock()

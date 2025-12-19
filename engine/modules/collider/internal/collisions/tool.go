@@ -33,7 +33,7 @@ func NewToolFactory(
 	logger logger.Logger,
 	assets assets.Assets,
 	chunkSize float32,
-) ecs.ToolFactory[collider.World, collider.ColliderTool] {
+) collider.ToolFactory {
 	mutex := &sync.Mutex{}
 	return ecs.NewToolFactory(func(world collider.World) collider.ColliderTool {
 		mutex.Lock()

@@ -14,8 +14,8 @@ type hoverSystem struct {
 }
 
 func NewHoverSystem(
-	inputsToolFactory ecs.ToolFactory[inputs.World, inputs.InputsTool],
-) ecs.SystemRegister[inputs.World] {
+	inputsToolFactory inputs.ToolFactory,
+) inputs.System {
 	return ecs.NewSystemRegister(func(w inputs.World) error {
 		s := &hoverSystem{
 			World:      w,

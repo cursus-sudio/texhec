@@ -2,7 +2,6 @@ package internal
 
 import (
 	"engine/modules/drag"
-	"engine/services/ecs"
 	"engine/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -15,7 +14,7 @@ type s struct {
 
 func NewSystem(
 	logger logger.Logger,
-) ecs.SystemRegister[drag.World] {
+) drag.System {
 	return s{logger}
 }
 

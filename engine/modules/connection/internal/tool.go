@@ -23,7 +23,7 @@ type tool struct {
 func NewToolFactory(
 	codec codec.Codec,
 	logger logger.Logger,
-) ecs.ToolFactory[connection.World, connection.ConnectionTool] {
+) connection.ToolFactory {
 	mutex := &sync.Mutex{}
 	return ecs.NewToolFactory(func(w connection.World) connection.ConnectionTool {
 		mutex.Lock()

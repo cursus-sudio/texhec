@@ -2,7 +2,6 @@ package textrenderer
 
 import (
 	"engine/modules/text"
-	"engine/services/ecs"
 	"engine/services/logger"
 )
 
@@ -12,7 +11,7 @@ type LayoutServiceFactory interface {
 
 type layoutServiceFactory struct {
 	logger          logger.Logger
-	textToolFactory ecs.ToolFactory[text.World, text.TextTool]
+	textToolFactory text.ToolFactory
 	fontService     FontService
 	fontsKeys       FontKeys
 
@@ -24,7 +23,7 @@ type layoutServiceFactory struct {
 }
 
 func NewLayoutServiceFactory(
-	textToolFactory ecs.ToolFactory[text.World, text.TextTool],
+	textToolFactory text.ToolFactory,
 	logger logger.Logger,
 	fontService FontService,
 	fontsKeys FontKeys,

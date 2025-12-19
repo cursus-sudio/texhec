@@ -4,7 +4,6 @@ import (
 	"engine/modules/genericrenderer"
 	"engine/modules/genericrenderer/internal/renderer"
 	"engine/services/assets"
-	"engine/services/ecs"
 	"engine/services/graphics/texture"
 	"engine/services/graphics/vao/vbo"
 	"engine/services/logger"
@@ -39,7 +38,7 @@ func (pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) genericrenderer.System {
 		return renderer.NewSystem(
-			ioc.Get[ecs.ToolFactory[genericrenderer.World, genericrenderer.GenericRendererTool]](c),
+			ioc.Get[genericrenderer.ToolFactory](c),
 			ioc.Get[window.Api](c),
 			ioc.Get[assets.AssetsStorage](c),
 			ioc.Get[logger.Logger](c),
@@ -48,7 +47,7 @@ func (pkg) Register(b ioc.Builder) {
 		)
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[genericrenderer.World, genericrenderer.GenericRendererTool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) genericrenderer.ToolFactory {
 		return renderer.NewToolFactory()
 	})
 }

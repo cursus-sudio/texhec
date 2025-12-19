@@ -43,7 +43,7 @@ type layoutService struct {
 
 func NewLayoutService(
 	world text.World,
-	textToolFactory ecs.ToolFactory[text.World, text.TextTool],
+	textToolFactory text.ToolFactory,
 
 	logger logger.Logger,
 	fontService FontService,

@@ -19,9 +19,9 @@ type orthoSys struct {
 }
 
 func NewOrthoSys(
-	cameraToolFactory ecs.ToolFactory[camera.World, camera.CameraTool],
+	cameraToolFactory camera.ToolFactory,
 	logger logger.Logger,
-) ecs.SystemRegister[camera.World] {
+) camera.System {
 	return ecs.NewSystemRegister(func(w camera.World) error {
 		cameraTool := cameraToolFactory.Build(w)
 

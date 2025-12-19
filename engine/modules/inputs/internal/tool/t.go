@@ -25,7 +25,7 @@ type tool struct {
 	mouseDrag  ecs.ComponentsArray[inputs.MouseDragComponent]
 }
 
-func NewToolFactory() ecs.ToolFactory[inputs.World, inputs.InputsTool] {
+func NewToolFactory() inputs.ToolFactory {
 	mutex := &sync.Mutex{}
 	return ecs.NewToolFactory(func(w inputs.World) inputs.InputsTool {
 		mutex.Lock()

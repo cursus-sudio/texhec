@@ -16,7 +16,7 @@ type tool struct {
 	groupsArray  ecs.ComponentsArray[groups.GroupsComponent]
 }
 
-func NewToolFactory(logger logger.Logger) ecs.ToolFactory[groups.World, groups.GroupsTool] {
+func NewToolFactory(logger logger.Logger) groups.ToolFactory {
 	mutex := &sync.Mutex{}
 	return ecs.NewToolFactory(func(w groups.World) groups.GroupsTool {
 		mutex.Lock()

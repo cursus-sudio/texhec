@@ -46,7 +46,7 @@ type Tool struct {
 
 func NewTool(
 	config config.Config,
-	netSyncToolFactory ecs.ToolFactory[netsync.World, netsync.NetSyncTool],
+	netSyncToolFactory netsync.ToolFactory,
 	stateToolFactory ecs.ToolFactory[netsync.World, state.Tool],
 	logger logger.Logger,
 	world netsync.World,

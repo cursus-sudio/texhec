@@ -14,9 +14,9 @@ type tool struct {
 }
 
 func NewToolFactory(
-	toolFactory ecs.ToolFactory[ecs.World, relation.EntityToKeyTool[uuid.UUID]],
+	toolFactory relation.ToolFactory[uuid.UUID],
 	uuidFactory uuid.Factory,
-) ecs.ToolFactory[uuid.World, uuid.UUIDTool] {
+) uuid.ToolFactory {
 	mutex := &sync.Mutex{}
 	return ecs.NewToolFactory(func(w uuid.World) uuid.UUIDTool {
 		mutex.Lock()

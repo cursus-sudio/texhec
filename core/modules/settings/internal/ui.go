@@ -35,7 +35,7 @@ func NewSystem(
 	assets assets.Assets,
 	logger logger.Logger,
 	gameAssets gameassets.GameAssets,
-) ecs.SystemRegister[settings.World] {
+) settings.System {
 	return ecs.NewSystemRegister(func(world settings.World) error {
 		s := system{
 			assets,

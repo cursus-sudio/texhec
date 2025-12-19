@@ -40,8 +40,8 @@ func NewSetup(t *testing.T) Setup {
 	w := world{
 		World: ecs.NewWorld(),
 	}
-	w.HierarchyTool = ioc.Get[ecs.ToolFactory[hierarchy.World, hierarchy.HierarchyTool]](c).Build(w)
-	w.GroupsTool = ioc.Get[ecs.ToolFactory[groups.World, groups.GroupsTool]](c).Build(w)
+	w.HierarchyTool = ioc.Get[hierarchy.ToolFactory](c).Build(w)
+	w.GroupsTool = ioc.Get[groups.ToolFactory](c).Build(w)
 
 	return Setup{
 		w,

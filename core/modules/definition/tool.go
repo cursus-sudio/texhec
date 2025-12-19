@@ -5,6 +5,7 @@ import (
 	"engine/services/ecs"
 )
 
+type ToolFactory ecs.ToolFactory[World, DefinitionTool]
 type DefinitionTool interface {
 	Definition() Interface
 }

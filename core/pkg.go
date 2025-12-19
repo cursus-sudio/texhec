@@ -16,7 +16,6 @@ import (
 	gamescene "core/scenes/game"
 	menuscene "core/scenes/menu"
 	settingsscene "core/scenes/settings"
-	"engine/modules/animation/pkg"
 	"engine/modules/audio/pkg"
 	"engine/modules/camera"
 	"engine/modules/camera/pkg"
@@ -33,12 +32,11 @@ import (
 	"engine/modules/netsync/pkg"
 	"engine/modules/render/pkg"
 	"engine/modules/scenes/pkg"
-	"engine/modules/slerp"
-	"engine/modules/slerp/pkg"
 	"engine/modules/text"
 	"engine/modules/text/pkg"
 	"engine/modules/transform"
 	"engine/modules/transform/pkg"
+	transitionpkg "engine/modules/transition/pkg"
 	"engine/modules/uuid/pkg"
 	"engine/services/assets"
 	"engine/services/clock"
@@ -160,8 +158,8 @@ func getDic() ioc.Dic {
 		uipkg.Package(
 			3,
 			time.Millisecond*300,
-			gameassets.ShowMenuAnimation,
-			gameassets.HideMenuAnimation,
+			// gameassets.ShowMenuAnimation,
+			// gameassets.HideMenuAnimation,
 		),
 		settingspkg.Package(),
 
@@ -169,7 +167,6 @@ func getDic() ioc.Dic {
 
 		// engine packages
 		audiopkg.Package(),
-		animationpkg.Package(),
 		camerapkg.Package(.1, 10),
 		colliderpkg.Package(),
 		dragpkg.Package(),
@@ -247,10 +244,7 @@ func getDic() ioc.Dic {
 
 			return config
 		}()),
-		slerppkg.Package(),
-		slerppkg.PackageT(func(c1, c2 transform.SizeComponent, progress slerp.Progress) transform.SizeComponent {
-			return c1.Blend(c2, float32(progress))
-		}),
+		transitionpkg.Package(),
 
 		// game packages
 		fpsloggerpkg.Package(),

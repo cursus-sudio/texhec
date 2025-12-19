@@ -3,7 +3,6 @@ package uitool
 import (
 	gameassets "core/assets"
 	"core/modules/ui"
-	"engine/modules/animation"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"sync"
@@ -12,8 +11,6 @@ import (
 
 func NewToolFactory(
 	animationDuration time.Duration,
-	showAnimation animation.AnimationID,
-	hideAnimation animation.AnimationID,
 	gameAssets gameassets.GameAssets,
 	logger logger.Logger,
 ) ui.ToolFactory {
@@ -26,8 +23,6 @@ func NewToolFactory(
 		}
 		t := NewTool(
 			animationDuration,
-			showAnimation,
-			hideAnimation,
 			w,
 			gameAssets,
 			logger,

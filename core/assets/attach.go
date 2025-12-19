@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"core/modules/definition"
 	"core/modules/tile"
-	"engine/modules/animation"
 	"engine/modules/audio"
 	"engine/modules/collider"
 	"engine/modules/genericrenderer"
 	"engine/modules/render"
 	"engine/modules/text"
-	"engine/modules/transform"
+	"engine/modules/transition"
 	"engine/services/assets"
 	"engine/services/datastructures"
 	gtexture "engine/services/graphics/texture"
@@ -177,22 +176,18 @@ func (pkg) Assets(b ioc.Builder) {
 //
 
 const (
-	ChangeColorsAnimation animation.AnimationID = iota
-
-	// game scene events
-	ShowMenuAnimation
-	HideMenuAnimation
-)
-const (
-	MyEasingFunction animation.EasingFunctionID = iota
+	_ transition.EasingID = iota
 	LinearEasingFunction
+	MyEasingFunction
 	EaseOutElastic
 )
 
 func (pkg) Animations(b ioc.Builder) {
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b animation.AnimationSystemBuilder) animation.AnimationSystemBuilder {
-		b.AddEasingFunction(LinearEasingFunction, func(t animation.AnimationState) animation.AnimationState { return t })
-		b.AddEasingFunction(MyEasingFunction, func(t animation.AnimationState) animation.AnimationState {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b transition.EasingService) transition.EasingService {
+		b.Set(LinearEasingFunction, func(t transition.Progress) transition.Progress {
+			return t
+		})
+		b.Set(MyEasingFunction, func(t transition.Progress) transition.Progress {
 			const n1 = 7.5625
 			const d1 = 2.75
 
@@ -209,7 +204,7 @@ func (pkg) Animations(b ioc.Builder) {
 				return n1*t*t + 0.984375
 			}
 		})
-		b.AddEasingFunction(EaseOutElastic, func(t animation.AnimationState) animation.AnimationState {
+		b.Set(EaseOutElastic, func(t transition.Progress) transition.Progress {
 			const c1 float64 = 10
 			const c2 float64 = .75
 			const c3 float64 = (2 * math.Pi) / 3
@@ -223,38 +218,8 @@ func (pkg) Animations(b ioc.Builder) {
 			x = math.Pow(2, -c1*x)*
 				math.Sin((x*c1-c2)*c3) +
 				1
-			return animation.AnimationState(x)
+			return transition.Progress(x)
 		})
-		b.AddAnimation(ChangeColorsAnimation, animation.NewAnimation(
-			[]animation.Event{},
-			[]animation.Transition{
-				animation.NewTransition(
-					render.NewColor(mgl32.Vec4{1, 0, 1, 1}),
-					render.NewColor(mgl32.Vec4{1, 1, 1, 1}),
-					MyEasingFunction,
-				),
-			},
-		))
-		b.AddAnimation(ShowMenuAnimation, animation.NewAnimation(
-			[]animation.Event{},
-			[]animation.Transition{
-				animation.NewTransition(
-					transform.NewPivotPoint(0, 1, .5),
-					transform.NewPivotPoint(1, 1, .5),
-					LinearEasingFunction,
-				),
-			},
-		))
-		b.AddAnimation(HideMenuAnimation, animation.NewAnimation(
-			[]animation.Event{},
-			[]animation.Transition{
-				animation.NewTransition(
-					transform.NewPivotPoint(1, 1, .5),
-					transform.NewPivotPoint(0, 1, .5),
-					LinearEasingFunction,
-				),
-			},
-		))
 		return b
 	})
 }

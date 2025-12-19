@@ -5,7 +5,6 @@ import (
 	"core/modules/tile"
 	"core/modules/ui"
 	"core/modules/ui/internal/uitool"
-	"engine/modules/animation"
 	"engine/services/codec"
 	"engine/services/ecs"
 	"engine/services/logger"
@@ -19,21 +18,15 @@ import (
 type pkg struct {
 	maxLayer          tile.Layer
 	animationDuration time.Duration
-	showAnimation     animation.AnimationID
-	hideAnimation     animation.AnimationID
 }
 
 func Package(
 	maxLayer tile.Layer,
 	animationDuration time.Duration,
-	showAnimation animation.AnimationID,
-	hideAnimation animation.AnimationID,
 ) ioc.Pkg {
 	return pkg{
 		maxLayer,
 		animationDuration,
-		showAnimation,
-		hideAnimation,
 	}
 }
 
@@ -49,8 +42,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ui.ToolFactory {
 		return uitool.NewToolFactory(
 			pkg.animationDuration,
-			pkg.showAnimation,
-			pkg.hideAnimation,
 			ioc.Get[gameassets.GameAssets](c),
 			ioc.Get[logger.Logger](c),
 		)

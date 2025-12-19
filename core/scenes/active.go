@@ -6,7 +6,7 @@ import (
 	"core/modules/settings"
 	"core/modules/tile"
 	"core/modules/ui"
-	"engine/modules/animation"
+	"engine"
 	"engine/modules/audio"
 	"engine/modules/camera"
 	"engine/modules/collider"
@@ -19,9 +19,9 @@ import (
 	"engine/modules/netsync"
 	"engine/modules/render"
 	scenesys "engine/modules/scenes"
-	"engine/modules/slerp"
 	"engine/modules/text"
 	"engine/modules/transform"
+	"engine/modules/transition"
 	"engine/modules/uuid"
 	"engine/services/ecs"
 	"engine/services/logger"
@@ -47,21 +47,7 @@ const (
 )
 
 type World interface {
-	// engine
-	ecs.World
-	animation.AnimationTool
-	camera.CameraTool
-	collider.ColliderTool
-	connection.ConnectionTool
-	genericrenderer.GenericRendererTool
-	groups.GroupsTool
-	hierarchy.HierarchyTool
-	netsync.NetSyncTool
-	inputs.InputsTool
-	render.RenderTool
-	text.TextTool
-	transform.TransformTool
-	uuid.UUIDTool
+	engine.World
 
 	// game
 	definition.DefinitionTool
@@ -72,7 +58,6 @@ type World interface {
 type world struct {
 	// engine
 	ecs.World
-	animation.AnimationTool
 	camera.CameraTool
 	collider.ColliderTool
 	connection.ConnectionTool
@@ -84,6 +69,7 @@ type world struct {
 	render.RenderTool
 	text.TextTool
 	transform.TransformTool
+	transition.TransitionTool
 	uuid.UUIDTool
 
 	// game
@@ -138,8 +124,8 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) WorldResolver {
 		return func(w ecs.World) World {
 			world := &world{World: w}
-			world.AnimationTool = ioc.Get[animation.ToolFactory](c).Build(world)
 			world.UUIDTool = ioc.Get[uuid.ToolFactory](c).Build(world)
+			world.TransitionTool = ioc.Get[transition.ToolFactory](c).Build(world)
 
 			world.HierarchyTool = ioc.Get[hierarchy.ToolFactory](c).Build(world)
 			world.GroupsTool = ioc.Get[groups.ToolFactory](c).Build(world)
@@ -201,10 +187,9 @@ func (pkg) Register(b ioc.Builder) {
 				ioc.Get[inputs.System](c),
 
 				// update
-				ioc.Get[animation.System](c),
 				ioc.Get[camera.System](c),
 				ioc.Get[drag.System](c),
-				ioc.Get[slerp.System](c),
+				ioc.Get[transition.System](c),
 				temporaryInlineSystems,
 
 				ioc.Get[tile.System](c),

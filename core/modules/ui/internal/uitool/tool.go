@@ -3,7 +3,6 @@ package uitool
 import (
 	gameassets "core/assets"
 	"core/modules/ui"
-	"engine/modules/animation"
 	"engine/modules/collider"
 	"engine/modules/genericrenderer"
 	"engine/modules/groups"
@@ -11,6 +10,7 @@ import (
 	"engine/modules/render"
 	"engine/modules/text"
 	"engine/modules/transform"
+	"engine/modules/transition"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"errors"
@@ -31,8 +31,6 @@ type tool struct {
 	*changing
 
 	animationDuration time.Duration
-	showAnimation     animation.AnimationID
-	hideAnimation     animation.AnimationID
 
 	ui.World
 	gameAssets gameassets.GameAssets
@@ -43,8 +41,6 @@ type tool struct {
 
 func NewTool(
 	animationDuration time.Duration,
-	showAnimation animation.AnimationID,
-	hideAnimation animation.AnimationID,
 	world ui.World,
 	gameAssets gameassets.GameAssets,
 	logger logger.Logger,
@@ -53,8 +49,6 @@ func NewTool(
 		changing: &changing{},
 
 		animationDuration: animationDuration,
-		showAnimation:     showAnimation,
-		hideAnimation:     hideAnimation,
 
 		World:      world,
 		gameAssets: gameAssets,
@@ -161,7 +155,12 @@ func (t tool) Show() ecs.EntityID {
 	t.logger.Warn(t.ResetChildWrapper())
 	if !t.active {
 		t.active = true
-		t.Animation().Component().Set(t.menu, animation.NewAnimationComponent(t.showAnimation, t.animationDuration))
+		events.Emit(t.Events(), transition.NewTransitionEvent(
+			t.menu,
+			transform.NewPivotPoint(0, 1, .5),
+			transform.NewPivotPoint(1, 1, .5),
+			t.animationDuration,
+		))
 	}
 	return t.childWrapper
 }
@@ -169,7 +168,12 @@ func (t tool) Show() ecs.EntityID {
 func (t tool) Hide() {
 	if t.active {
 		t.active = false
-		t.Animation().Component().Set(t.menu, animation.NewAnimationComponent(t.hideAnimation, t.animationDuration))
+		events.Emit(t.Events(), transition.NewTransitionEvent(
+			t.menu,
+			transform.NewPivotPoint(1, 1, .5),
+			transform.NewPivotPoint(0, 1, .5),
+			t.animationDuration,
+		))
 	}
 }
 

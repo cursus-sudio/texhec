@@ -38,7 +38,8 @@ func (c TextureFrameComponent) GetFrame(frameLen int) int {
 	)
 }
 
-func (c1 TextureFrameComponent) Blend(c2 TextureFrameComponent, mix64 float64) TextureFrameComponent {
+func (c1 TextureFrameComponent) Blend(c2 TextureFrameComponent, mix32 float32) TextureFrameComponent {
+	mix64 := float64(mix32)
 	return TextureFrameComponent{c1.FrameNormalized*(1-mix64) + c2.FrameNormalized*mix64}
 }
 

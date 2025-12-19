@@ -12,7 +12,7 @@ type tool struct {
 	pipelineArray ecs.ComponentsArray[genericrenderer.PipelineComponent]
 }
 
-func NewToolFactory() ecs.ToolFactory[genericrenderer.World, genericrenderer.GenericRendererTool] {
+func NewToolFactory() genericrenderer.ToolFactory {
 	mutex := &sync.Mutex{}
 	return ecs.NewToolFactory(func(w genericrenderer.World) genericrenderer.GenericRendererTool {
 		mutex.Lock()

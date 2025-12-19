@@ -29,8 +29,8 @@ type updateProjetionsSystem struct {
 func NewUpdateProjectionsSystem(
 	window window.Api,
 	logger logger.Logger,
-	cameraToolFactory ecs.ToolFactory[camera.World, camera.CameraTool],
-) ecs.SystemRegister[camera.World] {
+	cameraToolFactory camera.ToolFactory,
+) camera.System {
 	return ecs.NewSystemRegister(func(w camera.World) error {
 		s := &updateProjetionsSystem{
 			World:      w,

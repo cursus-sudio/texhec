@@ -66,10 +66,10 @@ func (pkg pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.System {
-		systems := []ecs.SystemRegister[tile.World]{
+		systems := []tile.System{
 			tileui.NewSystem(
 				ioc.Get[logger.Logger](c),
-				ioc.Get[ecs.ToolFactory[tile.World, tile.TileTool]](c),
+				ioc.Get[tile.ToolFactory](c),
 			),
 		}
 		return ecs.NewSystemRegister(func(world tile.World) error {

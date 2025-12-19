@@ -18,14 +18,13 @@ func NewParent(parent ecs.EntityID) Component { return Component{parent} }
 
 //
 
+type ToolFactory ecs.ToolFactory[World, HierarchyTool]
 type HierarchyTool interface {
 	Hierarchy() Interface
 }
-
 type World interface {
 	ecs.World
 }
-
 type Interface interface {
 	Component() ecs.ComponentsArray[Component]
 

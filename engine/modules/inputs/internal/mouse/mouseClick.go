@@ -35,8 +35,8 @@ type clickSystem struct {
 func NewClickSystem(
 	logger logger.Logger,
 	window window.Api,
-	inputsToolFactory ecs.ToolFactory[inputs.World, inputs.InputsTool],
-) ecs.SystemRegister[inputs.World] {
+	inputsToolFactory inputs.ToolFactory,
+) inputs.System {
 	return ecs.NewSystemRegister(func(w inputs.World) error {
 		s := &clickSystem{
 			logger:     logger,

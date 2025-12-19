@@ -15,7 +15,7 @@ type inputsSystem struct {
 
 func NewInputsSystem(
 	mediainputs mediainputs.Api,
-) ecs.SystemRegister[inputs.World] {
+) inputs.System {
 	return ecs.NewSystemRegister(func(w inputs.World) error {
 		s := &inputsSystem{inputs: mediainputs}
 		events.Listen(w.EventsBuilder(), s.Listen)

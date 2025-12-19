@@ -26,7 +26,7 @@ var geomSource string
 var fragSource string
 
 type textRendererRegister struct {
-	textToolFactory      ecs.ToolFactory[text.World, text.TextTool]
+	textToolFactory      text.ToolFactory
 	fontService          FontService
 	vboFactory           vbo.VBOFactory[Glyph]
 	layoutServiceFactory LayoutServiceFactory
@@ -42,7 +42,7 @@ type textRendererRegister struct {
 }
 
 func NewTextRendererRegister(
-	textToolFactory ecs.ToolFactory[text.World, text.TextTool],
+	textToolFactory text.ToolFactory,
 	fontService FontService,
 	vboFactory vbo.VBOFactory[Glyph],
 	layoutServiceFactory LayoutServiceFactory,

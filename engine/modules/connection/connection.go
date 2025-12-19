@@ -37,15 +37,14 @@ func (comp ConnectionComponent) Conn() Conn {
 
 // tool
 
+type ToolFactory ecs.ToolFactory[World, ConnectionTool]
 type ConnectionTool interface {
 	Connection() Interface
 }
-
 type World interface {
 	ecs.World
 	uuid.UUIDTool
 }
-
 type Interface interface {
 	Component() ecs.ComponentsArray[ConnectionComponent]
 

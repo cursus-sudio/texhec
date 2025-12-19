@@ -24,10 +24,10 @@ type scrollSystem struct {
 
 func NewScrollSystem(
 	logger logger.Logger,
-	cameraCtors ecs.ToolFactory[camera.World, camera.CameraTool],
+	cameraCtors camera.ToolFactory,
 	window window.Api,
 	minZoom, maxZoom float32,
-) ecs.SystemRegister[camera.World] {
+) camera.System {
 	return ecs.NewSystemRegister(func(w camera.World) error {
 		s := &scrollSystem{
 			window: window,

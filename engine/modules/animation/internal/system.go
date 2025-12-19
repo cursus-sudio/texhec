@@ -24,7 +24,7 @@ type system struct {
 
 func NewSystem(
 	b AnimationSystemBuilder,
-) ecs.SystemRegister[animation.World] {
+) animation.System {
 	return ecs.NewSystemRegister(func(w animation.World) error {
 		transitionFunctions := make(map[reflect.Type]animation.AnyTransitionFunction, len(b.transitionFunctions))
 		for key, transitionFunction := range b.transitionFunctions {

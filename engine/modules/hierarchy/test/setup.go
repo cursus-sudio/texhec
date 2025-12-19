@@ -27,7 +27,7 @@ func NewSetup() Setup {
 	}
 	c := b.Build()
 	world := ecs.NewWorld()
-	toolFactory := ioc.Get[ecs.ToolFactory[hierarchy.World, hierarchy.HierarchyTool]](c)
+	toolFactory := ioc.Get[hierarchy.ToolFactory](c)
 	tool := toolFactory.Build(world)
 	return Setup{
 		world,

@@ -41,7 +41,7 @@ func NewTransformTool(
 	defaultSize transform.SizeComponent,
 	defaultPivot transform.PivotPointComponent,
 	defaultParentPivot transform.ParentPivotPointComponent,
-) ecs.ToolFactory[transform.World, transform.TransformTool] {
+) transform.ToolFactory {
 	mutex := &sync.Mutex{}
 	return ecs.NewToolFactory(func(w transform.World) transform.TransformTool {
 		mutex.Lock()

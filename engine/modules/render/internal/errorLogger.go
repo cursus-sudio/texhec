@@ -16,7 +16,7 @@ type errorLogger struct {
 	render.RenderTool
 }
 
-func NewErrorLogger(logger logger.Logger, t render.RenderTool) ecs.SystemRegister[render.World] {
+func NewErrorLogger(logger logger.Logger, t render.RenderTool) render.System {
 	return ecs.NewSystemRegister(func(w render.World) error {
 		s := &errorLogger{logger, t}
 		events.Listen(w.EventsBuilder(), s.Listen)

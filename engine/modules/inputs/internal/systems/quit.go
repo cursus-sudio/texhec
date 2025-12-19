@@ -14,7 +14,7 @@ type sys struct {
 
 func NewQuitSystem(
 	runtime runtime.Runtime,
-) ecs.SystemRegister[inputs.World] {
+) inputs.System {
 	return ecs.NewSystemRegister(func(w inputs.World) error {
 		s := &sys{
 			runtime: runtime,

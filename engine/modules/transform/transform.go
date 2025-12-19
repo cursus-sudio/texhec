@@ -7,15 +7,14 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
+type ToolFactory ecs.ToolFactory[World, TransformTool]
 type TransformTool interface {
 	Transform() Interface
 }
-
 type World interface { // these are dependencies of transform package
 	ecs.World
 	hierarchy.HierarchyTool
 }
-
 type Interface interface {
 	SetAbsolutePos(ecs.EntityID, AbsolutePosComponent)
 	SetAbsoluteRotation(ecs.EntityID, AbsoluteRotationComponent)

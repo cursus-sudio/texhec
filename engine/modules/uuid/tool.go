@@ -16,15 +16,13 @@ func New(id UUID) Component {
 	return Component{id}
 }
 
-// add unique id to domain components
+type ToolFactory ecs.ToolFactory[World, UUIDTool]
 type UUIDTool interface {
 	UUID() Interface
 }
-
 type World interface {
 	ecs.World
 }
-
 type Interface interface {
 	Factory
 	Component() ecs.ComponentsArray[Component]

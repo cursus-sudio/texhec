@@ -24,10 +24,10 @@ type dragSystem struct {
 
 func NewDragSystem(
 	dragButton uint8,
-	cameraCtors ecs.ToolFactory[camera.World, camera.CameraTool],
+	cameraCtors camera.ToolFactory,
 	window window.Api,
 	logger logger.Logger,
-) ecs.SystemRegister[camera.World] {
+) camera.System {
 	return ecs.NewSystemRegister(func(w camera.World) error {
 		s := &dragSystem{
 			isHeld: false,

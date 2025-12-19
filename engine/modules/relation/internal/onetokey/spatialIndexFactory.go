@@ -10,9 +10,9 @@ func NewSpatialRelationFactory[IndexType any](
 	dirtySetFactory func(ecs.World) ecs.DirtySet,
 	componentIndexFactory func(ecs.World) func(ecs.EntityID) (IndexType, bool),
 	indexNumber func(IndexType) uint32,
-) ecs.ToolFactory[ecs.World, relation.EntityToKeyTool[IndexType]] {
+) relation.ToolFactory[IndexType] {
 	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(w ecs.World) relation.EntityToKeyTool[IndexType] {
+	return ecs.NewToolFactory(func(w relation.World) relation.EntityToKeyTool[IndexType] {
 		mutex.Lock()
 		defer mutex.Unlock()
 		if index, ok := ecs.GetGlobal[spatialRelation[IndexType]](w); ok {

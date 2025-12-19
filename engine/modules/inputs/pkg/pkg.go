@@ -46,7 +46,7 @@ func (pkg) Register(b ioc.Builder) {
 			Register(inputs.SynchronizePositionEvent{})
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[inputs.World, inputs.InputsTool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) inputs.ToolFactory {
 		return tool.NewToolFactory()
 	})
 
@@ -69,13 +69,13 @@ func (pkg) Register(b ioc.Builder) {
 					ioc.Get[window.Api](c),
 				),
 				mouse.NewHoverSystem(
-					ioc.Get[ecs.ToolFactory[inputs.World, inputs.InputsTool]](c),
+					ioc.Get[inputs.ToolFactory](c),
 				),
 				mouse.NewHoverEventsSystem(),
 				mouse.NewClickSystem(
 					ioc.Get[logger.Logger](c),
 					ioc.Get[window.Api](c),
-					ioc.Get[ecs.ToolFactory[inputs.World, inputs.InputsTool]](c),
+					ioc.Get[inputs.ToolFactory](c),
 				),
 				ecs.NewSystemRegister(func(w ecs.World) error {
 					events.Listen(w.EventsBuilder(), func(frames.FrameEvent) {

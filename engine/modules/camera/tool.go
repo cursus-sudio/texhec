@@ -14,15 +14,14 @@ var (
 	ErrNotCamera error = errors.New("this isn't a camera")
 )
 
+type ToolFactory ecs.ToolFactory[World, CameraTool]
 type CameraTool interface {
 	Camera() Interface
 }
-
 type World interface {
 	ecs.World
 	transform.TransformTool
 }
-
 type Interface interface {
 	GetObject(ecs.EntityID) (Object, error)
 	Component() ecs.ComponentsArray[Component]

@@ -36,7 +36,7 @@ type cameraRaySystem struct {
 func NewCameraRaySystem(
 	logger logger.Logger,
 	window window.Api,
-) ecs.SystemRegister[inputs.World] {
+) inputs.System {
 	return ecs.NewSystemRegister(func(w inputs.World) error {
 		s := &cameraRaySystem{
 			World:  w,

@@ -16,7 +16,7 @@ func NewToolFactory(
 	hideAnimation animation.AnimationID,
 	gameAssets gameassets.GameAssets,
 	logger logger.Logger,
-) ecs.ToolFactory[ui.World, ui.UiTool] {
+) ui.ToolFactory {
 	mutex := &sync.Mutex{}
 	return ecs.NewToolFactory(func(w ui.World) ui.UiTool {
 		mutex.Lock()

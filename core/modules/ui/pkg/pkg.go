@@ -46,7 +46,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			Register(ui.HideUiEvent{})
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[ui.World, ui.UiTool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ui.ToolFactory {
 		return uitool.NewToolFactory(
 			pkg.animationDuration,
 			pkg.showAnimation,
@@ -56,7 +56,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 		)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ui.System {
-		factory := ioc.Get[ecs.ToolFactory[ui.World, ui.UiTool]](c)
+		factory := ioc.Get[ui.ToolFactory](c)
 		return ecs.NewSystemRegister(func(w ui.World) error {
 			events.Listen(w.EventsBuilder(), func(e sdl.MouseButtonEvent) {
 				if e.Button != sdl.BUTTON_RIGHT || e.State != sdl.RELEASED {

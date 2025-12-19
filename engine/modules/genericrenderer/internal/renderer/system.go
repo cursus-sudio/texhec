@@ -74,13 +74,13 @@ type system struct {
 }
 
 func NewSystem(
-	genericRendererToolFactory ecs.ToolFactory[genericrenderer.World, genericrenderer.GenericRendererTool],
+	genericRendererToolFactory genericrenderer.ToolFactory,
 	window window.Api,
 	assetsStorage assets.AssetsStorage,
 	logger logger.Logger,
 	vboFactory vbo.VBOFactory[genericrenderer.Vertex],
 	textureFactory texture.Factory,
-) ecs.SystemRegister[genericrenderer.World] {
+) genericrenderer.System {
 	return ecs.NewSystemRegister(func(w genericrenderer.World) error {
 		vert, err := shader.NewShader(vertSource, shader.VertexShader)
 		if err != nil {

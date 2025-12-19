@@ -17,7 +17,7 @@ func TileColliderSystem(logger logger.Logger,
 	tileGroups groups.GroupsComponent, // groups
 	colliderComponent collider.Component, // collider
 	uuidFactory uuid.Factory, // tools
-) ecs.SystemRegister[tile.World] {
+) tile.System {
 	return ecs.NewSystemRegister(func(w tile.World) error {
 		tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w)
 

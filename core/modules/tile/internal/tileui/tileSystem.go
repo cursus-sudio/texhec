@@ -14,8 +14,8 @@ import (
 
 func NewSystem(
 	logger logger.Logger,
-	tileToolFactory ecs.ToolFactory[tile.World, tile.TileTool],
-) ecs.SystemRegister[tile.World] {
+	tileToolFactory tile.ToolFactory,
+) tile.System {
 	return ecs.NewSystemRegister(func(world tile.World) error {
 		tilePosArray := ecs.GetComponentsArray[tile.PosComponent](world)
 		tileTool := tileToolFactory.Build(world).Tile()

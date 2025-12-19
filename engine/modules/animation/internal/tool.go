@@ -22,7 +22,7 @@ type tool struct {
 	loopArrary      ecs.ComponentsArray[animation.LoopComponent]
 }
 
-func NewToolFactory() ecs.ToolFactory[animation.World, animation.AnimationTool] {
+func NewToolFactory() animation.ToolFactory {
 	mutex := &sync.Mutex{}
 	return ecs.NewToolFactory(func(w animation.World) animation.AnimationTool {
 		mutex.Lock()

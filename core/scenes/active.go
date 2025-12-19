@@ -137,26 +137,26 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) WorldResolver {
 		return func(w ecs.World) World {
 			world := &world{World: w}
-			world.AnimationTool = ioc.Get[ecs.ToolFactory[animation.World, animation.AnimationTool]](c).Build(world)
-			world.UUIDTool = ioc.Get[ecs.ToolFactory[uuid.World, uuid.UUIDTool]](c).Build(world)
+			world.AnimationTool = ioc.Get[animation.ToolFactory](c).Build(world)
+			world.UUIDTool = ioc.Get[uuid.ToolFactory](c).Build(world)
 
-			world.HierarchyTool = ioc.Get[ecs.ToolFactory[hierarchy.World, hierarchy.HierarchyTool]](c).Build(world)
-			world.GroupsTool = ioc.Get[ecs.ToolFactory[groups.World, groups.GroupsTool]](c).Build(world)
-			world.TransformTool = ioc.Get[ecs.ToolFactory[transform.World, transform.TransformTool]](c).Build(world)
+			world.HierarchyTool = ioc.Get[hierarchy.ToolFactory](c).Build(world)
+			world.GroupsTool = ioc.Get[groups.ToolFactory](c).Build(world)
+			world.TransformTool = ioc.Get[transform.ToolFactory](c).Build(world)
 
-			world.ConnectionTool = ioc.Get[ecs.ToolFactory[connection.World, connection.ConnectionTool]](c).Build(world)
-			world.NetSyncTool = ioc.Get[ecs.ToolFactory[netsync.World, netsync.NetSyncTool]](c).Build(world)
+			world.ConnectionTool = ioc.Get[connection.ToolFactory](c).Build(world)
+			world.NetSyncTool = ioc.Get[netsync.ToolFactory](c).Build(world)
 
-			world.CameraTool = ioc.Get[ecs.ToolFactory[camera.World, camera.CameraTool]](c).Build(world)
-			world.ColliderTool = ioc.Get[ecs.ToolFactory[collider.World, collider.ColliderTool]](c).Build(world)
-			world.GenericRendererTool = ioc.Get[ecs.ToolFactory[genericrenderer.World, genericrenderer.GenericRendererTool]](c).Build(world)
-			world.InputsTool = ioc.Get[ecs.ToolFactory[inputs.World, inputs.InputsTool]](c).Build(world)
-			world.RenderTool = ioc.Get[ecs.ToolFactory[render.World, render.RenderTool]](c).Build(world)
-			world.TextTool = ioc.Get[ecs.ToolFactory[text.World, text.TextTool]](c).Build(world)
+			world.CameraTool = ioc.Get[camera.ToolFactory](c).Build(world)
+			world.ColliderTool = ioc.Get[collider.ToolFactory](c).Build(world)
+			world.GenericRendererTool = ioc.Get[genericrenderer.ToolFactory](c).Build(world)
+			world.InputsTool = ioc.Get[inputs.ToolFactory](c).Build(world)
+			world.RenderTool = ioc.Get[render.ToolFactory](c).Build(world)
+			world.TextTool = ioc.Get[text.ToolFactory](c).Build(world)
 
-			world.DefinitionTool = ioc.Get[ecs.ToolFactory[definition.World, definition.DefinitionTool]](c).Build(world)
-			world.TileTool = ioc.Get[ecs.ToolFactory[tile.World, tile.TileTool]](c).Build(world)
-			world.UiTool = ioc.Get[ecs.ToolFactory[ui.World, ui.UiTool]](c).Build(world)
+			world.DefinitionTool = ioc.Get[definition.ToolFactory](c).Build(world)
+			world.TileTool = ioc.Get[tile.ToolFactory](c).Build(world)
+			world.UiTool = ioc.Get[ui.ToolFactory](c).Build(world)
 			return world
 		}
 	})

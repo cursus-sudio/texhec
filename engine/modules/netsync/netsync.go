@@ -6,6 +6,7 @@ import (
 	"engine/services/ecs"
 )
 
+type ToolFactory ecs.ToolFactory[World, NetSyncTool]
 type NetSyncTool interface {
 	NetSync() Interface
 }

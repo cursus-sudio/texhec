@@ -10,10 +10,10 @@ import (
 
 type System ecs.SystemRegister[World]
 
+type ToolFactory ecs.ToolFactory[World, GenericRendererTool]
 type GenericRendererTool interface {
 	GenericRenderer() Interface
 }
-
 type World interface {
 	ecs.World
 	render.RenderTool
@@ -21,7 +21,6 @@ type World interface {
 	groups.GroupsTool
 	transform.TransformTool
 }
-
 type Interface interface {
 	Pipeline() ecs.ComponentsArray[PipelineComponent]
 }

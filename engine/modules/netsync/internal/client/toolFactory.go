@@ -12,7 +12,7 @@ import (
 func NewToolFactory(
 	config config.Config,
 	stateToolFactory ecs.ToolFactory[netsync.World, state.Tool],
-	netSyncToolFactory ecs.ToolFactory[netsync.World, netsync.NetSyncTool],
+	netSyncToolFactory netsync.ToolFactory,
 	logger logger.Logger,
 ) ecs.ToolFactory[netsync.World, Tool] {
 	mutex := &sync.Mutex{}

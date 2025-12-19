@@ -21,14 +21,13 @@ func NewButton(text string, event any) Button {
 	return Button{text, event}
 }
 
+type ToolFactory ecs.ToolFactory[World, UiTool]
 type UiTool interface {
 	Ui() Interface
 }
-
 type World interface {
 	engine.World
 }
-
 type Interface interface {
 	UiCamera() ecs.ComponentsArray[UiCameraComponent]
 	// returns parent to attach ui elements

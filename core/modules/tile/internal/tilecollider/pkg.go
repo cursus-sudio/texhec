@@ -42,7 +42,7 @@ func Package(
 
 func (pkg pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.System) tile.System {
-		tileToolFactory := ioc.Get[ecs.ToolFactory[tile.World, tile.TileTool]](c)
+		tileToolFactory := ioc.Get[tile.ToolFactory](c)
 		logger := ioc.Get[logger.Logger](c)
 		return ecs.NewSystemRegister(func(w tile.World) error {
 			if err := s.Register(w); err != nil {

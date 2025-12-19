@@ -6,16 +6,15 @@ import (
 	"engine/services/ecs"
 )
 
+type ToolFactory ecs.ToolFactory[World, ColliderTool]
 type ColliderTool interface {
 	Collider() Interface
 }
-
 type World interface {
 	ecs.World
 	transform.TransformTool
 	groups.GroupsTool
 }
-
 type Interface interface {
 	Component() ecs.ComponentsArray[Component]
 

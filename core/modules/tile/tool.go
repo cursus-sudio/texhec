@@ -8,16 +8,15 @@ import (
 	"engine/services/ecs"
 )
 
+type ToolFactory ecs.ToolFactory[World, TileTool]
 type TileTool interface {
 	Tile() Interface
 }
-
 type World interface {
 	engine.World
 	definition.DefinitionTool
 	ui.UiTool
 }
-
 type Interface interface {
 	PosKey() relation.EntityToKeyTool[PosComponent]
 	ColliderPosKey() relation.EntityToKeyTool[ColliderPos]

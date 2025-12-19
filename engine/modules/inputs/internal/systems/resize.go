@@ -11,7 +11,7 @@ import (
 
 type resizeSystem struct{}
 
-func NewResizeSystem() ecs.SystemRegister[inputs.World] {
+func NewResizeSystem() inputs.System {
 	return ecs.NewSystemRegister(func(w inputs.World) error {
 		s := &resizeSystem{}
 		events.Listen(w.EventsBuilder(), s.Listen)

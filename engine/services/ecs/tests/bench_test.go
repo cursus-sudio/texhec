@@ -1,7 +1,6 @@
 package ecs_test
 
 import (
-	"engine/services/datastructures"
 	"engine/services/ecs"
 	"testing"
 )
@@ -32,12 +31,12 @@ func BenchmarkGetComponent(b *testing.B) {
 }
 
 func BenchmarkCreateComponents(b *testing.B) {
-	entities := datastructures.NewSparseSet[ecs.EntityID]()
+	entities := ecs.NewWorld()
 	arr := ecs.NewComponentsArray[Component](entities)
 
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
-		entities.Add(entity)
+		entities.EnsureExists(entity)
 	}
 
 	b.ResetTimer()
@@ -49,12 +48,12 @@ func BenchmarkCreateComponents(b *testing.B) {
 }
 
 func BenchmarkUpdateComponents(b *testing.B) {
-	entities := datastructures.NewSparseSet[ecs.EntityID]()
+	entities := ecs.NewWorld()
 	arr := ecs.NewComponentsArray[Component](entities)
 
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
-		entities.Add(entity)
+		entities.EnsureExists(entity)
 		arr.Set(entity, Component{})
 	}
 
@@ -67,12 +66,12 @@ func BenchmarkUpdateComponents(b *testing.B) {
 }
 
 func BenchmarkRemoveComponent(b *testing.B) {
-	entities := datastructures.NewSparseSet[ecs.EntityID]()
+	entities := ecs.NewWorld()
 	arr := ecs.NewComponentsArray[Component](entities)
 
 	for i := 0; i < b.N; i++ {
 		entity := ecs.NewEntityID(uint64(i))
-		entities.Add(entity)
+		entities.EnsureExists(entity)
 		arr.Set(entity, Component{})
 	}
 

@@ -99,7 +99,7 @@ func GetComponentsArray[Component any](world World) ComponentsArray[Component] {
 	if array, ok := components.arrays[componentType]; ok {
 		return array.(ComponentsArray[Component])
 	}
-	array := NewComponentsArray[Component](components.entities)
+	array := NewComponentsArray[Component](world)
 	components.arrays[componentType] = array
 	//
 	listeners, _ := components.onArrayAddListeners[componentType]

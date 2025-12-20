@@ -1,9 +1,5 @@
 package ecs
 
-import (
-	"engine/services/datastructures"
-)
-
 type DirtySet interface {
 	// get also clears
 	Get() []EntityID
@@ -12,33 +8,43 @@ type DirtySet interface {
 }
 
 type dirtySet struct {
-	set datastructures.SparseSet[EntityID]
+	entities []EntityID
+	set      []uint8
 }
 
 func NewDirtySet() DirtySet {
 	return &dirtySet{
-		set: datastructures.NewSparseSet[EntityID](),
+		entities: nil,
+		set:      nil,
 	}
 }
 
 func (f *dirtySet) Get() []EntityID {
-	original := f.set.GetIndices()
-	values := make([]EntityID, len(original))
-	copy(values, original)
-
-	for _, entity := range original {
-		f.set.Remove(entity)
-	}
-
+	values := f.entities
+	f.Clear()
 	return values
 }
 
 func (f *dirtySet) Dirty(entity EntityID) {
-	f.set.Add(entity)
+	byteIndex := entity / 8
+	entityMask := uint8(1 << (entity % 8))
+
+	// ensure index exists
+	for len(f.set) <= int(byteIndex) {
+		f.set = append(f.set, 0)
+	}
+
+	if f.set[byteIndex]&entityMask != 0 {
+		return
+	}
+	f.entities = append(f.entities, entity)
+	f.set[byteIndex] |= entityMask
 }
 
 func (f *dirtySet) Clear() {
-	for _, entity := range f.set.GetIndices() {
-		f.set.Remove(entity)
+	for _, entity := range f.entities {
+		byteIndex := entity / 8
+		f.set[byteIndex] = 0
 	}
+	f.entities = nil
 }

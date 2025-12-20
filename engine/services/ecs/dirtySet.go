@@ -26,12 +26,12 @@ func (f *dirtySet) Get() []EntityID {
 }
 
 func (f *dirtySet) Dirty(entity EntityID) {
-	byteIndex := entity / 8
-	entityMask := uint8(1 << (entity % 8))
+	byteIndex := int(entity / 8)
+	entityMask := uint8(1 << (entity & 7)) // &7 == %8
 
-	// ensure index exists
-	for len(f.set) <= int(byteIndex) {
-		f.set = append(f.set, 0)
+	if byteIndex >= len(f.set) {
+		newBytes := make([]uint8, byteIndex-len(f.set)+1)
+		f.set = append(f.set, newBytes...)
 	}
 
 	if f.set[byteIndex]&entityMask != 0 {

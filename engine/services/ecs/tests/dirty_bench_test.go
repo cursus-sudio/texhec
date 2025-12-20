@@ -101,7 +101,13 @@ func BenchmarkDirtySetDirty(b *testing.B) {
 		set.Dirty(ecs.EntityID(i))
 	}
 }
-
+func BenchmarkDirtySetDirtyInversed(b *testing.B) {
+	set := ecs.NewDirtySet()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		set.Dirty(ecs.EntityID(b.N - i))
+	}
+}
 func BenchmarkDirtySetGet(b *testing.B) {
 	set := ecs.NewDirtySet()
 	b.ResetTimer()
@@ -109,7 +115,6 @@ func BenchmarkDirtySetGet(b *testing.B) {
 		set.Get()
 	}
 }
-
 func BenchmarkDirtySetDirtyAndGet(b *testing.B) {
 	set := ecs.NewDirtySet()
 	b.ResetTimer()
@@ -118,7 +123,6 @@ func BenchmarkDirtySetDirtyAndGet(b *testing.B) {
 		set.Get()
 	}
 }
-
 func BenchmarkDirtySetDirtyAnd1Get(b *testing.B) {
 	set := ecs.NewDirtySet()
 	b.ResetTimer()

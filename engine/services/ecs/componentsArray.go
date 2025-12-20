@@ -125,9 +125,6 @@ func (c *componentsArray[Component]) GetEntities() []EntityID {
 }
 
 func (c *componentsArray[Component]) GetAny(entity EntityID) (any, bool) {
-	for _, beforeGet := range c.beforeGets {
-		beforeGet()
-	}
 	return c.Get(entity)
 }
 

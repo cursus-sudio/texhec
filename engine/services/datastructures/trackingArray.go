@@ -26,75 +26,75 @@ type TrackingArray[Stored comparable] interface {
 }
 
 type trackingArray[Stored comparable] struct {
-	data    []Stored
-	changes map[int]*Stored
+	Data       []Stored
+	ChangesMap map[int]*Stored
 }
 
 func NewTrackingArray[Stored comparable]() TrackingArray[Stored] {
 	return &trackingArray[Stored]{
-		changes: map[int]*Stored{},
+		ChangesMap: map[int]*Stored{},
 	}
 }
 
-func (s *trackingArray[Stored]) Get() []Stored { return s.data }
+func (s *trackingArray[Stored]) Get() []Stored { return s.Data }
 
 func (s *trackingArray[Stored]) Add(elements ...Stored) {
 	for i := 0; i < len(elements); i++ {
-		s.changes[i+len(s.data)] = nil
+		s.ChangesMap[i+len(s.Data)] = nil
 	}
-	s.data = append(s.data, elements...)
+	s.Data = append(s.Data, elements...)
 }
 
 func (s *trackingArray[Stored]) Set(index int, e Stored) error {
-	if len(s.data) <= index {
+	if len(s.Data) <= index {
 		return ErrOutOfBounds
 	}
-	original := s.data[index]
-	if s.data[index] == e {
+	original := s.Data[index]
+	if s.Data[index] == e {
 		return nil
 	}
-	if _, ok := s.changes[index]; !ok {
-		s.changes[index] = &original
+	if _, ok := s.ChangesMap[index]; !ok {
+		s.ChangesMap[index] = &original
 	}
-	s.data[index] = e
+	s.Data[index] = e
 
 	return nil
 }
 
 func (s *trackingArray[Stored]) Remove(indices ...int) error {
 	for _, index := range indices {
-		if index >= len(s.data) {
+		if index >= len(s.Data) {
 			return ErrOutOfBounds
 		}
 	}
 
 	sort.Slice(indices, func(i, j int) bool { return indices[i] > indices[j] })
 	for _, index := range indices {
-		if _, ok := s.changes[index]; !ok {
-			e := s.data[index]
-			s.changes[index] = &e
+		if _, ok := s.ChangesMap[index]; !ok {
+			e := s.Data[index]
+			s.ChangesMap[index] = &e
 		}
-		if _, ok := s.changes[len(s.data)-1]; !ok {
-			e := s.data[len(s.data)-1]
-			s.changes[len(s.data)-1] = &e
+		if _, ok := s.ChangesMap[len(s.Data)-1]; !ok {
+			e := s.Data[len(s.Data)-1]
+			s.ChangesMap[len(s.Data)-1] = &e
 		}
 
-		s.data[index] = s.data[len(s.data)-1]
-		s.data = s.data[:len(s.data)-1]
+		s.Data[index] = s.Data[len(s.Data)-1]
+		s.Data = s.Data[:len(s.Data)-1]
 	}
 	return nil
 }
 
 func (s *trackingArray[Stored]) Changes() []Change[Stored] {
-	changes := make([]Change[Stored], 0, len(s.changes))
-	for index, from := range s.changes {
+	changes := make([]Change[Stored], 0, len(s.ChangesMap))
+	for index, from := range s.ChangesMap {
 		changes = append(changes, Change[Stored]{index, from})
 	}
 	sort.Slice(changes, func(i, j int) bool { return changes[i].Index > changes[j].Index })
 	return changes
 }
 
-func (s *trackingArray[Stored]) ClearChanges() { s.changes = map[int]*Stored{} }
+func (s *trackingArray[Stored]) ClearChanges() { s.ChangesMap = map[int]*Stored{} }
 
 //
 

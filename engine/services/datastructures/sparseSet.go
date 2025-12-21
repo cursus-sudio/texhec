@@ -17,10 +17,10 @@ type SparseSet[Index constraints.Integer] interface {
 
 type sparseSet[Index constraints.Integer] struct {
 	EmptyValue    Index
-	valuesIndices []Index // here some indices have special meaning (read constants above)
+	ValuesIndices []Index // here some indices have special meaning (read constants above)
 
-	// both arrays below indices correspond
-	indices []Index // here value means index in sparse array
+	// both arrays below Indices correspond
+	Indices []Index // here value means index in sparse array
 }
 
 func NewSparseSet[Index constraints.Integer]() SparseSet[Index] {
@@ -31,11 +31,11 @@ func NewSparseSet[Index constraints.Integer]() SparseSet[Index] {
 }
 
 func (a *sparseSet[Index]) Get(index Index) bool {
-	if int(index) >= len(a.valuesIndices) {
+	if int(index) >= len(a.ValuesIndices) {
 		return false
 	}
 
-	valueIndex := a.valuesIndices[index]
+	valueIndex := a.ValuesIndices[index]
 	if valueIndex == a.EmptyValue {
 		return false
 	}
@@ -43,45 +43,45 @@ func (a *sparseSet[Index]) Get(index Index) bool {
 	return true
 }
 
-func (a *sparseSet[Index]) GetIndices() []Index { return a.indices }
+func (a *sparseSet[Index]) GetIndices() []Index { return a.Indices }
 
 func (a *sparseSet[Index]) Add(index Index) bool {
-	for int(index) >= len(a.valuesIndices) {
-		a.valuesIndices = append(a.valuesIndices, a.EmptyValue)
+	for int(index) >= len(a.ValuesIndices) {
+		a.ValuesIndices = append(a.ValuesIndices, a.EmptyValue)
 	}
 
-	valueIndex := a.valuesIndices[index]
+	valueIndex := a.ValuesIndices[index]
 
 	if valueIndex == a.EmptyValue {
-		a.valuesIndices[index] = Index(len(a.indices))
-		a.indices = append(a.indices, index)
+		a.ValuesIndices[index] = Index(len(a.Indices))
+		a.Indices = append(a.Indices, index)
 		return true
 	}
 
-	a.indices[valueIndex] = index
+	a.Indices[valueIndex] = index
 
 	return false
 }
 
 func (a *sparseSet[Index]) Remove(index Index) bool {
-	if int(index) >= len(a.valuesIndices) {
+	if int(index) >= len(a.ValuesIndices) {
 		return false
 	}
 
-	valueIndex := a.valuesIndices[index]
+	valueIndex := a.ValuesIndices[index]
 	if valueIndex == a.EmptyValue {
 		return false
 	}
 
-	a.valuesIndices[index] = a.EmptyValue
+	a.ValuesIndices[index] = a.EmptyValue
 
-	if len(a.indices)-1 != int(valueIndex) {
-		movedIndex := a.indices[len(a.indices)-1]
-		a.indices[valueIndex] = movedIndex
+	if len(a.Indices)-1 != int(valueIndex) {
+		movedIndex := a.Indices[len(a.Indices)-1]
+		a.Indices[valueIndex] = movedIndex
 
-		a.valuesIndices[movedIndex] = valueIndex
+		a.ValuesIndices[movedIndex] = valueIndex
 	}
 
-	a.indices = a.indices[:len(a.indices)-1]
+	a.Indices = a.Indices[:len(a.Indices)-1]
 	return true
 }

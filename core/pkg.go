@@ -30,13 +30,15 @@ import (
 	"engine/modules/inputs"
 	"engine/modules/inputs/pkg"
 	"engine/modules/netsync/pkg"
+	"engine/modules/record"
+	"engine/modules/record/pkg"
 	"engine/modules/render/pkg"
 	"engine/modules/scenes/pkg"
 	"engine/modules/text"
 	"engine/modules/text/pkg"
 	"engine/modules/transform"
 	"engine/modules/transform/pkg"
-	transitionpkg "engine/modules/transition/pkg"
+	"engine/modules/transition/pkg"
 	"engine/modules/uuid/pkg"
 	"engine/services/assets"
 	"engine/services/clock"
@@ -138,7 +140,7 @@ func getDic() ioc.Dic {
 		console.Package(),
 		media.Package(window, ctx),
 		// ecs.Package(), // scenes register world so ecs package isn't registered
-		frames.Package(30, 60),
+		frames.Package(3, 60),
 		// frames.Package(30, 10000),
 		scenes.Package(),
 
@@ -224,10 +226,14 @@ func getDic() ioc.Dic {
 			config := netsyncpkg.NewConfig(
 				150, // max predictions
 			)
-			netsyncpkg.AddComponent[transform.PosComponent](config)
-			netsyncpkg.AddComponent[camera.OrthoComponent](config)
-			netsyncpkg.AddComponent[definition.DefinitionLinkComponent](config)
-			netsyncpkg.AddComponent[tile.PosComponent](config)
+			record.AddToConfig[transform.PosComponent](config.RecordConfig())
+			record.AddToConfig[camera.OrthoComponent](config.RecordConfig())
+			record.AddToConfig[definition.DefinitionLinkComponent](config.RecordConfig())
+			record.AddToConfig[tile.PosComponent](config.RecordConfig())
+			// netsyncpkg.AddComponent[transform.PosComponent](config)
+			// netsyncpkg.AddComponent[camera.OrthoComponent](config)
+			// netsyncpkg.AddComponent[definition.DefinitionLinkComponent](config)
+			// netsyncpkg.AddComponent[tile.PosComponent](config)
 
 			// syncpkg.AddEvent[scenessys.ChangeSceneEvent](config)
 			netsyncpkg.AddEvent[drag.DraggableEvent](config)
@@ -244,6 +250,7 @@ func getDic() ioc.Dic {
 
 			return config
 		}()),
+		recordpkg.Package(),
 		transitionpkg.Package(),
 
 		// game packages

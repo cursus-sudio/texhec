@@ -6,7 +6,6 @@ import (
 	"engine/modules/netsync/internal/clienttypes"
 	"engine/modules/netsync/internal/server"
 	"engine/modules/netsync/internal/servertypes"
-	"engine/modules/netsync/internal/state"
 	"engine/modules/netsync/internal/tool"
 	"engine/services/codec"
 	"engine/services/ecs"
@@ -43,24 +42,16 @@ func (pkg pkg) Register(b ioc.Builder) {
 		return tool.NewToolFactory()
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[netsync.World, state.Tool] {
-		return state.NewToolFactory(
-			*pkg.config.config,
-			ioc.Get[logger.Logger](c),
-		)
-	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[netsync.World, server.Tool] {
 		return server.NewToolFactory(
 			*pkg.config.config,
 			ioc.Get[netsync.ToolFactory](c),
-			ioc.Get[ecs.ToolFactory[netsync.World, state.Tool]](c),
 			ioc.Get[logger.Logger](c),
 		)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[netsync.World, client.Tool] {
 		return client.NewToolFactory(
 			*pkg.config.config,
-			ioc.Get[ecs.ToolFactory[netsync.World, state.Tool]](c),
 			ioc.Get[netsync.ToolFactory](c),
 			ioc.Get[logger.Logger](c),
 		)

@@ -6,6 +6,7 @@ import (
 	"engine/modules/uuid"
 	uuidpkg "engine/modules/uuid/pkg"
 	"engine/services/clock"
+	"engine/services/codec"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"time"
@@ -18,8 +19,8 @@ type Component struct {
 }
 
 type Setup struct {
-	C      ioc.Dic
 	Config record.Config
+	Codec  codec.Codec
 
 	World
 	ComponentArray ecs.ComponentsArray[Component]
@@ -43,11 +44,17 @@ func NewSetup() Setup {
 	for _, pkg := range []ioc.Pkg{
 		logger.Package(true, func(c ioc.Dic, message string) { print(message) }),
 		clock.Package(time.RFC3339Nano),
+		codec.Package(),
 		uuidpkg.Package(),
 		recordpkg.Package(),
 	} {
 		pkg.Register(b)
 	}
+
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
+		return b.
+			Register(Component{})
+	})
 
 	c := b.Build()
 
@@ -56,7 +63,7 @@ func NewSetup() Setup {
 	w.RecordTool = ioc.Get[record.ToolFactory](c).Build(w)
 
 	s := Setup{
-		C:      c,
+		Codec:  ioc.Get[codec.Codec](c),
 		Config: record.NewConfig(),
 
 		World:          w,

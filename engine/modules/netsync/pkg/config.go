@@ -2,7 +2,7 @@ package netsyncpkg
 
 import (
 	"engine/modules/netsync/internal/config"
-	"engine/services/ecs"
+	"engine/modules/record"
 	"reflect"
 
 	"github.com/ogiusek/events"
@@ -15,11 +15,16 @@ type Config struct {
 func NewConfig(maxPredictions int) Config {
 	return Config{
 		config: &config.Config{
+			RecordConfig:        record.NewConfig(),
 			AuthorizeEvent:      make(map[reflect.Type]func(any) error),
 			AllowedClientEvents: make(map[reflect.Type]struct{}),
 			MaxPredictions:      maxPredictions,
 		},
 	}
+}
+
+func (c Config) RecordConfig() record.Config {
+	return c.config.RecordConfig
 }
 
 func AddEvent[EventType any](config Config) {
@@ -47,13 +52,6 @@ func AddTransparentEvent[EventType any](config Config) {
 		events.Listen(b, func(e EventType) { f(e) })
 	})
 	config.config.AllowedClientEvents[eventType] = struct{}{}
-}
-
-func AddComponent[ComponentType any](config Config) {
-	config.config.Components = append(config.config.Components, reflect.TypeFor[ComponentType]())
-	config.config.ArraysOfComponents = append(config.config.ArraysOfComponents, func(w ecs.World) ecs.AnyComponentArray {
-		return ecs.GetComponentsArray[ComponentType](w)
-	})
 }
 
 func AddEventAuthorization[EventType any](config Config, handler func(EventType) error) {

@@ -17,6 +17,7 @@ import (
 	"engine/modules/hierarchy"
 	"engine/modules/inputs"
 	"engine/modules/netsync"
+	"engine/modules/record"
 	"engine/modules/render"
 	scenesys "engine/modules/scenes"
 	"engine/modules/text"
@@ -65,6 +66,7 @@ type world struct {
 	groups.GroupsTool
 	hierarchy.HierarchyTool
 	netsync.NetSyncTool
+	record.RecordTool
 	inputs.InputsTool
 	render.RenderTool
 	text.TextTool
@@ -132,6 +134,7 @@ func (pkg) Register(b ioc.Builder) {
 			world.TransformTool = ioc.Get[transform.ToolFactory](c).Build(world)
 
 			world.ConnectionTool = ioc.Get[connection.ToolFactory](c).Build(world)
+			world.RecordTool = ioc.Get[record.ToolFactory](c).Build(world)
 			world.NetSyncTool = ioc.Get[netsync.ToolFactory](c).Build(world)
 
 			world.CameraTool = ioc.Get[camera.ToolFactory](c).Build(world)

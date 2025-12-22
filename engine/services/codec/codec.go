@@ -3,6 +3,7 @@ package codec
 import (
 	"bytes"
 	"encoding/gob"
+	"engine/services/logger"
 	"errors"
 	"reflect"
 )
@@ -15,13 +16,18 @@ type Codec interface {
 	Decode([]byte) (any, error)
 }
 
-type codec struct{}
+type codec struct {
+	logger logger.Logger
+}
 
-func NewCodec(types []reflect.Type) Codec {
+func newCodec(
+	logger logger.Logger,
+	types []reflect.Type,
+) Codec {
 	for _, codecType := range types {
 		gob.Register(reflect.New(codecType).Elem().Interface())
 	}
-	return &codec{}
+	return &codec{logger}
 }
 
 func (codec *codec) Encode(model any) ([]byte, error) {
@@ -36,7 +42,7 @@ func (codec *codec) Encode(model any) ([]byte, error) {
 func (codec *codec) Decode(bytesToDecode []byte) (any, error) {
 	var value any
 	if err := gob.
-		NewDecoder(bytes.NewBuffer(bytesToDecode)).
+		NewDecoder(bytes.NewReader(bytesToDecode)).
 		Decode(&value); err != nil {
 		return nil, errors.Join(ErrInvalidBytes, err)
 	}

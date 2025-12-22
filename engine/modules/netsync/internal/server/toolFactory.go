@@ -3,7 +3,6 @@ package server
 import (
 	"engine/modules/netsync"
 	"engine/modules/netsync/internal/config"
-	"engine/modules/netsync/internal/state"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"sync"
@@ -12,7 +11,6 @@ import (
 func NewToolFactory(
 	config config.Config,
 	netSyncToolFactory netsync.ToolFactory,
-	stateToolFactory ecs.ToolFactory[netsync.World, state.Tool],
 	logger logger.Logger,
 ) ecs.ToolFactory[netsync.World, Tool] {
 	mutex := &sync.Mutex{}
@@ -25,7 +23,6 @@ func NewToolFactory(
 		t := NewTool(
 			config,
 			netSyncToolFactory,
-			stateToolFactory,
 			logger,
 			w,
 		)

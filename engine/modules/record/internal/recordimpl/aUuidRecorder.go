@@ -6,8 +6,13 @@ import (
 	"engine/services/datastructures"
 	"engine/services/ecs"
 	"fmt"
-	"reflect"
 )
+
+type UUIDRecording struct {
+	Sealed        datastructures.SparseSet[ecs.EntityID]
+	EntitiesUUIDs datastructures.SparseArray[ecs.EntityID, uuid.UUID]
+	record.UUIDRecording
+}
 
 type uuidKeyedRecorder struct {
 	*tool
@@ -15,8 +20,8 @@ type uuidKeyedRecorder struct {
 	i     record.UUIDRecordingID
 	holes datastructures.SparseSet[record.UUIDRecordingID]
 
-	uuidRecordings          datastructures.SparseArray[record.UUIDRecordingID, record.UUIDRecording]
-	backwardsUUIDRecordings datastructures.SparseArray[record.UUIDRecordingID, record.UUIDRecording]
+	uuidRecordings          datastructures.SparseArray[record.UUIDRecordingID, UUIDRecording]
+	backwardsUUIDRecordings datastructures.SparseArray[record.UUIDRecordingID, UUIDRecording]
 }
 
 func newUUIDKeyedRecorder(
@@ -25,43 +30,43 @@ func newUUIDKeyedRecorder(
 	uuidKeyedRecorder := &uuidKeyedRecorder{
 		t,
 
-		0,
+		1,
 		datastructures.NewSparseSet[record.UUIDRecordingID](),
 
-		datastructures.NewSparseArray[record.UUIDRecordingID, record.UUIDRecording](),
-		datastructures.NewSparseArray[record.UUIDRecordingID, record.UUIDRecording](),
+		datastructures.NewSparseArray[record.UUIDRecordingID, UUIDRecording](),
+		datastructures.NewSparseArray[record.UUIDRecordingID, UUIDRecording](),
 	}
 
 	return uuidKeyedRecorder
 }
 
 func (t *uuidKeyedRecorder) GetState(config record.Config) record.UUIDRecording {
-	recording := record.UUIDRecording{
-		UUIDEntities:  make(map[uuid.UUID]ecs.EntityID),
+	recording := UUIDRecording{
 		EntitiesUUIDs: datastructures.NewSparseArray[ecs.EntityID, uuid.UUID](),
-		Recording: record.Recording{
-			RemovedEntities: datastructures.NewSparseSet[ecs.EntityID](),
-			Sealed:          datastructures.NewSparseSet[ecs.EntityID](),
-			Arrays:          make(map[reflect.Type]record.ArrayRecording, len(config.RecordedComponents)),
+		UUIDRecording: record.UUIDRecording{
+			UUIDEntities: make(map[uuid.UUID]ecs.EntityID),
+			Recording: record.Recording{
+				RemovedEntities: datastructures.NewSparseSet[ecs.EntityID](),
+				Arrays:          make(map[string]record.ArrayRecording, len(config.RecordedComponents)),
+			},
 		},
 	}
-	entitiesUUIDs := datastructures.NewSparseArray[ecs.EntityID, uuid.UUID]()
 	for arrayType, arrayCtor := range config.RecordedComponents {
 		array := arrayCtor(t.world)
 		components := datastructures.NewSparseArray[ecs.EntityID, any]()
-		recording.Arrays[arrayType] = components
+		recording.Arrays[arrayType.String()] = record.ArrayRecording(components)
 
 		//
 
 		for _, entity := range array.GetEntities() {
-			if _, ok := entitiesUUIDs.Get(entity); !ok {
+			if _, ok := recording.EntitiesUUIDs.Get(entity); !ok {
 				uuid, ok := t.world.UUID().Component().Get(entity)
 				if !ok {
 					uuid.ID = t.world.UUID().NewUUID()
 					t.world.UUID().Component().Set(entity, uuid)
 				}
-				entitiesUUIDs.Set(entity, uuid.ID)
-
+				recording.EntitiesUUIDs.Set(entity, uuid.ID)
+				recording.UUIDEntities[uuid.ID] = entity
 			}
 			component, ok := array.GetAny(entity)
 			if !ok {
@@ -70,38 +75,53 @@ func (t *uuidKeyedRecorder) GetState(config record.Config) record.UUIDRecording 
 			components.Set(entity, component)
 		}
 	}
-	return recording
+	return recording.UUIDRecording
 }
 
 func (t *uuidKeyedRecorder) StartBackwardsRecording(config record.Config) record.UUIDRecordingID {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	t.SynchronizeState()
 	id, recording := t.getRecordingAndID(config)
 	t.uuidRecordings.Set(id, recording)
 	return id
 }
 func (t *uuidKeyedRecorder) StartRecording(config record.Config) record.UUIDRecordingID {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	t.SynchronizeState()
 	id, recording := t.getRecordingAndID(config)
 	t.backwardsUUIDRecordings.Set(id, recording)
 	return id
 }
 func (t *uuidKeyedRecorder) Stop(id record.UUIDRecordingID) (record.UUIDRecording, bool) {
+	// t.logger.Info("stopped recording")
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	t.SynchronizeState()
 	if recording, ok := t.uuidRecordings.Get(id); ok {
 		t.uuidRecordings.Remove(id)
 		t.holes.Add(id)
-		return recording, ok
+		return recording.UUIDRecording, ok
 	}
 	if recording, ok := t.backwardsUUIDRecordings.Get(id); ok {
 		t.backwardsUUIDRecordings.Remove(id)
 		t.holes.Add(id)
-		return recording, ok
+		return recording.UUIDRecording, ok
 	}
 	return record.UUIDRecording{}, false
 }
-func (t *uuidKeyedRecorder) Apply(recordings ...record.UUIDRecording) {
+func (t *uuidKeyedRecorder) Apply(config record.Config, recordings ...record.UUIDRecording) {
+	for arrayType, arrayCtor := range config.RecordedComponents {
+		t.tool.GetArrayAndEnsureExists(arrayType, arrayCtor)
+	}
 	errs := []error{}
 	for _, recording := range recordings {
+		if recording.RemovedEntities == nil ||
+			recording.Arrays == nil ||
+			recording.UUIDEntities == nil {
+			return
+		}
 		// entities uuids mapping
 		entities := datastructures.NewSparseArray[ecs.EntityID, ecs.EntityID]()
 		for uuidValue, entityPlaceholder := range recording.UUIDEntities {
@@ -162,7 +182,7 @@ func (t *uuidKeyedRecorder) applyArray(
 	}
 	return errs
 }
-func (t *uuidKeyedRecorder) getRecordingAndID(config record.Config) (record.UUIDRecordingID, record.UUIDRecording) {
+func (t *uuidKeyedRecorder) getRecordingAndID(config record.Config) (record.UUIDRecordingID, UUIDRecording) {
 	var id record.UUIDRecordingID
 	if holes := t.holes.GetIndices(); len(holes) != 0 {
 		id = holes[0]
@@ -172,19 +192,21 @@ func (t *uuidKeyedRecorder) getRecordingAndID(config record.Config) (record.UUID
 		t.i++
 	}
 
-	recording := record.UUIDRecording{
-		UUIDEntities:  make(map[uuid.UUID]ecs.EntityID),
+	recording := UUIDRecording{
+		Sealed:        datastructures.NewSparseSet[ecs.EntityID](),
 		EntitiesUUIDs: datastructures.NewSparseArray[ecs.EntityID, uuid.UUID](),
-		Recording: record.Recording{
-			RemovedEntities: datastructures.NewSparseSet[ecs.EntityID](),
-			Sealed:          datastructures.NewSparseSet[ecs.EntityID](),
-			Arrays:          make(map[reflect.Type]record.ArrayRecording, len(config.RecordedComponents)),
+		UUIDRecording: record.UUIDRecording{
+			UUIDEntities: make(map[uuid.UUID]ecs.EntityID),
+			Recording: record.Recording{
+				RemovedEntities: datastructures.NewSparseSet[ecs.EntityID](),
+				Arrays:          make(map[string]record.ArrayRecording, len(config.RecordedComponents)),
+			},
 		},
 	}
 
 	for arrayType, arrayCtor := range config.RecordedComponents {
 		t.tool.GetArrayAndEnsureExists(arrayType, arrayCtor)
-		recording.Arrays[arrayType] = datastructures.NewSparseArray[ecs.EntityID, any]()
+		recording.Arrays[arrayType.String()] = record.ArrayRecording(datastructures.NewSparseArray[ecs.EntityID, any]())
 	}
 	return id, recording
 }

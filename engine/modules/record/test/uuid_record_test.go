@@ -2,6 +2,8 @@ package test
 
 import (
 	"engine/modules/uuid"
+	"engine/services/ecs"
+	"maps"
 	"reflect"
 	"testing"
 )
@@ -29,16 +31,12 @@ func TestUUIDForwardRecording(t *testing.T) {
 		return
 	}
 
-	if len(recording.EntitiesUUIDs.GetIndices()) != 1 || recording.EntitiesUUIDs.GetIndices()[0] != entity {
-		t.Errorf("expected entity [%v] got %v", entity, recording.EntitiesUUIDs.GetIndices())
-		return
-	}
-	if len(recording.EntitiesUUIDs.GetValues()) != 1 || recording.EntitiesUUIDs.GetValues()[0] != uuidComponent.ID {
-		t.Errorf("expected uuid [%v] got %v", uuidComponent.ID, recording.EntitiesUUIDs.GetValues())
+	if expected := map[uuid.UUID]ecs.EntityID{uuidComponent.ID: entity}; !maps.Equal(recording.UUIDEntities, expected) {
+		t.Errorf("expected [%v] got [%v]", expected, recording.UUIDEntities)
 		return
 	}
 
-	array, ok := recording.Arrays[reflect.TypeFor[Component]()]
+	array, ok := recording.Arrays[reflect.TypeFor[Component]().String()]
 	if !ok {
 		t.Error("expected recording to have changes")
 		return
@@ -76,16 +74,12 @@ func TestUUIDBackwardsRecording(t *testing.T) {
 		return
 	}
 
-	if len(recording.EntitiesUUIDs.GetIndices()) != 1 || recording.EntitiesUUIDs.GetIndices()[0] != entity {
-		t.Errorf("expected entity [%v] got %v", entity, recording.EntitiesUUIDs.GetIndices())
-		return
-	}
-	if len(recording.EntitiesUUIDs.GetValues()) != 1 || recording.EntitiesUUIDs.GetValues()[0] != uuidComponent.ID {
-		t.Errorf("expected uuid [%v] got %v", uuidComponent.ID, recording.EntitiesUUIDs.GetValues())
+	if expected := map[uuid.UUID]ecs.EntityID{uuidComponent.ID: entity}; !maps.Equal(recording.UUIDEntities, expected) {
+		t.Errorf("expected [%v] got [%v]", expected, recording.UUIDEntities)
 		return
 	}
 
-	array, ok := recording.Arrays[reflect.TypeFor[Component]()]
+	array, ok := recording.Arrays[reflect.TypeFor[Component]().String()]
 	if !ok {
 		t.Error("expected recording to have changes")
 		return
@@ -96,6 +90,64 @@ func TestUUIDBackwardsRecording(t *testing.T) {
 	}
 	if len(array.GetValues()) != 1 || array.GetValues()[0] != initialState {
 		t.Errorf("expected array components to be only component [%v] not %v", initialState, array.GetValues())
+		return
+	}
+
+	world.RemoveEntity(entity)
+	world.Record().UUID().Apply(world.Config, recording)
+
+	if ei := world.ComponentArray.GetEntities(); len(ei) != 1 {
+		t.Errorf("unexpected entities on apply. expected one entity got %v", ei)
+		return
+	}
+	if c, ok := world.ComponentArray.Get(world.ComponentArray.GetEntities()[0]); !ok || c != initialState {
+		t.Errorf("unexpected component on apply. expected %v %t got %v %t", initialState, true, c, ok)
+		return
+	}
+}
+
+func TestUUIDGetState(t *testing.T) {
+	world := NewSetup()
+	initialState := Component{Counter: 6}
+
+	entity := world.NewEntity()
+	world.ComponentArray.Set(entity, initialState)
+
+	recording := world.Record().UUID().GetState(world.Config)
+
+	array, ok := recording.Arrays[reflect.TypeFor[Component]().String()]
+	if !ok {
+		t.Error("expected recording to have changes")
+		return
+	}
+	if len(array.GetIndices()) != 1 || array.GetIndices()[0] != entity {
+		t.Errorf("expected array entities to be only entity [%v] not %v", entity, array.GetIndices())
+		return
+	}
+	if len(array.GetValues()) != 1 || array.GetValues()[0] != initialState {
+		t.Errorf("expected array components to be only component [%v] not %v", initialState, array.GetValues())
+		return
+	}
+
+	if uuidComponent, ok := world.UUID().Component().Get(entity); !ok {
+		t.Errorf("entity should have and uuid component")
+		return
+	} else if _, ok := recording.UUIDEntities[uuidComponent.ID]; !ok {
+		t.Errorf("entity should have and uuid in recording")
+		return
+	}
+	array.Remove(entity)
+	world.Record().UUID().Apply(world.Config, recording)
+	if ei := world.ComponentArray.GetEntities(); len(ei) != 1 {
+		t.Errorf("unexpected entities on apply. expected one entity got %v", ei)
+		return
+	}
+	// if c, ok := world.UUID().Component().Get(world.ComponentArray.GetEntities()[0]); !ok || c.ID != recording.EntitiesUUIDs.GetValues()[0] {
+	// 	t.Errorf("unexpected component on apply. expected %v %t got %v %t", initialState, true, c, ok)
+	// 	return
+	// }
+	if c, ok := world.ComponentArray.Get(world.ComponentArray.GetEntities()[0]); !ok || c != initialState {
+		t.Errorf("unexpected component on apply. expected %v %t got %v %t", initialState, true, c, ok)
 		return
 	}
 }

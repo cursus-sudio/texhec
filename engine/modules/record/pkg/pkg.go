@@ -4,6 +4,9 @@ import (
 	"engine/modules/record"
 	"engine/modules/record/internal/recordimpl"
 	"engine/modules/uuid"
+	"engine/services/codec"
+	"engine/services/datastructures"
+	"engine/services/ecs"
 	"engine/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
@@ -21,6 +24,21 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) Register(b ioc.Builder) {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
+		return b.
+			// recording
+			Register(record.Recording{}).
+			Register(datastructures.NewSparseSet[ecs.EntityID]()).
+			Register(map[string]record.ArrayRecording{}).
+
+			// uuid recording
+			Register(record.UUIDRecording{}).
+			Register(map[uuid.UUID]ecs.EntityID{}).
+			Register(datastructures.NewSparseArray[ecs.EntityID, uuid.UUID]()).
+
+			// array
+			Register(record.ArrayRecording(datastructures.NewSparseArray[ecs.EntityID, any]()))
+	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) record.ToolFactory {
 		return recordimpl.NewToolFactory(
 			ioc.Get[uuid.ToolFactory](c),

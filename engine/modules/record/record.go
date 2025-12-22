@@ -54,16 +54,17 @@ type EntityKeyedRecorder interface {
 	// finishes recording if open
 	Stop(RecordingID) (r Recording, ok bool)
 
-	Apply(...Recording)
+	Apply(Config, ...Recording)
 }
 
 type RecordingID uint16
 type Recording struct {
 	RemovedEntities datastructures.SparseSet[ecs.EntityID]
-	Sealed          datastructures.SparseSet[ecs.EntityID]
-	Arrays          map[reflect.Type]ArrayRecording
+	Arrays          map[string] /*array type*/ ArrayRecording
 }
-type ArrayRecording datastructures.SparseArray[ecs.EntityID, any] // nil for component means that component is removed
+
+// nil for component means that component is removed
+type ArrayRecording datastructures.SparseArray[ecs.EntityID, any]
 
 //
 
@@ -80,12 +81,12 @@ type UUIDKeyedRecorder interface {
 	// finishes recording if open
 	Stop(UUIDRecordingID) (r UUIDRecording, ok bool)
 
-	Apply(...UUIDRecording)
+	Apply(Config, ...UUIDRecording)
 }
 
 type UUIDRecordingID uint16
 type UUIDRecording struct {
-	UUIDEntities  map[uuid.UUID]ecs.EntityID
-	EntitiesUUIDs datastructures.SparseArray[ecs.EntityID, uuid.UUID]
+	UUIDEntities map[uuid.UUID]ecs.EntityID
+
 	Recording
 }

@@ -17,12 +17,13 @@ type entityArray struct {
 
 type tool struct {
 	world       record.World
-	worldArrays map[reflect.Type]entityArray
+	worldArrays map[string]entityArray
 
 	worldCopy       record.World
-	worldCopyArrays map[reflect.Type]entityArray
+	worldCopyArrays map[string]entityArray
 
 	logger logger.Logger
+	mutex  *sync.Mutex
 	*entityKeyedRecorder
 	*uuidKeyedRecorder
 }
@@ -40,16 +41,18 @@ func NewToolFactory(
 		}
 		t := tool{
 			world:       w,
-			worldArrays: make(map[reflect.Type]entityArray),
+			worldArrays: make(map[string]entityArray),
 
 			worldCopy:       newWorld(uuidToolFactory),
-			worldCopyArrays: make(map[reflect.Type]entityArray),
+			worldCopyArrays: make(map[string]entityArray),
 
 			logger: logger,
+			mutex:  &sync.Mutex{},
 		}
 		t.entityKeyedRecorder = newEntityKeyedRecorder(&t)
 		t.uuidKeyedRecorder = newUUIDKeyedRecorder(&t)
 		w.SaveGlobal(t)
+
 		return t
 	})
 }
@@ -75,13 +78,13 @@ func (t tool) GetArrayAndEnsureExists(arrayType reflect.Type, arrayCtor func(ecs
 		arrayCtor(t.world),
 	}
 	worldArray.AddDirtySet(worldArray.dirtySet)
-	t.worldArrays[arrayType] = worldArray
+	t.worldArrays[arrayType.String()] = worldArray
 
 	worldCopyArray := entityArray{
 		ecs.NewDirtySet(),
 		arrayCtor(t.worldCopy),
 	}
-	t.worldCopyArrays[arrayType] = worldCopyArray
+	t.worldCopyArrays[arrayType.String()] = worldCopyArray
 
 	for _, entity := range worldArray.GetEntities() {
 		component, ok := worldArray.GetAny(entity)
@@ -103,7 +106,7 @@ func (t tool) SynchronizeState() {
 }
 
 func (t tool) synchronizeArrayState(
-	arrayType reflect.Type,
+	arrayType string,
 	worldArray entityArray,
 	worldCopyArray entityArray,
 ) {
@@ -112,11 +115,8 @@ func (t tool) synchronizeArrayState(
 		return
 	}
 
-	t.applyChangesInRecording(arrayType, worldCopyArray, entities, t.entityKeyedRecorder.recordings, true)
+	t.applyChangesInEntityRecording(arrayType, worldCopyArray, entities, t.entityKeyedRecorder.recordings, true)
 	t.applyChangesInUUIDRecording(arrayType, worldCopyArray, entities, t.uuidKeyedRecorder.uuidRecordings, true)
-
-	t.applyChangesInRecording(arrayType, worldArray, entities, t.entityKeyedRecorder.backwardsRecordings, false)
-	t.applyChangesInUUIDRecording(arrayType, worldArray, entities, t.uuidKeyedRecorder.backwardsUUIDRecordings, false)
 
 	for _, entity := range entities {
 		if component, ok := worldArray.GetAny(entity); ok {
@@ -129,13 +129,16 @@ func (t tool) synchronizeArrayState(
 		}
 		t.worldCopy.RemoveEntity(entity)
 	}
+
+	t.applyChangesInEntityRecording(arrayType, worldCopyArray, entities, t.entityKeyedRecorder.backwardsRecordings, false)
+	t.applyChangesInUUIDRecording(arrayType, worldCopyArray, entities, t.uuidKeyedRecorder.backwardsUUIDRecordings, false)
 }
 
-func (t tool) applyChangesInRecording(
-	arrayType reflect.Type,
+func (t tool) applyChangesInEntityRecording(
+	arrayType string,
 	worldCopyArray ecs.AnyComponentArray,
 	entities []ecs.EntityID,
-	recordings datastructures.SparseArray[record.RecordingID, record.Recording],
+	recordings datastructures.SparseArray[record.RecordingID, Recording],
 	seal bool,
 ) {
 	for _, recording := range recordings.GetValues() {
@@ -161,10 +164,10 @@ func (t tool) applyChangesInRecording(
 	}
 }
 func (t tool) applyChangesInUUIDRecording(
-	arrayType reflect.Type,
+	arrayType string,
 	array ecs.AnyComponentArray,
 	entities []ecs.EntityID,
-	recordings datastructures.SparseArray[record.UUIDRecordingID, record.UUIDRecording],
+	recordings datastructures.SparseArray[record.UUIDRecordingID, UUIDRecording],
 	seal bool,
 ) {
 	for _, recording := range recordings.GetValues() {

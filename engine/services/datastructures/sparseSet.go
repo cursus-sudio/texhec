@@ -23,6 +23,25 @@ type sparseSet[Index constraints.Integer] struct {
 	Indices []Index // here value means index in sparse array
 }
 
+// func (a sparseSet[Index]) GobTypes() []any { return []any{[]Index{}} }
+// func (a *sparseSet[Index]) GobEncode() ([]byte, error) {
+//		var buf bytes.Buffer
+//		if err := gob.NewEncoder(&buf).Encode(a.Indices); err != nil {
+//			return nil, err
+//		}
+//		return buf.Bytes(), nil
+//	}
+// func (a *sparseSet[Index]) GobDecode(data []byte) error {
+// 	indices := []Index{}
+// 	if err := gob.NewDecoder(bytes.NewReader(data)).Decode(&indices); err != nil {
+// 		return err
+// 	}
+// 	for _, index := range indices {
+// 		a.Add(index)
+// 	}
+// 	return nil
+// }
+
 func NewSparseSet[Index constraints.Integer]() SparseSet[Index] {
 	var zero Index
 	return &sparseSet[Index]{

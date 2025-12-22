@@ -9,6 +9,7 @@ import (
 	"engine/modules/hierarchy"
 	"engine/modules/inputs"
 	"engine/modules/netsync"
+	"engine/modules/record"
 	"engine/modules/render"
 	"engine/modules/text"
 	"engine/modules/transform"
@@ -27,6 +28,7 @@ type World interface {
 	hierarchy.HierarchyTool
 	inputs.InputsTool
 	netsync.NetSyncTool
+	record.RecordTool
 	render.RenderTool
 	text.TextTool
 	transform.TransformTool

@@ -3,7 +3,6 @@ package client
 import (
 	"engine/modules/netsync"
 	"engine/modules/netsync/internal/config"
-	"engine/modules/netsync/internal/state"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"sync"
@@ -11,7 +10,6 @@ import (
 
 func NewToolFactory(
 	config config.Config,
-	stateToolFactory ecs.ToolFactory[netsync.World, state.Tool],
 	netSyncToolFactory netsync.ToolFactory,
 	logger logger.Logger,
 ) ecs.ToolFactory[netsync.World, Tool] {
@@ -24,7 +22,6 @@ func NewToolFactory(
 		}
 		t := NewTool(
 			config,
-			stateToolFactory,
 			netSyncToolFactory,
 			logger,
 			w,

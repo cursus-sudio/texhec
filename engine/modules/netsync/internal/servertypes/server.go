@@ -1,20 +1,20 @@
 package servertypes
 
 import (
-	"engine/modules/netsync/internal/state"
+	"engine/modules/record"
 	"engine/modules/uuid"
 )
 
 // server messages
 
 type SendStateDTO struct {
-	State state.State
+	State record.UUIDRecording
 	Error error
 }
 
 type SendChangeDTO struct {
 	EventID uuid.UUID
-	Changes state.State
+	Changes record.UUIDRecording
 	Error   error
 }
 

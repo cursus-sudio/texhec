@@ -1,8 +1,10 @@
 package test
 
 import (
+	"engine/services/clock"
 	"engine/services/codec"
 	"engine/services/logger"
+	"time"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -20,6 +22,7 @@ func NewSetup() setup {
 
 	for _, pkg := range []ioc.Pkg{
 		codec.Package(),
+		clock.Package(time.RFC3339Nano),
 		logger.Package(true, func(c ioc.Dic, message string) { print(message) }),
 	} {
 		pkg.Register(b)

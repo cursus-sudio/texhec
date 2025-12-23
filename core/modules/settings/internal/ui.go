@@ -15,8 +15,10 @@ import (
 	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/ecs"
+	"engine/services/frames"
 	"engine/services/logger"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/events"
 )
 
@@ -30,6 +32,8 @@ type system struct {
 	logger logger.Logger
 	settings.World
 }
+
+type temporaryToggleColorComponent struct{}
 
 func NewSystem(
 	assets assets.Assets,
@@ -46,8 +50,9 @@ func NewSystem(
 		}
 
 		events.ListenE(world.EventsBuilder(), func(event settings.EnterSettingsForParentEvent) error {
-			return s.Render(event.Parent)
+			return s.ListenRender(event.Parent)
 		})
+		events.Listen(world.EventsBuilder(), s.ListenOnTick)
 		events.Listen(world.EventsBuilder(), func(settings.EnterSettingsEvent) {
 			event := settings.EnterSettingsForParentEvent{
 				Parent: s.Ui().Show(),
@@ -59,7 +64,23 @@ func NewSystem(
 	})
 }
 
-func (s system) Render(parent ecs.EntityID) error {
+func (s system) ListenOnTick(frames.TickEvent) {
+	toggleArray := ecs.GetComponentsArray[temporaryToggleColorComponent](s)
+	for _, entity := range toggleArray.GetEntities() {
+		color, ok := s.Render().Color().Get(entity)
+		if !ok {
+			color.Color = mgl32.Vec4{1, 1, 1, 1}
+		}
+
+		color.Color[1] = 1 - color.Color[1]
+		color.Color[2] = 1 - color.Color[2]
+
+		s.Render().Color().Set(entity, color)
+	}
+
+}
+
+func (s system) ListenRender(parent ecs.EntityID) error {
 	// render
 	// collider
 	// click
@@ -102,6 +123,8 @@ func (s system) Render(parent ecs.EntityID) error {
 		btnEntity := s.NewEntity()
 		s.Hierarchy().SetParent(btnEntity, parent)
 		s.Groups().Inherit().Set(btnEntity, groups.InheritGroupsComponent{})
+
+		ecs.GetComponentsArray[temporaryToggleColorComponent](s).Set(btnEntity, temporaryToggleColorComponent{})
 
 		// btnTransform := transformTransaction.GetObject(btnEntity)
 		s.Transform().AspectRatio().Set(btnEntity, transform.NewAspectRatio(float32(btnAspectRatio.Dx()), float32(btnAspectRatio.Dy()), 0, transform.PrimaryAxisX))

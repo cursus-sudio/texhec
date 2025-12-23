@@ -32,8 +32,10 @@ import (
 	"engine/modules/netsync/pkg"
 	"engine/modules/record"
 	"engine/modules/record/pkg"
+	"engine/modules/render"
 	"engine/modules/render/pkg"
 	"engine/modules/scenes/pkg"
+	"engine/modules/smooth/pkg"
 	"engine/modules/text"
 	"engine/modules/text/pkg"
 	"engine/modules/transform"
@@ -130,7 +132,7 @@ func getDic() ioc.Dic {
 		console.Package(),
 		media.Package(window, ctx),
 		// ecs.Package(), // scenes register world so ecs package isn't registered
-		frames.Package(3, 60),
+		frames.Package(1, 60),
 		// frames.Package(30, 10000),
 		scenes.Package(),
 
@@ -241,6 +243,11 @@ func getDic() ioc.Dic {
 			return config
 		}()),
 		recordpkg.Package(),
+		smoothpkg.Package(func() smoothpkg.Config {
+			config := smoothpkg.NewConfig()
+			smoothpkg.SmoothComponent[render.ColorComponent](config)
+			return config
+		}()),
 		transitionpkg.Package(),
 
 		// game packages

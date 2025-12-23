@@ -20,6 +20,7 @@ import (
 	"engine/modules/record"
 	"engine/modules/render"
 	scenesys "engine/modules/scenes"
+	"engine/modules/smooth"
 	"engine/modules/text"
 	"engine/modules/transform"
 	"engine/modules/transition"
@@ -183,6 +184,7 @@ func (pkg) Register(b ioc.Builder) {
 
 			errs := ecs.RegisterSystems(world,
 				ioc.Get[netsync.StartSystem](c),
+				ioc.Get[smooth.StartSystem](c),
 				// update {
 				ioc.Get[connection.System](c),
 
@@ -201,6 +203,7 @@ func (pkg) Register(b ioc.Builder) {
 				ioc.Get[ui.System](c),
 				ioc.Get[settings.System](c),
 				// } (update)
+				ioc.Get[smooth.StopSystem](c),
 				ioc.Get[netsync.StopSystem](c),
 
 				// audio

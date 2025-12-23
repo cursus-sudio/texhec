@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"engine/services/ecs"
 	appruntime "engine/services/runtime"
+	"fmt"
 	"os"
 	"runtime"
 	"runtime/pprof"
@@ -12,11 +13,16 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
+// golangci-lint run --fix
 func main() {
 	print("started\n")
 
 	{ // go tool pprof -http=:8080 cpu.pprof.cp
-		f, err := os.Create("cpu.pprof.cp")
+		name := ""
+		if len(os.Args) > 1 {
+			name = os.Args[1]
+		}
+		f, err := os.Create(fmt.Sprintf("cpu.pprof%v.cp", name))
 		if err != nil {
 			panic(err)
 		}

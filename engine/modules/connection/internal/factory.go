@@ -21,7 +21,6 @@ func NewFactory(codec codec.Codec, logger logger.Logger) *factory {
 func (f *factory) NewConnection(rawConn net.Conn) connection.Conn {
 	messages := make(chan any)
 	go func() {
-		defer rawConn.Close()
 		defer close(messages)
 
 		for {
@@ -40,10 +39,12 @@ func (f *factory) NewConnection(rawConn net.Conn) connection.Conn {
 				f.logger.Warn(err)
 				continue
 			}
-			// f.logger.Info(fmt.Sprintf("received '%v' type '%v'", message, reflect.TypeOf(message).String()))
+			// f.logger.Info(fmt.Sprintf("received '***' type '%v'", reflect.TypeOf(message).String()))
 
 			messages <- message
 		}
+
+		_ = rawConn.Close()
 	}()
 	return conn{
 		factory:  f,

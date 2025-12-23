@@ -62,7 +62,7 @@ func (t *tool) TextureFrame() ecs.ComponentsArray[render.TextureFrameComponent] 
 
 func (*tool) Error() error {
 	if glErr := gl.GetError(); glErr != gl.NO_ERROR {
-		return fmt.Errorf("opengl error: %x %s\n", glErr, glErrorStrings[glErr])
+		return fmt.Errorf("opengl error: %x %s", glErr, glErrorStrings[glErr])
 	}
 	return nil
 }

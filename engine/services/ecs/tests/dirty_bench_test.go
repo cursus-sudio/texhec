@@ -94,6 +94,44 @@ func TestDependentDirtySet(t *testing.T) {
 	}
 }
 
+func BenchmarkDirtySetDirty(b *testing.B) {
+	set := ecs.NewDirtySet()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		set.Dirty(ecs.EntityID(i))
+	}
+}
+func BenchmarkDirtySetDirtyInversed(b *testing.B) {
+	set := ecs.NewDirtySet()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		set.Dirty(ecs.EntityID(b.N - i))
+	}
+}
+func BenchmarkDirtySetGet(b *testing.B) {
+	set := ecs.NewDirtySet()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		set.Get()
+	}
+}
+func BenchmarkDirtySetDirtyAndGet(b *testing.B) {
+	set := ecs.NewDirtySet()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		set.Dirty(ecs.EntityID(i))
+		set.Get()
+	}
+}
+func BenchmarkDirtySetDirtyAnd1Get(b *testing.B) {
+	set := ecs.NewDirtySet()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		set.Dirty(ecs.EntityID(i))
+	}
+	set.Get()
+}
+
 //
 
 func benchmarkNEntitiesSaveWith7Systems(b *testing.B, entitiesCount int) {

@@ -55,7 +55,6 @@ type TileRenderSystemRegister struct {
 	gridDepth float32
 	layers    int32
 
-	world  tile.World
 	groups groups.GroupsComponent
 }
 

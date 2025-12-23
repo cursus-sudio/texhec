@@ -18,7 +18,6 @@ func (a *cachedAsset) Release() { a.released = true }
 
 //
 
-const notAssetID = "not_asset"
 const assetID = "asset"
 
 func TestAssets(t *testing.T) {

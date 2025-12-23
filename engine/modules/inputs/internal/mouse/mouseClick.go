@@ -147,9 +147,7 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
 				if comp, ok := s.Inputs().MouseDoubleLeft().Get(*entity); ok {
 					eventToEmit = comp.Event
 				}
-				break
 			}
-			break
 		case sdl.BUTTON_RIGHT:
 			if comp, ok := s.Inputs().MouseRight().Get(*entity); ok {
 				eventToEmit = comp.Event
@@ -159,9 +157,7 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
 				if comp, ok := s.Inputs().MouseDoubleRight().Get(*entity); ok {
 					eventToEmit = comp.Event
 				}
-				break
 			}
-			break
 		}
 
 		if eventToEmit != nil {

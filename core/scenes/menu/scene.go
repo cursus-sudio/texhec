@@ -3,7 +3,6 @@ package menuscene
 import (
 	gameassets "core/assets"
 	gamescenes "core/scenes"
-	"engine/modules/animation"
 	"engine/modules/camera"
 	"engine/modules/collider"
 	"engine/modules/genericrenderer"
@@ -12,6 +11,7 @@ import (
 	scenessys "engine/modules/scenes"
 	"engine/modules/text"
 	"engine/modules/transform"
+	"engine/modules/transition"
 	"engine/services/assets"
 	"engine/services/ecs"
 	"engine/services/logger"
@@ -20,6 +20,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-gl/mathgl/mgl32"
+	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -62,11 +64,13 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			world.Render().Mesh().Set(background, render.NewMesh(gameAssets.SquareMesh))
 			world.Render().Texture().Set(background, render.NewTexture(gameAssets.Tiles.Forest))
 			world.GenericRenderer().Pipeline().Set(background, genericrenderer.PipelineComponent{})
-			world.Animation().Component().Set(background, animation.NewAnimationComponent(
-				gameassets.ChangeColorsAnimation,
+			world.Transition().Easing().Set(background, transition.NewEasing(gameassets.MyEasingFunction))
+			events.Emit(world.Events(), transition.NewTransitionEvent(
+				background,
+				render.NewColor(mgl32.Vec4{1, 0, 1, 1}),
+				render.NewColor(mgl32.Vec4{1, 1, 1, 1}),
 				time.Second,
 			))
-			// world.Animation().Loop().Set(background, animation.NewLoopComponent())
 
 			buttonArea := world.NewEntity()
 			world.Transform().Size().Set(buttonArea, transform.NewSize(500, 300, 1))

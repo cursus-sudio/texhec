@@ -72,7 +72,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 				gl.VertexAttribIPointerWithOffset(i, 1, gl.UNSIGNED_INT,
 					int32(unsafe.Sizeof(TileData{})), uintptr(unsafe.Offsetof(TileData{}.Type)))
 				gl.EnableVertexAttribArray(i)
-				i++
 			})
 			return vbo
 		}

@@ -15,11 +15,11 @@ type SparseArray[Index constraints.Integer, Value any] interface {
 
 type sparseArray[Index constraints.Integer, Value any] struct {
 	EmptyValue    Index
-	valuesIndices []Index // here some indices have special meaning (read constants above)
+	ValuesIndices []Index // here some indices have special meaning (read constants above)
 
 	// both arrays below indices correspond
-	values  []Value
-	indices []Index // here value means index in sparse array
+	Values  []Value
+	Indices []Index // here value means index in sparse array
 }
 
 func NewSparseArray[Index constraints.Integer, Value any]() SparseArray[Index, Value] {
@@ -30,66 +30,66 @@ func NewSparseArray[Index constraints.Integer, Value any]() SparseArray[Index, V
 }
 
 func (a *sparseArray[Index, Value]) Get(index Index) (Value, bool) {
-	if int(index) >= len(a.valuesIndices) {
+	if int(index) >= len(a.ValuesIndices) {
 		var zero Value
 		return zero, false
 	}
 
-	valueIndex := a.valuesIndices[index]
+	valueIndex := a.ValuesIndices[index]
 	if valueIndex == a.EmptyValue {
 		var zero Value
 		return zero, false
 	}
 
-	value := a.values[valueIndex]
+	value := a.Values[valueIndex]
 	return value, true
 }
 
-func (a *sparseArray[Index, Value]) GetValues() []Value  { return a.values }
-func (a *sparseArray[Index, Value]) GetIndices() []Index { return a.indices }
+func (a *sparseArray[Index, Value]) GetValues() []Value  { return a.Values }
+func (a *sparseArray[Index, Value]) GetIndices() []Index { return a.Indices }
 
 func (a *sparseArray[Index, Value]) Set(index Index, value Value) bool {
-	for int(index) >= len(a.valuesIndices) {
-		a.valuesIndices = append(a.valuesIndices, a.EmptyValue)
+	for int(index) >= len(a.ValuesIndices) {
+		a.ValuesIndices = append(a.ValuesIndices, a.EmptyValue)
 	}
 
-	valueIndex := a.valuesIndices[index]
+	valueIndex := a.ValuesIndices[index]
 
 	if valueIndex == a.EmptyValue {
-		a.valuesIndices[index] = Index(len(a.values))
-		a.values = append(a.values, value)
-		a.indices = append(a.indices, index)
+		a.ValuesIndices[index] = Index(len(a.Values))
+		a.Values = append(a.Values, value)
+		a.Indices = append(a.Indices, index)
 		return true
 	}
 
-	a.values[valueIndex] = value
-	a.indices[valueIndex] = index
+	a.Values[valueIndex] = value
+	a.Indices[valueIndex] = index
 	return false
 }
 
 func (a *sparseArray[Index, Value]) Remove(index Index) bool {
-	if int(index) >= len(a.valuesIndices) {
+	if int(index) >= len(a.ValuesIndices) {
 		return false
 	}
 
-	valueIndex := a.valuesIndices[index]
+	valueIndex := a.ValuesIndices[index]
 	if valueIndex == a.EmptyValue {
 		return false
 	}
 
-	a.valuesIndices[index] = a.EmptyValue
+	a.ValuesIndices[index] = a.EmptyValue
 
-	if len(a.values)-1 != int(valueIndex) {
-		movedValue := a.values[len(a.values)-1]
-		movedIndex := a.indices[len(a.indices)-1]
+	if len(a.Values)-1 != int(valueIndex) {
+		movedValue := a.Values[len(a.Values)-1]
+		movedIndex := a.Indices[len(a.Indices)-1]
 
-		a.values[valueIndex] = movedValue
-		a.indices[valueIndex] = movedIndex
+		a.Values[valueIndex] = movedValue
+		a.Indices[valueIndex] = movedIndex
 
-		a.valuesIndices[movedIndex] = valueIndex
+		a.ValuesIndices[movedIndex] = valueIndex
 	}
 
-	a.values = a.values[:len(a.values)-1]
-	a.indices = a.indices[:len(a.indices)-1]
+	a.Values = a.Values[:len(a.Values)-1]
+	a.Indices = a.Indices[:len(a.Indices)-1]
 	return true
 }

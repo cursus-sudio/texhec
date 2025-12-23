@@ -31,7 +31,7 @@ func NewFontBatch(
 
 	for _, index := range font.GlyphsWidth.GetIndices() {
 		width, _ := font.GlyphsWidth.Get(index)
-		glyphsWidth.Set(int(index), width)
+		_ = glyphsWidth.Set(int(index), width)
 	}
 	glyphsWidth.Flush()
 

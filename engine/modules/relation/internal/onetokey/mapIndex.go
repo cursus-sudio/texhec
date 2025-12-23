@@ -54,25 +54,21 @@ func (i mapRelation[IndexType]) Get(index IndexType) (ecs.EntityID, bool) {
 }
 
 func (i mapRelation[IndexType]) Upsert(ei []ecs.EntityID) {
-	added := make([]ecs.EntityID, 0, len(ei))
 	for _, entity := range ei {
 		indexType, ok := i.componentIndex(entity)
 		if !ok {
 			continue
 		}
-		added = append(added, entity)
 		i.indices[indexType] = entity
 	}
 }
 
 func (i mapRelation[IndexType]) Remove(ei []ecs.EntityID) {
-	removed := make([]ecs.EntityID, 0, len(ei))
 	for _, entity := range ei {
 		indexType, ok := i.componentIndex(entity)
 		if !ok {
 			continue
 		}
 		delete(i.indices, indexType)
-		removed = append(removed, entity)
 	}
 }

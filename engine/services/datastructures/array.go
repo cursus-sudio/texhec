@@ -10,42 +10,42 @@ type Array[Stored comparable] interface {
 }
 
 type array[Stored comparable] struct {
-	data []Stored
+	Data []Stored
 }
 
 func NewArray[Stored comparable]() Array[Stored] {
 	return &array[Stored]{}
 }
 
-func (s *array[Stored]) Get() []Stored { return s.data }
+func (s *array[Stored]) Get() []Stored { return s.Data }
 
 func (s *array[Stored]) Add(elements ...Stored) {
-	s.data = append(s.data, elements...)
+	s.Data = append(s.Data, elements...)
 }
 
 func (s *array[Stored]) Set(index int, e Stored) error {
-	if len(s.data) <= index {
+	if len(s.Data) <= index {
 		return ErrOutOfBounds
 	}
-	if s.data[index] == e {
+	if s.Data[index] == e {
 		return nil
 	}
-	s.data[index] = e
+	s.Data[index] = e
 
 	return nil
 }
 
 func (s *array[Stored]) Remove(indices ...int) error {
 	for _, index := range indices {
-		if index >= len(s.data) {
+		if index >= len(s.Data) {
 			return ErrOutOfBounds
 		}
 	}
 
 	sort.Slice(indices, func(i, j int) bool { return indices[i] > indices[j] })
 	for _, index := range indices {
-		s.data[index] = s.data[len(s.data)-1]
-		s.data = s.data[:len(s.data)-1]
+		s.Data[index] = s.Data[len(s.Data)-1]
+		s.Data = s.Data[:len(s.Data)-1]
 	}
 	return nil
 }

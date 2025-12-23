@@ -26,6 +26,6 @@ func NewErrorLogger(logger logger.Logger, t render.RenderTool) render.System {
 
 func (logger *errorLogger) Listen(args frames.FrameEvent) {
 	if glErr := gl.GetError(); glErr != gl.NO_ERROR {
-		logger.logger.Warn(fmt.Errorf("opengl error: %x %s\n", glErr, glErrorStrings[glErr]))
+		logger.logger.Warn(fmt.Errorf("opengl error: %x %s", glErr, glErrorStrings[glErr]))
 	}
 }

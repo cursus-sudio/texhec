@@ -67,8 +67,8 @@ func (r *globalsImpl) SaveGlobal(register Global) {
 		if ok {
 			cleanable := r.cleanables.Get()[index]
 			cleanable.Release()
-			r.cleanables.Remove(index)
-			r.cleanableTypes.Remove(index)
+			_ = r.cleanables.Remove(index)
+			_ = r.cleanableTypes.Remove(index)
 		}
 		r.cleanableTypes.Add(registerType)
 		r.cleanables.Add(cleanable)

@@ -52,7 +52,7 @@ func NewBuffer[Stored comparable](
 func (s *buffer[Stored]) ID() uint32 { return s.buffer }
 
 func (s *buffer[Stored]) CheckBufferSize() bool {
-	elementsCount := len(s.TrackingArray.Get())
+	elementsCount := len(s.Get())
 	if s.bufferLen != elementsCount {
 		s.bufferLen = elementsCount
 		return true
@@ -65,8 +65,8 @@ func (s *buffer[Stored]) Release() {
 }
 
 func (s *buffer[Stored]) Flush() {
-	changes := s.TrackingArray.Changes()
-	s.TrackingArray.ClearChanges()
+	changes := s.Changes()
+	s.ClearChanges()
 
 	if len(changes) == 0 {
 		return
@@ -75,7 +75,7 @@ func (s *buffer[Stored]) Flush() {
 	gl.BindBuffer(s.target, s.buffer)
 	defer gl.BindBuffer(s.target, 0)
 
-	arr := s.TrackingArray.Get()
+	arr := s.Get()
 	if resized := s.CheckBufferSize(); resized {
 		gl.BufferData(s.target, s.bufferLen*s.elementSize, gl.Ptr(arr), s.usage)
 		return
@@ -83,8 +83,8 @@ func (s *buffer[Stored]) Flush() {
 
 	sort.Slice(changes, func(i, j int) bool { return changes[i].Index > changes[j].Index })
 
-	var offset int = changes[0].Index
-	var size int = 1
+	var offset = changes[0].Index
+	var size = 1
 
 	for _, changed := range changes[1:] {
 		if changed.Index == offset+size {

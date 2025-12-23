@@ -74,7 +74,9 @@ func (pkg pkg) Register(b ioc.Builder) {
 		}
 		return ecs.NewSystemRegister(func(world tile.World) error {
 			for _, system := range systems {
-				system.Register(world)
+				if err := system.Register(world); err != nil {
+					return err
+				}
 			}
 			return nil
 		})

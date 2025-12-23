@@ -1,11 +1,10 @@
 package transformpkg
 
 import (
-	"engine/modules/animation"
 	"engine/modules/transform"
 	"engine/modules/transform/internal/transformtool"
+	transitionpkg "engine/modules/transition/pkg"
 	"engine/services/codec"
-	"engine/services/ecs"
 	"engine/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -42,6 +41,16 @@ func (pkg pkg) Register(b ioc.Builder) {
 			Register(transform.ParentComponent{})
 	})
 
+	for _, pkg := range []ioc.Pkg{
+		transitionpkg.PackageT[transform.PosComponent](),
+		transitionpkg.PackageT[transform.RotationComponent](),
+		transitionpkg.PackageT[transform.SizeComponent](),
+		transitionpkg.PackageT[transform.PivotPointComponent](),
+		transitionpkg.PackageT[transform.ParentPivotPointComponent](),
+	} {
+		pkg.Register(b)
+	}
+
 	ioc.RegisterSingleton(b, func(c ioc.Dic) transform.ToolFactory {
 		return transformtool.NewTransformTool(
 			ioc.Get[logger.Logger](c),
@@ -50,45 +59,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 			pkg.defaultPivot,
 			pkg.defaultParentPivot,
 		)
-	})
-
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b animation.AnimationSystemBuilder) animation.AnimationSystemBuilder {
-		animation.AddTransitionFunction(b, func(w ecs.World) animation.TransitionFunction[transform.PosComponent] {
-			componentArray := ecs.GetComponentsArray[transform.PosComponent](w)
-			return func(arg animation.TransitionFunctionArgument[transform.PosComponent]) {
-				comp := arg.From.Blend(arg.To, float32(arg.State))
-				componentArray.Set(arg.Entity, comp)
-			}
-		})
-		animation.AddTransitionFunction(b, func(w ecs.World) animation.TransitionFunction[transform.RotationComponent] {
-			componentArray := ecs.GetComponentsArray[transform.RotationComponent](w)
-			return func(arg animation.TransitionFunctionArgument[transform.RotationComponent]) {
-				comp := arg.From.Blend(arg.To, float32(arg.State))
-				componentArray.Set(arg.Entity, comp)
-			}
-		})
-		animation.AddTransitionFunction(b, func(w ecs.World) animation.TransitionFunction[transform.SizeComponent] {
-			componentArray := ecs.GetComponentsArray[transform.SizeComponent](w)
-			return func(arg animation.TransitionFunctionArgument[transform.SizeComponent]) {
-				comp := arg.From.Blend(arg.To, float32(arg.State))
-				componentArray.Set(arg.Entity, comp)
-			}
-		})
-		animation.AddTransitionFunction(b, func(w ecs.World) animation.TransitionFunction[transform.PivotPointComponent] {
-			componentArray := ecs.GetComponentsArray[transform.PivotPointComponent](w)
-			return func(arg animation.TransitionFunctionArgument[transform.PivotPointComponent]) {
-				comp := arg.From.Blend(arg.To, float32(arg.State))
-				componentArray.Set(arg.Entity, comp)
-			}
-		})
-		animation.AddTransitionFunction(b, func(w ecs.World) animation.TransitionFunction[transform.ParentPivotPointComponent] {
-			componentArray := ecs.GetComponentsArray[transform.ParentPivotPointComponent](w)
-			return func(arg animation.TransitionFunctionArgument[transform.ParentPivotPointComponent]) {
-				comp := arg.From.Blend(arg.To, float32(arg.State))
-				componentArray.Set(arg.Entity, comp)
-			}
-		})
-		return b
 	})
 
 }

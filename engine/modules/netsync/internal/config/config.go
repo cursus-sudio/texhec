@@ -2,6 +2,7 @@ package config
 
 import (
 	"engine/modules/netsync"
+	"engine/modules/record"
 	"engine/services/ecs"
 	"reflect"
 
@@ -18,8 +19,7 @@ type Config struct {
 	TransparentEvents         []reflect.Type
 	ListenToTransparentEvents []func(events.Builder, func(any))
 
-	Components         []reflect.Type
-	ArraysOfComponents []func(ecs.World) ecs.AnyComponentArray
+	RecordConfig record.Config
 
 	// client
 	MaxPredictions int

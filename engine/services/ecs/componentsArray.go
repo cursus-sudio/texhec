@@ -40,6 +40,7 @@ type ComponentsArray[Component any] interface {
 // impl
 
 type componentsArray[Component any] struct {
+	entities   entitiesInterface
 	equal      func(Component, Component) bool
 	empty      Component
 	components datastructures.SparseArray[EntityID, Component]
@@ -49,16 +50,20 @@ type componentsArray[Component any] struct {
 	beforeGets   []BeforeGet
 }
 
-func NewComponentsArray[Component any](entities datastructures.SparseSet[EntityID]) *componentsArray[Component] {
+func NewComponentsArray[Component any](entities entitiesInterface) *componentsArray[Component] {
 	equal := func(Component, Component) bool { return false }
 	if reflect.TypeFor[Component]().Comparable() {
 		equal = func(c1, c2 Component) bool { return any(c1) == any(c2) }
 	}
 	array := &componentsArray[Component]{
-		equal:      equal,
+		entities: entities,
+		equal:    equal,
+		// empty: default,
 		components: datastructures.NewSparseArray[EntityID, Component](),
 
-		dirtySets: datastructures.NewSet[DirtySet](),
+		dependencies: nil,
+		dirtySets:    datastructures.NewSet[DirtySet](),
+		beforeGets:   nil,
 	}
 	return array
 }
@@ -68,14 +73,15 @@ func (c *componentsArray[Component]) Set(entity EntityID, component Component) {
 	if ok && c.equal(value, component) {
 		return
 	}
-	entities := []EntityID{entity}
+	c.entities.EnsureExists(entity)
 	c.components.Set(entity, component)
-	for _, dirtyFlags := range c.dirtySets.Get() {
-		for _, entity := range entities {
-			dirtyFlags.Dirty(entity)
+	for _, dirtySet := range c.dirtySets.Get() {
+		if !dirtySet.Ok() {
+			c.dirtySets.RemoveElements(dirtySet)
+			continue
 		}
+		dirtySet.Dirty(entity)
 	}
-	return
 }
 
 func (c *componentsArray[Component]) SetAny(entity EntityID, anyComponent any) error {
@@ -97,9 +103,13 @@ func (c *componentsArray[Component]) Remove(entity EntityID) {
 		return
 	}
 	c.components.Remove(entity)
-	for _, dirtyFlag := range c.dirtySets.Get() {
+	for _, dirtySet := range c.dirtySets.Get() {
 		for _, entity := range entities {
-			dirtyFlag.Dirty(entity)
+			if !dirtySet.Ok() {
+				c.dirtySets.RemoveElements(dirtySet)
+				continue
+			}
+			dirtySet.Dirty(entity)
 		}
 	}
 }
@@ -123,9 +133,6 @@ func (c *componentsArray[Component]) GetEntities() []EntityID {
 }
 
 func (c *componentsArray[Component]) GetAny(entity EntityID) (any, bool) {
-	for _, beforeGet := range c.beforeGets {
-		beforeGet()
-	}
 	return c.Get(entity)
 }
 
@@ -134,11 +141,20 @@ func (c *componentsArray[Component]) GetAny(entity EntityID) (any, bool) {
 func (c *componentsArray[Component]) AddDependency(dependency AnyComponentArray) {
 	c.dependencies = append(c.dependencies, dependency)
 	for _, dirtySet := range c.dirtySets.Get() {
+		if !dirtySet.Ok() {
+			c.dirtySets.RemoveElements(dirtySet)
+			continue
+		}
 		dependency.AddDirtySet(dirtySet)
 	}
 }
 func (c *componentsArray[Component]) AddDirtySet(dirtySet DirtySet) {
+	if !dirtySet.Ok() {
+		c.dirtySets.RemoveElements(dirtySet)
+		return
+	}
 	if _, ok := c.dirtySets.GetIndex(dirtySet); ok {
+
 		return
 	}
 	for _, entity := range c.GetEntities() {

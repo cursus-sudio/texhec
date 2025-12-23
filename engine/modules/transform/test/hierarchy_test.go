@@ -9,8 +9,8 @@ import (
 
 func TestHierarchy(t *testing.T) {
 	setup := NewSetup(t)
-	parent := setup.World.NewEntity()
-	child := setup.World.NewEntity()
+	parent := setup.NewEntity()
+	child := setup.NewEntity()
 
 	setup.Hierarchy().SetParent(child, parent)
 	setup.Transform().Pos().Set(parent, transform.NewPos(5, 5, 5))

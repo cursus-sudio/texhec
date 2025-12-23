@@ -39,7 +39,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 		b.OnStop(func(r runtimeservice.Runtime) {
 			api := ioc.Get[Api](c)
 			sdl.GLDeleteContext(api.Ctx())
-			api.Window().Destroy()
+			_ = api.Window().Destroy()
 			sdl.Quit()
 		})
 		return b

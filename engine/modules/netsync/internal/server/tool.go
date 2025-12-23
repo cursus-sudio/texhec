@@ -5,7 +5,7 @@ import (
 	"engine/modules/netsync/internal/clienttypes"
 	"engine/modules/netsync/internal/config"
 	"engine/modules/netsync/internal/servertypes"
-	"engine/modules/netsync/internal/state"
+	"engine/modules/record"
 	"engine/modules/uuid"
 	"engine/services/datastructures"
 	"engine/services/ecs"
@@ -25,6 +25,7 @@ type clientMessage struct {
 
 type toolState struct {
 	recordedEventUUID *uuid.UUID
+	recordingID       record.UUIDRecordingID
 
 	mutex *sync.Mutex
 
@@ -35,8 +36,7 @@ type toolState struct {
 
 	netsync.World
 	netsync.NetSyncTool
-	stateTool state.Tool
-	logger    logger.Logger
+	logger logger.Logger
 }
 
 type Tool struct {
@@ -47,7 +47,6 @@ type Tool struct {
 func NewTool(
 	config config.Config,
 	netSyncToolFactory netsync.ToolFactory,
-	stateToolFactory ecs.ToolFactory[netsync.World, state.Tool],
 	logger logger.Logger,
 	world netsync.World,
 ) Tool {
@@ -55,6 +54,7 @@ func NewTool(
 		config,
 		&toolState{
 			nil,
+			0,
 
 			&sync.Mutex{},
 
@@ -65,7 +65,6 @@ func NewTool(
 
 			world,
 			netSyncToolFactory.Build(world),
-			stateToolFactory.Build(world),
 			logger,
 		},
 	}
@@ -112,14 +111,6 @@ func NewTool(
 	t.NetSync().Client().AddDirtySet(t.dirtySet)
 	t.Connection().Component().AddDirtySet(t.dirtySet)
 
-	// listen to entities changes
-
-	for _, arrayCtor := range config.ArraysOfComponents {
-		array := arrayCtor(world)
-		// before changes record
-		array.BeforeGet(t.stateTool.RecordEntitiesChange)
-	}
-
 	return t
 }
 
@@ -135,7 +126,7 @@ func (t Tool) BeforeEvent(event any) {
 		uuid := t.UUID().NewUUID()
 		t.recordedEventUUID = &uuid
 	}
-	t.stateTool.StartRecording()
+	t.recordingID = t.Record().UUID().StartRecording(t.RecordConfig)
 }
 
 func (t Tool) AfterEvent(event any) {
@@ -144,11 +135,10 @@ func (t Tool) AfterEvent(event any) {
 		return
 	}
 
-	if changes := t.stateTool.FinishRecording(); changes != nil && t.recordedEventUUID != nil {
-		t.emitChanges(*t.recordedEventUUID, *changes)
-	} else {
-		t.logger.Warn(ErrRecordingDidntStartProperly)
+	if recording, ok := t.Record().UUID().Stop(t.recordingID); ok && t.recordedEventUUID != nil {
+		t.emitChanges(*t.recordedEventUUID, recording)
 	}
+	t.recordingID = 0
 }
 
 func (t Tool) OnTransparentEvent(event any) {
@@ -166,7 +156,7 @@ func (t Tool) OnTransparentEvent(event any) {
 }
 
 func (t Tool) ListenFetchState(entity ecs.EntityID, dto clienttypes.FetchStateDTO) {
-	state := t.stateTool.GetState()
+	state := t.Record().UUID().GetState(t.RecordConfig)
 	t.sendVisible(entity, nil, state)
 }
 
@@ -175,9 +165,9 @@ func (t Tool) ListenEmitEvent(entity ecs.EntityID, dto clienttypes.EmitEventDTO)
 	if !ok {
 		return
 	}
-	event, err := t.Config.Auth(entity, dto.Event)
+	event, err := t.Auth(entity, dto.Event)
 	if err != nil {
-		conn.Conn().Send(servertypes.SendChangeDTO{Error: err})
+		err := conn.Conn().Send(servertypes.SendChangeDTO{Error: err})
 		t.logger.Warn(err)
 		return
 	}
@@ -190,9 +180,9 @@ func (t Tool) ListenTransparentEvent(entity ecs.EntityID, dto clienttypes.Transp
 	if !ok {
 		return
 	}
-	event, err := t.Config.Auth(entity, dto.Event)
+	event, err := t.Auth(entity, dto.Event)
 	if err != nil {
-		conn.Conn().Send(servertypes.TransparentEventDTO{Error: err})
+		err := conn.Conn().Send(servertypes.TransparentEventDTO{Error: err})
 		t.logger.Warn(err)
 		return
 	}
@@ -236,7 +226,7 @@ func (t Tool) loadConnections() {
 	}
 }
 
-func (t Tool) sendVisible(client ecs.EntityID, eventUUID *uuid.UUID, changes state.State) {
+func (t Tool) sendVisible(client ecs.EntityID, eventUUID *uuid.UUID, changes record.UUIDRecording) {
 	connComp, ok := t.Connection().Component().Get(client)
 	if !ok {
 		return
@@ -279,7 +269,7 @@ func (t Tool) sendVisible(client ecs.EntityID, eventUUID *uuid.UUID, changes sta
 	}()
 }
 
-func (t Tool) emitChanges(eventUUID uuid.UUID, changes state.State) {
+func (t Tool) emitChanges(eventUUID uuid.UUID, changes record.UUIDRecording) {
 	for _, client := range t.NetSync().Client().GetEntities() {
 		t.sendVisible(client, &eventUUID, changes)
 	}

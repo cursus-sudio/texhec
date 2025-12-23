@@ -9,7 +9,7 @@ import (
 
 func TestSize(t *testing.T) {
 	setup := NewSetup(t)
-	entity := setup.World.NewEntity()
+	entity := setup.NewEntity()
 
 	setup.Transform().Size().Set(entity, transform.NewSize(10, 10, 10))
 	setup.expectAbsoluteSize(entity, transform.NewSize(10, 10, 10))

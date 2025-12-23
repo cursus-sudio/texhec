@@ -6,8 +6,7 @@ import (
 	"engine/modules/netsync/internal/clienttypes"
 	"engine/modules/netsync/internal/config"
 	"engine/modules/netsync/internal/servertypes"
-	"engine/modules/netsync/internal/state"
-	"engine/modules/uuid"
+	"engine/modules/record"
 	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/frames"
@@ -22,7 +21,7 @@ import (
 
 type savedPrediction struct {
 	PredictedEvent clienttypes.PredictedEvent
-	Snapshot       state.State
+	Snapshot       record.UUIDRecording
 }
 
 type recordedPrediction struct {
@@ -35,6 +34,7 @@ type toolState struct {
 	recordedPrediction *recordedPrediction
 	sentTransparentEvent,
 	receivedTransparentEvent bool
+	recordingID record.UUIDRecordingID
 
 	mutex *sync.Mutex
 
@@ -45,8 +45,7 @@ type toolState struct {
 
 	netsync.World
 	netsync.NetSyncTool
-	stateTool state.Tool
-	logger    logger.Logger
+	logger logger.Logger
 }
 
 // can:
@@ -59,7 +58,6 @@ type Tool struct {
 
 func NewTool(
 	config config.Config,
-	stateToolFactory ecs.ToolFactory[netsync.World, state.Tool],
 	netSyncToolFactory netsync.ToolFactory,
 	logger logger.Logger,
 	world netsync.World,
@@ -72,6 +70,7 @@ func NewTool(
 			nil,
 			false,
 			false,
+			0,
 
 			&sync.Mutex{},
 
@@ -82,7 +81,6 @@ func NewTool(
 
 			world,
 			netSyncToolFactory.Build(world),
-			stateToolFactory.Build(world),
 			logger,
 		},
 	}
@@ -121,7 +119,7 @@ func NewTool(
 			listener, ok := listeners[messageType]
 			if !ok {
 				t.logger.Warn(fmt.Errorf("invalid listener of type '%v' called", messageType.String()))
-				conn.Close()
+				_ = conn.Close()
 				return
 			}
 			listener(message)
@@ -130,12 +128,6 @@ func NewTool(
 
 	t.NetSync().Server().AddDirtySet(t.dirtySet)
 	t.Connection().Component().AddDirtySet(t.dirtySet)
-
-	// listen to entities changes
-	for _, arrayCtor := range config.ArraysOfComponents {
-		array := arrayCtor(world)
-		array.BeforeGet(t.stateTool.RecordEntitiesChange)
-	}
 
 	return t
 }
@@ -149,6 +141,7 @@ func (t Tool) BeforeEventRecord(event any) {
 	if clientConn == nil {
 		return
 	}
+
 	if !t.recordNextEvent {
 		t.recordNextEvent = true
 		return
@@ -164,7 +157,7 @@ func (t Tool) BeforeEventRecord(event any) {
 		return
 	}
 
-	t.stateTool.StartRecording()
+	t.recordingID = t.Record().UUID().StartBackwardsRecording(t.RecordConfig)
 	t.recordedPrediction = &recordedPrediction{
 		PredictedEvent: clienttypes.PredictedEvent{
 			ID:    t.UUID().NewUUID(),
@@ -200,10 +193,14 @@ func (t Tool) AfterEvent(event any) {
 		return
 	}
 
-	changes := t.stateTool.FinishRecording()
+	recording, ok := t.Record().UUID().Stop(t.recordingID)
+	t.recordingID = 0
+	if !ok {
+		return
+	}
 	newPrediction := savedPrediction{
 		PredictedEvent: t.recordedPrediction.PredictedEvent,
-		Snapshot:       *changes,
+		Snapshot:       recording,
 	}
 	t.recordedPrediction = nil
 
@@ -221,7 +218,8 @@ func (t Tool) OnTransparentEvent(event any) {
 	}
 
 	t.sentTransparentEvent = true
-	conn.Send(clienttypes.TransparentEventDTO{Event: event})
+	err := conn.Send(clienttypes.TransparentEventDTO{Event: event})
+	t.logger.Warn(err)
 }
 
 func (t Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
@@ -245,7 +243,7 @@ func (t Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
 	// check is event predicted. if is then remove first event from queue
 	// if isn't then undo predictions, emit server event(as not recordable), emit all predicted events again
 	if len(t.predictions) == 0 {
-		t.stateTool.ApplyState(dto.Changes)
+		t.Record().UUID().Apply(t.RecordConfig, dto.Changes)
 		return
 	}
 	if t.predictions[0].PredictedEvent.ID == dto.EventID {
@@ -264,7 +262,7 @@ func (t Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
 		// }
 	}
 	predictedEvents := t.undoPredictions()
-	t.stateTool.ApplyState(dto.Changes)
+	t.Record().UUID().Apply(t.RecordConfig, dto.Changes)
 	// reApplied events are events without applied event
 	reEmitedEvents := make([]clienttypes.PredictedEvent, 0, len(predictedEvents))
 	for _, predictedEvent := range predictedEvents {
@@ -284,11 +282,11 @@ func (t Tool) ListenSendState(dto servertypes.SendStateDTO) {
 	if dto.Error != nil {
 		t.predictions = nil
 		t.logger.Warn(dto.Error)
-		conn.Close()
+		_ = conn.Close()
 		return
 	}
 	t.predictions = nil
-	t.stateTool.ApplyState(dto.State)
+	t.Record().UUID().Apply(t.RecordConfig, dto.State)
 }
 
 func (t Tool) ListenTransparentEvent(dto servertypes.TransparentEventDTO) {
@@ -352,16 +350,13 @@ func (t Tool) loadConnections() {
 func (t Tool) undoPredictions() []clienttypes.PredictedEvent {
 	// add events to the list
 	var unDoneEvents []clienttypes.PredictedEvent
+	snapshots := make([]record.UUIDRecording, len(t.predictions))
 	for _, prediction := range t.predictions {
 		unDoneEvents = append(unDoneEvents, prediction.PredictedEvent)
+		// snapshots = append([]record.UUIDRecording{prediction.Snapshot}, snapshots...)
+		snapshots = append(snapshots, prediction.Snapshot)
 	}
-	original := state.State{
-		Entities: make(map[uuid.UUID]state.EntitySnapshot),
-	}
-	for _, prediction := range t.predictions {
-		original.MergeC1OverC2(prediction.Snapshot)
-	}
-	t.stateTool.ApplyState(original)
+	t.Record().UUID().Apply(t.RecordConfig, snapshots...)
 	t.predictions = nil
 	return unDoneEvents
 }

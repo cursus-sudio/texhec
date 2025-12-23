@@ -19,6 +19,7 @@ type entitiesInterface interface {
 	EntityExists(EntityID) bool
 
 	NewEntity() EntityID
+	EnsureExists(EntityID)
 	RemoveEntity(EntityID)
 }
 
@@ -49,7 +50,7 @@ func (entitiesStorage *entitiesImpl) EntityExists(entity EntityID) bool {
 
 func (entitiesStorage *entitiesImpl) NewEntity() EntityID {
 	if id, ok := entitiesStorage.holes.GetStored(0); ok {
-		entitiesStorage.holes.Remove(0)
+		_ = entitiesStorage.holes.Remove(0)
 		entitiesStorage.entities.Add(id)
 		return id
 	}
@@ -58,6 +59,14 @@ func (entitiesStorage *entitiesImpl) NewEntity() EntityID {
 	id := EntityID(index)
 	entitiesStorage.entities.Add(id)
 	return id
+}
+
+func (entitiesStorage *entitiesImpl) EnsureExists(entity EntityID) {
+	if ok := entitiesStorage.entities.Get(entity); ok {
+		return
+	}
+	entitiesStorage.entities.Add(entity)
+	entitiesStorage.holes.RemoveElements(entity)
 }
 
 func (entitiesStorage *entitiesImpl) RemoveEntity(entity EntityID) {

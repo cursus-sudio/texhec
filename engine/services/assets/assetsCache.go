@@ -2,7 +2,6 @@ package assets
 
 import (
 	"engine/services/httperrors"
-	"reflect"
 	"sync"
 )
 
@@ -18,9 +17,8 @@ type AssetsCache interface {
 }
 
 type cachedAssets struct {
-	mutex   sync.Mutex
-	cachers map[reflect.Type]func(any) (CachedAsset, error)
-	assets  map[AssetID]CachedAsset
+	mutex  sync.Mutex
+	assets map[AssetID]CachedAsset
 }
 
 func NewCachedAssets() AssetsCache {
@@ -58,10 +56,7 @@ func (assets *cachedAssets) Delete(id AssetID) {
 	if !ok {
 		return
 	}
-	releasableAsset, ok := asset.(CachedAsset)
-	if ok {
-		releasableAsset.Release()
-	}
+	asset.Release()
 	delete(assets.assets, id)
 }
 

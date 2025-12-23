@@ -3,7 +3,6 @@ package mouse
 import (
 	"engine/modules/collider"
 	"engine/modules/inputs"
-	"engine/services/assets"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"engine/services/media/window"
@@ -28,7 +27,6 @@ type cameraRaySystem struct {
 	logger logger.Logger
 	window window.Api
 	events events.Events
-	assets assets.Assets
 
 	hoversOverEntity *ecs.EntityID
 }

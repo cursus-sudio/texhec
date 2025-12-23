@@ -2,7 +2,6 @@ package inputspkg
 
 import (
 	"engine/modules/inputs"
-	engineinputs "engine/modules/inputs"
 	"engine/modules/inputs/internal/mouse"
 	"engine/modules/inputs/internal/systems"
 	"engine/modules/inputs/internal/tool"
@@ -50,7 +49,7 @@ func (pkg) Register(b ioc.Builder) {
 		return tool.NewToolFactory()
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) engineinputs.System {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) inputs.System {
 		return ecs.NewSystemRegister(func(w inputs.World) error {
 			ecs.RegisterSystems(w,
 				systems.NewInputsSystem(ioc.Get[inputsapi.Api](c)),
@@ -59,7 +58,7 @@ func (pkg) Register(b ioc.Builder) {
 
 				ecs.NewSystemRegister(func(w ecs.World) error {
 					events.Listen(w.EventsBuilder(), func(sdl.QuitEvent) {
-						events.Emit(w.Events(), engineinputs.NewQuitEvent())
+						events.Emit(w.Events(), inputs.NewQuitEvent())
 					})
 					return nil
 				}),

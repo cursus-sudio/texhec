@@ -2,6 +2,7 @@ package netsync
 
 import (
 	"engine/modules/connection"
+	"engine/modules/record"
 	"engine/modules/uuid"
 	"engine/services/ecs"
 )
@@ -14,6 +15,7 @@ type World interface {
 	ecs.World
 	uuid.UUIDTool
 	connection.ConnectionTool
+	record.RecordTool
 }
 type Interface interface {
 	Server() ecs.ComponentsArray[ServerComponent]

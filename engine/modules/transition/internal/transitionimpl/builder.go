@@ -36,7 +36,9 @@ func (b *builder) Build() transition.System {
 	systems := b.systems
 	return ecs.NewSystemRegister(func(w transition.World) error {
 		for _, system := range systems {
-			system.Register(w)
+			if err := system.Register(w); err != nil {
+				return err
+			}
 		}
 		return nil
 	})

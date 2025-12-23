@@ -13,7 +13,7 @@ func BenchmarkEntityCodecEncode(b *testing.B) {
 	originalRecording := world.Record().Entity().GetState(world.Config)
 
 	for i := 0; i < b.N; i++ {
-		world.Codec.Encode(originalRecording)
+		_, _ = world.Codec.Encode(originalRecording)
 	}
 }
 func BenchmarkEntityCodecDecode(b *testing.B) {
@@ -31,7 +31,7 @@ func BenchmarkEntityCodecDecode(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		world.Codec.Decode(encodedRecording)
+		_, _ = world.Codec.Decode(encodedRecording)
 	}
 }
 func BenchmarkUUIDCodecEncode(b *testing.B) {
@@ -43,7 +43,7 @@ func BenchmarkUUIDCodecEncode(b *testing.B) {
 	originalRecording := world.Record().UUID().GetState(world.Config)
 
 	for i := 0; i < b.N; i++ {
-		world.Codec.Encode(originalRecording)
+		_, _ = world.Codec.Encode(originalRecording)
 	}
 }
 func BenchmarkUUIDCodecDecode(b *testing.B) {
@@ -61,6 +61,6 @@ func BenchmarkUUIDCodecDecode(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		world.Codec.Decode(encodedRecording)
+		_, _ = world.Codec.Decode(encodedRecording)
 	}
 }

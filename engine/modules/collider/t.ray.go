@@ -37,8 +37,6 @@ func (r *Ray) Apply(transform mgl32.Mat4) {
 	}
 	r.Direction = newDirection.Normalize()
 
-	newDirection = newDirection.Normalize()
-
 	var newMaxDistance float32
 	if r.MaxDistance == 0.0 {
 		newMaxDistance = 0.0

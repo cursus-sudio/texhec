@@ -96,7 +96,7 @@ func NewTool(
 			t.ListenTransparentEvent(a.(servertypes.TransparentEventDTO))
 		},
 	}
-	events.Listen(t.EventsBuilder(), func(frames.TickEvent) {
+	events.Listen(t.EventsBuilder(), func(frames.FrameEvent) {
 		t.loadConnections()
 		conn := t.getConnection()
 		if conn == nil {
@@ -119,7 +119,7 @@ func NewTool(
 			listener, ok := listeners[messageType]
 			if !ok {
 				t.logger.Warn(fmt.Errorf("invalid listener of type '%v' called", messageType.String()))
-				conn.Close()
+				_ = conn.Close()
 				return
 			}
 			listener(message)
@@ -141,6 +141,7 @@ func (t Tool) BeforeEventRecord(event any) {
 	if clientConn == nil {
 		return
 	}
+
 	if !t.recordNextEvent {
 		t.recordNextEvent = true
 		return
@@ -177,7 +178,6 @@ func (t Tool) BeforeEvent(event any) {
 	}
 
 	dto := clienttypes.EmitEventDTO(t.recordedPrediction.PredictedEvent)
-	// t.logger.Info("predicting event")
 	if err := clientConn.Send(dto); err != nil {
 		t.logger.Warn(err)
 	}
@@ -218,7 +218,8 @@ func (t Tool) OnTransparentEvent(event any) {
 	}
 
 	t.sentTransparentEvent = true
-	conn.Send(clienttypes.TransparentEventDTO{Event: event})
+	err := conn.Send(clienttypes.TransparentEventDTO{Event: event})
+	t.logger.Warn(err)
 }
 
 func (t Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
@@ -242,12 +243,10 @@ func (t Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
 	// check is event predicted. if is then remove first event from queue
 	// if isn't then undo predictions, emit server event(as not recordable), emit all predicted events again
 	if len(t.predictions) == 0 {
-		// t.logger.Info("received completely unpredicted change")
 		t.Record().UUID().Apply(t.RecordConfig, dto.Changes)
 		return
 	}
 	if t.predictions[0].PredictedEvent.ID == dto.EventID {
-		// t.logger.Info("received predicted change")
 		t.predictions = t.predictions[1:]
 		return
 		// TODO later. add test is prediction correct
@@ -262,7 +261,6 @@ func (t Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
 		// 	t.predictions = t.predictions[1:]
 		// }
 	}
-	// t.logger.Info("received change")
 	predictedEvents := t.undoPredictions()
 	t.Record().UUID().Apply(t.RecordConfig, dto.Changes)
 	// reApplied events are events without applied event
@@ -284,7 +282,7 @@ func (t Tool) ListenSendState(dto servertypes.SendStateDTO) {
 	if dto.Error != nil {
 		t.predictions = nil
 		t.logger.Warn(dto.Error)
-		conn.Close()
+		_ = conn.Close()
 		return
 	}
 	t.predictions = nil

@@ -171,9 +171,9 @@ func (pkg) Register(b ioc.Builder) {
 						window := ioc.Get[window.Api](c)
 						flags := window.Window().GetFlags()
 						if flags&sdl.WINDOW_FULLSCREEN_DESKTOP == sdl.WINDOW_FULLSCREEN_DESKTOP {
-							window.Window().SetFullscreen(0)
+							_ = window.Window().SetFullscreen(0)
 						} else {
-							window.Window().SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
+							_ = window.Window().SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
 						}
 					}
 				})

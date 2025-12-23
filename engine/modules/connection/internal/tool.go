@@ -72,7 +72,7 @@ func (t tool) BeforeGet() {
 			continue
 		}
 		t.connections.RemoveElements(connection)
-		connection.Close()
+		_ = connection.Close()
 	}
 }
 
@@ -88,8 +88,6 @@ func (t tool) Host(addr string, onConn func(connection.ConnectionComponent)) err
 		return err
 	}
 	go func() {
-		defer listener.Close()
-
 		for {
 			rawConn, err := listener.Accept()
 			if err != nil {
@@ -100,6 +98,7 @@ func (t tool) Host(addr string, onConn func(connection.ConnectionComponent)) err
 			connComp := connection.NewConnection(conn)
 			onConn(connComp)
 		}
+		_ = listener.Close()
 	}()
 	return nil
 }

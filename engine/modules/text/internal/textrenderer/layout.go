@@ -129,7 +129,7 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	maxHeight := size.Size.Y() / float32(fontSize.FontSize)
 
 	// generate lines
-	var nextLetterIndex int = 0
+	var nextLetterIndex = 0
 	for nextLetterIndex < len(textComponent.Text) {
 		letter, letterSize := utf8.DecodeRuneInString(textComponent.Text[nextLetterIndex:])
 		letterIndex := nextLetterIndex
@@ -155,7 +155,7 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 			width:   letterLine.width + letterWidth,
 		}
 
-		var shouldBreak bool = updatedLine.width > maxWidth
+		var shouldBreak = updatedLine.width > maxWidth
 
 		var canBreak bool
 		switch breakComponent.Break {
@@ -172,8 +172,8 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 			continue
 		}
 
-		var defaultLastLineLetterIndex int = len(updatedLine.letters) - 1
-		var lastLineLetterIndex int = defaultLastLineLetterIndex
+		var defaultLastLineLetterIndex = len(updatedLine.letters) - 1
+		var lastLineLetterIndex = defaultLastLineLetterIndex
 		switch breakComponent.Break {
 		case text.BreakAny:
 		case text.BreakNone:
@@ -210,7 +210,7 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 		}
 	}
 
-	var heightOffset float32 = 0
+	var heightOffset float32
 	{
 		linesCount := float32(len(lines))
 		height := linesCount * float32(lineHeight)

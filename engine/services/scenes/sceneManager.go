@@ -113,7 +113,7 @@ func (sceneManager *sceneManager) CurrentScene() SceneId {
 
 func (sceneManager *sceneManager) CurrentSceneWorld() ecs.World {
 	if !sceneManager.loadedCurrentScene {
-		sceneManager.LoadScene(sceneManager.currentSceneId)
+		_ = sceneManager.LoadScene(sceneManager.currentSceneId)
 	}
 	return sceneManager.activeWorld
 }

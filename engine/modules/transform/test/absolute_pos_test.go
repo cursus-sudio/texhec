@@ -9,7 +9,7 @@ import (
 
 func TestAbsolutePos(t *testing.T) {
 	setup := NewSetup(t)
-	entity := setup.World.NewEntity()
+	entity := setup.NewEntity()
 
 	setup.Transform().Pos().Set(entity, transform.NewPos(10, 10, 10))
 	setup.expectAbsolutePos(entity, transform.NewPos(10, 10, 10))

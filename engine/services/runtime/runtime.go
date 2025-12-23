@@ -34,10 +34,10 @@ func NewRuntime(
 func (r *runtime) Run() {
 	r.onStart(r)
 	r.mutex.RLock()
-	r.mutex.RUnlock()
 }
 
 func (r *runtime) Stop() {
+	// panic("went")
 	r.stopMutex.Lock()
 	if r.stopped {
 		return

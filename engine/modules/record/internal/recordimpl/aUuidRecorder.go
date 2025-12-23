@@ -113,7 +113,7 @@ func (t *uuidKeyedRecorder) Stop(id record.UUIDRecordingID) (record.UUIDRecordin
 }
 func (t *uuidKeyedRecorder) Apply(config record.Config, recordings ...record.UUIDRecording) {
 	for arrayType, arrayCtor := range config.RecordedComponents {
-		t.tool.GetArrayAndEnsureExists(arrayType, arrayCtor)
+		t.GetArrayAndEnsureExists(arrayType, arrayCtor)
 	}
 	errs := []error{}
 	for _, recording := range recordings {
@@ -178,7 +178,8 @@ func (t *uuidKeyedRecorder) applyArray(
 			array.Remove(entity)
 			continue
 		}
-		array.SetAny(entity, component)
+		err := array.SetAny(entity, component)
+		t.logger.Warn(err)
 	}
 	return errs
 }
@@ -205,7 +206,7 @@ func (t *uuidKeyedRecorder) getRecordingAndID(config record.Config) (record.UUID
 	}
 
 	for arrayType, arrayCtor := range config.RecordedComponents {
-		t.tool.GetArrayAndEnsureExists(arrayType, arrayCtor)
+		t.GetArrayAndEnsureExists(arrayType, arrayCtor)
 		recording.Arrays[arrayType.String()] = record.ArrayRecording(datastructures.NewSparseArray[ecs.EntityID, any]())
 	}
 	return id, recording

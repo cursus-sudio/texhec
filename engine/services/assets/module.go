@@ -33,7 +33,9 @@ func (a *assetModule) InitializeProperties(pointer any) error {
 		fieldValue := structValue.Field(i)
 
 		if fieldType.Type.Kind() == reflect.Struct {
-			a.InitializeProperties(fieldValue.Addr().Interface())
+			if err := a.InitializeProperties(fieldValue.Addr().Interface()); err != nil {
+				return err
+			}
 			continue
 		}
 

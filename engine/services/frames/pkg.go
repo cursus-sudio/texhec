@@ -2,6 +2,7 @@ package frames
 
 import (
 	"engine/services/clock"
+	"engine/services/logger"
 	runtimeservice "engine/services/runtime"
 
 	"github.com/ogiusek/events"
@@ -33,10 +34,11 @@ func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterDependency[Frames, Builder](b)
 
 	ioc.WrapService(b, runtimeservice.OrderStop, func(c ioc.Dic, r runtimeservice.Builder) runtimeservice.Builder {
-		r.OnStartOnMainThread(func(r runtimeservice.Runtime) {
-			ioc.Get[Frames](c).Run()
+		err := r.OnStartOnMainThread(func(r runtimeservice.Runtime) {
+			_ = ioc.Get[Frames](c).Run()
 			go r.Stop()
 		})
+		ioc.Get[logger.Logger](c).Warn(err)
 		r.OnStop(func(r runtimeservice.Runtime) {
 			ioc.Get[Frames](c).Stop()
 		})

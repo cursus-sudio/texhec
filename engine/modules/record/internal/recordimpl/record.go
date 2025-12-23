@@ -91,7 +91,8 @@ func (t tool) GetArrayAndEnsureExists(arrayType reflect.Type, arrayCtor func(ecs
 		if !ok {
 			continue
 		}
-		worldCopyArray.SetAny(entity, component)
+		err := worldCopyArray.SetAny(entity, component)
+		t.logger.Warn(err)
 	}
 }
 
@@ -115,12 +116,13 @@ func (t tool) synchronizeArrayState(
 		return
 	}
 
-	t.applyChangesInEntityRecording(arrayType, worldCopyArray, entities, t.entityKeyedRecorder.recordings, true)
-	t.applyChangesInUUIDRecording(arrayType, worldCopyArray, entities, t.uuidKeyedRecorder.uuidRecordings, true)
+	t.applyChangesInEntityRecording(arrayType, worldCopyArray, entities, t.recordings, true)
+	t.applyChangesInUUIDRecording(arrayType, worldCopyArray, entities, t.uuidRecordings, true)
 
 	for _, entity := range entities {
 		if component, ok := worldArray.GetAny(entity); ok {
-			worldCopyArray.SetAny(entity, component)
+			err := worldCopyArray.SetAny(entity, component)
+			t.logger.Warn(err)
 			continue
 		}
 		if t.world.EntityExists(entity) {
@@ -130,8 +132,8 @@ func (t tool) synchronizeArrayState(
 		t.worldCopy.RemoveEntity(entity)
 	}
 
-	t.applyChangesInEntityRecording(arrayType, worldCopyArray, entities, t.entityKeyedRecorder.backwardsRecordings, false)
-	t.applyChangesInUUIDRecording(arrayType, worldCopyArray, entities, t.uuidKeyedRecorder.backwardsUUIDRecordings, false)
+	t.applyChangesInEntityRecording(arrayType, worldCopyArray, entities, t.backwardsRecordings, false)
+	t.applyChangesInUUIDRecording(arrayType, worldCopyArray, entities, t.backwardsUUIDRecordings, false)
 }
 
 func (t tool) applyChangesInEntityRecording(

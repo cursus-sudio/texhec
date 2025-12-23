@@ -55,11 +55,8 @@ func (a *sparseSet[Index]) Get(index Index) bool {
 	}
 
 	valueIndex := a.ValuesIndices[index]
-	if valueIndex == a.EmptyValue {
-		return false
-	}
 
-	return true
+	return valueIndex != a.EmptyValue
 }
 
 func (a *sparseSet[Index]) GetIndices() []Index { return a.Indices }

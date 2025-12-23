@@ -21,7 +21,6 @@ func NewFactory(codec codec.Codec, logger logger.Logger) *factory {
 func (f *factory) NewConnection(rawConn net.Conn) connection.Conn {
 	messages := make(chan any)
 	go func() {
-		defer rawConn.Close()
 		defer close(messages)
 
 		for {
@@ -44,6 +43,8 @@ func (f *factory) NewConnection(rawConn net.Conn) connection.Conn {
 
 			messages <- message
 		}
+
+		_ = rawConn.Close()
 	}()
 	return conn{
 		factory:  f,

@@ -53,10 +53,7 @@ import (
 	"engine/services/media"
 	"engine/services/runtime"
 	"engine/services/scenes"
-	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -70,14 +67,14 @@ import (
 
 func getDic() ioc.Dic {
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
-		panic(fmt.Errorf("Failed to initialize SDL: %s", err))
+		panic(fmt.Errorf("failed to initialize SDL: %s", err))
 	}
 
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 4 /* 3 */)
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 1 /* 3 */)
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
-	sdl.GLSetAttribute(sdl.GL_DOUBLEBUFFER, 1) // Essential for GLSwap
-	sdl.GLSetAttribute(sdl.GL_DEPTH_SIZE, 24)  // Good practice for depth testing
+	_ = sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 4 /* 3 */)
+	_ = sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 1 /* 3 */)
+	_ = sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
+	_ = sdl.GLSetAttribute(sdl.GL_DOUBLEBUFFER, 1) // Essential for GLSwap
+	_ = sdl.GLSetAttribute(sdl.GL_DEPTH_SIZE, 24)  // Good practice for depth testing
 
 	// audio
 	if err := mix.OpenAudio(48000, sdl.AUDIO_F32SYS, 2, 1024); err != nil {
@@ -92,12 +89,12 @@ func getDic() ioc.Dic {
 		sdl.WINDOW_SHOWN|sdl.WINDOW_OPENGL,
 	)
 	if err != nil {
-		panic(fmt.Errorf("Failed to create window: %s", err))
+		panic(fmt.Errorf("failed to create window: %s", err))
 	}
 
 	ctx, err := window.GLCreateContext()
 	if err != nil {
-		panic(fmt.Errorf("Failed to create gl context: %s", err))
+		panic(fmt.Errorf("failed to create gl context: %s", err))
 	}
 	if err := gl.Init(); err != nil {
 		panic(fmt.Errorf("could not initialize OpenGL: %v", err))
@@ -105,7 +102,7 @@ func getDic() ioc.Dic {
 	if err := window.GLMakeCurrent(ctx); err != nil {
 		panic(fmt.Errorf("could not make OpenGL context current: %v", err))
 	}
-	sdl.GLSetSwapInterval(0)
+	_ = sdl.GLSetSwapInterval(0)
 
 	// render settings
 	gl.Enable(gl.CULL_FACE)
@@ -119,13 +116,6 @@ func getDic() ioc.Dic {
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	// path
-
-	engineDir, err := os.Getwd()
-	if err != nil {
-		panic(errors.Join(errors.New("current wordking direcotry"), err))
-	}
-	// parent of both /backend and /frontend directory
-	engineDir = filepath.Dir(engineDir)
 
 	pkgs := []ioc.Pkg{
 		clock.Package(time.RFC3339Nano),

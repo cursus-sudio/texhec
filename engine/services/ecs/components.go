@@ -102,7 +102,7 @@ func GetComponentsArray[Component any](world World) ComponentsArray[Component] {
 	array := NewComponentsArray[Component](world)
 	components.arrays[componentType] = array
 	//
-	listeners, _ := components.onArrayAddListeners[componentType]
+	listeners := components.onArrayAddListeners[componentType]
 	for _, listener := range listeners {
 		listener(array)
 	}

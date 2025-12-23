@@ -76,7 +76,6 @@ func (s *updateProjetionsSystem) UpsertOrtho() {
 		if err != nil {
 			continue
 		}
-		s.Camera().GetObject(entity)
 		resizeOrtho, ok := s.Camera().Ortho().Get(entity)
 		if !ok {
 			continue

@@ -81,7 +81,7 @@ func NewTool(
 			t.ListenTransparentEvent(entity, a.(clienttypes.TransparentEventDTO))
 		},
 	}
-	events.Listen(t.EventsBuilder(), func(frames.TickEvent) {
+	events.Listen(t.EventsBuilder(), func(frames.FrameEvent) {
 		t.loadConnections()
 		for len(t.toRemove) != 0 {
 			entity := t.toRemove[0]
@@ -165,9 +165,9 @@ func (t Tool) ListenEmitEvent(entity ecs.EntityID, dto clienttypes.EmitEventDTO)
 	if !ok {
 		return
 	}
-	event, err := t.Config.Auth(entity, dto.Event)
+	event, err := t.Auth(entity, dto.Event)
 	if err != nil {
-		conn.Conn().Send(servertypes.SendChangeDTO{Error: err})
+		err := conn.Conn().Send(servertypes.SendChangeDTO{Error: err})
 		t.logger.Warn(err)
 		return
 	}
@@ -180,9 +180,9 @@ func (t Tool) ListenTransparentEvent(entity ecs.EntityID, dto clienttypes.Transp
 	if !ok {
 		return
 	}
-	event, err := t.Config.Auth(entity, dto.Event)
+	event, err := t.Auth(entity, dto.Event)
 	if err != nil {
-		conn.Conn().Send(servertypes.TransparentEventDTO{Error: err})
+		err := conn.Conn().Send(servertypes.TransparentEventDTO{Error: err})
 		t.logger.Warn(err)
 		return
 	}

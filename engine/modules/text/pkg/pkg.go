@@ -121,7 +121,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 				gl.VertexAttribIPointerWithOffset(i, 1, gl.INT,
 					int32(unsafe.Sizeof(textrenderer.Glyph{})), uintptr(unsafe.Offsetof(textrenderer.Glyph{}.Glyph)))
 				gl.EnableVertexAttribArray(i)
-				i++
 			})
 			return vbo
 		}

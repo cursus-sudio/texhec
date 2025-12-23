@@ -7,11 +7,11 @@ import (
 
 func TestParentPivot(t *testing.T) {
 	setup := NewSetup(t)
-	parent := setup.World.NewEntity()
+	parent := setup.NewEntity()
 	setup.Transform().Pos().Set(parent, transform.NewPos(10, 10, 10))
 	setup.Transform().Size().Set(parent, transform.NewSize(10, 10, 10))
 
-	entity := setup.World.NewEntity()
+	entity := setup.NewEntity()
 
 	setup.Hierarchy().SetParent(entity, parent)
 	setup.Transform().Parent().Set(entity, transform.NewParent(transform.RelativePos))

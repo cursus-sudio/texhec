@@ -30,6 +30,16 @@ func BenchmarkSetInEntityRecording(b *testing.B) {
 	world.Record().Entity().Stop(recordingID)
 }
 
+func BenchmarkCreateNEntities(b *testing.B) {
+	world := NewSetup()
+
+	entity := world.NewEntity()
+	world.ComponentArray.Set(entity, Component{Counter: 6})
+
+	for i := 0; i < b.N; i++ {
+		world.ComponentArray.Set(ecs.EntityID(i), Component{Counter: i})
+	}
+}
 func BenchmarkCreateNEntitiesEntityRecording(b *testing.B) {
 	world := NewSetup()
 

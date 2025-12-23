@@ -50,7 +50,7 @@ func (entitiesStorage *entitiesImpl) EntityExists(entity EntityID) bool {
 
 func (entitiesStorage *entitiesImpl) NewEntity() EntityID {
 	if id, ok := entitiesStorage.holes.GetStored(0); ok {
-		entitiesStorage.holes.Remove(0)
+		_ = entitiesStorage.holes.Remove(0)
 		entitiesStorage.entities.Add(id)
 		return id
 	}

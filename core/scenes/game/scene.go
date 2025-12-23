@@ -131,13 +131,14 @@ func addScene(
 	}
 
 	if isServer {
-		world.Connection().Host(":8080", func(cc connection.ConnectionComponent) {
+		err := world.Connection().Host(":8000", func(cc connection.ConnectionComponent) {
 			entity := world.NewEntity()
 			world.NetSync().Client().Set(entity, netsync.ClientComponent{})
 			world.Connection().Component().Set(entity, cc)
 		})
+		logger.Warn(err)
 	} else {
-		comp, err := world.Connection().Connect(":8080")
+		comp, err := world.Connection().Connect(":8000")
 		if err != nil {
 			logger.Warn(errors.New("there is no server"))
 		}

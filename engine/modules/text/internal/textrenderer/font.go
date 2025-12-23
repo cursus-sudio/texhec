@@ -116,7 +116,7 @@ func (s *fontService) AssetFont(assetID assets.AssetID) (Font, error) {
 }
 
 func (s *fontService) getLetterImage(drawer font.Drawer, letter rune) *image.RGBA {
-	var text string = string(letter)
+	var text = string(letter)
 	textBounds, _ := drawer.BoundString(text)
 
 	rect := image.Rect(0, 0, s.cellSize, s.cellSize)

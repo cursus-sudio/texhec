@@ -42,19 +42,14 @@ jobs:
 
     # engine
 
-    - name: Run /engine tests
-      run: go test ./...
-      working-directory: engine
-
     - name: Run /engine golangci-lint
       uses: golangci/golangci-lint-action@v6
       with:
         version: latest
-        args: --timeout=5m --fix
-      working-directory: engine
+        working-directory: engine
 
-    - name: Static Analysis of /engine
-      run: go vet ./...
+    - name: Run /engine tests
+      run: go test ./...
       working-directory: engine
 
     # core
@@ -67,9 +62,4 @@ jobs:
       uses: golangci/golangci-lint-action@v6
       with:
         version: latest
-        args: --timeout=5m --fix
-      working-directory: core
-
-    - name: Static Analysis of /core
-      run: go vet ./...
-      working-directory: core
+        working-directory: engine

@@ -22,6 +22,7 @@ jobs:
         sudo apt-get install -y libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libsdl2-net-dev
         # OpenGL
         sudo apt-get install -y mesa-utils libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
+# golangci-lint run --fix
 
     - name: Set up Go
       uses: actions/setup-go@v5
@@ -39,17 +40,34 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-deps-
 
+    # engine
 
     - name: Run /engine tests
       run: go test ./...
+      working-directory: engine
+
+    - name: Run /engine golangci-lint
+      uses: golangci/golangci-lint-action@v6
+      with:
+        version: latest
+        args: --timeout=5m --fix
       working-directory: engine
 
     - name: Static Analysis of /engine
       run: go vet ./...
       working-directory: engine
 
+    # core
+
     - name: Run /core tests
       run: go test ./...
+      working-directory: core
+
+    - name: Run /core golangci-lint
+      uses: golangci/golangci-lint-action@v6
+      with:
+        version: latest
+        args: --timeout=5m --fix
       working-directory: core
 
     - name: Static Analysis of /core

@@ -23,17 +23,24 @@ type Interface interface {
 //
 
 type Config struct {
+	ComponentsOrder    *[]reflect.Type
 	RecordedComponents map[reflect.Type]func(ecs.World) ecs.AnyComponentArray
 }
 
 func NewConfig() Config {
+	componentsOrder := make([]reflect.Type, 0)
 	return Config{
+		ComponentsOrder:    &componentsOrder,
 		RecordedComponents: make(map[reflect.Type]func(ecs.World) ecs.AnyComponentArray),
 	}
 }
 
 func AddToConfig[Component any](config Config) {
 	componentType := reflect.TypeFor[Component]()
+	if _, ok := config.RecordedComponents[componentType]; ok {
+		return
+	}
+	*config.ComponentsOrder = append(*config.ComponentsOrder, componentType)
 	config.RecordedComponents[componentType] = func(w ecs.World) ecs.AnyComponentArray {
 		return ecs.GetComponentsArray[Component](w)
 	}
@@ -59,14 +66,10 @@ type EntityKeyedRecorder interface {
 
 type RecordingID uint16
 type Recording struct {
-	RemovedEntities datastructures.SparseSet[ecs.EntityID]
-	Arrays          map[string] /*array type*/ ArrayRecording
+	// [componentArrayLayoutID]component
+	// nil for removed entity
+	Entities datastructures.SparseArray[ecs.EntityID, []any]
 }
-
-// nil for component means that component is removed
-type ArrayRecording datastructures.SparseArray[ecs.EntityID, any]
-
-//
 
 type UUIDKeyedRecorder interface {
 	// gets state as finished recording
@@ -86,7 +89,7 @@ type UUIDKeyedRecorder interface {
 
 type UUIDRecordingID uint16
 type UUIDRecording struct {
-	UUIDEntities map[uuid.UUID]ecs.EntityID
-
-	Recording
+	// map[componentUUID][componentArrayLayoutID]component
+	// map[componentUUID]nil is when entity is removed
+	Entities map[uuid.UUID][]any
 }

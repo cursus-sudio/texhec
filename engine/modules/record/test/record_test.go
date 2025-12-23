@@ -1,7 +1,6 @@
 package test
 
 import (
-	"reflect"
 	"testing"
 )
 
@@ -26,17 +25,14 @@ func TestEntityForwardRecording(t *testing.T) {
 		return
 	}
 
-	array, ok := recording.Arrays[reflect.TypeFor[Component]().String()]
-	if !ok {
-		t.Error("expected recording to have changes")
+	if len(recording.Entities.GetIndices()) != 1 || recording.Entities.GetIndices()[0] != entity {
+		t.Errorf("expected array entities to be only entity [%v] not %v", entity, recording.Entities.GetIndices())
 		return
 	}
-	if len(array.GetIndices()) != 1 || array.GetIndices()[0] != entity {
-		t.Errorf("expected array entities to be only entity [%v] not %v", entity, array.GetIndices())
-		return
-	}
-	if len(array.GetValues()) != 1 || array.GetValues()[0] != finalState {
-		t.Errorf("expected array components to be only component [%v] not %v", finalState, array.GetValues())
+	if len(recording.Entities.GetValues()) != 1 ||
+		len(recording.Entities.GetValues()[0]) != 1 ||
+		recording.Entities.GetValues()[0][0] != finalState {
+		t.Errorf("expected array components to be only component [%v] not %v", finalState, recording.Entities.GetValues())
 		return
 	}
 }
@@ -62,17 +58,14 @@ func TestEntityBackwardsRecording(t *testing.T) {
 		return
 	}
 
-	array, ok := recording.Arrays[reflect.TypeFor[Component]().String()]
-	if !ok {
-		t.Error("expected recording to have changes")
+	if len(recording.Entities.GetIndices()) != 1 || recording.Entities.GetIndices()[0] != entity {
+		t.Errorf("expected array entities to be only entity [%v] not %v", entity, recording.Entities.GetIndices())
 		return
 	}
-	if len(array.GetIndices()) != 1 || array.GetIndices()[0] != entity {
-		t.Errorf("expected array entities to be only entity [%v] not %v", entity, array.GetIndices())
-		return
-	}
-	if len(array.GetValues()) != 1 || array.GetValues()[0] != initialState {
-		t.Errorf("expected array components to be only component [%v] not %v", initialState, array.GetValues())
+	if len(recording.Entities.GetValues()) != 1 ||
+		len(recording.Entities.GetValues()[0]) != 1 ||
+		recording.Entities.GetValues()[0][0] != initialState {
+		t.Errorf("expected array components to be only component [%v] not %v", initialState, recording.Entities.GetValues())
 		return
 	}
 
@@ -97,21 +90,18 @@ func TestEntityGetState(t *testing.T) {
 
 	recording := world.Record().Entity().GetState(world.Config)
 
-	array, ok := recording.Arrays[reflect.TypeFor[Component]().String()]
-	if !ok {
-		t.Error("expected recording to have changes")
+	if len(recording.Entities.GetIndices()) != 1 || recording.Entities.GetIndices()[0] != entity {
+		t.Errorf("expected array entities to be only entity [%v] not %v", entity, recording.Entities.GetIndices())
 		return
 	}
-	if len(array.GetIndices()) != 1 || array.GetIndices()[0] != entity {
-		t.Errorf("expected array entities to be only entity [%v] not %v", entity, array.GetIndices())
-		return
-	}
-	if len(array.GetValues()) != 1 || array.GetValues()[0] != initialState {
-		t.Errorf("expected array components to be only component [%v] not %v", initialState, array.GetValues())
+	if len(recording.Entities.GetValues()) != 1 ||
+		len(recording.Entities.GetValues()[0]) != 1 ||
+		recording.Entities.GetValues()[0][0] != initialState {
+		t.Errorf("expected array components to be only component [%v] not %v", initialState, recording.Entities.GetValues())
 		return
 	}
 
-	array.Remove(entity)
+	world.ComponentArray.Remove(entity)
 	world.Record().Entity().Apply(world.Config, recording)
 	if ei := world.ComponentArray.GetEntities(); len(ei) != 1 {
 		t.Errorf("unexpected entities on apply. expected one entity got %v", ei)

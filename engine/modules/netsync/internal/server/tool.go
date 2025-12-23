@@ -239,7 +239,7 @@ func (t Tool) sendVisible(client ecs.EntityID, eventUUID *uuid.UUID, changes rec
 	// 	delete(changes.Entities, uuid)
 	// }
 
-	if len(sentChanges.UUIDEntities) == 0 {
+	if len(sentChanges.Entities) == 0 {
 		return
 	}
 

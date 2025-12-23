@@ -2,9 +2,8 @@ package test
 
 import (
 	"engine/modules/uuid"
-	"engine/services/ecs"
 	"maps"
-	"reflect"
+	"slices"
 	"testing"
 )
 
@@ -31,22 +30,13 @@ func TestUUIDForwardRecording(t *testing.T) {
 		return
 	}
 
-	if expected := map[uuid.UUID]ecs.EntityID{uuidComponent.ID: entity}; !maps.Equal(recording.UUIDEntities, expected) {
-		t.Errorf("expected [%v] got [%v]", expected, recording.UUIDEntities)
-		return
+	expected := map[uuid.UUID][]any{
+		uuidComponent.ID: {finalState},
 	}
-
-	array, ok := recording.Arrays[reflect.TypeFor[Component]().String()]
-	if !ok {
-		t.Error("expected recording to have changes")
-		return
-	}
-	if len(array.GetIndices()) != 1 || array.GetIndices()[0] != entity {
-		t.Errorf("expected array entities to be only entity [%v] not %v", entity, array.GetIndices())
-		return
-	}
-	if len(array.GetValues()) != 1 || array.GetValues()[0] != finalState {
-		t.Errorf("expected array components to be only component [%v] not %v", finalState, array.GetValues())
+	if !maps.EqualFunc(expected, recording.Entities, func(v1, v2 []any) bool {
+		return slices.Equal(v1, v2)
+	}) {
+		t.Errorf("expected recording %v but got %v", expected, recording.Entities)
 		return
 	}
 }
@@ -74,22 +64,13 @@ func TestUUIDBackwardsRecording(t *testing.T) {
 		return
 	}
 
-	if expected := map[uuid.UUID]ecs.EntityID{uuidComponent.ID: entity}; !maps.Equal(recording.UUIDEntities, expected) {
-		t.Errorf("expected [%v] got [%v]", expected, recording.UUIDEntities)
-		return
+	expected := map[uuid.UUID][]any{
+		uuidComponent.ID: {initialState},
 	}
-
-	array, ok := recording.Arrays[reflect.TypeFor[Component]().String()]
-	if !ok {
-		t.Error("expected recording to have changes")
-		return
-	}
-	if len(array.GetIndices()) != 1 || array.GetIndices()[0] != entity {
-		t.Errorf("expected array entities to be only entity [%v] not %v", entity, array.GetIndices())
-		return
-	}
-	if len(array.GetValues()) != 1 || array.GetValues()[0] != initialState {
-		t.Errorf("expected array components to be only component [%v] not %v", initialState, array.GetValues())
+	if !maps.EqualFunc(expected, recording.Entities, func(v1, v2 []any) bool {
+		return slices.Equal(v1, v2)
+	}) {
+		t.Errorf("expected recording %v but got %v", expected, recording.Entities)
 		return
 	}
 
@@ -115,28 +96,19 @@ func TestUUIDGetState(t *testing.T) {
 
 	recording := world.Record().UUID().GetState(world.Config)
 
-	array, ok := recording.Arrays[reflect.TypeFor[Component]().String()]
+	uuidComponent, ok := world.UUID().Component().Get(entity)
 	if !ok {
-		t.Error("expected recording to have changes")
+		t.Errorf("expected entity to get uuid component when recorded by uuid recorder")
 		return
 	}
-	if len(array.GetIndices()) != 1 || array.GetIndices()[0] != entity {
-		t.Errorf("expected array entities to be only entity [%v] not %v", entity, array.GetIndices())
+	expected := map[uuid.UUID][]any{uuidComponent.ID: {initialState}}
+	if !maps.EqualFunc(expected, recording.Entities, func(v1, v2 []any) bool {
+		return slices.Equal(v1, v2)
+	}) {
+		t.Errorf("expected recording %v but got %v", expected, recording.Entities)
 		return
 	}
-	if len(array.GetValues()) != 1 || array.GetValues()[0] != initialState {
-		t.Errorf("expected array components to be only component [%v] not %v", initialState, array.GetValues())
-		return
-	}
-
-	if uuidComponent, ok := world.UUID().Component().Get(entity); !ok {
-		t.Errorf("entity should have and uuid component")
-		return
-	} else if _, ok := recording.UUIDEntities[uuidComponent.ID]; !ok {
-		t.Errorf("entity should have and uuid in recording")
-		return
-	}
-	array.Remove(entity)
+	world.ComponentArray.Remove(entity)
 	world.Record().UUID().Apply(world.Config, recording)
 	if ei := world.ComponentArray.GetEntities(); len(ei) != 1 {
 		t.Errorf("unexpected entities on apply. expected one entity got %v", ei)

@@ -35,42 +35,13 @@ func TestCodec(t *testing.T) {
 	}
 
 	// UUIDEntities
-	if !maps.Equal(originalRecording.UUIDEntities, comparedRecording.UUIDEntities) {
-		t.Errorf(
-			"UUIDEntities mismatch. wanted %v has %v",
-			originalRecording.UUIDEntities,
-			comparedRecording.UUIDEntities,
-		)
-	}
-
-	// EntitiesUUIDs
-	// if !slices.Equal(originalRecording.EntitiesUUIDs.GetValues(), comparedRecording.EntitiesUUIDs.GetValues()) {
-	// 	t.Errorf(
-	// 		"EntitiesUUIDs values mismatch. %v != %v",
-	// 		originalRecording.EntitiesUUIDs.GetValues(),
-	// 		comparedRecording.EntitiesUUIDs.GetValues(),
-	// 	)
-	// }
-
-	// RemovedEntities
-	if !slices.Equal(originalRecording.RemovedEntities.GetIndices(), comparedRecording.RemovedEntities.GetIndices()) {
-		t.Errorf(
-			"RemovedEntities mismatch. %v != %v",
-			originalRecording.RemovedEntities.GetIndices(),
-			comparedRecording.RemovedEntities.GetIndices(),
-		)
-	}
-
-	// Arrays
-	if !maps.EqualFunc(originalRecording.Arrays, comparedRecording.Arrays, func(v1, v2 record.ArrayRecording) bool {
-		return slices.Equal(v1.GetIndices(), v2.GetIndices()) &&
-			slices.Equal(v1.GetValues(), v2.GetValues())
+	if !maps.EqualFunc(originalRecording.Entities, comparedRecording.Entities, func(v1, v2 []any) bool {
+		return slices.Equal(v1, v2)
 	}) {
 		t.Errorf(
-			"Arrays mismatch. %v != %v",
-			originalRecording.Arrays,
-			comparedRecording.Arrays,
+			"Entities don't match expected %v has %v",
+			originalRecording.Entities,
+			comparedRecording.Entities,
 		)
 	}
-
 }

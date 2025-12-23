@@ -28,16 +28,11 @@ func (pkg) Register(b ioc.Builder) {
 		return b.
 			// recording
 			Register(record.Recording{}).
-			Register(datastructures.NewSparseSet[ecs.EntityID]()).
-			Register(map[string]record.ArrayRecording{}).
+			Register(datastructures.NewSparseArray[ecs.EntityID, []any]()).
 
 			// uuid recording
 			Register(record.UUIDRecording{}).
-			Register(map[uuid.UUID]ecs.EntityID{}).
-			Register(datastructures.NewSparseArray[ecs.EntityID, uuid.UUID]()).
-
-			// array
-			Register(record.ArrayRecording(datastructures.NewSparseArray[ecs.EntityID, any]()))
+			Register(map[uuid.UUID][]any{})
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) record.ToolFactory {
 		return recordimpl.NewToolFactory(

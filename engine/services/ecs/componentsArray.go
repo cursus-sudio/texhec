@@ -75,8 +75,12 @@ func (c *componentsArray[Component]) Set(entity EntityID, component Component) {
 	}
 	c.entities.EnsureExists(entity)
 	c.components.Set(entity, component)
-	for _, dirtyFlags := range c.dirtySets.Get() {
-		dirtyFlags.Dirty(entity)
+	for _, dirtySet := range c.dirtySets.Get() {
+		if !dirtySet.Ok() {
+			c.dirtySets.RemoveElements(dirtySet)
+			continue
+		}
+		dirtySet.Dirty(entity)
 	}
 }
 
@@ -99,9 +103,13 @@ func (c *componentsArray[Component]) Remove(entity EntityID) {
 		return
 	}
 	c.components.Remove(entity)
-	for _, dirtyFlag := range c.dirtySets.Get() {
+	for _, dirtySet := range c.dirtySets.Get() {
 		for _, entity := range entities {
-			dirtyFlag.Dirty(entity)
+			if !dirtySet.Ok() {
+				c.dirtySets.RemoveElements(dirtySet)
+				continue
+			}
+			dirtySet.Dirty(entity)
 		}
 	}
 }
@@ -133,11 +141,20 @@ func (c *componentsArray[Component]) GetAny(entity EntityID) (any, bool) {
 func (c *componentsArray[Component]) AddDependency(dependency AnyComponentArray) {
 	c.dependencies = append(c.dependencies, dependency)
 	for _, dirtySet := range c.dirtySets.Get() {
+		if !dirtySet.Ok() {
+			c.dirtySets.RemoveElements(dirtySet)
+			continue
+		}
 		dependency.AddDirtySet(dirtySet)
 	}
 }
 func (c *componentsArray[Component]) AddDirtySet(dirtySet DirtySet) {
+	if !dirtySet.Ok() {
+		c.dirtySets.RemoveElements(dirtySet)
+		return
+	}
 	if _, ok := c.dirtySets.GetIndex(dirtySet); ok {
+
 		return
 	}
 	for _, entity := range c.GetEntities() {

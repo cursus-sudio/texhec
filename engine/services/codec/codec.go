@@ -25,7 +25,9 @@ func newCodec(
 	types []reflect.Type,
 ) Codec {
 	for _, codecType := range types {
-		gob.Register(reflect.New(codecType).Elem().Interface())
+		name := codecType.String()
+		value := reflect.New(codecType).Elem().Interface()
+		gob.RegisterName(name, value)
 	}
 	return &codec{logger}
 }

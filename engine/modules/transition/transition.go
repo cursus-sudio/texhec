@@ -20,21 +20,21 @@ type Interface interface {
 
 //
 
-type BlendableComponent[Component any] interface {
-	Blend(Component, float32) Component
+type Lerp[Component any] interface {
+	Lerp(Component, float32) Component
 }
 
 //
 
 type Progress float32
 
-type TransitionComponent[Component BlendableComponent[Component]] struct {
+type TransitionComponent[Component Lerp[Component]] struct {
 	From, To Component
 	Progress,
 	Duration time.Duration
 }
 
-func NewTransition[Component BlendableComponent[Component]](
+func NewTransition[Component Lerp[Component]](
 	from, to Component,
 	duration time.Duration,
 ) TransitionComponent[Component] {
@@ -49,12 +49,12 @@ func NewTransition[Component BlendableComponent[Component]](
 //
 
 // saves transition component
-type TransitionEvent[Component BlendableComponent[Component]] struct {
+type TransitionEvent[Component Lerp[Component]] struct {
 	Entity    ecs.EntityID
 	Component TransitionComponent[Component]
 }
 
-func NewTransitionEvent[Component BlendableComponent[Component]](
+func NewTransitionEvent[Component Lerp[Component]](
 	entity ecs.EntityID,
 	from, to Component,
 	duration time.Duration,

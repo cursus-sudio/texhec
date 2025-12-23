@@ -117,22 +117,22 @@ func NewParentPivotPoint(x, y, z float32) ParentPivotPointComponent {
 
 // blend
 
-func (c1 PosComponent) Blend(c2 PosComponent, mix32 float32) PosComponent {
+func (c1 PosComponent) Lerp(c2 PosComponent, mix32 float32) PosComponent {
 	return PosComponent{c1.Pos.Mul(1 - mix32).Add(c2.Pos.Mul(mix32))}
 }
 
-func (c1 RotationComponent) Blend(c2 RotationComponent, mix32 float32) RotationComponent {
+func (c1 RotationComponent) Lerp(c2 RotationComponent, mix32 float32) RotationComponent {
 	return RotationComponent{mgl32.QuatSlerp(c1.Rotation, c2.Rotation, mix32)}
 }
 
-func (c1 SizeComponent) Blend(c2 SizeComponent, mix32 float32) SizeComponent {
+func (c1 SizeComponent) Lerp(c2 SizeComponent, mix32 float32) SizeComponent {
 	return SizeComponent{c1.Size.Mul(1 - mix32).Add(c2.Size.Mul(mix32))}
 }
 
-func (c1 PivotPointComponent) Blend(c2 PivotPointComponent, mix32 float32) PivotPointComponent {
+func (c1 PivotPointComponent) Lerp(c2 PivotPointComponent, mix32 float32) PivotPointComponent {
 	return PivotPointComponent{c1.Point.Mul(1 - mix32).Add(c2.Point.Mul(mix32))}
 }
 
-func (c1 ParentPivotPointComponent) Blend(c2 ParentPivotPointComponent, mix32 float32) ParentPivotPointComponent {
+func (c1 ParentPivotPointComponent) Lerp(c2 ParentPivotPointComponent, mix32 float32) ParentPivotPointComponent {
 	return ParentPivotPointComponent{c1.Point.Mul(1 - mix32).Add(c2.Point.Mul(mix32))}
 }

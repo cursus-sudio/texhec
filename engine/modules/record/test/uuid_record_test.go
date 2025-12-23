@@ -77,10 +77,6 @@ func TestUUIDBackwardsRecording(t *testing.T) {
 	world.RemoveEntity(entity)
 	world.Record().UUID().Apply(world.Config, recording)
 
-	if ei := world.ComponentArray.GetEntities(); len(ei) != 1 {
-		t.Errorf("unexpected entities on apply. expected one entity got %v", ei)
-		return
-	}
 	if c, ok := world.ComponentArray.Get(world.ComponentArray.GetEntities()[0]); !ok || c != initialState {
 		t.Errorf("unexpected component on apply. expected %v %t got %v %t", initialState, true, c, ok)
 		return

@@ -57,7 +57,7 @@ func (t *uuidKeyedRecorder) GetState(config record.Config) record.UUIDRecording 
 func (t *uuidKeyedRecorder) StartBackwardsRecording(config record.Config) record.UUIDRecordingID {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
-	defer t.SyncBackwardsRecordingState()
+	t.SyncBackwardsRecordingState()
 
 	id := t.getID()
 	recording := &UUIDBackwardRecording{
@@ -89,6 +89,7 @@ func (t *uuidKeyedRecorder) StartRecording(config record.Config) record.UUIDReco
 		array := t.GetWorldArray(arrayType, config)
 		array.AddDirtySet(recording.DirtySet)
 	}
+	recording.DirtySet.Clear()
 	t.forwardRecordings.Set(id, recording)
 
 	return id
@@ -100,8 +101,10 @@ func (t *uuidKeyedRecorder) Stop(id record.UUIDRecordingID) (record.UUIDRecordin
 	if recording, ok := t.forwardRecordings.Get(id); ok {
 		entities := recording.DirtySet.Get()
 		recording.DirtySet.Release()
+
 		t.forwardRecordings.Remove(id)
 		t.holes.Add(id)
+
 		return t.getStateFor(recording.Config, entities), true
 	}
 	if recording, ok := t.backwardsRecordings.Get(id); ok {
@@ -110,8 +113,10 @@ func (t *uuidKeyedRecorder) Stop(id record.UUIDRecordingID) (record.UUIDRecordin
 			array := t.GetWorldArray(arrayType, recording.Config)
 			array.uuidDependencies.RemoveElements(recording)
 		}
+
 		t.backwardsRecordings.Remove(id)
 		t.holes.Add(id)
+
 		return record.UUIDRecording{Entities: recording.Entities}, true
 	}
 	return record.UUIDRecording{}, false

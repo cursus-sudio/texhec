@@ -20,7 +20,7 @@ func (conn conn) Send(message any) error {
 		return err
 	}
 
-	// conn.logger.Info(fmt.Sprintf("sending '%v' of type '%v'", message, reflect.TypeOf(message).String()))
+	// conn.logger.Info(fmt.Sprintf("sending '***' of type '%v'", reflect.TypeOf(message).String()))
 	length := uint32(len(bytes))
 	lengthInByes := make([]byte, 4)
 	binary.BigEndian.PutUint32(lengthInByes, length)

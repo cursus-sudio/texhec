@@ -56,7 +56,7 @@ func (t *entityKeyedRecorder) GetState(config record.Config) record.Recording {
 func (t *entityKeyedRecorder) StartBackwardsRecording(config record.Config) record.RecordingID {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
-	defer t.SyncBackwardsRecordingState()
+	t.SyncBackwardsRecordingState()
 
 	id := t.getID()
 	recording := &BackwardRecording{
@@ -87,6 +87,7 @@ func (t *entityKeyedRecorder) StartRecording(config record.Config) record.Record
 		array := t.GetWorldArray(arrayType, config)
 		array.AddDirtySet(recording.DirtySet)
 	}
+	recording.DirtySet.Clear()
 	t.forwardRecordings.Set(id, recording)
 
 	return id
@@ -97,8 +98,10 @@ func (t *entityKeyedRecorder) Stop(id record.RecordingID) (record.Recording, boo
 	if recording, ok := t.forwardRecordings.Get(id); ok {
 		entities := recording.DirtySet.Get()
 		recording.DirtySet.Release()
+
 		t.forwardRecordings.Remove(id)
 		t.holes.Add(id)
+
 		return t.getStateFor(recording.Config, entities), true
 	}
 	if recording, ok := t.backwardsRecordings.Get(id); ok {
@@ -107,8 +110,10 @@ func (t *entityKeyedRecorder) Stop(id record.RecordingID) (record.Recording, boo
 			array := t.GetWorldArray(arrayType, recording.Config)
 			array.dependencies.RemoveElements(recording)
 		}
+
 		t.backwardsRecordings.Remove(id)
 		t.holes.Add(id)
+
 		return record.Recording{Entities: recording.Entities}, true
 	}
 	return record.Recording{}, false

@@ -39,7 +39,7 @@ func (f *factory) NewConnection(rawConn net.Conn) connection.Conn {
 				f.logger.Warn(err)
 				continue
 			}
-			// f.logger.Info(fmt.Sprintf("received '%v' type '%v'", message, reflect.TypeOf(message).String()))
+			// f.logger.Info(fmt.Sprintf("received '***' type '%v'", reflect.TypeOf(message).String()))
 
 			messages <- message
 		}

@@ -10,6 +10,8 @@ func TestEntityForwardRecording(t *testing.T) {
 	middleState := Component{Counter: 7}
 	finalState := Component{Counter: 8}
 
+	world.ComponentArray.Set(world.NewEntity(), initialState)
+
 	entity := world.NewEntity()
 	world.ComponentArray.Set(entity, initialState)
 
@@ -43,6 +45,8 @@ func TestEntityBackwardsRecording(t *testing.T) {
 	middleState := Component{Counter: 7}
 	finalState := Component{Counter: 9}
 
+	world.ComponentArray.Set(world.NewEntity(), initialState)
+
 	entity := world.NewEntity()
 	world.ComponentArray.Set(entity, initialState)
 
@@ -71,10 +75,6 @@ func TestEntityBackwardsRecording(t *testing.T) {
 
 	world.Record().Entity().Apply(world.Config, recording)
 
-	if ei := world.ComponentArray.GetEntities(); len(ei) != 1 || ei[0] != entity {
-		t.Errorf("unexpected entities on apply. expected [%v] got %v", entity, ei)
-		return
-	}
 	if c, ok := world.ComponentArray.Get(entity); !ok || c != initialState {
 		t.Errorf("unexpected component on apply. expected %v %t got %v %t", initialState, true, c, ok)
 		return

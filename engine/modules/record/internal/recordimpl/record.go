@@ -95,20 +95,6 @@ func (t tool) synchronizeArrayState(
 		return
 	}
 
-	// apply in world
-	for _, entity := range entities {
-		if component, ok := worldArray.GetAny(entity); ok {
-			err := worldCopyArray.SetAny(entity, component)
-			t.logger.Warn(err)
-			continue
-		}
-		if t.world.EntityExists(entity) {
-			worldCopyArray.Remove(entity)
-			continue
-		}
-		t.worldCopy.RemoveEntity(entity)
-	}
-
 	// apply in Entity arrays
 	for _, recording := range t.entity.backwardsRecordings.GetValues() {
 		for _, entity := range entities {
@@ -163,6 +149,20 @@ func (t tool) synchronizeArrayState(
 			recording.Entities[uuid.ID] = components
 		}
 	}
+
+	// apply in world
+	for _, entity := range entities {
+		if component, ok := worldArray.GetAny(entity); ok {
+			err := worldCopyArray.SetAny(entity, component)
+			t.logger.Warn(err)
+			continue
+		}
+		if t.world.EntityExists(entity) {
+			worldCopyArray.Remove(entity)
+			continue
+		}
+		t.worldCopy.RemoveEntity(entity)
+	}
 }
 
 func (t tool) GetWorldArray(arrayType reflect.Type, config record.Config) entityArray {
@@ -179,8 +179,16 @@ func (t tool) GetWorldArray(arrayType reflect.Type, config record.Config) entity
 	}
 	entityArray.AddDirtySet(entityArray.dirtySet)
 	t.worldArrays[arrayKey] = entityArray
+	entityArray.dirtySet.Clear()
+
 	array := arrayCtor(t.worldCopy)
 	t.worldCopyArrays[arrayKey] = array
+
+	for _, entity := range entityArray.GetEntities() {
+		component, _ := entityArray.GetAny(entity)
+		_ = array.SetAny(entity, component)
+	}
+
 	return entityArray
 }
 
@@ -198,7 +206,15 @@ func (t tool) GetWorldCopyArray(arrayType reflect.Type, config record.Config) ec
 	}
 	entityArray.AddDirtySet(entityArray.dirtySet)
 	t.worldArrays[arrayKey] = entityArray
+	entityArray.dirtySet.Clear()
+
 	array := arrayCtor(t.worldCopy)
 	t.worldCopyArrays[arrayKey] = array
+
+	for _, entity := range entityArray.GetEntities() {
+		component, _ := entityArray.GetAny(entity)
+		_ = array.SetAny(entity, component)
+	}
+
 	return array
 }

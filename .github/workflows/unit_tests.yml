@@ -2,6 +2,7 @@ name: unit tests
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened]
     branches:
       - main
 
@@ -11,26 +12,64 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Install SDL2 and OpenGL Dependencies
+      run: |
+        sudo apt-get update
+        # SDL2
+        sudo apt-get install -y libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libsdl2-net-dev
+        # OpenGL
+        sudo apt-get install -y mesa-utils libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
+# golangci-lint run --fix
+
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
         go-version: '1.22'
 
-    - name: Download core Go Modules
-      run: go mod download
-      working-directory: core
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          /var/cache/apt/archives
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-deps-${{ hashFiles('**/go.mod') }}
+        restore-keys: |
+          ${{ runner.os }}-deps-
 
-    - name: Download engine Go Modules
-      run: go mod download
-      working-directory: engine
+    # engine
 
-    - name: run engine tests
+    - name: Run /engine tests
       run: go test ./...
       working-directory: engine
 
-    - name: run core tests
-      run: go test ./...
-      working-directory: core
+    - name: Run /engine golangci-lint
+      uses: golangci/golangci-lint-action@v6
+      with:
+        version: latest
+        args: --timeout=5m --fix
+      working-directory: engine
 
-    - name: Static Analysis (Go Vet)
+    - name: Static Analysis of /engine
       run: go vet ./...
+      working-directory: engine
+
+    # core
+
+    - name: Run /core tests
+      run: go test ./...
+      working-directory: core
+
+    - name: Run /core golangci-lint
+      uses: golangci/golangci-lint-action@v6
+      with:
+        version: latest
+        args: --timeout=5m --fix
+      working-directory: core
+
+    - name: Static Analysis of /core
+      run: go vet ./...
+      working-directory: core

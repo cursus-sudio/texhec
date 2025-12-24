@@ -47,6 +47,8 @@ jobs:
       with:
         version: latest
         working-directory: engine
+        args: --timeout=5m
+      timeout-minutes: 5
 
     - name: Run /engine tests
       run: go test ./...
@@ -63,3 +65,5 @@ jobs:
       with:
         version: latest
         working-directory: engine
+        args: --timeout=5m
+      timeout-minutes: 5

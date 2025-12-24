@@ -9,7 +9,7 @@ import (
 	"github.com/ogiusek/events"
 )
 
-type sysT[Component transition.BlendableComponent[Component]] struct {
+type sysT[Component transition.Lerp[Component]] struct {
 	world    transition.World
 	dirtySet ecs.DirtySet
 
@@ -21,7 +21,7 @@ type sysT[Component transition.BlendableComponent[Component]] struct {
 	easingService transition.EasingService
 }
 
-func NewSysT[Component transition.BlendableComponent[Component]](
+func NewSysT[Component transition.Lerp[Component]](
 	logger logger.Logger,
 	easingService transition.EasingService,
 ) transition.System {
@@ -73,7 +73,7 @@ func (s sysT[Component]) ListenFrame(event frames.FrameEvent) {
 			}
 		}
 
-		component := transitionComponent.From.Blend(transitionComponent.To, float32(progress))
+		component := transitionComponent.From.Lerp(transitionComponent.To, float32(progress))
 
 		s.transitionArray.Set(entity, transitionComponent)
 		s.componentArray.Set(entity, component)

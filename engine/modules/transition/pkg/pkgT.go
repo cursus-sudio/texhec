@@ -9,10 +9,10 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
-type pkgT[Component transition.BlendableComponent[Component]] struct {
+type pkgT[Component transition.Lerp[Component]] struct {
 }
 
-func PackageT[Component transition.BlendableComponent[Component]]() ioc.Pkg {
+func PackageT[Component transition.Lerp[Component]]() ioc.Pkg {
 	return pkgT[Component]{}
 }
 

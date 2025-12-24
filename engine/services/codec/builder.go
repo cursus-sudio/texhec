@@ -1,35 +1,44 @@
 package codec
 
-import "reflect"
+import (
+	"engine/services/logger"
+	"reflect"
+)
 
 type Builder interface {
-	Register(reflect.Type) Builder
-	TryRegister(reflect.Type) error
+	Register(any) Builder
 	Build() Codec
 }
 
 type builder struct {
-	types map[reflect.Type]struct{}
+	logger logger.Logger
+	types  map[reflect.Type]struct{}
 }
 
-func NewBuilder() Builder {
-	return &builder{types: make(map[reflect.Type]struct{})}
-}
-
-func (b *builder) Register(codecType reflect.Type) Builder {
-	if err := b.TryRegister(codecType); err != nil {
-		panic(err)
+func NewBuilder(logger logger.Logger) Builder {
+	return &builder{
+		logger: logger,
+		types:  make(map[reflect.Type]struct{}),
 	}
-	return b
 }
 
-func (b *builder) TryRegister(codecType reflect.Type) error {
-	_, ok := b.types[codecType]
-	if ok {
-		return ErrTypeIsAlreadyRegistered
+type GobTypesHook interface { // types to register
+	GobTypes() []any
+}
+
+func (b *builder) Register(codecExample any) Builder {
+	codecType := reflect.TypeOf(codecExample)
+	if _, ok := b.types[codecType]; ok {
+		return b
 	}
 	b.types[codecType] = struct{}{}
-	return nil
+
+	if h, ok := codecExample.(GobTypesHook); ok {
+		for _, t := range h.GobTypes() {
+			b.Register(t)
+		}
+	}
+	return b
 }
 
 func (b *builder) Build() Codec {
@@ -37,5 +46,5 @@ func (b *builder) Build() Codec {
 	for codecType := range b.types {
 		types = append(types, codecType)
 	}
-	return NewCodec(types)
+	return newCodec(b.logger, types)
 }

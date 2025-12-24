@@ -12,38 +12,38 @@ type Set[Stored comparable] interface {
 
 type set[Stored comparable] struct {
 	TrackingArray[Stored]
-	indices map[Stored]int
+	Indices map[Stored]int
 }
 
 func NewSet[Stored comparable]() Set[Stored] {
 	return &set[Stored]{
 		TrackingArray: NewTrackingArray[Stored](),
-		indices:       map[Stored]int{},
+		Indices:       map[Stored]int{},
 	}
 }
 
 func (s *set[Stored]) UpdateIndices() {
-	changes := s.TrackingArray.Changes()
+	changes := s.Changes()
 	if len(changes) == 0 {
 		return
 	}
-	elements := s.TrackingArray.Get()
-	s.TrackingArray.ClearChanges()
+	elements := s.Get()
+	s.ClearChanges()
 	for _, original := range changes {
 		if original.From != nil {
 			key := *original.From
-			delete(s.indices, key)
+			delete(s.Indices, key)
 		}
 		if original.Index < len(elements) {
 			element := elements[original.Index]
-			s.indices[element] = original.Index
+			s.Indices[element] = original.Index
 		}
 	}
 }
 
 func (s *set[Stored]) GetStored(index int) (Stored, bool) {
 	s.UpdateIndices()
-	elements := s.TrackingArray.Get()
+	elements := s.Get()
 	if len(elements) <= index {
 		var zero Stored
 		return zero, false
@@ -53,7 +53,7 @@ func (s *set[Stored]) GetStored(index int) (Stored, bool) {
 
 func (s *set[Stored]) GetIndex(e Stored) (int, bool) {
 	s.UpdateIndices()
-	i, ok := s.indices[e]
+	i, ok := s.Indices[e]
 	return i, ok
 }
 
@@ -77,5 +77,5 @@ func (s *set[Stored]) RemoveElements(elements ...Stored) {
 		}
 		indices = append(indices, index)
 	}
-	s.Remove(indices...)
+	_ = s.Remove(indices...)
 }

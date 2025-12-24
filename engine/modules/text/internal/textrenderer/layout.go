@@ -2,7 +2,6 @@ package textrenderer
 
 import (
 	"engine/modules/text"
-	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"unicode/utf8"
@@ -28,14 +27,8 @@ type LayoutService interface {
 }
 
 type layoutService struct {
-	world                ecs.World
-	transformTransaction transform.Transaction
-	textArray            ecs.ComponentsArray[text.TextComponent]
-	fontFamilyArray      ecs.ComponentsArray[text.FontFamilyComponent]
-	fontSizeArray        ecs.ComponentsArray[text.FontSizeComponent]
-	// overflowArray   ecs.ComponentsArray[text.Overflow]
-	breakArray     ecs.ComponentsArray[text.BreakComponent]
-	textAlignArray ecs.ComponentsArray[text.TextAlignComponent]
+	text.World
+	text.TextTool
 
 	logger      logger.Logger
 	fontService FontService
@@ -49,9 +42,8 @@ type layoutService struct {
 }
 
 func NewLayoutService(
-	world ecs.World,
-
-	transformToolFactory ecs.ToolFactory[transform.Tool],
+	world text.World,
+	textToolFactory text.ToolFactory,
 
 	logger logger.Logger,
 	fontService FontService,
@@ -64,14 +56,8 @@ func NewLayoutService(
 	defaultTextAlign text.TextAlignComponent,
 ) LayoutService {
 	return &layoutService{
-		world:                world,
-		transformTransaction: transformToolFactory.Build(world).Transaction(),
-		textArray:            ecs.GetComponentsArray[text.TextComponent](world),
-		fontFamilyArray:      ecs.GetComponentsArray[text.FontFamilyComponent](world),
-		fontSizeArray:        ecs.GetComponentsArray[text.FontSizeComponent](world),
-		// overflowArray:   ecs.GetComponentsArray[text.Overflow](world),
-		breakArray:     ecs.GetComponentsArray[text.BreakComponent](world),
-		textAlignArray: ecs.GetComponentsArray[text.TextAlignComponent](world),
+		World:    world,
+		TextTool: textToolFactory.Build(world),
 
 		logger:      logger,
 		fontService: fontService,
@@ -104,33 +90,29 @@ type line struct {
 func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	// TODO add overflow read, text align read and transform modification
 
-	transform := s.transformTransaction.GetObject(entity)
-	size, err := transform.AbsoluteSize().Get()
-	if err != nil {
-		return Layout{}, err
+	size, _ := s.Transform().AbsoluteSize().Get(entity)
+	textComponent, ok := s.Text().Content().Get(entity)
+	if !ok {
+		return Layout{}, nil
 	}
-	textComponent, err := s.textArray.GetComponent(entity)
-	if err != nil {
-		return Layout{}, err
-	}
-	fontFamily, err := s.fontFamilyArray.GetComponent(entity)
-	if err != nil {
+	fontFamily, ok := s.Text().FontFamily().Get(entity)
+	if !ok {
 		fontFamily = s.defaultFontFamily
 	}
-	fontSize, err := s.fontSizeArray.GetComponent(entity)
-	if err != nil {
+	fontSize, ok := s.Text().FontSize().Get(entity)
+	if !ok {
 		fontSize = s.defaultFontSize
 	}
 	// overflow, err := s.overflowArray.GetComponent(entity)
 	// if err != nil {
 	// 	overflow = s.defaultOverflow
 	// }
-	breakComponent, err := s.breakArray.GetComponent(entity)
-	if err != nil {
+	breakComponent, ok := s.Text().Break().Get(entity)
+	if !ok {
 		breakComponent = s.defaultBreak
 	}
-	textAlign, err := s.textAlignArray.GetComponent(entity)
-	if err != nil {
+	textAlign, ok := s.Text().Align().Get(entity)
+	if !ok {
 		textAlign = s.defaultTextAlign
 	}
 
@@ -147,7 +129,7 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	maxHeight := size.Size.Y() / float32(fontSize.FontSize)
 
 	// generate lines
-	var nextLetterIndex int = 0
+	var nextLetterIndex = 0
 	for nextLetterIndex < len(textComponent.Text) {
 		letter, letterSize := utf8.DecodeRuneInString(textComponent.Text[nextLetterIndex:])
 		letterIndex := nextLetterIndex
@@ -173,7 +155,7 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 			width:   letterLine.width + letterWidth,
 		}
 
-		var shouldBreak bool = updatedLine.width > maxWidth
+		var shouldBreak = updatedLine.width > maxWidth
 
 		var canBreak bool
 		switch breakComponent.Break {
@@ -190,8 +172,8 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 			continue
 		}
 
-		var defaultLastLineLetterIndex int = len(updatedLine.letters) - 1
-		var lastLineLetterIndex int = defaultLastLineLetterIndex
+		var defaultLastLineLetterIndex = len(updatedLine.letters) - 1
+		var lastLineLetterIndex = defaultLastLineLetterIndex
 		switch breakComponent.Break {
 		case text.BreakAny:
 		case text.BreakNone:
@@ -228,7 +210,7 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 		}
 	}
 
-	var heightOffset float32 = 0
+	var heightOffset float32
 	{
 		linesCount := float32(len(lines))
 		height := linesCount * float32(lineHeight)

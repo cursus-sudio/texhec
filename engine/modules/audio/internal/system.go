@@ -7,9 +7,6 @@ import (
 	"github.com/ogiusek/events"
 )
 
-type system struct {
-}
-
 func NewSystem(s Service) audio.System {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		events.ListenE(w.EventsBuilder(), func(e audio.StopEvent) error {

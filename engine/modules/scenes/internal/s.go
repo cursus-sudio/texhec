@@ -14,7 +14,7 @@ type system struct {
 	Event   *scenessys.ChangeSceneEvent
 }
 
-func NewChangeSceneSystem(m scenes.SceneManager) ecs.SystemRegister {
+func NewChangeSceneSystem(m scenes.SceneManager) ecs.SystemRegister[ecs.World] {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := &system{
 			Manager: m,

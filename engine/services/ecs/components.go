@@ -8,30 +8,26 @@ import (
 
 // interface
 
-type ComponentType struct {
+type componentType struct {
 	componentType reflect.Type
 }
 
-func (t *ComponentType) String() string { return t.componentType.String() }
+func (t *componentType) String() string { return t.componentType.String() }
 
-func newComponentType(componentType reflect.Type) ComponentType {
-	return ComponentType{componentType: componentType}
+func newComponentType(t reflect.Type) componentType {
+	return componentType{componentType: t}
 }
 
 //
 
 type Component interface{}
 
-func GetComponentType(component Component) ComponentType {
+func getComponentType(component Component) componentType {
 	typeOfComponent := reflect.TypeOf(component)
 	if typeOfComponent.Kind() != reflect.Struct {
 		panic("component has to be a struct (cannot use pointers under the hood)")
 	}
 	return newComponentType(typeOfComponent)
-}
-
-func GetComponentPointerType(componentPointer any) ComponentType {
-	return newComponentType(reflect.TypeOf(componentPointer).Elem())
 }
 
 //
@@ -50,9 +46,6 @@ type componentsInterface interface {
 
 	// returns for with all listed component types
 	// the same live query should be returned for the same input
-	Query() LiveQueryBuilder
-
-	GetAnyComponent(EntityID, ComponentType) (any, error)
 }
 
 // impl
@@ -65,7 +58,7 @@ func (components *componentsImpl) Components() ComponentsStorage { return compon
 
 func (components *componentsImpl) RemoveEntity(entity EntityID) {
 	for _, arr := range components.storage.arrays {
-		arr.RemoveComponent(entity)
+		arr.Remove(entity)
 	}
 }
 
@@ -80,53 +73,36 @@ func newComponents(entities datastructures.SparseSet[EntityID]) *componentsImpl 
 type arraysSharedInterface interface {
 	AnyComponentArray
 	// this adds listeners for change and remove
-	addQueries([]*liveQuery)
 }
 
 type componentsStorage struct {
-	arrays              map[ComponentType]arraysSharedInterface // any is *componentsArray[ComponentType]
+	arrays              map[componentType]arraysSharedInterface // any is *componentsArray[ComponentType]
 	entities            datastructures.SparseSet[EntityID]
-	onArrayAddListeners map[ComponentType][]func(arraysSharedInterface)
-
-	cachedQueries    map[queryKey]*liveQuery
-	dependentQueries map[ComponentType][]*liveQuery
+	onArrayAddListeners map[componentType][]func(arraysSharedInterface)
 }
 
 type ComponentsStorage *componentsStorage
 
 func newComponentsStorage(entities datastructures.SparseSet[EntityID]) ComponentsStorage {
 	return &componentsStorage{
-		arrays:              make(map[ComponentType]arraysSharedInterface),
+		arrays:              make(map[componentType]arraysSharedInterface),
 		entities:            entities,
-		onArrayAddListeners: make(map[ComponentType][]func(arraysSharedInterface)),
-
-		cachedQueries:    make(map[queryKey]*liveQuery, 0),
-		dependentQueries: make(map[ComponentType][]*liveQuery, 0),
+		onArrayAddListeners: make(map[componentType][]func(arraysSharedInterface)),
 	}
-}
-
-func (components *componentsStorage) whenArrExists(t ComponentType, l func(arraysSharedInterface)) {
-	if arr, ok := components.arrays[t]; ok {
-		l(arr)
-		return
-	}
-	onAdd, _ := components.onArrayAddListeners[t]
-	onAdd = append(onAdd, l)
-	components.onArrayAddListeners[t] = onAdd
 }
 
 func GetComponentsArray[Component any](world World) ComponentsArray[Component] {
 	components := world.Components()
 	var zero Component
-	componentType := GetComponentType(zero)
+	componentType := getComponentType(zero)
 
 	if array, ok := components.arrays[componentType]; ok {
 		return array.(ComponentsArray[Component])
 	}
-	array := NewComponentsArray[Component](components.entities)
+	array := NewComponentsArray[Component](world)
 	components.arrays[componentType] = array
 	//
-	listeners, _ := components.onArrayAddListeners[componentType]
+	listeners := components.onArrayAddListeners[componentType]
 	for _, listener := range listeners {
 		listener(array)
 	}
@@ -138,17 +114,16 @@ func SaveComponent[Component any](
 	w World,
 	entity EntityID,
 	component Component,
-) error {
-	return GetComponentsArray[Component](w).
-		SaveComponent(entity, component)
+) {
+	GetComponentsArray[Component](w).Set(entity, component)
 }
 
 func GetComponent[Component any](
 	w World,
 	entity EntityID,
-) (Component, error) {
+) (Component, bool) {
 	return GetComponentsArray[Component](w).
-		GetComponent(entity)
+		Get(entity)
 }
 
 func RemoveComponent[Component any](
@@ -156,12 +131,12 @@ func RemoveComponent[Component any](
 	entity EntityID,
 ) {
 	GetComponentsArray[Component](w).
-		RemoveComponent(entity)
+		Remove(entity)
 }
 
 func GetEntitiesWithComponents(
 	components ComponentsStorage,
-	componentTypes ...ComponentType,
+	componentTypes ...componentType,
 ) []EntityID {
 	if len(componentTypes) == 0 {
 		return nil
@@ -182,21 +157,11 @@ func GetEntitiesWithComponents(
 arrayEntities:
 	for _, entity := range arrayEntities {
 		for _, array := range arrays {
-			if _, err := array.GetAnyComponent(entity); err != nil {
+			if _, ok := array.GetAny(entity); !ok {
 				continue arrayEntities
 			}
 		}
 		finalEntities = append(finalEntities, entity)
 	}
 	return finalEntities
-}
-
-func (i *componentsImpl) Query() LiveQueryBuilder {
-	return newLiveQueryFactory(i)
-}
-func (i *componentsImpl) GetAnyComponent(entity EntityID, componentType ComponentType) (any, error) {
-	if array, ok := i.storage.arrays[componentType]; ok {
-		return array.GetAnyComponent(entity)
-	}
-	return nil, ErrComponentDoNotExists
 }

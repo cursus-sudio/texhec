@@ -2,85 +2,79 @@ package internal
 
 import (
 	"engine/modules/groups"
-	"engine/modules/hierarchy"
 	"engine/services/ecs"
-	"engine/services/logger"
 )
 
-type s struct {
-	logger logger.Logger
-
-	world     ecs.World
-	hierarchy hierarchy.Transaction
-
-	inheritArray ecs.ComponentsArray[groups.InheritGroupsComponent]
-	groupsArray  ecs.ComponentsArray[groups.GroupsComponent]
-
-	groupsTransaction ecs.ComponentsArrayTransaction[groups.GroupsComponent]
+func (t tool) calculateGroup(entity ecs.EntityID) (groups.GroupsComponent, bool) {
+	def := groups.GroupsComponent{}
+	parent, ok := t.world.Hierarchy().Parent(entity)
+	if !ok {
+		return def, false
+	}
+	groups, ok := t.groupsArray.Get(parent)
+	if !ok {
+		return def, false
+	}
+	return groups, ok
 }
 
-func NewSystem(
-	logger logger.Logger,
-	parentToolFactory ecs.ToolFactory[hierarchy.Tool],
-) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
-		inheritArray := ecs.GetComponentsArray[groups.InheritGroupsComponent](w)
-		groupsArray := ecs.GetComponentsArray[groups.GroupsComponent](w)
-		s := s{
-			logger,
-			w,
-			parentToolFactory.Build(w).Transaction(),
-			inheritArray,
-			groupsArray,
-			groupsArray.Transaction(),
+type save struct {
+	entity ecs.EntityID
+	groups groups.GroupsComponent
+}
+
+func (s tool) Init() {
+	dirtySet := ecs.NewDirtySet()
+	s.groupsArray.AddDependency(s.inheritArray)
+	s.groupsArray.AddDependency(s.world.Hierarchy().Component())
+
+	s.groupsArray.AddDirtySet(dirtySet)
+
+	s.groupsArray.BeforeGet(func() {
+		entities := dirtySet.Get()
+		if len(entities) == 0 {
+			return
 		}
-		return s.Init()
-	})
-}
+		children := []ecs.EntityID{}
 
-func (s s) Init() error {
-	onParentUpsert := func(ei []ecs.EntityID) {
-		for _, entity := range ei {
-			groups, err := s.groupsArray.GetComponent(entity)
-			if err != nil {
-				continue
-			}
-			parentObject := s.hierarchy.GetObject(entity)
-			children := parentObject.Children()
-			for _, child := range children.GetIndices() {
-				_, err := s.inheritArray.GetComponent(child)
-				if err != nil {
-					continue
+		saves := []save{}
+
+		for len(entities) != 0 || len(children) != 0 {
+			if len(entities) == 0 {
+				entities = children
+				for _, save := range saves {
+					s.groupsArray.Set(save.entity, save.groups)
 				}
-				s.groupsTransaction.SaveComponent(child, groups)
-			}
-		}
-		s.logger.Warn(ecs.FlushMany(s.groupsTransaction))
-	}
-	s.groupsArray.OnAdd(onParentUpsert)
-	s.groupsArray.OnChange(onParentUpsert)
 
-	onChildUpsert := func(ei []ecs.EntityID) {
-		for _, entity := range ei {
-			parentObject := s.hierarchy.GetObject(entity)
-			parent, err := parentObject.Parent().Get()
-			if err != nil {
+				dirtySet.Clear()
+				children = nil
+				saves = nil
+			}
+			entity := entities[0]
+			entities = entities[1:]
+
+			groups, ok := s.calculateGroup(entity)
+			if !ok {
 				continue
 			}
-			parentGroup, err := s.groupsArray.GetComponent(parent.Parent)
-			if err != nil {
+			if originalGroups, ok := s.groupsArray.Get(entity); ok && groups == originalGroups {
 				continue
 			}
-			s.groupsTransaction.SaveComponent(entity, parentGroup)
-		}
-		ecs.FlushMany(s.groupsTransaction)
-	}
-	childQuery := s.world.Query().
-		Track(ecs.GetComponentType(hierarchy.ParentComponent{})).
-		Require(ecs.GetComponentType(groups.InheritGroupsComponent{})).
-		Build()
-	childQuery.OnAdd(onChildUpsert)
-	childQuery.OnChange(onChildUpsert)
+			saves = append(saves, save{
+				entity: entity,
+				groups: groups,
+			})
 
-	return nil
+			for _, child := range s.world.Hierarchy().Children(entity).GetIndices() {
+				if _, ok := s.inheritArray.Get(child); ok {
+					children = append(children, child)
+				}
+			}
+		}
+
+		for _, save := range saves {
+			s.groupsArray.Set(save.entity, save.groups)
+		}
+		dirtySet.Clear()
+	})
 }

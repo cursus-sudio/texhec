@@ -2,6 +2,7 @@ package camera
 
 import (
 	"engine/modules/collider"
+	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/media/window"
 	"errors"
@@ -13,8 +14,27 @@ var (
 	ErrNotCamera error = errors.New("this isn't a camera")
 )
 
-type Tool interface {
+type ToolFactory ecs.ToolFactory[World, CameraTool]
+type CameraTool interface {
+	Camera() Interface
+}
+type World interface {
+	ecs.World
+	transform.TransformTool
+}
+type Interface interface {
 	GetObject(ecs.EntityID) (Object, error)
+	Component() ecs.ComponentsArray[Component]
+
+	Mobile() ecs.ComponentsArray[MobileCameraComponent]
+	Limits() ecs.ComponentsArray[CameraLimitsComponent]
+	Viewport() ecs.ComponentsArray[ViewportComponent]
+	NormalizedViewport() ecs.ComponentsArray[NormalizedViewportComponent]
+
+	Ortho() ecs.ComponentsArray[OrthoComponent]
+	OrthoResolution() ecs.ComponentsArray[OrthoResolutionComponent]
+	Perspective() ecs.ComponentsArray[PerspectiveComponent]
+	DynamicPerspective() ecs.ComponentsArray[DynamicPerspectiveComponent]
 }
 
 //

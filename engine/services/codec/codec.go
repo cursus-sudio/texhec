@@ -1,18 +1,12 @@
 package codec
 
 import (
-	"encoding/json"
+	"bytes"
+	"encoding/gob"
+	"engine/services/logger"
 	"errors"
-	"fmt"
 	"reflect"
 )
-
-type name string
-
-type Encoded struct {
-	Name  name            `json:"t"`
-	Bytes json.RawMessage `json:"v"`
-}
 
 type Codec interface {
 	Encode(any) ([]byte, error)
@@ -23,62 +17,39 @@ type Codec interface {
 }
 
 type codec struct {
-	typesByName map[name]reflect.Type
-	namesByType map[reflect.Type]name
+	logger logger.Logger
 }
 
-func NewCodec(types []reflect.Type) Codec {
-	typesByName := make(map[name]reflect.Type, len(types))
-	namesByType := make(map[reflect.Type]name, len(types))
+func newCodec(
+	logger logger.Logger,
+	types []reflect.Type,
+) Codec {
 	for _, codecType := range types {
-		typeName := name(codecType.String())
-
-		typesByName[typeName] = codecType
-		namesByType[codecType] = typeName
+		name := codecType.String()
+		value := reflect.New(codecType).Elem().Interface()
+		gob.RegisterName(name, value)
 	}
-	return &codec{
-		typesByName: typesByName,
-		namesByType: namesByType,
-	}
+	return &codec{logger}
 }
 
 func (codec *codec) Encode(model any) ([]byte, error) {
-	modelType := reflect.TypeOf(model)
-	name, ok := codec.namesByType[modelType]
-	if !ok {
-		return nil, errors.Join(
-			ErrTypeIsNotRegistered,
-			fmt.Errorf("codec is missing \"%v\" type", modelType.String()),
-		)
-	}
-	modelBytes, err := json.Marshal(model)
-	if err != nil {
+	var buffer bytes.Buffer
+	encoder := gob.NewEncoder(&buffer)
+	if err := encoder.Encode(&model); err != nil {
 		return nil, errors.Join(ErrCannotEncodeType, err)
 	}
-	encoded := Encoded{
-		Name:  name,
-		Bytes: modelBytes,
-	}
-	bytes, err := json.Marshal(encoded)
-	if err != nil {
-		return nil, errors.Join(ErrCannotEncodeType, err)
-	}
-	return bytes, nil
+	return buffer.Bytes(), nil
 }
 
-func (codec *codec) Decode(bytes []byte) (any, error) {
-	var encoded Encoded
-	if err := json.Unmarshal(bytes, &encoded); err != nil {
+func (codec *codec) Decode(bytesToDecode []byte) (any, error) {
+	var value any
+	if err := gob.
+		NewDecoder(bytes.NewReader(bytesToDecode)).
+		Decode(&value); err != nil {
 		return nil, errors.Join(ErrInvalidBytes, err)
 	}
-	modelType, ok := codec.typesByName[encoded.Name]
-	if !ok {
-		return nil, ErrTypeIsNotRegistered
+	if value == nil {
+		return nil, errors.Join(ErrTypeIsNotRegistered)
 	}
-	modelPtr := reflect.New(modelType)
-	if err := json.Unmarshal(encoded.Bytes, modelPtr.Interface()); err != nil {
-		return nil, errors.Join(ErrInvalidBytes, err)
-	}
-	model := modelPtr.Elem().Interface()
-	return model, nil
+	return value, nil
 }

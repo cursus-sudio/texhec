@@ -13,11 +13,11 @@ import (
 
 type errorLogger struct {
 	logger logger.Logger
-	render.Tool
+	render.RenderTool
 }
 
-func NewErrorLogger(logger logger.Logger, t render.Tool) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
+func NewErrorLogger(logger logger.Logger, t render.RenderTool) render.System {
+	return ecs.NewSystemRegister(func(w render.World) error {
 		s := &errorLogger{logger, t}
 		events.Listen(w.EventsBuilder(), s.Listen)
 		return nil
@@ -26,6 +26,6 @@ func NewErrorLogger(logger logger.Logger, t render.Tool) ecs.SystemRegister {
 
 func (logger *errorLogger) Listen(args frames.FrameEvent) {
 	if glErr := gl.GetError(); glErr != gl.NO_ERROR {
-		logger.logger.Warn(fmt.Errorf("opengl error: %x %s\n", glErr, glErrorStrings[glErr]))
+		logger.logger.Warn(fmt.Errorf("opengl error: %x %s", glErr, glErrorStrings[glErr]))
 	}
 }

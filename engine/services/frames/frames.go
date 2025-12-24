@@ -3,7 +3,6 @@ package frames
 import (
 	"engine/services/clock"
 	"errors"
-	"sync"
 	"time"
 
 	"github.com/ogiusek/events"
@@ -19,18 +18,17 @@ type Frames interface {
 }
 
 type frames struct {
-	Running  bool
-	FPS      int
-	RunMutex sync.RWMutex
-	Events   events.Events
-	Clock    clock.Clock
+	Running bool
+	TPS,
+	FPS int
+	TickProgress time.Duration
+	Events       events.Events
+	Clock        clock.Clock
 }
 
 func (frames *frames) StartLoop() {
-	frames.RunMutex.Lock()
-	defer frames.RunMutex.Unlock()
-
 	frameDuration := time.Second / time.Duration(frames.FPS)
+	tickDuration := time.Second / time.Duration(frames.TPS)
 	ticker := time.NewTicker(frameDuration)
 	defer ticker.Stop()
 
@@ -43,6 +41,11 @@ func (frames *frames) StartLoop() {
 
 		delta := currentTime.Sub(lastFrameTime)
 		event := NewFrameEvent(delta)
+		frames.TickProgress += delta
+		for frames.TickProgress > tickDuration {
+			frames.TickProgress -= tickDuration
+			events.Emit(frames.Events, TickEvent{tickDuration})
+		}
 		events.Emit(frames.Events, event)
 
 		lastFrameTime = currentTime
@@ -62,6 +65,4 @@ func (frames *frames) Run() error {
 
 func (frames *frames) Stop() {
 	frames.Running = false
-	frames.RunMutex.RLock()
-	frames.RunMutex.RUnlock()
 }

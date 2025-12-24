@@ -17,6 +17,8 @@ type CachableAsset interface {
 
 type AssetID string
 
+// add asset struct
+
 type Assets interface {
 	Get(AssetID) (any, error)
 	Release(...AssetID)
@@ -26,7 +28,6 @@ type Assets interface {
 type assets struct {
 	assetStorage AssetsStorage
 	cachedAssets AssetsCache
-	// cachers      map[reflect.Type]func(any) (CachedAsset, error)
 }
 
 func NewAssets(

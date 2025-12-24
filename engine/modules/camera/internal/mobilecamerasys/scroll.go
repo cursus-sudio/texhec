@@ -2,7 +2,6 @@ package mobilecamerasys
 
 import (
 	"engine/modules/camera"
-	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"engine/services/media/window"
@@ -14,76 +13,56 @@ import (
 )
 
 type scrollSystem struct {
-	window      window.Api
-	cameraCtors camera.Tool
-	logger      logger.Logger
+	window window.Api
+	logger logger.Logger
 
-	world         ecs.World
-	transformTool transform.Tool
-	orthoArray    ecs.ComponentsArray[camera.OrthoComponent]
-	query         ecs.LiveQuery
+	camera.World
+	camera.CameraTool
 
 	minZoom, maxZoom float32
 }
 
 func NewScrollSystem(
 	logger logger.Logger,
-	cameraCtors ecs.ToolFactory[camera.Tool],
-	transformTool ecs.ToolFactory[transform.Tool],
+	cameraCtors camera.ToolFactory,
 	window window.Api,
 	minZoom, maxZoom float32,
-) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
+) camera.System {
+	return ecs.NewSystemRegister(func(w camera.World) error {
 		s := &scrollSystem{
-			window:      window,
-			cameraCtors: cameraCtors.Build(w),
-			logger:      logger,
+			window: window,
+			logger: logger,
 
-			world:         w,
-			orthoArray:    ecs.GetComponentsArray[camera.OrthoComponent](w),
-			transformTool: transformTool.Build(w),
-			query: w.Query().Require(
-				ecs.GetComponentType(camera.MobileCameraComponent{}),
-			).Build(),
+			World:      w,
+			CameraTool: cameraCtors.Build(w),
 
 			minZoom: minZoom, // e.g. 0.1
 			maxZoom: maxZoom, // e.g. 5
 		}
-		events.ListenE(w.EventsBuilder(), s.Listen)
+		events.Listen(w.EventsBuilder(), s.Listen)
 		return nil
 	})
 }
 
-func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) error {
+func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) {
 	if event.Y == 0 {
-		return nil
+		return
 	}
 
 	var mul = float32(math.Pow(10, float64(event.Y)/50))
 
 	mousePos := s.window.GetMousePos()
 
-	transformTransaction := s.transformTool.Transaction()
-
-	for _, cameraEntity := range s.query.Entities() {
-		ortho, err := s.orthoArray.GetComponent(cameraEntity)
-		if err != nil {
+	for _, cameraEntity := range s.Camera().Mobile().GetEntities() {
+		ortho, ok := s.Camera().Ortho().Get(cameraEntity)
+		if !ok {
 			continue
 		}
 
-		transform := transformTransaction.GetObject(cameraEntity)
-		pos, err := transform.AbsolutePos().Get()
-		if err != nil {
-			s.logger.Warn(err)
-			continue
-		}
-		rot, err := transform.AbsoluteRotation().Get()
-		if err != nil {
-			s.logger.Warn(err)
-			continue
-		}
+		pos, _ := s.Transform().AbsolutePos().Get(cameraEntity)
+		rot, _ := s.Transform().AbsoluteRotation().Get(cameraEntity)
 
-		camera, err := s.cameraCtors.GetObject(cameraEntity)
+		camera, err := s.Camera().GetObject(cameraEntity)
 		if err != nil {
 			continue
 		}
@@ -94,9 +73,7 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) error {
 		ortho.Zoom *= mul
 		ortho.Zoom = max(min(ortho.Zoom, s.maxZoom), s.minZoom)
 
-		if err := s.orthoArray.SaveComponent(cameraEntity, ortho); err != nil {
-			return err
-		}
+		s.Camera().Ortho().Set(cameraEntity, ortho)
 
 		// read after
 		rayAfter := camera.ShootRay(mousePos)
@@ -107,9 +84,7 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) error {
 		rotationDifference := mgl32.QuatBetweenVectors(rayBefore.Direction, rayAfter.Direction)
 		rot.Rotation = rotationDifference.Mul(rot.Rotation)
 
-		transform.AbsolutePos().Set(pos)
-		transform.AbsoluteRotation().Set(rot)
+		s.Transform().SetAbsolutePos(cameraEntity, pos)
+		s.Transform().SetAbsoluteRotation(cameraEntity, rot)
 	}
-
-	return ecs.FlushMany(transformTransaction.Transactions()...)
 }

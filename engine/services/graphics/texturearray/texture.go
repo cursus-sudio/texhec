@@ -39,12 +39,6 @@ func (f *factory) New(asset datastructures.SparseArray[uint32, image.Image]) (Te
 	textureArray := TextureArray{}
 	images := datastructures.NewSparseArray[uint32, image.Image]()
 
-	bounds := []image.Rectangle{}
-	for _, i := range asset.GetIndices() {
-		image, _ := asset.Get(i)
-		bounds = append(bounds, image.Bounds())
-	}
-
 	w, h := 0, 0
 	if len(asset.GetValues()) != 0 {
 		bounds := asset.GetValues()[0].Bounds()

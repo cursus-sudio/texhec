@@ -6,82 +6,85 @@ import (
 	"engine/modules/groups"
 	"engine/modules/inputs"
 	"engine/modules/transform"
+	"engine/modules/uuid"
 	"engine/services/ecs"
 	"engine/services/logger"
 )
 
-func TileColliderSystem(
-	logger logger.Logger,
-	// transform
-	tileSize int32,
+func TileColliderSystem(logger logger.Logger,
+	tileSize int32, // transform
 	gridDepth float32,
-	// groups
-	tileGroups groups.GroupsComponent,
-	// collider
-	colliderComponent collider.ColliderComponent,
-) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
+	tileGroups groups.GroupsComponent, // groups
+	colliderComponent collider.Component, // collider
+	uuidFactory uuid.Factory, // tools
+) tile.System {
+	return ecs.NewSystemRegister(func(w tile.World) error {
 		tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w)
-		tileColliderArray := ecs.GetComponentsArray[ColliderComponent](w)
 
-		leftClickArray := ecs.GetComponentsArray[inputs.MouseLeftClickComponent](w)
-		collidersArray := ecs.GetComponentsArray[collider.ColliderComponent](w)
-
-		posArray := ecs.GetComponentsArray[transform.PosComponent](w)
-		sizeArray := ecs.GetComponentsArray[transform.SizeComponent](w)
-
-		groupsArray := ecs.GetComponentsArray[groups.GroupsComponent](w)
-
-		onUpsert := func(ei []ecs.EntityID) {
-			// groups
-			groupsTransaction := groupsArray.Transaction()
+		tilePosDirtySet := ecs.NewDirtySet()
+		tilePosArray.AddDirtySet(tilePosDirtySet)
+		w.UUID().Component().BeforeGet(func() {
+			ei := tilePosDirtySet.Get()
+			if len(ei) == 0 {
+				return
+			}
 			for _, entity := range ei {
-				groupsTransaction.SaveComponent(entity, tileGroups)
+				if _, ok := w.UUID().Component().Get(entity); ok {
+					continue
+				}
+				comp := uuid.New(uuidFactory.NewUUID())
+				w.UUID().Component().Set(entity, comp)
+			}
+		})
+
+		//
+
+		tileColliderDirtySet := ecs.NewDirtySet()
+		tileColliderArray := ecs.GetComponentsArray[ColliderComponent](w)
+		tileColliderArray.AddDirtySet(tileColliderDirtySet)
+		applyTileCollider := func() {
+			ei := tileColliderDirtySet.Get()
+			if len(ei) == 0 {
+				return
+			}
+			// groups
+			for _, entity := range ei {
+				w.Groups().Component().Set(entity, tileGroups)
 			}
 
 			// pos
-			posTransaction := posArray.Transaction()
 			for _, entity := range ei {
-				pos, err := tilePosArray.GetComponent(entity)
-				if err != nil {
+				pos, ok := tilePosArray.Get(entity)
+				if !ok {
 					continue
 				}
-				posTransaction.SaveComponent(entity, transform.NewPos(
+				transformPos := transform.NewPos(
 					float32(tileSize)*float32(pos.X)+float32(tileSize)/2,
 					float32(tileSize)*float32(pos.Y)+float32(tileSize)/2,
 					gridDepth+float32(pos.Layer),
-				))
+				)
+				w.Transform().Pos().Set(entity, transformPos)
+				comp := inputs.NewMouseLeftClick(tile.NewTileClickEvent(pos))
+				w.Inputs().MouseLeft().Set(entity, comp)
 			}
 
 			// transform
-			sizeTransaction := sizeArray.Transaction()
 			for _, entity := range ei {
-				sizeTransaction.SaveComponent(entity, transform.NewSize(float32(tileSize), float32(tileSize), 1))
+				w.Transform().Size().Set(entity, transform.NewSize(float32(tileSize), float32(tileSize), 1))
 			}
 
 			// collider
-			colliderTransaction := collidersArray.Transaction()
 			for _, entity := range ei {
-				colliderTransaction.SaveComponent(entity, colliderComponent)
+				w.Collider().Component().Set(entity, colliderComponent)
 			}
-
-			// mouse
-			leftClickTransaction := leftClickArray.Transaction()
-			for _, entity := range ei {
-				comp := inputs.NewMouseLeftClick(tile.NewTileClickEvent(entity))
-				leftClickTransaction.SaveComponent(entity, comp)
-			}
-			logger.Warn(ecs.FlushMany(
-				groupsTransaction,
-				posTransaction,
-				sizeTransaction,
-				leftClickTransaction,
-				colliderTransaction,
-			))
 		}
 
-		tileColliderArray.OnAdd(onUpsert)
-		tileColliderArray.OnChange(onUpsert)
+		w.Collider().Component().BeforeGet(applyTileCollider)
+		w.Transform().Size().BeforeGet(applyTileCollider)
+		w.Transform().Pos().BeforeGet(applyTileCollider)
+		w.Inputs().MouseLeft().BeforeGet(applyTileCollider)
+		w.Groups().Component().BeforeGet(applyTileCollider)
+
 		return nil
 	})
 }

@@ -3,44 +3,41 @@ package hierarchy
 import (
 	"engine/services/datastructures"
 	"engine/services/ecs"
+	"errors"
 )
 
-type ParentComponent struct {
+var (
+	ErrParentCycle error = errors.New("parent cycle is not allowed")
+)
+
+type Component struct {
 	Parent ecs.EntityID
 }
 
-func NewParent(parent ecs.EntityID) ParentComponent { return ParentComponent{parent} }
+func NewParent(parent ecs.EntityID) Component { return Component{parent} }
 
 //
 
-type Tool interface {
-	Transaction() Transaction
-	// parent can only be removed
-	// OnParentRemove([]ecs.EntityID)
-	// OnChildAppend([]ecs.EntityID)
-	// OnChildRemove([]ecs.EntityID)
-	// OnFlatChildAppend([]ecs.EntityID)
-	// OnFlatChildRemove([]ecs.EntityID)
+type ToolFactory ecs.ToolFactory[World, HierarchyTool]
+type HierarchyTool interface {
+	Hierarchy() Interface
 }
-
-type Transaction interface {
-	GetObject(ecs.EntityID) Object
-	Transactions() []ecs.AnyComponentsArrayTransaction
-	Flush() error
+type World interface {
+	ecs.World
 }
-
-// absolute components return errors only in case when
-// entity is relative to parent that doesn't exist
-type Object interface {
-	Parent() ecs.EntityComponent[ParentComponent]
+type Interface interface {
+	Component() ecs.ComponentsArray[Component]
 
 	// returns true if is child of any parent doesn't matter the depth
-	IsChildOf(parent ecs.EntityID) bool
-	// from closest to furthest
-	GetParents() datastructures.SparseSet[ecs.EntityID]
-	GetOrderedParents() []ecs.EntityID
+	IsChildOf(child ecs.EntityID, parent ecs.EntityID) bool
+	SetParent(child ecs.EntityID, parent ecs.EntityID)
+	Parent(child ecs.EntityID) (ecs.EntityID, bool)
 
-	Children() datastructures.SparseSetReader[ecs.EntityID]
+	// from closest to furthest
+	GetParents(child ecs.EntityID) datastructures.SparseSet[ecs.EntityID]
+	GetOrderedParents(child ecs.EntityID) []ecs.EntityID
+
+	Children(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID]
 	// includes children of children
-	FlatChildren() datastructures.SparseSetReader[ecs.EntityID]
+	FlatChildren(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID]
 }

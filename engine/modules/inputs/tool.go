@@ -1,32 +1,35 @@
 package inputs
 
-import "engine/services/ecs"
+import (
+	"engine/modules/camera"
+	"engine/modules/collider"
+	"engine/services/ecs"
+)
 
-type Tool interface {
-	Transaction() Transaction
+type ToolFactory ecs.ToolFactory[World, InputsTool]
+type InputsTool interface {
+	Inputs() Interface
 }
-
-type Transaction interface {
-	GetObject(ecs.EntityID) Object
-	Transactions() []ecs.AnyComponentsArrayTransaction
-	Flush() error
+type World interface {
+	ecs.World
+	collider.ColliderTool
+	camera.CameraTool
 }
+type Interface interface {
+	Hovered() ecs.ComponentsArray[HoveredComponent]
+	Dragged() ecs.ComponentsArray[DraggedComponent]
 
-type Object interface {
-	Hovered() ecs.EntityComponent[HoveredComponent]
-	Dragged() ecs.EntityComponent[DraggedComponent]
+	KeepSelected() ecs.ComponentsArray[KeepSelectedComponent]
 
-	KeepSelected() ecs.EntityComponent[KeepSelectedComponent]
+	MouseLeft() ecs.ComponentsArray[MouseLeftClickComponent]
+	MouseDoubleLeft() ecs.ComponentsArray[MouseDoubleLeftClickComponent]
 
-	MouseLeftClick() ecs.EntityComponent[MouseLeftClickComponent]
-	MouseDoubleLeftClick() ecs.EntityComponent[MouseDoubleLeftClickComponent]
+	MouseRight() ecs.ComponentsArray[MouseRightClickComponent]
+	MouseDoubleRight() ecs.ComponentsArray[MouseDoubleRightClickComponent]
 
-	MouseRightClick() ecs.EntityComponent[MouseRightClickComponent]
-	MouseDoubleRightClick() ecs.EntityComponent[MouseDoubleRightClickComponent]
+	MouseEnter() ecs.ComponentsArray[MouseEnterComponent]
+	MouseLeave() ecs.ComponentsArray[MouseLeaveComponent]
 
-	MouseEnter() ecs.EntityComponent[MouseEnterComponent]
-	MouseLeave() ecs.EntityComponent[MouseLeaveComponent]
-
-	MouseHover() ecs.EntityComponent[MouseHoverComponent]
-	MouseDrag() ecs.EntityComponent[MouseDragComponent]
+	MouseHover() ecs.ComponentsArray[MouseHoverComponent]
+	MouseDrag() ecs.ComponentsArray[MouseDragComponent]
 }

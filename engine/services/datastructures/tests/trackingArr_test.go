@@ -12,7 +12,7 @@ func TestTrackingArrRemove(t *testing.T) {
 	}
 	removed := []int{6}
 	for _, remove := range removed {
-		s.Remove(remove)
+		_ = s.Remove(remove)
 		// s.RemoveElements(remove)
 	}
 arr:

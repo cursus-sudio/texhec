@@ -1,14 +1,11 @@
 package textpkg
 
 import (
-	"engine/modules/camera"
 	"engine/modules/text"
 	"engine/modules/text/internal/textrenderer"
 	"engine/modules/text/internal/texttool"
-	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/datastructures"
-	"engine/services/ecs"
 	"engine/services/graphics/texturearray"
 	"engine/services/graphics/vao/vbo"
 	"engine/services/logger"
@@ -20,7 +17,7 @@ import (
 )
 
 type pkg struct {
-	defaultFontFamily text.FontFamilyComponent
+	defaultFontFamily func(c ioc.Dic) text.FontFamilyComponent
 	defaultFontSize   text.FontSizeComponent
 	// defaultOverflow   text.Overflow
 	defaultBreak     text.BreakComponent
@@ -33,7 +30,7 @@ type pkg struct {
 }
 
 func Package(
-	defaultFontFamily text.FontFamilyComponent,
+	defaultFontFamily func(c ioc.Dic) text.FontFamilyComponent,
 	defaultFontSize text.FontSizeComponent,
 	// defaultOverflow text.Overflow,
 	defaultBreak text.BreakComponent,
@@ -63,12 +60,13 @@ func Package(
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[text.Tool] {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) text.ToolFactory {
 		return texttool.NewTool(ioc.Get[logger.Logger](c))
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) textrenderer.FontService {
 		return textrenderer.NewFontService(
 			ioc.Get[assets.Assets](c),
+			ioc.Get[assets.AssetsCache](c),
 			pkg.usedGlyphs,
 			pkg.faceOptions,
 			ioc.Get[logger.Logger](c),
@@ -79,11 +77,11 @@ func (pkg pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) textrenderer.LayoutServiceFactory {
 		return textrenderer.NewLayoutServiceFactory(
+			ioc.Get[text.ToolFactory](c),
 			ioc.Get[logger.Logger](c),
 			ioc.Get[textrenderer.FontService](c),
 			ioc.Get[textrenderer.FontKeys](c),
-			ioc.Get[ecs.ToolFactory[transform.Tool]](c),
-			pkg.defaultFontFamily,
+			pkg.defaultFontFamily(c),
 			pkg.defaultFontSize,
 			// pkg.defaultOverflow,
 			pkg.defaultBreak,
@@ -97,13 +95,12 @@ func (pkg pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) text.System {
 		return textrenderer.NewTextRendererRegister(
-			ioc.Get[ecs.ToolFactory[camera.Tool]](c),
-			ioc.Get[ecs.ToolFactory[transform.Tool]](c),
+			ioc.Get[text.ToolFactory](c),
 			ioc.Get[textrenderer.FontService](c),
 			ioc.Get[vbo.VBOFactory[textrenderer.Glyph]](c),
 			ioc.Get[textrenderer.LayoutServiceFactory](c),
 			ioc.Get[logger.Logger](c),
-			pkg.defaultFontFamily.FontFamily,
+			pkg.defaultFontFamily(c).FontFamily,
 			pkg.defaultColor,
 			ioc.Get[texturearray.Factory](c),
 			ioc.Get[textrenderer.FontKeys](c),
@@ -124,7 +121,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 				gl.VertexAttribIPointerWithOffset(i, 1, gl.INT,
 					int32(unsafe.Sizeof(textrenderer.Glyph{})), uintptr(unsafe.Offsetof(textrenderer.Glyph{}.Glyph)))
 				gl.EnableVertexAttribArray(i)
-				i++
 			})
 			return vbo
 		}

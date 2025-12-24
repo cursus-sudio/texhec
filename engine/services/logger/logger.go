@@ -7,7 +7,7 @@ import (
 
 // nil errors are not warned or fatal
 type Logger interface {
-	Info(message string)
+	Info(format string, a ...any)
 	Warn(err error)
 	Fatal(err error)
 }
@@ -19,9 +19,15 @@ type logger struct {
 	Panic        func(string)
 }
 
-func (logger *logger) Info(message string) {
+func (logger *logger) Info(format string, a ...any) {
+	message := fmt.Sprintf(format, a...)
 	msg := fmt.Sprintf("\033[34m[ Info ]\033[0m %s \033[34m\n%s\033[0m\n", logger.Clock.Now(), message)
 	logger.Print(msg)
+}
+
+func TestWarning(logger Logger) {
+	// print("hihi %v")
+	logger.Info("hihi %v")
 }
 
 func (logger *logger) Warn(err error) {

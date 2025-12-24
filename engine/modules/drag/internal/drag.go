@@ -1,10 +1,7 @@
 package internal
 
 import (
-	"engine/modules/camera"
 	"engine/modules/drag"
-	"engine/modules/transform"
-	"engine/services/ecs"
 	"engine/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -12,51 +9,36 @@ import (
 )
 
 type s struct {
-	logger               logger.Logger
-	cameraToolFactory    ecs.ToolFactory[camera.Tool]
-	transformToolFactory ecs.ToolFactory[transform.Tool]
+	logger logger.Logger
 }
 
 func NewSystem(
 	logger logger.Logger,
-	cameraToolFactory ecs.ToolFactory[camera.Tool],
-	transformToolFactory ecs.ToolFactory[transform.Tool],
-) ecs.SystemRegister {
-	return s{logger, cameraToolFactory, transformToolFactory}
+) drag.System {
+	return s{logger}
 }
 
-func (s s) Register(w ecs.World) error {
-	cameraTool := s.cameraToolFactory.Build(w)
-	transformTransaction := s.transformToolFactory.Build(w).Transaction()
+func (s s) Register(w drag.World) error {
 	events.Listen(w.EventsBuilder(), func(event drag.DraggableEvent) {
-		camera, err := cameraTool.GetObject(event.Drag.Camera)
+		camera, err := w.Camera().GetObject(event.Drag.Camera)
 		if err != nil {
 			return
 		}
+		entity := event.Entity
 
-		transform := transformTransaction.GetObject(event.Entity)
-		pos, err := transform.AbsolutePos().Get()
-		if err != nil {
-			s.logger.Warn(err)
-			return
-		}
-		rot, err := transform.AbsoluteRotation().Get()
-		if err != nil {
-			s.logger.Warn(err)
-			return
-		}
+		pos, _ := w.Transform().AbsolutePos().Get(entity)
+		rot, _ := w.Transform().AbsoluteRotation().Get(entity)
 
 		fromRay := camera.ShootRay(event.Drag.From)
 		toRay := camera.ShootRay(event.Drag.To)
 
 		posDiff := toRay.Pos.Sub(fromRay.Pos)
 		pos.Pos = pos.Pos.Add(posDiff)
-		transform.AbsolutePos().Set(pos)
+		w.Transform().SetAbsolutePos(entity, pos)
 
 		rotDiff := mgl32.QuatBetweenVectors(toRay.Direction, fromRay.Direction)
 		rot.Rotation = rot.Rotation.Mul(rotDiff)
-		transform.AbsoluteRotation().Set(rot)
-		s.logger.Warn(ecs.FlushMany(transformTransaction.Transactions()...))
+		w.Transform().SetAbsoluteRotation(entity, rot)
 	})
 	return nil
 }

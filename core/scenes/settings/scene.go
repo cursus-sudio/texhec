@@ -2,22 +2,17 @@ package settingsscene
 
 import (
 	gameassets "core/assets"
+	"core/modules/settings"
 	gamescenes "core/scenes"
-	"engine/modules/audio"
 	"engine/modules/camera"
-	"engine/modules/collider"
 	"engine/modules/genericrenderer"
-	"engine/modules/hierarchy"
-	"engine/modules/inputs"
 	"engine/modules/render"
-	scenessys "engine/modules/scenes"
 	"engine/modules/text"
 	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/scenes"
-	"slices"
-	"strings"
 
+	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -29,65 +24,38 @@ func Package() ioc.Pkg {
 
 func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.SettingsBuilder) gamescenes.SettingsBuilder {
-		b.OnLoad(func(world scenes.SceneCtx) {
+		gameassets := ioc.Get[gameassets.GameAssets](c)
+		worldResolver := ioc.Get[gamescenes.WorldResolver](c)
+		b.OnLoad(func(rawWorld ecs.World) {
+			world := worldResolver(rawWorld)
 			cameraEntity := world.NewEntity()
-			ecs.SaveComponent(world, cameraEntity, camera.NewOrtho(-1000, +1000))
+			world.Camera().Ortho().Set(cameraEntity, camera.NewOrtho(-1000, +1000))
 
 			signature := world.NewEntity()
-			ecs.SaveComponent(world, signature, transform.NewPos(5, 5, 0))
-			ecs.SaveComponent(world, signature, transform.NewSize(100, 50, 1))
-			ecs.SaveComponent(world, signature, transform.NewPivotPoint(0, .5, .5))
-			ecs.SaveComponent(world, signature, hierarchy.NewParent(cameraEntity))
-			ecs.SaveComponent(world, signature, transform.NewParent(transform.RelativePos))
-			ecs.SaveComponent(world, signature, transform.NewParentPivotPoint(0, 0, .5))
+			world.Transform().Pos().Set(signature, transform.NewPos(5, 5, 0))
+			world.Transform().Size().Set(signature, transform.NewSize(100, 50, 1))
+			world.Transform().PivotPoint().Set(signature, transform.NewPivotPoint(0, .5, .5))
+			world.Hierarchy().SetParent(signature, cameraEntity)
+			world.Transform().Parent().Set(signature, transform.NewParent(transform.RelativePos))
+			world.Transform().ParentPivotPoint().Set(signature, transform.NewParentPivotPoint(0, 0, .5))
 
-			ecs.SaveComponent(world, signature, text.TextComponent{Text: "settings"})
-			ecs.SaveComponent(world, signature, text.FontSizeComponent{FontSize: 32})
-			ecs.SaveComponent(world, signature, text.BreakComponent{Break: text.BreakNone})
+			world.Text().Content().Set(signature, text.TextComponent{Text: "settings"})
+			world.Text().FontSize().Set(signature, text.FontSizeComponent{FontSize: 32})
+			world.Text().Break().Set(signature, text.BreakComponent{Break: text.BreakNone})
 
 			background := world.NewEntity()
-			ecs.SaveComponent(world, background, hierarchy.NewParent(cameraEntity))
-			ecs.SaveComponent(world, background, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
-			ecs.SaveComponent(world, background, render.NewMesh(gameassets.SquareMesh))
-			ecs.SaveComponent(world, background, render.NewTexture(gameassets.GroundTileTextureID))
-			ecs.SaveComponent(world, background, genericrenderer.PipelineComponent{})
+			world.Hierarchy().SetParent(background, cameraEntity)
+			world.Transform().Parent().Set(background, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
+			world.Render().Mesh().Set(background, render.NewMesh(gameassets.SquareMesh))
+			world.Render().Texture().Set(background, render.NewTexture(gameassets.Tiles.Ground))
+			world.GenericRenderer().Pipeline().Set(background, genericrenderer.PipelineComponent{})
 
 			buttonArea := world.NewEntity()
-			ecs.SaveComponent(world, buttonArea, transform.NewSize(500, 200, 2))
-			ecs.SaveComponent(world, buttonArea, hierarchy.NewParent(cameraEntity))
-			ecs.SaveComponent(world, buttonArea, transform.NewParent(transform.RelativePos))
+			world.Transform().Size().Set(buttonArea, transform.NewSize(500, 200, 2))
+			world.Hierarchy().SetParent(buttonArea, cameraEntity)
+			world.Transform().Parent().Set(buttonArea, transform.NewParent(transform.RelativePos))
 
-			type Button struct {
-				Text    string
-				OnClick any
-			}
-			buttons := []Button{
-				{Text: "mute", OnClick: audio.NewPlayEvent(gamescenes.EffectChannel, gameassets.AudioID)},
-				{Text: "keybinds", OnClick: nil},
-				{Text: "return to menu", OnClick: scenessys.NewChangeSceneEvent(gamescenes.MenuID)},
-			}
-			slices.Reverse(buttons)
-
-			for i, button := range buttons {
-				btn := world.NewEntity()
-				normalizedIndex := float32(i) / (float32(len(buttons)) - 1)
-				ecs.SaveComponent(world, btn, transform.NewSize(500, 50, 2))
-				ecs.SaveComponent(world, btn, hierarchy.NewParent(buttonArea))
-				ecs.SaveComponent(world, btn, transform.NewParent(transform.RelativePos))
-				ecs.SaveComponent(world, btn, transform.NewParentPivotPoint(.5, normalizedIndex, .5))
-
-				ecs.SaveComponent(world, btn, render.NewMesh(gameassets.SquareMesh))
-				ecs.SaveComponent(world, btn, render.NewTexture(gameassets.WaterTileTextureID))
-				ecs.SaveComponent(world, btn, genericrenderer.PipelineComponent{})
-
-				ecs.SaveComponent(world, btn, inputs.NewMouseLeftClick(button.OnClick))
-				ecs.SaveComponent(world, btn, collider.NewCollider(gameassets.SquareColliderID))
-				ecs.SaveComponent(world, btn, inputs.KeepSelectedComponent{})
-
-				ecs.SaveComponent(world, btn, text.TextComponent{Text: strings.ToUpper(button.Text)})
-				ecs.SaveComponent(world, btn, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
-				ecs.SaveComponent(world, btn, text.FontSizeComponent{FontSize: 32})
-			}
+			events.Emit(world.Events(), settings.EnterSettingsForParentEvent{Parent: buttonArea})
 		})
 
 		return b

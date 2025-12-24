@@ -4,6 +4,7 @@ import (
 	"engine/modules/audio"
 	"engine/modules/audio/internal"
 	"engine/services/assets"
+	"engine/services/codec"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -13,6 +14,16 @@ type pkg struct{}
 func Package() ioc.Pkg { return pkg{} }
 
 func (pkg) Register(b ioc.Builder) {
+	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
+		return b.
+			// events
+			Register(audio.StopEvent{}).
+			Register(audio.PlayEvent{}).
+			Register(audio.QueueEvent{}).
+			Register(audio.QueueEndlessEvent{}).
+			Register(audio.SetMasterVolumeEvent{}).
+			Register(audio.SetChannelVolumeEvent{})
+	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) internal.Service {
 		return internal.NewService(
 			ioc.Get[assets.Assets](c),

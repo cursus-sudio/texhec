@@ -10,12 +10,14 @@ type AudioAsset interface {
 }
 
 type audioAsset struct {
-	chunk *mix.Chunk
+	chunk  *mix.Chunk
+	source []byte
 }
 
-func NewAudioAsset(chunk *mix.Chunk) AudioAsset {
+func NewAudioAsset(chunk *mix.Chunk, source []byte) AudioAsset {
 	return &audioAsset{
-		chunk: chunk,
+		chunk:  chunk,
+		source: source,
 	}
 }
 

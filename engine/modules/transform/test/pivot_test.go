@@ -6,39 +6,15 @@ import (
 )
 
 func TestPivot(t *testing.T) {
-	setup := NewSetup()
-	entity := setup.World.NewEntity()
-	entityTransform := setup.Transaction.GetObject(entity)
+	setup := NewSetup(t)
+	entity := setup.NewEntity()
 
-	expectPos := func(expectedPos transform.PosComponent) {
-		pos, err := entityTransform.AbsolutePos().Get()
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if pos != expectedPos {
-			t.Errorf("expected pos %v but has %v", expectedPos, pos)
-		}
-	}
+	setup.Transform().Size().Set(entity, transform.NewSize(10, 10, 10))
+	setup.expectAbsolutePos(entity, transform.NewPos(0, 0, 0))
 
-	entityTransform.Size().Set(transform.NewSize(10, 10, 10))
-	if err := setup.Transaction.Flush(); err != nil {
-		t.Error(err)
-		return
-	}
-	expectPos(transform.NewPos(0, 0, 0))
+	setup.Transform().PivotPoint().Set(entity, transform.NewPivotPoint(0, 0, 0))
+	setup.expectAbsolutePos(entity, transform.NewPos(5, 5, 5))
 
-	entityTransform.PivotPoint().Set(transform.NewPivotPoint(0, 0, 0))
-	if err := setup.Transaction.Flush(); err != nil {
-		t.Error(err)
-		return
-	}
-	expectPos(transform.NewPos(5, 5, 5))
-
-	entityTransform.PivotPoint().Set(transform.NewPivotPoint(1, 1, 1))
-	if err := setup.Transaction.Flush(); err != nil {
-		t.Error(err)
-		return
-	}
-	expectPos(transform.NewPos(-5, -5, -5))
+	setup.Transform().PivotPoint().Set(entity, transform.NewPivotPoint(1, 1, 1))
+	setup.expectAbsolutePos(entity, transform.NewPos(-5, -5, -5))
 }

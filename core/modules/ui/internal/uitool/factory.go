@@ -1,14 +1,8 @@
 package uitool
 
 import (
-	"core/modules/tile"
+	gameassets "core/assets"
 	"core/modules/ui"
-	"engine/modules/animation"
-	"engine/modules/camera"
-	"engine/modules/hierarchy"
-	"engine/modules/render"
-	"engine/modules/text"
-	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"sync"
@@ -17,35 +11,21 @@ import (
 
 func NewToolFactory(
 	animationDuration time.Duration,
-	showAnimation animation.AnimationID,
-	hideAnimation animation.AnimationID,
+	gameAssets gameassets.GameAssets,
 	logger logger.Logger,
-	cameraToolFactory ecs.ToolFactory[camera.Tool],
-	transformToolFactory ecs.ToolFactory[transform.Tool],
-	tileToolFactory ecs.ToolFactory[tile.Tool],
-	textToolFactory ecs.ToolFactory[text.Tool],
-	renderToolFactory ecs.ToolFactory[render.Tool],
-	hierarchyToolFactory ecs.ToolFactory[hierarchy.Tool],
-) ecs.ToolFactory[ui.Tool] {
+) ui.ToolFactory {
 	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(w ecs.World) ui.Tool {
+	return ecs.NewToolFactory(func(w ui.World) ui.UiTool {
 		mutex.Lock()
 		defer mutex.Unlock()
-		if t, err := ecs.GetGlobal[tool](w); err == nil {
+		if t, ok := ecs.GetGlobal[tool](w); ok {
 			return t
 		}
 		t := NewTool(
 			animationDuration,
-			showAnimation,
-			hideAnimation,
 			w,
+			gameAssets,
 			logger,
-			cameraToolFactory,
-			transformToolFactory,
-			tileToolFactory,
-			textToolFactory,
-			renderToolFactory,
-			hierarchyToolFactory,
 		)
 		w.SaveGlobal(t)
 		return t

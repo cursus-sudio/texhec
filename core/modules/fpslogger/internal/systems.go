@@ -22,7 +22,7 @@ type logsSystem struct {
 func NewFpsLoggerSystem(
 	sceneMagener scenes.SceneManager,
 	console console.Console,
-) ecs.SystemRegister {
+) ecs.SystemRegister[ecs.World] {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := &logsSystem{
 			SceneManager: sceneMagener,
@@ -31,14 +31,14 @@ func NewFpsLoggerSystem(
 
 			frames: make([]time.Time, 60),
 		}
-		events.ListenE(w.EventsBuilder(), s.Listen)
+		events.Listen(w.EventsBuilder(), s.Listen)
 		return nil
 	})
 }
 
 var format = "02-01-2006 15:04:05"
 
-func (system *logsSystem) Listen(args frames.FrameEvent) error {
+func (system *logsSystem) Listen(args frames.FrameEvent) {
 	now := time.Now()
 	latestAcceptableFrame := now.Add(-time.Second)
 	startIndex := 0
@@ -58,5 +58,4 @@ func (system *logsSystem) Listen(args frames.FrameEvent) error {
 
 	system.Console.Print(text)
 	system.Console.Flush()
-	return nil
 }

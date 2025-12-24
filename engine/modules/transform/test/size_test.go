@@ -3,41 +3,20 @@ package test
 import (
 	"engine/modules/transform"
 	"testing"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
-func TestAbsoluteSize(t *testing.T) {
-	setup := NewSetup()
-	entity := setup.World.NewEntity()
+func TestSize(t *testing.T) {
+	setup := NewSetup(t)
+	entity := setup.NewEntity()
 
-	expectSize := func(expectedSize transform.SizeComponent) {
-		entityTransform := setup.Transaction.GetObject(entity)
-		size, err := entityTransform.AbsoluteSize().Get()
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if size != expectedSize {
-			t.Errorf("expected size %v but has %v", expectedSize, size)
-		}
-	}
+	setup.Transform().Size().Set(entity, transform.NewSize(10, 10, 10))
+	setup.expectAbsoluteSize(entity, transform.NewSize(10, 10, 10))
 
-	{
-		entityTransform := setup.Transaction.GetObject(entity)
-		entityTransform.Size().Set(transform.NewSize(10, 10, 10))
-		if err := setup.Transaction.Flush(); err != nil {
-			t.Error(err)
-			return
-		}
-		expectSize(transform.NewSize(10, 10, 10))
-	}
+	setup.Transform().Size().Set(entity, transform.NewSize(15, 15, 15))
+	setup.expectAbsoluteSize(entity, transform.NewSize(15, 15, 15))
 
-	{
-		entityTransform := setup.Transaction.GetObject(entity)
-		entityTransform.Size().Set(transform.NewSize(15, 15, 15))
-		if err := setup.Transaction.Flush(); err != nil {
-			t.Error(err)
-			return
-		}
-		expectSize(transform.NewSize(15, 15, 15))
-	}
+	setup.Transform().SetAbsoluteSize(entity, transform.AbsoluteSizeComponent{Size: mgl32.Vec3{5, 5, 5}})
+	setup.expectAbsoluteSize(entity, transform.NewSize(5, 5, 5))
 }

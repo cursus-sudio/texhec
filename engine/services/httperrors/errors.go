@@ -3,7 +3,7 @@ package httperrors
 import "errors"
 
 var (
-	ErrHttp = errors.New("Http error")
+	ErrHttp = errors.New("http error")
 )
 
 // services errors

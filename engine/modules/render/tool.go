@@ -1,20 +1,23 @@
 package render
 
-import "engine/services/ecs"
+import (
+	"engine/modules/transform"
+	"engine/services/ecs"
+)
 
-type Tool interface {
-	Transaction() Transaction
+type ToolFactory ecs.ToolFactory[World, RenderTool]
+type RenderTool interface {
+	Render() Interface
+}
+type World interface {
+	ecs.World
+	transform.TransformTool
+}
+type Interface interface {
+	Color() ecs.ComponentsArray[ColorComponent]
+	Mesh() ecs.ComponentsArray[MeshComponent]
+	Texture() ecs.ComponentsArray[TextureComponent]
+	TextureFrame() ecs.ComponentsArray[TextureFrameComponent]
+
 	Error() error
-}
-
-type Transaction interface {
-	GetObject(ecs.EntityID) Object
-	Transactions() []ecs.AnyComponentsArrayTransaction
-	Flush() error
-}
-
-type Object interface {
-	Color() ecs.EntityComponent[ColorComponent]
-	Mesh() ecs.EntityComponent[MeshComponent]
-	Texture() ecs.EntityComponent[TextureComponent]
 }

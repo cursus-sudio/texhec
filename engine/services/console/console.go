@@ -39,7 +39,6 @@ func (console *console) Flush() {
 	}
 	console.print(flushed + console.permanent + console.toPrint)
 	console.permanent = ""
-	flushed += console.toPrint
 	console.previousDrawnLines = strings.Count(console.toPrint, "\n")
 	console.toPrint = ""
 }

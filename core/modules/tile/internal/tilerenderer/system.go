@@ -1,8 +1,8 @@
 package tilerenderer
 
 import (
+	"core/modules/tile"
 	_ "embed"
-	"engine/modules/camera"
 	"engine/modules/groups"
 	"engine/modules/render"
 	"engine/services/datastructures"
@@ -14,7 +14,6 @@ import (
 	"engine/services/logger"
 	"engine/services/media/window"
 	"image"
-	"sync"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
@@ -32,6 +31,14 @@ type TileType struct {
 	Texture image.Image
 }
 
+type layer struct {
+	vao           vao.VAO
+	vertices      vbo.VBOSetter[TileData]
+	verticesCount int32
+	changed       bool
+	tiles         datastructures.SparseArray[ecs.EntityID, TileData]
+}
+
 type system struct {
 	program   program.Program
 	locations locations
@@ -39,23 +46,17 @@ type system struct {
 
 	logger logger.Logger
 
-	textureArray  texturearray.TextureArray
-	vao           vao.VAO
-	vertices      vbo.VBOSetter[TileData]
-	verticesCount int32
+	textureArray texturearray.TextureArray
+	rendered     datastructures.SparseArray[ecs.EntityID, tile.PosComponent]
+	layers       []*layer
 
 	tileSize  int32
 	gridDepth float32
 
-	world       ecs.World
-	cameraQuery ecs.LiveQuery
-	groupsArray ecs.ComponentsArray[groups.GroupsComponent]
-	gridGroups  groups.GroupsComponent
-	cameraCtors camera.Tool
-
-	changed     bool
-	changeMutex sync.Locker
-	tiles       datastructures.SparseArray[ecs.EntityID, TileData]
+	dirtySet     ecs.DirtySet
+	world        tile.World
+	tilePosArray ecs.ComponentsArray[tile.PosComponent]
+	gridGroups   groups.GroupsComponent
 }
 
 type locations struct {
@@ -65,43 +66,67 @@ type locations struct {
 }
 
 func (s *system) Listen(render.RenderEvent) {
+	dirtyEntities := s.dirtySet.Get()
+	for _, entity := range dirtyEntities {
+		if tilePos, ok := s.rendered.Get(entity); ok {
+			layer := s.layers[tilePos.Layer]
+			layer.changed = true
+			layer.tiles.Remove(entity)
+			s.rendered.Remove(entity)
+		}
+		tileType, ok := s.world.Definition().Link().Get(entity)
+		if !ok {
+			continue
+		}
+		tilePos, ok := s.tilePosArray.Get(entity)
+		if !ok {
+			continue
+		}
+		layer := s.layers[tilePos.Layer]
+		layer.changed = true
+		tile := TileData{tilePos.X, tilePos.Y, tileType.DefinitionID}
+		layer.tiles.Set(entity, tile)
+		s.rendered.Set(entity, tilePos)
+	}
+
 	w, h := s.window.Window().GetSize()
-	// gl.Viewport(0, 0, w-100, h-100)
 	defer func() { gl.Viewport(0, 0, w, h) }()
-	if s.changed {
-		s.changeMutex.Lock()
-		s.vertices.SetVertices(s.tiles.GetValues())
-		s.verticesCount = int32(len(s.tiles.GetValues()))
-		s.changed = false
-		s.changeMutex.Unlock()
+	for _, layer := range s.layers {
+		if layer.changed {
+			layer.vertices.SetVertices(layer.tiles.GetValues())
+			layer.verticesCount = int32(len(layer.tiles.GetValues()))
+			layer.changed = false
+		}
 	}
 
 	s.program.Use()
 	s.textureArray.Use()
-	s.vao.Use()
+	for _, layer := range s.layers {
+		layer.vao.Use()
 
-	gl.Uniform1i(s.locations.TileSize, s.tileSize)
-	gl.Uniform1f(s.locations.GridDepth, s.gridDepth)
+		gl.Uniform1i(s.locations.TileSize, s.tileSize)
+		gl.Uniform1f(s.locations.GridDepth, s.gridDepth)
 
-	for _, cameraEntity := range s.cameraQuery.Entities() {
-		camera, err := s.cameraCtors.GetObject(cameraEntity)
-		if err != nil {
-			continue
+		for _, cameraEntity := range s.world.Camera().Component().GetEntities() {
+			camera, err := s.world.Camera().GetObject(cameraEntity)
+			if err != nil {
+				continue
+			}
+
+			cameraGroups, ok := s.world.Groups().Component().Get(cameraEntity)
+			if !ok {
+				cameraGroups = groups.DefaultGroups()
+			}
+
+			if !cameraGroups.SharesAnyGroup(s.gridGroups) {
+				continue
+			}
+
+			cameraMatrix := camera.Mat4()
+			gl.UniformMatrix4fv(s.locations.Camera, 1, false, &cameraMatrix[0])
+
+			gl.Viewport(camera.Viewport())
+			gl.DrawArrays(gl.POINTS, 0, layer.verticesCount)
 		}
-
-		cameraGroups, err := s.groupsArray.GetComponent(cameraEntity)
-		if err != nil {
-			cameraGroups = groups.DefaultGroups()
-		}
-
-		if !cameraGroups.SharesAnyGroup(s.gridGroups) {
-			continue
-		}
-
-		cameraMatrix := camera.Mat4()
-		gl.UniformMatrix4fv(s.locations.Camera, 1, false, &cameraMatrix[0])
-
-		gl.Viewport(camera.Viewport())
-		gl.DrawArrays(gl.POINTS, 0, s.verticesCount)
 	}
 }

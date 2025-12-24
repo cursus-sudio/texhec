@@ -7,13 +7,14 @@ import (
 	"engine/modules/collider"
 	"engine/modules/drag"
 	"engine/modules/genericrenderer"
-	"engine/modules/hierarchy"
 	"engine/modules/inputs"
 	"engine/modules/render"
 	scenessys "engine/modules/scenes"
 	"engine/modules/text"
 	"engine/modules/transform"
+	"engine/services/assets"
 	"engine/services/ecs"
+	"engine/services/logger"
 	"engine/services/scenes"
 	"strings"
 
@@ -29,67 +30,80 @@ func Package() ioc.Pkg {
 
 func (pkg) LoadObjects(b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.CreditsBuilder) gamescenes.CreditsBuilder {
-		b.OnLoad(func(world scenes.SceneCtx) {
+		gameAssets := ioc.Get[gameassets.GameAssets](c)
+		logger := ioc.Get[logger.Logger](c)
+		assetsService := ioc.Get[assets.Assets](c)
+		worldResolver := ioc.Get[gamescenes.WorldResolver](c)
+		b.OnLoad(func(rawWorld ecs.World) {
+			world := worldResolver(rawWorld)
 			cameraEntity := world.NewEntity()
-			ecs.SaveComponent(world, cameraEntity, camera.NewOrtho(-1000, +1000))
+			world.Camera().Ortho().Set(cameraEntity, camera.NewOrtho(-1000, +1000))
 
 			signature := world.NewEntity()
-			ecs.SaveComponent(world, signature, hierarchy.NewParent(cameraEntity))
-			ecs.SaveComponent(world, signature, transform.NewPos(5, 5, 0))
-			ecs.SaveComponent(world, signature, transform.NewSize(100, 50, 1))
-			ecs.SaveComponent(world, signature, transform.NewPivotPoint(0, .5, .5))
-			ecs.SaveComponent(world, signature, transform.NewParent(transform.RelativePos))
-			ecs.SaveComponent(world, signature, transform.NewParentPivotPoint(0, 0, .5))
+			world.Hierarchy().SetParent(signature, cameraEntity)
+			world.Transform().Pos().Set(signature, transform.NewPos(5, 5, 0))
+			world.Transform().Size().Set(signature, transform.NewSize(100, 50, 1))
+			world.Transform().PivotPoint().Set(signature, transform.NewPivotPoint(0, .5, .5))
+			world.Transform().Parent().Set(signature, transform.NewParent(transform.RelativePos))
+			world.Transform().ParentPivotPoint().Set(signature, transform.NewParentPivotPoint(0, 0, .5))
 
-			ecs.SaveComponent(world, signature, text.TextComponent{Text: "credits"})
-			ecs.SaveComponent(world, signature, text.FontSizeComponent{FontSize: 32})
-			ecs.SaveComponent(world, signature, text.BreakComponent{Break: text.BreakNone})
+			world.Text().Content().Set(signature, text.TextComponent{Text: "credits"})
+			world.Text().FontSize().Set(signature, text.FontSizeComponent{FontSize: 32})
+			world.Text().Break().Set(signature, text.BreakComponent{Break: text.BreakNone})
 
 			background := world.NewEntity()
-			ecs.SaveComponent(world, background, hierarchy.NewParent(cameraEntity))
-			ecs.SaveComponent(world, background, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
-			ecs.SaveComponent(world, background, transform.NewParentPivotPoint(.5, .5, .5))
-			ecs.SaveComponent(world, background, render.NewMesh(gameassets.SquareMesh))
-			ecs.SaveComponent(world, background, render.NewTexture(gameassets.MountainTileTextureID))
-			ecs.SaveComponent(world, background, genericrenderer.PipelineComponent{})
+			world.Hierarchy().SetParent(background, cameraEntity)
+			world.Transform().Parent().Set(background, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
+			world.Transform().ParentPivotPoint().Set(background, transform.NewParentPivotPoint(.5, .5, .5))
+			world.Render().Mesh().Set(background, render.NewMesh(gameAssets.SquareMesh))
+			world.Render().Texture().Set(background, render.NewTexture(gameAssets.Tiles.Mountain))
+			world.GenericRenderer().Pipeline().Set(background, genericrenderer.PipelineComponent{})
 
 			buttonArea := world.NewEntity()
-			ecs.SaveComponent(world, buttonArea, transform.NewSize(500, 200, 1))
-			ecs.SaveComponent(world, buttonArea, hierarchy.NewParent(cameraEntity))
-			ecs.SaveComponent(world, buttonArea, transform.NewParent(transform.RelativePos))
+			world.Transform().Size().Set(buttonArea, transform.NewSize(500, 200, 1))
+			world.Hierarchy().SetParent(buttonArea, cameraEntity)
+			world.Transform().Parent().Set(buttonArea, transform.NewParent(transform.RelativePos))
 
 			draggable := world.NewEntity()
-			ecs.SaveComponent(world, draggable, transform.NewSize(50, 50, 3))
-			ecs.SaveComponent(world, draggable, render.NewColor(mgl32.Vec4{0, 1, 0, .2}))
-			ecs.SaveComponent(world, draggable, render.NewMesh(gameassets.SquareMesh))
-			ecs.SaveComponent(world, draggable, render.NewTexture(gameassets.WaterTileTextureID))
-			ecs.SaveComponent(world, draggable, genericrenderer.PipelineComponent{})
+			world.Transform().Size().Set(draggable, transform.NewSize(50, 50, 3))
+			world.Render().Color().Set(draggable, render.NewColor(mgl32.Vec4{0, 1, 0, .2}))
+			world.Render().Mesh().Set(draggable, render.NewMesh(gameAssets.SquareMesh))
+			world.Render().Texture().Set(draggable, render.NewTexture(gameAssets.Hud.Btn))
+			world.GenericRenderer().Pipeline().Set(draggable, genericrenderer.PipelineComponent{})
 
-			ecs.SaveComponent(world, draggable, collider.NewCollider(gameassets.SquareColliderID))
-			ecs.SaveComponent(world, draggable, inputs.NewMouseDragComponent(drag.NewDraggable(draggable)))
+			world.Collider().Component().Set(draggable, collider.NewCollider(gameAssets.SquareCollider))
+			world.Inputs().MouseDrag().Set(draggable, inputs.NewMouseDragComponent(drag.NewDraggable(draggable)))
 
-			ecs.SaveComponent(world, draggable, text.TextComponent{Text: strings.ToUpper("drag me")})
-			ecs.SaveComponent(world, draggable, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
-			ecs.SaveComponent(world, draggable, text.FontSizeComponent{FontSize: 15})
-			ecs.SaveComponent(world, draggable, text.TextColorComponent{Color: mgl32.Vec4{.5, 0, 1, 1}})
+			world.Text().Content().Set(draggable, text.TextComponent{Text: strings.ToUpper("drag me")})
+			world.Text().Align().Set(draggable, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+			world.Text().FontSize().Set(draggable, text.FontSizeComponent{FontSize: 15})
+			world.Text().Color().Set(draggable, text.TextColorComponent{Color: mgl32.Vec4{.5, 0, 1, 1}})
+
+			btnAsset, err := assets.GetAsset[render.TextureAsset](assetsService, gameAssets.Hud.Btn)
+			if err != nil {
+				logger.Warn(err)
+				return
+			}
+			btnAspectRatio := btnAsset.AspectRatio()
 
 			btn := world.NewEntity()
-			ecs.SaveComponent(world, btn, transform.NewSize(500, 50, 2))
-			ecs.SaveComponent(world, btn, hierarchy.NewParent(buttonArea))
-			ecs.SaveComponent(world, btn, transform.NewParent(transform.RelativePos))
-			ecs.SaveComponent(world, btn, transform.NewParentPivotPoint(.5, 0, .5))
+			world.Transform().Size().Set(btn, transform.NewSize(500, 100, 1))
+			world.Hierarchy().SetParent(btn, buttonArea)
+			world.Transform().Parent().Set(btn, transform.NewParent(transform.RelativePos))
+			world.Transform().ParentPivotPoint().Set(btn, transform.NewParentPivotPoint(.5, 0, .5))
+			world.Transform().AspectRatio().Set(btn, transform.NewAspectRatio(float32(btnAspectRatio.Dx()), float32(btnAspectRatio.Dy()), 0, transform.PrimaryAxisY))
 
-			ecs.SaveComponent(world, btn, render.NewMesh(gameassets.SquareMesh))
-			ecs.SaveComponent(world, btn, render.NewTexture(gameassets.WaterTileTextureID))
-			ecs.SaveComponent(world, btn, genericrenderer.PipelineComponent{})
+			world.Render().Mesh().Set(btn, render.NewMesh(gameAssets.SquareMesh))
+			world.Render().Texture().Set(btn, render.NewTexture(gameAssets.Hud.Btn))
+			world.GenericRenderer().Pipeline().Set(btn, genericrenderer.PipelineComponent{})
 
-			ecs.SaveComponent(world, btn, inputs.NewMouseLeftClick(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
-			ecs.SaveComponent(world, btn, inputs.KeepSelectedComponent{})
-			ecs.SaveComponent(world, btn, collider.NewCollider(gameassets.SquareColliderID))
+			world.Inputs().MouseLeft().Set(btn, inputs.NewMouseLeftClick(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
+			world.Inputs().KeepSelected().Set(btn, inputs.KeepSelectedComponent{})
+			world.Collider().Component().Set(btn, collider.NewCollider(gameAssets.SquareCollider))
 
-			ecs.SaveComponent(world, btn, text.TextComponent{Text: strings.ToUpper("return to menu")})
-			ecs.SaveComponent(world, btn, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
-			ecs.SaveComponent(world, btn, text.FontSizeComponent{FontSize: 32})
+			world.Text().Content().Set(btn, text.TextComponent{Text: strings.ToUpper("return to menu")})
+			world.Text().Align().Set(btn, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+			world.Text().FontSize().Set(btn, text.FontSizeComponent{FontSize: 32})
 		})
 
 		return b

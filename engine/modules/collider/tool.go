@@ -1,8 +1,23 @@
 package collider
 
-import "engine/services/ecs"
+import (
+	"engine/modules/groups"
+	"engine/modules/transform"
+	"engine/services/ecs"
+)
 
-type CollisionTool interface {
+type ToolFactory ecs.ToolFactory[World, ColliderTool]
+type ColliderTool interface {
+	Collider() Interface
+}
+type World interface {
+	ecs.World
+	transform.TransformTool
+	groups.GroupsTool
+}
+type Interface interface {
+	Component() ecs.ComponentsArray[Component]
+
 	// todo add collision groups
 	// narrow
 	CollidesWithRay(ecs.EntityID, Ray) (ObjectRayCollision, error)

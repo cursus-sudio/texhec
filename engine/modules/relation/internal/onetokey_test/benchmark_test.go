@@ -17,10 +17,8 @@ func BenchmarkSpatialIndexingGet(b *testing.B) {
 	setup := NewSetup()
 	component := Component{Index: 69}
 	entity := setup.W.NewEntity()
-	if err := setup.Array.SaveComponent(entity, component); err != nil {
-		b.Error(err)
-		return
-	}
+	setup.Array.Set(entity, component)
+
 	tool := setup.Tool()
 
 	b.StartTimer()
@@ -37,8 +35,8 @@ func BenchmarkSpatialIndexingSave(b *testing.B) {
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		setup.Array.RemoveComponent(entity)
-		setup.Array.SaveComponent(entity, component)
+		setup.Array.Remove(entity)
+		setup.Array.Set(entity, component)
 	}
 }
 
@@ -49,7 +47,7 @@ func BenchmarkSpatialIndexingSaveWithoutTool(b *testing.B) {
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		setup.Array.RemoveComponent(entity)
-		setup.Array.SaveComponent(entity, component)
+		setup.Array.Remove(entity)
+		setup.Array.Set(entity, component)
 	}
 }

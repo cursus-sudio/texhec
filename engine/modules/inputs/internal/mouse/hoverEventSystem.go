@@ -9,23 +9,17 @@ import (
 )
 
 type hoverEventSystem struct {
-	world           ecs.World
+	inputs.World
 	hoverEventArray ecs.ComponentsArray[inputs.MouseHoverComponent]
-	events          events.Events
-	query           ecs.LiveQuery
+	hoveredArray    ecs.ComponentsArray[inputs.HoveredComponent]
 }
 
-func NewHoverEventsSystem() ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
-		query := w.Query().Require(
-			ecs.GetComponentType(inputs.MouseHoverComponent{}),
-			ecs.GetComponentType(inputs.HoveredComponent{}),
-		).Build()
+func NewHoverEventsSystem() inputs.System {
+	return ecs.NewSystemRegister(func(w inputs.World) error {
 		s := &hoverEventSystem{
-			world:           w,
+			World:           w,
 			hoverEventArray: ecs.GetComponentsArray[inputs.MouseHoverComponent](w),
-			events:          w.Events(),
-			query:           query,
+			hoveredArray:    ecs.GetComponentsArray[inputs.HoveredComponent](w),
 		}
 		events.Listen(w.EventsBuilder(), s.Listen)
 		return nil
@@ -33,12 +27,12 @@ func NewHoverEventsSystem() ecs.SystemRegister {
 }
 
 func (s *hoverEventSystem) Listen(event frames.FrameEvent) {
-	for _, entity := range s.query.Entities() {
-		eventsComponent, err := s.hoverEventArray.GetComponent(entity)
-		if err != nil {
+	for _, entity := range s.hoveredArray.GetEntities() {
+		eventsComponent, ok := s.hoverEventArray.Get(entity)
+		if !ok {
 			continue
 		}
 
-		events.EmitAny(s.events, eventsComponent.Event)
+		events.EmitAny(s.Events(), eventsComponent.Event)
 	}
 }

@@ -1,18 +1,20 @@
 package scenes
 
+import "engine/services/ecs"
+
 type SceneManagerBuilder interface {
 	AddScene(Scene) SceneManagerBuilder
 	MakeActive(SceneId) SceneManagerBuilder
-	OnSceneLoad(func(SceneCtx)) SceneManagerBuilder
-	OnSceneUnload(func(SceneCtx)) SceneManagerBuilder
+	OnSceneLoad(func(ecs.World)) SceneManagerBuilder
+	OnSceneUnload(func(ecs.World)) SceneManagerBuilder
 	Build() SceneManager
 }
 
 type sceneManagerBuilder struct {
 	scenes          map[SceneId]Scene
 	currentScene    *SceneId
-	loadListeners   []func(SceneCtx)
-	unloadListeners []func(SceneCtx)
+	loadListeners   []func(ecs.World)
+	unloadListeners []func(ecs.World)
 }
 
 func NewSceneManagerBuilder() SceneManagerBuilder {
@@ -38,13 +40,13 @@ func (b *sceneManagerBuilder) MakeActive(sceneId SceneId) SceneManagerBuilder {
 }
 
 // listener is triggered after loading scene
-func (b *sceneManagerBuilder) OnSceneLoad(listener func(SceneCtx)) SceneManagerBuilder {
+func (b *sceneManagerBuilder) OnSceneLoad(listener func(ecs.World)) SceneManagerBuilder {
 	b.loadListeners = append(b.loadListeners, listener)
 	return b
 }
 
 // listener is triggered after unloading scene
-func (b *sceneManagerBuilder) OnSceneUnload(listener func(SceneCtx)) SceneManagerBuilder {
+func (b *sceneManagerBuilder) OnSceneUnload(listener func(ecs.World)) SceneManagerBuilder {
 	b.unloadListeners = append(b.unloadListeners, listener)
 	return b
 }
@@ -61,16 +63,16 @@ func (b *sceneManagerBuilder) Build() SceneManager {
 
 	manager := &sceneManager{
 		scenes:             b.scenes,
-		activeSceneCtx:     nil,
+		activeWorld:        nil,
 		loadedCurrentScene: false,
 		currentSceneId:     id,
 
-		onLoad: func(sc SceneCtx) {
+		onLoad: func(sc ecs.World) {
 			for _, listener := range b.loadListeners {
 				listener(sc)
 			}
 		},
-		onUnload: func(sc SceneCtx) {
+		onUnload: func(sc ecs.World) {
 			for _, listener := range b.unloadListeners {
 				listener(sc)
 			}
@@ -88,7 +90,7 @@ type SceneManager interface {
 	// AddScene(Scene) error
 
 	CurrentScene() SceneId
-	CurrentSceneCtx() SceneCtx
+	CurrentSceneWorld() ecs.World
 
 	// this method returns error:
 	// - ErrSceneDoNotExists
@@ -97,23 +99,23 @@ type SceneManager interface {
 
 type sceneManager struct {
 	scenes             map[SceneId]Scene
-	activeSceneCtx     SceneCtx
+	activeWorld        ecs.World
 	loadedCurrentScene bool
 	currentSceneId     SceneId
 
-	onLoad   func(SceneCtx)
-	onUnload func(SceneCtx)
+	onLoad   func(ecs.World)
+	onUnload func(ecs.World)
 }
 
 func (sceneManager *sceneManager) CurrentScene() SceneId {
 	return sceneManager.currentSceneId
 }
 
-func (sceneManager *sceneManager) CurrentSceneCtx() SceneCtx {
+func (sceneManager *sceneManager) CurrentSceneWorld() ecs.World {
 	if !sceneManager.loadedCurrentScene {
-		sceneManager.LoadScene(sceneManager.currentSceneId)
+		_ = sceneManager.LoadScene(sceneManager.currentSceneId)
 	}
-	return sceneManager.activeSceneCtx
+	return sceneManager.activeWorld
 }
 
 func (sceneManager *sceneManager) LoadScene(sceneId SceneId) error {
@@ -123,7 +125,7 @@ func (sceneManager *sceneManager) LoadScene(sceneId SceneId) error {
 	}
 
 	var unloadedScene Scene
-	previousCtx := sceneManager.activeSceneCtx
+	previousCtx := sceneManager.activeWorld
 	if sceneManager.loadedCurrentScene {
 		unloadedScene = sceneManager.scenes[sceneManager.currentSceneId]
 	}
@@ -132,9 +134,9 @@ func (sceneManager *sceneManager) LoadScene(sceneId SceneId) error {
 
 	// load
 	sceneManager.currentSceneId = sceneId
-	ctx := loadedScene.Load()
-	sceneManager.onLoad(ctx)
-	sceneManager.activeSceneCtx = ctx
+	world := loadedScene.Load()
+	sceneManager.onLoad(world)
+	sceneManager.activeWorld = world
 
 	// unload
 	if unloadedScene != nil {

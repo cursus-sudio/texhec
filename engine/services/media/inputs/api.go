@@ -35,91 +35,63 @@ func newInputsApi(logger logger.Logger, clock clock.Clock, events events.Events)
 func (i *api) Poll() {
 	for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 		var e any
-		switch event.(type) {
+		switch event := event.(type) {
 		case *sdl.AudioDeviceEvent:
-			e = *event.(*sdl.AudioDeviceEvent)
-			break
+			e = *event
 		case *sdl.ClipboardEvent:
-			e = *event.(*sdl.ClipboardEvent)
-			break
+			e = *event
 		case *sdl.CommonEvent:
-			e = *event.(*sdl.CommonEvent)
-			break
+			e = *event
 		case *sdl.ControllerAxisEvent:
-			e = *event.(*sdl.ControllerAxisEvent)
-			break
+			e = *event
 		case *sdl.ControllerButtonEvent:
-			e = *event.(*sdl.ControllerButtonEvent)
-			break
+			e = *event
 		case *sdl.ControllerDeviceEvent:
-			e = *event.(*sdl.ControllerDeviceEvent)
-			break
+			e = *event
 		case *sdl.DisplayEvent:
-			e = *event.(*sdl.DisplayEvent)
-			break
+			e = *event
 		case *sdl.DollarGestureEvent:
-			e = *event.(*sdl.DollarGestureEvent)
-			break
+			e = *event
 		case *sdl.DropEvent:
-			e = *event.(*sdl.DropEvent)
-			break
+			e = *event
 		case *sdl.JoyAxisEvent:
-			e = *event.(*sdl.JoyAxisEvent)
-			break
+			e = *event
 		case *sdl.JoyBallEvent:
-			e = *event.(*sdl.JoyBallEvent)
-			break
+			e = *event
 		case *sdl.JoyButtonEvent:
-			e = *event.(*sdl.JoyButtonEvent)
-			break
+			e = *event
 		case *sdl.JoyDeviceAddedEvent:
-			e = *event.(*sdl.JoyDeviceAddedEvent)
-			break
+			e = *event
 		case *sdl.JoyDeviceRemovedEvent:
-			e = *event.(*sdl.JoyDeviceRemovedEvent)
-			break
+			e = *event
 		case *sdl.JoyHatEvent:
-			e = *event.(*sdl.JoyHatEvent)
-			break
+			e = *event
 		case *sdl.KeyboardEvent:
-			e = *event.(*sdl.KeyboardEvent)
-			break
+			e = *event
 		case *sdl.MouseButtonEvent:
-			e = *event.(*sdl.MouseButtonEvent)
-			break
+			e = *event
 		case *sdl.MouseMotionEvent:
-			e = *event.(*sdl.MouseMotionEvent)
-			break
+			e = *event
 		case *sdl.MouseWheelEvent:
-			e = *event.(*sdl.MouseWheelEvent)
-			break
+			e = *event
 		case *sdl.MultiGestureEvent:
-			e = *event.(*sdl.MultiGestureEvent)
-			break
+			e = *event
 		case *sdl.QuitEvent:
-			e = *event.(*sdl.QuitEvent)
-			break
+			e = *event
 		case *sdl.RenderEvent:
-			e = *event.(*sdl.RenderEvent)
-			break
+			e = *event
 		case *sdl.SensorEvent:
-			e = *event.(*sdl.SensorEvent)
-			break
+			e = *event
 		case *sdl.TextInputEvent:
-			e = *event.(*sdl.TextInputEvent)
-			break
+			e = *event
 		case *sdl.TextEditingEvent:
-			e = *event.(*sdl.TextEditingEvent)
-			break
+			e = *event
 		case *sdl.UserEvent:
-			e = *event.(*sdl.UserEvent)
-			break
+			e = *event
 		case *sdl.WindowEvent:
-			e = *event.(*sdl.WindowEvent)
-			break
+			e = *event
 		case *sdl.TouchFingerEvent:
-			e = *event.(*sdl.TouchFingerEvent)
-			break
+			e = *event
 		default:
 			i.logger.Warn(errors.Join(
 				ErrNotHandledInput,

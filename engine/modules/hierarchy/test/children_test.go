@@ -1,7 +1,6 @@
 package test
 
 import (
-	"engine/modules/hierarchy"
 	"testing"
 )
 
@@ -11,25 +10,53 @@ func TestChildren(t *testing.T) {
 	child := setup.World.NewEntity()
 	grandChild := setup.World.NewEntity()
 
-	parentTransform := setup.Transaction.GetObject(parent)
-	childTransform := setup.Transaction.GetObject(child)
-	grandChildTransform := setup.Transaction.GetObject(grandChild)
+	setup.Tool.SetParent(child, parent)
+	setup.Tool.SetParent(grandChild, child)
 
-	childTransform.Parent().Set(hierarchy.NewParent(parent))
-	grandChildTransform.Parent().Set(hierarchy.NewParent(child))
-
-	if err := setup.Transaction.Flush(); err != nil {
-		t.Error(err)
+	if parents := setup.Tool.GetOrderedParents(child); len(parents) != 1 || parents[0] != parent {
+		t.Errorf("expected [%v] parents of a child but has %v", parent, parents)
 		return
 	}
 
-	if children := parentTransform.Children(); !children.Get(child) || len(children.GetIndices()) != 1 {
-		t.Errorf("expected parent to have one child")
+	if parents := setup.Tool.GetOrderedParents(grandChild); len(parents) != 2 || parents[0] != child || parents[1] != parent {
+		t.Errorf("expected [%v %v] parents of a grand child but has %v", child, parent, parents)
 		return
 	}
 
-	if children := parentTransform.FlatChildren(); !children.Get(child) || !children.Get(grandChild) || len(children.GetIndices()) != 2 {
-		t.Errorf("expected parent to have two flat children")
+	if children := setup.Tool.Children(parent); !children.Get(child) || len(children.GetIndices()) != 1 {
+		t.Errorf("expected parent to have one child %v", children.GetIndices())
+		return
+	}
+
+	if children := setup.Tool.FlatChildren(parent); !children.Get(child) || !children.Get(grandChild) || len(children.GetIndices()) != 2 {
+		t.Errorf("expected parent to have two flat children %v", children.GetIndices())
+		return
+	}
+
+	setup.World.RemoveEntity(parent)
+	setup.Tool.Children(parent)
+	if exists := setup.World.EntityExists(child); exists {
+		t.Errorf("parent children should be removed")
+		return
+	}
+	if exists := setup.World.EntityExists(grandChild); exists {
+		t.Errorf("parent children should be removed")
+		return
+	}
+	if children := setup.Tool.Children(parent); len(children.GetIndices()) != 0 {
+		t.Errorf("removed entity still has children")
+		return
+	}
+	if children := setup.Tool.FlatChildren(parent); len(children.GetIndices()) != 0 {
+		t.Errorf("removed entity still has children")
+		return
+	}
+	if children := setup.Tool.Children(parent); len(children.GetIndices()) != 0 {
+		t.Errorf("removed entity still has children")
+		return
+	}
+	if children := setup.Tool.FlatChildren(parent); len(children.GetIndices()) != 0 {
+		t.Errorf("removed entity still has children")
 		return
 	}
 }

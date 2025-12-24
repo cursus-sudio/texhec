@@ -1,7 +1,20 @@
 package settings
 
-import "engine/services/ecs"
+import (
+	"core/modules/ui"
+	"engine"
+	"engine/services/ecs"
+)
 
-type System ecs.SystemRegister
+type World interface {
+	engine.World
+	ui.UiTool
+}
+
+type System ecs.SystemRegister[World]
 
 type EnterSettingsEvent struct{}
+
+type EnterSettingsForParentEvent struct {
+	Parent ecs.EntityID
+}

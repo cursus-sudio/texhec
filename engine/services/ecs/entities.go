@@ -15,12 +15,12 @@ func NewEntityID(id uint64) EntityID { return EntityID(id) }
 //
 
 type entitiesInterface interface {
-	NewEntity() EntityID
-	EnsureEntityExists(EntityID)
-	RemoveEntity(EntityID)
-
 	GetEntities() []EntityID
 	EntityExists(EntityID) bool
+
+	NewEntity() EntityID
+	EnsureExists(EntityID)
+	RemoveEntity(EntityID)
 }
 
 // impl
@@ -40,9 +40,17 @@ func newEntities() *entitiesImpl {
 	}
 }
 
+func (entitiesStorage *entitiesImpl) GetEntities() []EntityID {
+	return entitiesStorage.entities.GetIndices()
+}
+
+func (entitiesStorage *entitiesImpl) EntityExists(entity EntityID) bool {
+	return entitiesStorage.entities.Get(entity)
+}
+
 func (entitiesStorage *entitiesImpl) NewEntity() EntityID {
 	if id, ok := entitiesStorage.holes.GetStored(0); ok {
-		entitiesStorage.holes.Remove(0)
+		_ = entitiesStorage.holes.Remove(0)
 		entitiesStorage.entities.Add(id)
 		return id
 	}
@@ -53,29 +61,15 @@ func (entitiesStorage *entitiesImpl) NewEntity() EntityID {
 	return id
 }
 
-func (entitiesStorage *entitiesImpl) EnsureEntityExists(entity EntityID) {
+func (entitiesStorage *entitiesImpl) EnsureExists(entity EntityID) {
 	if ok := entitiesStorage.entities.Get(entity); ok {
 		return
 	}
-
-	for entitiesStorage.counter < uint64(entity) {
-		entitiesStorage.counter++
-		entitiesStorage.holes.Add(EntityID(entitiesStorage.counter))
-	}
-
-	entitiesStorage.holes.RemoveElements(entity)
 	entitiesStorage.entities.Add(entity)
+	entitiesStorage.holes.RemoveElements(entity)
 }
 
 func (entitiesStorage *entitiesImpl) RemoveEntity(entity EntityID) {
 	entitiesStorage.holes.Add(entity)
 	entitiesStorage.entities.Remove(entity)
-}
-
-func (entitiesStorage *entitiesImpl) GetEntities() []EntityID {
-	return entitiesStorage.entities.GetIndices()
-}
-
-func (entitiesStorage *entitiesImpl) EntityExists(entity EntityID) bool {
-	return entitiesStorage.entities.Get(entity)
 }

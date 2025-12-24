@@ -1,22 +1,30 @@
 package gamescenes
 
 import (
+	"core/modules/definition"
 	"core/modules/fpslogger"
 	"core/modules/settings"
 	"core/modules/tile"
 	"core/modules/ui"
-	"engine/modules/animation"
+	"engine"
 	"engine/modules/audio"
 	"engine/modules/camera"
 	"engine/modules/collider"
+	"engine/modules/connection"
 	"engine/modules/drag"
 	"engine/modules/genericrenderer"
 	"engine/modules/groups"
+	"engine/modules/hierarchy"
 	"engine/modules/inputs"
-	"engine/modules/relation"
+	"engine/modules/netsync"
+	"engine/modules/record"
 	"engine/modules/render"
 	scenesys "engine/modules/scenes"
+	"engine/modules/smooth"
 	"engine/modules/text"
+	"engine/modules/transform"
+	"engine/modules/transition"
+	"engine/modules/uuid"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"engine/services/media/window"
@@ -28,10 +36,11 @@ import (
 )
 
 var (
-	MenuID     = scenes.NewSceneId("menu")
-	GameID     = scenes.NewSceneId("game")
-	SettingsID = scenes.NewSceneId("settings")
-	CreditsID  = scenes.NewSceneId("credits")
+	MenuID       = scenes.NewSceneId("menu")
+	GameID       = scenes.NewSceneId("game")
+	GameClientID = scenes.NewSceneId("game client")
+	SettingsID   = scenes.NewSceneId("settings")
+	CreditsID    = scenes.NewSceneId("credits")
 )
 
 const (
@@ -39,10 +48,46 @@ const (
 	MusicChannel
 )
 
-type CoreSystems func(scenes.SceneCtx)
+type World interface {
+	engine.World
+
+	// game
+	definition.DefinitionTool
+	tile.TileTool
+	ui.UiTool
+}
+
+type world struct {
+	// engine
+	ecs.World
+	camera.CameraTool
+	collider.ColliderTool
+	connection.ConnectionTool
+	genericrenderer.GenericRendererTool
+	groups.GroupsTool
+	hierarchy.HierarchyTool
+	netsync.NetSyncTool
+	record.RecordTool
+	inputs.InputsTool
+	render.RenderTool
+	text.TextTool
+	transform.TransformTool
+	transition.TransitionTool
+	uuid.UUIDTool
+
+	// game
+	definition.DefinitionTool
+	tile.TileTool
+	ui.UiTool
+}
+
+type WorldResolver func(ecs.World) World
+
+type CoreSystems func(ecs.World)
 
 type MenuBuilder scenes.SceneBuilder
 type GameBuilder scenes.SceneBuilder
+type GameClientBuilder scenes.SceneBuilder
 type SettingsBuilder scenes.SceneBuilder
 type CreditsBuilder scenes.SceneBuilder
 
@@ -55,8 +100,8 @@ func Package() ioc.Pkg {
 func AddDefaults[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
 	ioc.WrapService(b, scenes.LoadConfig, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
 		logger := ioc.Get[logger.Logger](c)
-		b.OnLoad(func(ctx scenes.SceneCtx) {
-			events.GlobalErrHandler(ctx.EventsBuilder(), func(err error) {
+		b.OnLoad(func(world ecs.World) {
+			events.GlobalErrHandler(world.EventsBuilder(), func(err error) {
 				logger.Warn(err)
 			})
 		})
@@ -72,38 +117,64 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b scenes.SceneManagerBuilder) scenes.SceneManagerBuilder {
 		b.AddScene(ioc.Get[MenuBuilder](c).Build(MenuID))
 		b.AddScene(ioc.Get[GameBuilder](c).Build(GameID))
+		b.AddScene(ioc.Get[GameClientBuilder](c).Build(GameClientID))
 		b.AddScene(ioc.Get[SettingsBuilder](c).Build(SettingsID))
 		b.AddScene(ioc.Get[CreditsBuilder](c).Build(CreditsID))
 		b.MakeActive(MenuID)
 		return b
 	})
 
+	ioc.RegisterSingleton(b, func(c ioc.Dic) WorldResolver {
+		return func(w ecs.World) World {
+			world := &world{World: w}
+			world.UUIDTool = ioc.Get[uuid.ToolFactory](c).Build(world)
+			world.TransitionTool = ioc.Get[transition.ToolFactory](c).Build(world)
+
+			world.HierarchyTool = ioc.Get[hierarchy.ToolFactory](c).Build(world)
+			world.GroupsTool = ioc.Get[groups.ToolFactory](c).Build(world)
+			world.TransformTool = ioc.Get[transform.ToolFactory](c).Build(world)
+
+			world.ConnectionTool = ioc.Get[connection.ToolFactory](c).Build(world)
+			world.RecordTool = ioc.Get[record.ToolFactory](c).Build(world)
+			world.NetSyncTool = ioc.Get[netsync.ToolFactory](c).Build(world)
+
+			world.CameraTool = ioc.Get[camera.ToolFactory](c).Build(world)
+			world.ColliderTool = ioc.Get[collider.ToolFactory](c).Build(world)
+			world.GenericRendererTool = ioc.Get[genericrenderer.ToolFactory](c).Build(world)
+			world.InputsTool = ioc.Get[inputs.ToolFactory](c).Build(world)
+			world.RenderTool = ioc.Get[render.ToolFactory](c).Build(world)
+			world.TextTool = ioc.Get[text.ToolFactory](c).Build(world)
+
+			world.DefinitionTool = ioc.Get[definition.ToolFactory](c).Build(world)
+			world.TileTool = ioc.Get[tile.ToolFactory](c).Build(world)
+			world.UiTool = ioc.Get[ui.ToolFactory](c).Build(world)
+			return world
+		}
+	})
+
 	ioc.RegisterSingleton(b, func(c ioc.Dic) CoreSystems {
-		return func(ctx scenes.SceneCtx) {
+		return func(rawWorld ecs.World) {
+			world := ioc.Get[WorldResolver](c)(rawWorld)
 			logger := ioc.Get[logger.Logger](c)
-			posFactory := ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[tile.PosComponent]]](c)
-			colliderFactory := ioc.Get[ecs.ToolFactory[relation.EntityToKeyTool[tile.ColliderPos]]](c)
 
 			temporaryInlineSystems := ecs.NewSystemRegister(func(w ecs.World) error {
-				posFactory.Build(w)
-				colliderFactory.Build(w)
 				events.Listen(w.EventsBuilder(), func(e sdl.KeyboardEvent) {
 					if e.Keysym.Sym == sdl.K_q {
 						logger.Info("quiting program due to pressing 'Q'")
-						events.Emit(ctx.Events(), inputs.NewQuitEvent())
+						events.Emit(world.Events(), inputs.NewQuitEvent())
 					}
 					if e.Keysym.Sym == sdl.K_ESCAPE {
 						logger.Info("quiting program due to pressing 'ESC'")
-						events.Emit(ctx.Events(), inputs.NewQuitEvent())
+						events.Emit(world.Events(), inputs.NewQuitEvent())
 					}
 					if e.State == sdl.PRESSED && e.Keysym.Sym == sdl.K_f {
 						logger.Info("toggling screen size due to pressing 'F'")
 						window := ioc.Get[window.Api](c)
 						flags := window.Window().GetFlags()
 						if flags&sdl.WINDOW_FULLSCREEN_DESKTOP == sdl.WINDOW_FULLSCREEN_DESKTOP {
-							window.Window().SetFullscreen(0)
+							_ = window.Window().SetFullscreen(0)
 						} else {
-							window.Window().SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
+							_ = window.Window().SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
 						}
 					}
 				})
@@ -111,23 +182,19 @@ func (pkg) Register(b ioc.Builder) {
 				return nil
 			})
 
-			// temporary system to say wich tile was pressed
-			// events.Listen(ctx.EventsBuilder(), func(event tile.TileClickEvent) {
-			// 	tileColliderArray := ecs.GetComponentsArray[tile.PosComponent](ctx)
-			// 	tileCollider, _ := tileColliderArray.GetComponent(event.Tile)
-			// 	logger.Info(fmt.Sprintf("collider: %v", tileCollider))
-			// })
+			errs := ecs.RegisterSystems(world,
+				ioc.Get[netsync.StartSystem](c),
+				ioc.Get[smooth.StartSystem](c),
+				// update {
+				ioc.Get[connection.System](c),
 
-			ecs.RegisterSystems(ctx,
 				// inputs
 				ioc.Get[inputs.System](c),
 
 				// update
-				ioc.Get[animation.System](c),
 				ioc.Get[camera.System](c),
-				ioc.Get[collider.System](c),
 				ioc.Get[drag.System](c),
-				ioc.Get[groups.System](c),
+				ioc.Get[transition.System](c),
 				temporaryInlineSystems,
 
 				ioc.Get[tile.System](c),
@@ -135,6 +202,9 @@ func (pkg) Register(b ioc.Builder) {
 				// ui update
 				ioc.Get[ui.System](c),
 				ioc.Get[settings.System](c),
+				// } (update)
+				ioc.Get[smooth.StopSystem](c),
+				ioc.Get[netsync.StopSystem](c),
 
 				// audio
 				ioc.Get[audio.System](c),
@@ -149,6 +219,9 @@ func (pkg) Register(b ioc.Builder) {
 				// after everything change scene
 				ioc.Get[scenesys.System](c),
 			)
+			for _, err := range errs {
+				logger.Warn(err)
+			}
 		}
 	})
 }

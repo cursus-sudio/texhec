@@ -11,4 +11,4 @@ func NewUpdateProjectionsEvent() ChangedResolutionEvent {
 	return ChangedResolutionEvent{}
 }
 
-type System ecs.SystemRegister
+type System ecs.SystemRegister[World]

@@ -1,9 +1,8 @@
 package mouse
 
 import (
-	"engine/modules/camera"
 	"engine/modules/collider"
-	"engine/services/assets"
+	"engine/modules/inputs"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"engine/services/media/window"
@@ -24,39 +23,30 @@ type RayChangedTargetEvent struct {
 }
 
 type cameraRaySystem struct {
-	world           ecs.World
-	logger          logger.Logger
-	cameraArray     ecs.ComponentsArray[camera.CameraComponent]
-	broadCollisions collider.CollisionTool
-	window          window.Api
-	events          events.Events
-	assets          assets.Assets
-	cameraResolver  camera.Tool
+	inputs.World
+	logger logger.Logger
+	window window.Api
+	events events.Events
 
 	hoversOverEntity *ecs.EntityID
 }
 
 func NewCameraRaySystem(
 	logger logger.Logger,
-	colliderFactory ecs.ToolFactory[collider.CollisionTool],
 	window window.Api,
-	cameraResolver ecs.ToolFactory[camera.Tool],
-) ecs.SystemRegister {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
+) inputs.System {
+	return ecs.NewSystemRegister(func(w inputs.World) error {
 		s := &cameraRaySystem{
-			world:           w,
-			logger:          logger,
-			cameraArray:     ecs.GetComponentsArray[camera.CameraComponent](w),
-			broadCollisions: colliderFactory.Build(w),
-			window:          window,
-			events:          w.Events(),
-			cameraResolver:  cameraResolver.Build(w),
+			World:  w,
+			logger: logger,
+			window: window,
+			events: w.Events(),
 
 			hoversOverEntity: nil,
 		}
 		events.ListenE(w.EventsBuilder(), s.Listen)
 		events.Listen(w.EventsBuilder(), func(sdl.MouseButtonEvent) {
-			events.Emit(s.world.Events(), ShootRayEvent{})
+			events.Emit(s.Events(), ShootRayEvent{})
 		})
 
 		return nil
@@ -68,15 +58,15 @@ func (s *cameraRaySystem) Listen(args ShootRayEvent) error {
 
 	var nearestCollision collider.ObjectRayCollision
 	var nearestCamera ecs.EntityID
-	for _, cameraEntity := range s.cameraArray.GetEntities() {
-		camera, err := s.cameraResolver.GetObject(cameraEntity)
+	for _, cameraEntity := range s.Camera().Component().GetEntities() {
+		camera, err := s.Camera().GetObject(cameraEntity)
 		if err != nil {
 			return err
 		}
 
 		ray := camera.ShootRay(mousePos)
 
-		collision, err := s.broadCollisions.ShootRay(ray)
+		collision, err := s.Collider().ShootRay(ray)
 		if err != nil {
 			return err
 		}

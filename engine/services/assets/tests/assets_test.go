@@ -18,11 +18,10 @@ func (a *cachedAsset) Release() { a.released = true }
 
 //
 
-const notAssetID = "not_asset"
 const assetID = "asset"
 
 func TestAssets(t *testing.T) {
-	storageBuilder := assets.NewAssetsStorageBuilder()
+	storageBuilder := assets.NewAssetsStorageBuilder("")
 	fetched := false
 	storageBuilder.RegisterAsset(assetID, func() (any, error) {
 		fetched = true

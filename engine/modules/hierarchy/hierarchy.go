@@ -37,6 +37,10 @@ type Interface interface {
 	GetParents(child ecs.EntityID) datastructures.SparseSet[ecs.EntityID]
 	GetOrderedParents(child ecs.EntityID) []ecs.EntityID
 
+	// maintains order of children and adds component to children
+	// even if children doesn't exist
+	SetChildren(parent ecs.EntityID, children ...ecs.EntityID)
+
 	Children(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID]
 	// includes children of children
 	FlatChildren(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID]

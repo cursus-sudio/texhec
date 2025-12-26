@@ -109,6 +109,25 @@ func (t tool) GetOrderedParents(child ecs.EntityID) []ecs.EntityID {
 
 //
 
+func (t tool) SetChildren(parent ecs.EntityID, children ...ecs.EntityID) {
+	t.BeforeGet()
+	previousChildren := t.Children(parent).GetIndices()
+	i := 0
+	for _, child := range previousChildren {
+		if child == children[i] {
+			i++
+			continue
+		}
+		t.hierarchyArray.Remove(child)
+	}
+
+	for i := i; i < len(children); i++ {
+		t.SetParent(parent, children[i])
+	}
+}
+
+//
+
 func (t tool) Children(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID] {
 	t.BeforeGet()
 	children, ok := t.children.Get(parent)

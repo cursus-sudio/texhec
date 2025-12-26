@@ -1,6 +1,8 @@
 package test
 
 import (
+	"engine/services/ecs"
+	"slices"
 	"testing"
 )
 
@@ -57,6 +59,37 @@ func TestChildren(t *testing.T) {
 	}
 	if children := setup.Tool.FlatChildren(parent); len(children.GetIndices()) != 0 {
 		t.Errorf("removed entity still has children")
+		return
+	}
+}
+
+func TestSetChildren(t *testing.T) {
+	setup := NewSetup()
+
+	parent := setup.World.NewEntity()
+
+	var expected []ecs.EntityID
+	child1 := setup.World.NewEntity()
+	child2 := setup.World.NewEntity()
+
+	setup.Tool.SetChildren(parent, child1, child2)
+	expected = []ecs.EntityID{child1, child2}
+	if children := setup.Tool.Children(parent).GetIndices(); slices.Equal(children, expected) {
+		t.Errorf("setChildren doesn't work expects %v and has %v", expected, children)
+		return
+	}
+
+	setup.Tool.SetChildren(parent, child2, child1)
+	expected = []ecs.EntityID{child2, child1}
+	if children := setup.Tool.Children(parent).GetIndices(); slices.Equal(children, expected) {
+		t.Errorf("setChildren doesn't work expects %v and has %v", expected, children)
+		return
+	}
+
+	setup.Tool.SetChildren(parent, child1, child2)
+	expected = []ecs.EntityID{child1, child2}
+	if children := setup.Tool.Children(parent).GetIndices(); slices.Equal(children, expected) {
+		t.Errorf("setChildren doesn't work expects %v and has %v", expected, children)
 		return
 	}
 }

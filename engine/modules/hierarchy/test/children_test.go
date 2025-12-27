@@ -72,23 +72,23 @@ func TestSetChildren(t *testing.T) {
 	child1 := setup.World.NewEntity()
 	child2 := setup.World.NewEntity()
 
-	setup.Tool.SetChildren(parent, child1, child2)
 	expected = []ecs.EntityID{child1, child2}
-	if children := setup.Tool.Children(parent).GetIndices(); slices.Equal(children, expected) {
+	setup.Tool.SetChildren(parent, expected...)
+	if children := setup.Tool.Children(parent).GetIndices(); !slices.Equal(children, expected) {
 		t.Errorf("setChildren doesn't work expects %v and has %v", expected, children)
 		return
 	}
 
-	setup.Tool.SetChildren(parent, child2, child1)
 	expected = []ecs.EntityID{child2, child1}
-	if children := setup.Tool.Children(parent).GetIndices(); slices.Equal(children, expected) {
+	setup.Tool.SetChildren(parent, expected...)
+	if children := setup.Tool.Children(parent).GetIndices(); !slices.Equal(children, expected) {
 		t.Errorf("setChildren doesn't work expects %v and has %v", expected, children)
 		return
 	}
 
-	setup.Tool.SetChildren(parent, child1, child2)
 	expected = []ecs.EntityID{child1, child2}
-	if children := setup.Tool.Children(parent).GetIndices(); slices.Equal(children, expected) {
+	setup.Tool.SetChildren(parent, expected...)
+	if children := setup.Tool.Children(parent).GetIndices(); !slices.Equal(children, expected) {
 		t.Errorf("setChildren doesn't work expects %v and has %v", expected, children)
 		return
 	}

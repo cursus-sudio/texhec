@@ -110,7 +110,6 @@ func (t tool) GetOrderedParents(child ecs.EntityID) []ecs.EntityID {
 //
 
 func (t tool) SetChildren(parent ecs.EntityID, children ...ecs.EntityID) {
-	t.BeforeGet()
 	previousChildren := t.Children(parent).GetIndices()
 	i := 0
 	for _, child := range previousChildren {
@@ -121,6 +120,7 @@ func (t tool) SetChildren(parent ecs.EntityID, children ...ecs.EntityID) {
 		t.hierarchyArray.Remove(child)
 	}
 
+	t.BeforeGet()
 	for i := i; i < len(children); i++ {
 		t.SetParent(children[i], parent)
 	}
@@ -175,19 +175,25 @@ func (t tool) handleEntityChange(entity ecs.EntityID) {
 	inheritedChildrenIndices := inheritedChildren.GetIndices()
 
 	if !hierarchyOk || parent != hierarchy.Parent {
+		var parentWithChildren ecs.EntityID
+		if !hierarchyOk {
+			parentWithChildren = parent
+		} else {
+			parentWithChildren = hierarchy.Parent
+		}
 		// remove parent
 		t.parents.Remove(entity)
 
 		// remove as a child
-		children, ok := t.children.Get(parent)
+		children, ok := t.children.Get(parentWithChildren)
 		if !ok { // this shouldn't occur and means invalid internal state
 			goto skipRemovalInParents
 		}
 		children.Remove(entity)
 		if len(children.GetIndices()) == 0 {
 			t.parents.Remove(entity)
-			t.children.Remove(parent)
-			t.flatChildren.Remove(parent)
+			t.children.Remove(parentWithChildren)
+			t.flatChildren.Remove(parentWithChildren)
 		}
 
 		// remove as a grand parent

@@ -16,6 +16,7 @@ import (
 	"engine/modules/groups"
 	"engine/modules/hierarchy"
 	"engine/modules/inputs"
+	"engine/modules/layout"
 	"engine/modules/netsync"
 	"engine/modules/record"
 	"engine/modules/render"
@@ -69,6 +70,7 @@ type world struct {
 	netsync.NetSyncTool
 	record.RecordTool
 	inputs.InputsTool
+	layout.LayoutTool
 	render.RenderTool
 	text.TextTool
 	transform.TransformTool
@@ -142,6 +144,7 @@ func (pkg) Register(b ioc.Builder) {
 			world.ColliderTool = ioc.Get[collider.ToolFactory](c).Build(world)
 			world.GenericRendererTool = ioc.Get[genericrenderer.ToolFactory](c).Build(world)
 			world.InputsTool = ioc.Get[inputs.ToolFactory](c).Build(world)
+			world.LayoutTool = ioc.Get[layout.ToolFactory](c).Build(world)
 			world.RenderTool = ioc.Get[render.ToolFactory](c).Build(world)
 			world.TextTool = ioc.Get[text.ToolFactory](c).Build(world)
 

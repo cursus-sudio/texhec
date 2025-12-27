@@ -6,6 +6,7 @@ import (
 	gamescenes "core/scenes"
 	"engine/modules/camera"
 	"engine/modules/genericrenderer"
+	"engine/modules/layout"
 	"engine/modules/render"
 	"engine/modules/text"
 	"engine/modules/transform"
@@ -51,9 +52,13 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			world.GenericRenderer().Pipeline().Set(background, genericrenderer.PipelineComponent{})
 
 			buttonArea := world.NewEntity()
-			world.Transform().Size().Set(buttonArea, transform.NewSize(500, 200, 2))
+			world.Transform().Size().Set(buttonArea, transform.NewSize(500, 200, 1))
 			world.Hierarchy().SetParent(buttonArea, cameraEntity)
 			world.Transform().Parent().Set(buttonArea, transform.NewParent(transform.RelativePos))
+
+			world.Layout().Order().Set(buttonArea, layout.NewOrder(layout.OrderVectical))
+			world.Layout().Align().Set(buttonArea, layout.NewAlign(.5, .5))
+			world.Layout().Gap().Set(buttonArea, layout.NewGap(10))
 
 			events.Emit(world.Events(), settings.EnterSettingsForParentEvent{Parent: buttonArea})
 		})

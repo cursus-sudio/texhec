@@ -8,6 +8,7 @@ import (
 	"engine/modules/groups"
 	"engine/modules/hierarchy"
 	"engine/modules/inputs"
+	"engine/modules/layout"
 	"engine/modules/netsync"
 	"engine/modules/record"
 	"engine/modules/render"
@@ -27,6 +28,7 @@ type World interface {
 	groups.GroupsTool
 	hierarchy.HierarchyTool
 	inputs.InputsTool
+	layout.LayoutTool
 	netsync.NetSyncTool
 	record.RecordTool
 	render.RenderTool

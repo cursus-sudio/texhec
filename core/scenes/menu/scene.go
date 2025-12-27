@@ -7,6 +7,7 @@ import (
 	"engine/modules/collider"
 	"engine/modules/genericrenderer"
 	"engine/modules/inputs"
+	"engine/modules/layout"
 	"engine/modules/render"
 	scenessys "engine/modules/scenes"
 	"engine/modules/text"
@@ -16,7 +17,6 @@ import (
 	"engine/services/ecs"
 	"engine/services/logger"
 	"engine/services/scenes"
-	"slices"
 	"strings"
 	"time"
 
@@ -41,7 +41,6 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			world := worldResolver(rawWorld)
 			cameraEntity := world.NewEntity()
 			world.Camera().Ortho().Set(cameraEntity, camera.NewOrtho(-1000, 1000))
-			world.Transform().Pos().Set(cameraEntity, transform.NewPos(0, 0, 1000))
 
 			signature := world.NewEntity()
 			world.Transform().Pos().Set(signature, transform.NewPos(5, 5, 0))
@@ -73,9 +72,12 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			))
 
 			buttonArea := world.NewEntity()
-			world.Transform().Size().Set(buttonArea, transform.NewSize(500, 300, 1))
 			world.Hierarchy().SetParent(buttonArea, cameraEntity)
 			world.Transform().Parent().Set(buttonArea, transform.NewParent(transform.RelativePos))
+
+			world.Layout().Order().Set(buttonArea, layout.NewOrder(layout.OrderVectical))
+			world.Layout().Align().Set(buttonArea, layout.NewAlign(.5, .5))
+			world.Layout().Gap().Set(buttonArea, layout.NewGap(10))
 
 			type Button struct {
 				Text    string
@@ -88,7 +90,6 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				{Text: "credits", OnClick: scenessys.NewChangeSceneEvent(gamescenes.CreditsID)},
 				{Text: "exit", OnClick: inputs.QuitEvent{}},
 			}
-			slices.Reverse(buttons)
 
 			btnAsset, err := assets.GetAsset[render.TextureAsset](assetsService, gameAssets.Hud.Btn)
 			if err != nil {
@@ -97,14 +98,12 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			}
 			btnAspectRatio := btnAsset.AspectRatio()
 
-			for i, button := range buttons {
+			for _, button := range buttons {
 				btn := world.NewEntity()
-				normalizedIndex := float32(i) / (float32(len(buttons)) - 1)
 				world.Transform().Size().Set(btn, transform.NewSize(150, 50, 1))
 				world.Transform().AspectRatio().Set(btn, transform.NewAspectRatio(float32(btnAspectRatio.Dx()), float32(btnAspectRatio.Dy()), 0, transform.PrimaryAxisX))
 				world.Hierarchy().SetParent(btn, buttonArea)
 				world.Transform().Parent().Set(btn, transform.NewParent(transform.RelativePos))
-				world.Transform().ParentPivotPoint().Set(btn, transform.NewParentPivotPoint(.5, normalizedIndex, .5))
 
 				world.Render().Mesh().Set(btn, render.NewMesh(gameAssets.SquareMesh))
 				world.Render().Texture().Set(btn, render.NewTexture(gameAssets.Hud.Btn))

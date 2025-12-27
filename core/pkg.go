@@ -29,6 +29,7 @@ import (
 	"engine/modules/hierarchy/pkg"
 	"engine/modules/inputs"
 	"engine/modules/inputs/pkg"
+	"engine/modules/layout/pkg"
 	"engine/modules/netsync/pkg"
 	"engine/modules/record"
 	"engine/modules/record/pkg"
@@ -249,6 +250,7 @@ func getDic() ioc.Dic {
 			return config
 		}()),
 		transitionpkg.Package(),
+		layoutpkg.Package(),
 
 		// game packages
 		fpsloggerpkg.Package(),

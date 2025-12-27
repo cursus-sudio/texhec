@@ -122,7 +122,7 @@ func (t tool) SetChildren(parent ecs.EntityID, children ...ecs.EntityID) {
 	}
 
 	for i := i; i < len(children); i++ {
-		t.SetParent(parent, children[i])
+		t.SetParent(children[i], parent)
 	}
 }
 

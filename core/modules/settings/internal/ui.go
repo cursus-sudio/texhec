@@ -139,55 +139,10 @@ func (s system) ListenRender(parent ecs.EntityID) error {
 		s.Collider().Component().Set(btnEntity, collider.NewCollider(s.gameAssets.SquareCollider))
 	}
 
-	// go func() {
-	// 	return
-	// 	for {
-	// 		time.Sleep(time.Millisecond * 500)
-	// 		// children := s.Hierarchy().Children(parent).GetIndices()
-	// 		children := []ecs.EntityID{5}
-	// 		type data struct {
-	// 			parentPos        transform.PosComponent
-	// 			parentPivotPoint transform.ParentPivotPointComponent
-	//
-	// 			pos        transform.PosComponent
-	// 			size       transform.SizeComponent
-	// 			pivotPoint transform.PivotPointComponent
-	//
-	// 			absolutePos transform.AbsolutePosComponent
-	// 		}
-	// 		dataPrinted := []data{}
-	// 		for _, child := range children {
-	// 			parentPos, _ := s.Transform().Pos().Get(parent)
-	// 			parentPivotPoint, _ := s.Transform().ParentPivotPoint().Get(child)
-	//
-	// 			pos, _ := s.Transform().Pos().Get(child)
-	// 			size, _ := s.Transform().Size().Get(child)
-	// 			pivotPoint, _ := s.Transform().PivotPoint().Get(child)
-	//
-	// 			absolutePos, _ := s.Transform().AbsolutePos().Get(child)
-	//
-	// 			dataPrinted = append(dataPrinted, data{
-	// 				parentPos:        parentPos,
-	// 				parentPivotPoint: parentPivotPoint,
-	//
-	// 				pos:        pos,
-	// 				size:       size,
-	// 				pivotPoint: pivotPoint,
-	//
-	// 				absolutePos: absolutePos,
-	// 			})
-	// 		}
-	// 		// s.logger.Info("children are %v with poses %v with codes\n%v", children, poses, posesCodes)
-	// 		s.logger.Info("children are %v with data %v", children, dataPrinted)
-	// 		// incorrect: [{{[0 0 0]} {[0.5 0 0.5]} {[0 85 0]} {[1 50 1]} {[0.5 1 0.5]} {[0 -89.606064 0]}}]
-	// 		// correct  : [{{[0 0 0]} {[0.5 0 0.5]} {[0 85 0]} {[1 50 1]} {[0.5 1 0.5]} {[0 -40 0]}}]
-	// 	}
-	// }()
 	// this line changes layout for some reason
-	// s.logger.Info("before call")
 	// s.Hierarchy().Children(0) // this lines destroys transform for uknown reason
 	// s.Transform().AbsoluteRotation().GetEntities() // and this repairs it back (no matter where placed) HELP
-	// s.logger.Info("after call")
+
 	// its the mix of (removing any of these solves the issue):
 	// - aspect ratio
 	// - hierarchy

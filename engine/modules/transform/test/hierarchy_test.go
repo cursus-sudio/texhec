@@ -19,7 +19,7 @@ func TestHierarchy(t *testing.T) {
 	setup.Transform().Pos().Set(child, transform.NewPos(5, 5, 5))
 	setup.expectAbsolutePos(child, transform.NewPos(10, 10, 10))
 
-	setup.Transform().SetAbsolutePos(child, transform.AbsolutePosComponent{Pos: mgl32.Vec3{5, 5, 5}})
+	setup.Transform().AbsolutePos().Set(child, transform.AbsolutePosComponent{Pos: mgl32.Vec3{5, 5, 5}})
 	setup.expectAbsolutePos(child, transform.NewPos(5, 5, 5))
 
 	setup.Transform().Pos().Set(child, transform.NewPos(10, 10, 10))

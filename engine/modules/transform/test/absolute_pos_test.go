@@ -17,6 +17,6 @@ func TestAbsolutePos(t *testing.T) {
 	setup.Transform().Pos().Set(entity, transform.NewPos(15, 15, 15))
 	setup.expectAbsolutePos(entity, transform.NewPos(15, 15, 15))
 
-	setup.Transform().SetAbsolutePos(entity, transform.AbsolutePosComponent{Pos: mgl32.Vec3{5, 5, 5}})
+	setup.Transform().AbsolutePos().Set(entity, transform.AbsolutePosComponent{Pos: mgl32.Vec3{5, 5, 5}})
 	setup.expectAbsolutePos(entity, transform.NewPos(5, 5, 5))
 }

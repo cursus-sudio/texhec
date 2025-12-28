@@ -111,17 +111,12 @@ func (t tool) GetOrderedParents(child ecs.EntityID) []ecs.EntityID {
 
 func (t tool) SetChildren(parent ecs.EntityID, children ...ecs.EntityID) {
 	previousChildren := t.Children(parent).GetIndices()
-	i := 0
 	for _, child := range previousChildren {
-		if child == children[i] {
-			i++
-			continue
-		}
 		t.hierarchyArray.Remove(child)
 	}
 
 	t.BeforeGet()
-	for i := i; i < len(children); i++ {
+	for i := 0; i < len(children); i++ {
 		t.SetParent(children[i], parent)
 	}
 }
@@ -160,44 +155,36 @@ func (t tool) BeforeGet() {
 	t.dirtySet.Clear()
 }
 
-func (t tool) handleEntityChange(entity ecs.EntityID) {
-	parent, parentOk := t.parents.Get(entity)
-	hierarchy, hierarchyOk := t.hierarchyArray.Get(entity)
-	_, isParent := t.parentArray.Get(entity)
+func (t tool) handleEntityChange(child ecs.EntityID) {
+	parent, parentOk := t.parents.Get(child)
+	hierarchy, hierarchyOk := t.hierarchyArray.Get(child)
+	_, isParent := t.parentArray.Get(child)
 
 	// children added to parents as flat children
-	inheritedChildren, ok := t.flatChildren.Get(entity)
+	inheritedChildren, ok := t.flatChildren.Get(child)
 	if !ok {
 		inheritedChildren = datastructures.NewSparseSet[ecs.EntityID]()
 	}
 	entityFlatChildren := inheritedChildren.GetIndices()
-	inheritedChildren.Add(entity)
+	inheritedChildren.Add(child)
 	inheritedChildrenIndices := inheritedChildren.GetIndices()
 
-	if !hierarchyOk || parent != hierarchy.Parent {
-		var parentWithChildren ecs.EntityID
-		if !hierarchyOk {
-			parentWithChildren = parent
-		} else {
-			parentWithChildren = hierarchy.Parent
-		}
-		// remove parent
-		t.parents.Remove(entity)
+	if parentOk {
+		t.parents.Remove(child)
 
 		// remove as a child
-		children, ok := t.children.Get(parentWithChildren)
+		children, ok := t.children.Get(parent)
 		if !ok { // this shouldn't occur and means invalid internal state
 			goto skipRemovalInParents
 		}
-		children.Remove(entity)
+		children.Remove(child)
 		if len(children.GetIndices()) == 0 {
-			t.parents.Remove(entity)
-			t.children.Remove(parentWithChildren)
-			t.flatChildren.Remove(parentWithChildren)
+			t.children.Remove(parent)
+			t.flatChildren.Remove(parent)
 		}
 
 		// remove as a grand parent
-		parents := t.GetOrderedParents(entity)
+		parents := t.GetOrderedParents(child)
 		for _, parent := range parents {
 			flatChildren, ok := t.flatChildren.Get(parent)
 			if !ok {
@@ -213,9 +200,9 @@ func (t tool) handleEntityChange(entity ecs.EntityID) {
 	}
 
 skipRemovalInParents:
-	if !parentOk && parent != hierarchy.Parent {
+	if hierarchyOk {
 		// add parent
-		t.parents.Set(entity, hierarchy.Parent)
+		t.parents.Set(child, hierarchy.Parent)
 
 		// add as parent
 		parentChildren, ok := t.children.Get(hierarchy.Parent)
@@ -227,11 +214,10 @@ skipRemovalInParents:
 			parentChildren = datastructures.NewSparseSet[ecs.EntityID]()
 			t.children.Set(hierarchy.Parent, parentChildren)
 		}
-		parentChildren.Add(entity)
-		t.parents.Set(entity, parent)
+		parentChildren.Add(child)
 
 		// add as grand child
-		parents := t.GetOrderedParents(entity)
+		parents := t.GetOrderedParents(child)
 		for _, parent := range parents {
 			children, ok := t.flatChildren.Get(parent)
 			if !ok {
@@ -246,9 +232,8 @@ skipRemovalInParents:
 	// skipChildrenAdditionInParents:
 
 	if !isParent {
-		t.children.Remove(entity)
-		t.flatChildren.Remove(entity)
-		t.parents.Remove(entity)
+		t.children.Remove(child)
+		t.flatChildren.Remove(child)
 		for _, child := range entityFlatChildren {
 			t.world.RemoveEntity(child)
 			t.flatChildren.Remove(child)

@@ -125,7 +125,7 @@ func (t tool) Init() error {
 	t.Transform().Parent().Set(childWrapper, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
 
 	t.Layout().Order().Set(childWrapper, layout.NewOrder(layout.OrderVectical))
-	t.Layout().Align().Set(childWrapper, layout.NewAlign(.5, .5))
+	t.Layout().Align().Set(childWrapper, layout.NewAlign(0, .5))
 	t.Layout().Gap().Set(childWrapper, layout.NewGap(10))
 
 	t.menu = menu

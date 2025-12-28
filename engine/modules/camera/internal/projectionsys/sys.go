@@ -72,23 +72,19 @@ func (s *updateProjetionsSystem) AspectRatio() float32 {
 func (s *updateProjetionsSystem) UpsertOrtho() {
 	ei := s.orthoDirtySet.Get()
 	for _, entity := range ei {
-		camera, err := s.Camera().GetObject(entity)
-		if err != nil {
-			continue
-		}
 		resizeOrtho, ok := s.Camera().Ortho().Get(entity)
 		if !ok {
 			continue
 		}
 
-		x, y, w, h := camera.Viewport()
+		x, y, w, h := s.Camera().GetViewport(entity)
 
 		size := transform.NewSize(
 			float32(w-x)/resizeOrtho.Zoom,
 			float32(h-y)/resizeOrtho.Zoom,
 			mgl32.Abs(resizeOrtho.Far-resizeOrtho.Near),
 		)
-		s.Transform().SetAbsoluteSize(entity, transform.AbsoluteSizeComponent(size))
+		s.Transform().AbsoluteSize().Set(entity, transform.AbsoluteSizeComponent(size))
 	}
 }
 

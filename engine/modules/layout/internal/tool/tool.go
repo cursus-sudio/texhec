@@ -94,62 +94,14 @@ func (t tool) BeforeGet() {
 	if len(parents) == 0 {
 		return
 	}
-
-	// t.logger.Info("children are %v", t.Hierarchy().Children(0).GetIndices())
+	defer t.dirtyChildren.Clear()
+	defer t.dirtyParents.Clear()
 
 	saves := []save{}
 
 	for _, parent := range parents {
-		children := t.Hierarchy().Children(parent).GetIndices()
-		if len(children) == 0 {
-			continue
-		}
-		order, ok := t.order.Get(parent)
-		if !ok {
-			continue
-		}
-		align, _ := t.align.Get(parent)
-		gap, _ := t.gap.Get(parent)
-
-		// including gaps
-		var childrenSize float32 = 0
-		for _, child := range children {
-			size, _ := t.Transform().AbsoluteSize().Get(child)
-			childrenSize += size.Size[order.Order]
-			childrenSize += gap.Gap
-		}
-		childrenSize -= gap.Gap
-
-		progress := childrenSize
-		progress *= align.Primary
-
-		for _, child := range children {
-			pos, _ := t.Transform().Pos().Get(child)
-			size, _ := t.Transform().AbsoluteSize().Get(child)
-
-			// pos
-			pos.Pos[order.Order] = progress
-
-			// pivot point
-			pivot := transform.NewPivotPoint(.5, .5, .5)
-			pivot.Point[order.Order] = 1
-			pivot.Point[order.Secondary()] = align.Secondary
-
-			// parent pivot
-			parentPivot := transform.NewParentPivotPoint(0, 0, .5)
-			parentPivot.Point[order.Secondary()] = align.Secondary
-
-			save := save{
-				child,
-				pos,
-				pivot,
-				parentPivot,
-			}
-			saves = append(saves, save)
-
-			progress -= size.Size[order.Order]
-			progress -= gap.Gap
-		}
+		parentSaves := t.handleParentChildren(parent)
+		saves = append(saves, parentSaves...)
 	}
 
 	for _, save := range saves {
@@ -157,4 +109,63 @@ func (t tool) BeforeGet() {
 		t.Transform().PivotPoint().Set(save.entity, save.pivot)
 		t.Transform().ParentPivotPoint().Set(save.entity, save.parentPivot)
 	}
+}
+
+func (t tool) handleParentChildren(parent ecs.EntityID) []save {
+	children := t.Hierarchy().Children(parent).GetIndices()
+	if len(children) == 0 {
+		return nil
+	}
+	order, ok := t.order.Get(parent)
+	if !ok {
+		return nil
+	}
+	saves := make([]save, 0, len(children))
+	align, _ := t.align.Get(parent)
+	gap, _ := t.gap.Get(parent)
+
+	// including gaps
+	var totalSize float32 = 0
+	for _, child := range children {
+		size, _ := t.Transform().AbsoluteSize().Get(child)
+		totalSize += size.Size[order.Order] + gap.Gap
+	}
+	totalSize -= gap.Gap
+
+	size, _ := t.Transform().AbsoluteSize().Get(parent)
+	progress := totalSize - size.Size[order.Primary()]
+	progress *= align.Primary
+
+	for _, child := range children {
+		// pos
+		pos := transform.NewPos(0, 0, 0)
+		pos.Pos[order.Primary()] = progress
+
+		// pivot point
+		pivot := transform.NewPivotPoint(.5, .5, .5)
+		pivot.Point[order.Primary()] = 1
+		pivot.Point[order.Secondary()] = align.Secondary
+
+		// parent pivot
+		parentPivot := transform.NewParentPivotPoint(.5, .5, .5)
+		parentPivot.Point[order.Primary()] = 1
+		parentPivot.Point[order.Secondary()] = align.Secondary
+
+		save := save{
+			child,
+			pos,
+			pivot,
+			parentPivot,
+		}
+		saves = append(saves, save)
+
+		// update progress
+		size, _ := t.Transform().AbsoluteSize().Get(child)
+		progress -= size.Size[order.Primary()] + gap.Gap
+
+		// t.logger.Info("child %v is %v", child, size)
+	}
+	// t.logger.Info("parent %v, children saves %v", parent, saves)
+
+	return saves
 }

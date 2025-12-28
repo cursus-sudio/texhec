@@ -74,6 +74,6 @@ func (s *wasdMoveSystem) Listen(event frames.FrameEvent) {
 			pos.Pos.Y() + moveVerticaly/ortho.Zoom,
 			pos.Pos.Z(),
 		}
-		s.Transform().SetAbsolutePos(camera, pos)
+		s.Transform().AbsolutePos().Set(camera, pos)
 	}
 }

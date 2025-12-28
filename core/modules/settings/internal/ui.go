@@ -85,9 +85,11 @@ func (s system) ListenRender(parent ecs.EntityID) error {
 	// collider
 	// click
 
+	children := []ecs.EntityID{}
+
 	// changes
 	labelEntity := s.NewEntity()
-	s.Hierarchy().SetParent(labelEntity, parent)
+	children = append(children, labelEntity)
 	s.Groups().Inherit().Set(labelEntity, groups.InheritGroupsComponent{})
 
 	s.Transform().Parent().Set(labelEntity, transform.NewParent(transform.RelativePos|transform.RelativeSizeX))
@@ -105,6 +107,8 @@ func (s system) ListenRender(parent ecs.EntityID) error {
 	}
 	btns := []Button{
 		{"SHOT", audio.NewPlayEvent(gamescenes.EffectChannel, s.gameAssets.ExampleAudio)},
+		{"SHOT2", audio.NewPlayEvent(gamescenes.EffectChannel, s.gameAssets.ExampleAudio)},
+		{"SHOT3", audio.NewPlayEvent(gamescenes.EffectChannel, s.gameAssets.ExampleAudio)},
 		{"QUIT", scenes.NewChangeSceneEvent(gamescenes.MenuID)},
 	}
 
@@ -116,7 +120,7 @@ func (s system) ListenRender(parent ecs.EntityID) error {
 
 	for _, btn := range btns {
 		btnEntity := s.NewEntity()
-		s.Hierarchy().SetParent(btnEntity, parent)
+		children = append(children, btnEntity)
 		s.Groups().Inherit().Set(btnEntity, groups.InheritGroupsComponent{})
 
 		ecs.GetComponentsArray[temporaryToggleColorComponent](s).Set(btnEntity, temporaryToggleColorComponent{})
@@ -139,16 +143,7 @@ func (s system) ListenRender(parent ecs.EntityID) error {
 		s.Collider().Component().Set(btnEntity, collider.NewCollider(s.gameAssets.SquareCollider))
 	}
 
-	// this line changes layout for some reason
-	// s.Hierarchy().Children(0) // this lines destroys transform for uknown reason
-	// s.Transform().AbsoluteRotation().GetEntities() // and this repairs it back (no matter where placed) HELP
+	s.Hierarchy().SetChildren(parent, children...)
 
-	// its the mix of (removing any of these solves the issue):
-	// - aspect ratio
-	// - hierarchy
-	// - layout
-	// and it causes:
-	// - absolute pos to do not update despite having the same parentPos, parentPivot, pos, size, pivot
-	// s.logger.Info("children are %v", s.Hierarchy().Children(parent).GetIndices())
 	return nil
 }

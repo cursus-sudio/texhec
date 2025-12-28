@@ -68,28 +68,30 @@ func TestSetChildren(t *testing.T) {
 
 	parent := setup.World.NewEntity()
 
-	var expected []ecs.EntityID
-	child1 := setup.World.NewEntity()
-	child2 := setup.World.NewEntity()
-
-	expected = []ecs.EntityID{child1, child2}
-	setup.Tool.SetChildren(parent, expected...)
-	if children := setup.Tool.Children(parent).GetIndices(); !slices.Equal(children, expected) {
-		t.Errorf("setChildren doesn't work expects %v and has %v", expected, children)
-		return
+	setAndExpect := func(expected ...ecs.EntityID) {
+		t.Helper()
+		setup.Tool.SetChildren(parent, expected...)
+		if children := setup.Tool.Children(parent).GetIndices(); !slices.Equal(children, expected) {
+			t.Errorf("setChildren doesn't work expects %v and has %v", expected, children)
+		}
 	}
 
-	expected = []ecs.EntityID{child2, child1}
-	setup.Tool.SetChildren(parent, expected...)
-	if children := setup.Tool.Children(parent).GetIndices(); !slices.Equal(children, expected) {
-		t.Errorf("setChildren doesn't work expects %v and has %v", expected, children)
-		return
-	}
+	c1 := setup.World.NewEntity()
+	c2 := setup.World.NewEntity()
+	c3 := setup.World.NewEntity()
+	c4 := setup.World.NewEntity()
 
-	expected = []ecs.EntityID{child1, child2}
-	setup.Tool.SetChildren(parent, expected...)
-	if children := setup.Tool.Children(parent).GetIndices(); !slices.Equal(children, expected) {
-		t.Errorf("setChildren doesn't work expects %v and has %v", expected, children)
-		return
-	}
+	// this order tests does removal works for more entities
+	setAndExpect(c1, c2, c3, c4)
+	setAndExpect(c2, c1, c4, c3)
+	setAndExpect(c1, c2, c3, c4)
+
+	setAndExpect(c1, c2)
+	setAndExpect(c2, c1)
+	setAndExpect(c1, c2)
+
+	setAndExpect(10010, 10011, 10012, 10013, 10014) // this is real example
+	setAndExpect(10010, 10011, 10012, 10013, 10014)
+	setAndExpect(10010, 10013, 10012, 10011, 10014)
+
 }

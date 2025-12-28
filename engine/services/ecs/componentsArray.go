@@ -166,5 +166,10 @@ func (c *componentsArray[Component]) AddDirtySet(dirtySet DirtySet) {
 	c.dirtySets.Add(dirtySet)
 }
 func (c *componentsArray[Component]) BeforeGet(listener BeforeGet) {
-	c.beforeGets = append(c.beforeGets, listener)
+	// we prepend listener so they are triggered first.
+	// if they are truely dependent they will call get again
+	//   and BeforeGet will trigger again triggering other listeners
+	// else if they won't be called again
+	//   then nothing will change
+	c.beforeGets = append([]BeforeGet{listener}, c.beforeGets...)
 }

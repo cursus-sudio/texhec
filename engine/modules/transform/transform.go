@@ -16,10 +16,6 @@ type World interface { // these are dependencies of transform package
 	hierarchy.HierarchyTool
 }
 type Interface interface {
-	SetAbsolutePos(ecs.EntityID, AbsolutePosComponent)
-	SetAbsoluteRotation(ecs.EntityID, AbsoluteRotationComponent)
-	SetAbsoluteSize(ecs.EntityID, AbsoluteSizeComponent)
-
 	AbsolutePos() ecs.ComponentsArray[AbsolutePosComponent]
 	AbsoluteRotation() ecs.ComponentsArray[AbsoluteRotationComponent]
 	AbsoluteSize() ecs.ComponentsArray[AbsoluteSizeComponent]

@@ -27,12 +27,11 @@ func (t tool) GetRelativeParentPos(entity ecs.EntityID) mgl32.Vec3 {
 	})
 }
 
-func (t tool) GetPivotPos(entity ecs.EntityID) mgl32.Vec3 {
+func (t tool) GetPivotPos(entity ecs.EntityID, size transform.AbsoluteSizeComponent) mgl32.Vec3 {
 	pivot, _ := t.pivotPointArray.Get(entity)
 	if pivot == t.defaultPivot {
 		return mgl32.Vec3{}
 	}
-	size, _ := t.absoluteSizeArray.Get(entity)
 	pivot.Point = pivot.Point.Sub(t.defaultPivot.Point)
 	return mgl32.Vec3{
 		size.Size[0] * (-pivot.Point[0]),
@@ -195,10 +194,10 @@ func (t tool) ApplyAspectRatio(entity ecs.EntityID, size *transform.SizeComponen
 
 //
 
-func (t tool) CalculateAbsolutePos(entity ecs.EntityID) transform.AbsolutePosComponent {
+func (t tool) CalculateAbsolutePos(entity ecs.EntityID, size transform.AbsoluteSizeComponent) transform.AbsolutePosComponent {
 	pos, _ := t.posArray.Get(entity)
 	relativeToParentPos := t.GetRelativeParentPos(entity)
-	pivotPos := t.GetPivotPos(entity)
+	pivotPos := t.GetPivotPos(entity, size)
 
 	pos.Pos = pos.Pos.
 		Add(relativeToParentPos).
@@ -226,4 +225,13 @@ func (t tool) CalculateAbsoluteSize(entity ecs.EntityID) transform.AbsoluteSizeC
 	t.ApplyMinMaxSize(entity, &size)
 
 	return transform.AbsoluteSizeComponent(size)
+}
+
+func (t tool) CalculateAbsolute(
+	entity ecs.EntityID,
+) (transform.AbsolutePosComponent, transform.AbsoluteRotationComponent, transform.AbsoluteSizeComponent) {
+	rot := t.CalculateAbsoluteRot(entity)
+	size := t.CalculateAbsoluteSize(entity)
+	pos := t.CalculateAbsolutePos(entity, size)
+	return pos, rot, size
 }

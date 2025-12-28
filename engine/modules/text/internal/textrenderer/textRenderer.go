@@ -166,11 +166,6 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 		entityMvp := translation.Mul4(rotation).Mul4(scale)
 
 		for _, cameraEntity := range s.Camera().Component().GetEntities() {
-			camera, err := s.Camera().GetObject(cameraEntity)
-			if err != nil {
-				continue
-			}
-
 			cameraGroups, ok := s.Groups().Component().Get(cameraEntity)
 			if !ok {
 				cameraGroups = groups.DefaultGroups()
@@ -180,10 +175,10 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 				continue
 			}
 
-			mvp := camera.Mat4().Mul4(entityMvp)
+			mvp := s.Camera().Mat4(cameraEntity).Mul4(entityMvp)
 			gl.UniformMatrix4fv(s.locations.Mvp, 1, false, &mvp[0])
 			gl.Uniform4fv(s.locations.Color, 1, &entityColor.Color[0])
-			gl.Viewport(camera.Viewport())
+			gl.Viewport(s.Camera().GetViewport(cameraEntity))
 
 			gl.DrawArrays(gl.POINTS, 0, layout.verticesCount)
 		}

@@ -2,6 +2,7 @@ package camera
 
 import (
 	"engine/modules/collider"
+	"engine/modules/groups"
 	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/media/window"
@@ -20,10 +21,10 @@ type CameraTool interface {
 }
 type World interface {
 	ecs.World
+	groups.GroupsTool
 	transform.TransformTool
 }
 type Interface interface {
-	GetObject(ecs.EntityID) (Object, error)
 	Component() ecs.ComponentsArray[Component]
 
 	Mobile() ecs.ComponentsArray[MobileCameraComponent]
@@ -35,12 +36,8 @@ type Interface interface {
 	OrthoResolution() ecs.ComponentsArray[OrthoResolutionComponent]
 	Perspective() ecs.ComponentsArray[PerspectiveComponent]
 	DynamicPerspective() ecs.ComponentsArray[DynamicPerspectiveComponent]
-}
 
-//
-
-type Object interface {
-	Viewport() (x, y, w, h int32)
-	Mat4() mgl32.Mat4
-	ShootRay(mousePos window.MousePos) collider.Ray
+	GetViewport(camera ecs.EntityID) (x, y, w, h int32)
+	Mat4(caemra ecs.EntityID) mgl32.Mat4
+	ShootRay(camera ecs.EntityID, mousePos window.MousePos) collider.Ray
 }

@@ -25,7 +25,9 @@ type Interface interface {
 }
 
 // all components are components for parent:
+
 // centering
+// Y axis is reversed for primary axis
 type AlignComponent struct {
 	// value between 0 and 1 where 0 means aligned to left and 1 aligned to right
 	Primary, Secondary float32 // default is 0

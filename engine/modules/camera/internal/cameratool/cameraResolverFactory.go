@@ -2,43 +2,70 @@ package cameratool
 
 import (
 	"engine/modules/camera"
+	"engine/modules/collider"
+	"engine/services/datastructures"
 	"engine/services/ecs"
+	"engine/services/media/window"
 	"reflect"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
-type CameraResolverFactory interface {
+type ToolFactory interface {
 	Register(
 		reflect.Type,
-		func(camera.World) func(ecs.EntityID) (camera.Object, error),
+		func(camera.World, camera.CameraTool) ProjectionData,
 	)
 	camera.ToolFactory
 }
 
-type cameraResolverFactory struct {
-	constructors map[reflect.Type]func(camera.World) func(ecs.EntityID) (camera.Object, error)
+type ProjectionData struct {
+	Mat4     func(entity ecs.EntityID) mgl32.Mat4
+	ShootRay func(entity ecs.EntityID, mousePos window.MousePos) collider.Ray
 }
 
-func NewCameraResolverFactory() CameraResolverFactory {
-	return &cameraResolverFactory{
-		constructors: make(map[reflect.Type]func(camera.World) func(ecs.EntityID) (camera.Object, error)),
+type toolFactory struct {
+	window window.Api
+
+	projectionIDs map[reflect.Type]projectionID
+	projections   datastructures.SparseArray[projectionID, func(camera.World, camera.CameraTool) ProjectionData]
+}
+
+func NewCameraResolverFactory(window window.Api) ToolFactory {
+	return &toolFactory{
+		window: window,
+
+		projectionIDs: make(map[reflect.Type]projectionID),
+		projections:   datastructures.NewSparseArray[projectionID, func(camera.World, camera.CameraTool) ProjectionData](),
 	}
 }
 
-func (f *cameraResolverFactory) Register(
+func (f *toolFactory) Register(
 	componentType reflect.Type,
-	ctor func(camera.World) func(ecs.EntityID) (camera.Object, error),
+	data func(camera.World, camera.CameraTool) ProjectionData,
 ) {
-	f.constructors[componentType] = ctor
+	if _, ok := f.projectionIDs[componentType]; ok {
+		return
+	}
+	i := projectionID(len(f.projections.GetIndices()))
+	f.projectionIDs[componentType] = i
+	f.projections.Set(i, data)
 }
 
-func (f *cameraResolverFactory) Build(world camera.World) camera.CameraTool {
-	ctors := make(map[reflect.Type]func(ecs.EntityID) (camera.Object, error))
-	for key, ctor := range f.constructors {
-		ctors[key] = ctor(world)
+func (f *toolFactory) Build(world camera.World) camera.CameraTool {
+	if t, ok := ecs.GetGlobal[tool](world); ok {
+		return &t
 	}
-	return &cameraResolver{
-		cameraArray:  ecs.GetComponentsArray[camera.Component](world),
-		constructors: ctors,
+	t := tool{
+		World: world,
+
+		cameraArray:      ecs.GetComponentsArray[camera.Component](world),
+		projectionsArray: ecs.GetComponentsArray[projectionComponent](world),
+
+		toolFactory: f,
+		projections: datastructures.NewSparseArray[projectionID, ProjectionData](),
+
+		dirtySet: ecs.NewDirtySet(),
 
 		mobileCamera:       ecs.GetComponentsArray[camera.MobileCameraComponent](world),
 		cameraLimits:       ecs.GetComponentsArray[camera.CameraLimitsComponent](world),
@@ -50,4 +77,15 @@ func (f *cameraResolverFactory) Build(world camera.World) camera.CameraTool {
 		perspective:        ecs.GetComponentsArray[camera.PerspectiveComponent](world),
 		dynamicPerspective: ecs.GetComponentsArray[camera.DynamicPerspectiveComponent](world),
 	}
+
+	world.SaveGlobal(t)
+
+	t.projectionsArray.BeforeGet(t.BeforeGet)
+	t.cameraArray.AddDirtySet(t.dirtySet)
+
+	for _, id := range f.projections.GetIndices() {
+		value, _ := f.projections.Get(id)
+		t.projections.Set(id, value(world, t))
+	}
+	return t
 }

@@ -59,12 +59,7 @@ func (s *cameraRaySystem) Listen(args ShootRayEvent) error {
 	var nearestCollision collider.ObjectRayCollision
 	var nearestCamera ecs.EntityID
 	for _, cameraEntity := range s.Camera().Component().GetEntities() {
-		camera, err := s.Camera().GetObject(cameraEntity)
-		if err != nil {
-			return err
-		}
-
-		ray := camera.ShootRay(mousePos)
+		ray := s.Camera().ShootRay(cameraEntity, mousePos)
 
 		collision, err := s.Collider().ShootRay(ray)
 		if err != nil {

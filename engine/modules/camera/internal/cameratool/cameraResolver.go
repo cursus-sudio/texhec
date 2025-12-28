@@ -2,15 +2,31 @@ package cameratool
 
 import (
 	"engine/modules/camera"
+	"engine/modules/collider"
+	"engine/services/datastructures"
 	"engine/services/ecs"
-	"errors"
-	"fmt"
-	"reflect"
+	"engine/services/media/window"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
-type cameraResolver struct {
-	cameraArray  ecs.ComponentsArray[camera.Component]
-	constructors map[reflect.Type]func(ecs.EntityID) (camera.Object, error)
+// type cameraDataID
+type projectionID uint8
+
+type projectionComponent struct {
+	projectionID
+}
+
+type tool struct {
+	camera.World
+
+	cameraArray      ecs.ComponentsArray[camera.Component]
+	projectionsArray ecs.ComponentsArray[projectionComponent]
+
+	*toolFactory
+	projections datastructures.SparseArray[projectionID, ProjectionData]
+
+	dirtySet ecs.DirtySet
 
 	mobileCamera       ecs.ComponentsArray[camera.MobileCameraComponent]
 	cameraLimits       ecs.ComponentsArray[camera.CameraLimitsComponent]
@@ -23,55 +39,100 @@ type cameraResolver struct {
 	dynamicPerspective ecs.ComponentsArray[camera.DynamicPerspectiveComponent]
 }
 
-func (c *cameraResolver) Camera() camera.Interface { return c }
+func (t tool) Camera() camera.Interface { return t }
 
-func (c *cameraResolver) Component() ecs.ComponentsArray[camera.Component] {
-	return c.cameraArray
+func (t tool) Component() ecs.ComponentsArray[camera.Component] {
+	return t.cameraArray
 }
 
-func (c *cameraResolver) GetObject(entity ecs.EntityID) (camera.Object, error) {
-	cameraComponent, ok := c.cameraArray.Get(entity)
+func (t tool) Mobile() ecs.ComponentsArray[camera.MobileCameraComponent] {
+	return t.mobileCamera
+}
+func (t tool) Limits() ecs.ComponentsArray[camera.CameraLimitsComponent] {
+	return t.cameraLimits
+}
+func (t tool) Viewport() ecs.ComponentsArray[camera.ViewportComponent] {
+	return t.viewport
+}
+func (t tool) NormalizedViewport() ecs.ComponentsArray[camera.NormalizedViewportComponent] {
+	return t.normalizedViewport
+}
+
+func (t tool) Ortho() ecs.ComponentsArray[camera.OrthoComponent] {
+	return t.ortho
+}
+func (t tool) OrthoResolution() ecs.ComponentsArray[camera.OrthoResolutionComponent] {
+	return t.orthoResolution
+}
+func (t tool) Perspective() ecs.ComponentsArray[camera.PerspectiveComponent] {
+	return t.perspective
+}
+func (t tool) DynamicPerspective() ecs.ComponentsArray[camera.DynamicPerspectiveComponent] {
+	return t.dynamicPerspective
+}
+
+//
+
+func (t tool) GetViewport(entity ecs.EntityID) (x, y, w, h int32) {
+	viewportComponent, ok := t.viewport.Get(entity)
+	if ok {
+		return viewportComponent.Viewport()
+	}
+	normalizedViewportComponent, ok := t.normalizedViewport.Get(entity)
+	if ok {
+		return normalizedViewportComponent.Viewport(t.window.Window().GetSize())
+	}
+
+	w, h = t.window.Window().GetSize()
+	return 0, 0, w, h
+}
+func (t tool) Mat4(entity ecs.EntityID) mgl32.Mat4 {
+	comp, ok := t.projectionsArray.Get(entity)
 	if !ok {
-		return nil, camera.ErrNotCamera
+		return mgl32.Mat4{}
 	}
-	constructor, ok := c.constructors[cameraComponent.Projection]
+	data, ok := t.projections.Get(comp.projectionID)
 	if !ok {
-		return nil, errors.Join(
-			camera.ErrNotCamera,
-			fmt.Errorf("missing constructor for \"%s\"", cameraComponent.Projection.String()),
-		)
+		return mgl32.Mat4{}
+	}
+	return data.Mat4(entity)
+}
+func (t tool) ShootRay(camera ecs.EntityID, mousePos window.MousePos) collider.Ray {
+	comp, ok := t.projectionsArray.Get(camera)
+	if !ok {
+		return collider.Ray{}
+	}
+	data, ok := t.projections.Get(comp.projectionID)
+	if !ok {
+		return collider.Ray{}
 	}
 
-	camera, err := constructor(entity)
-	if err != nil {
-		return nil, err
+	ray := data.ShootRay(camera, mousePos)
+	groups, _ := t.Groups().Component().Get(camera)
+	ray.Groups = groups
+	return ray
+}
+
+//
+
+func (t tool) BeforeGet() {
+	dirtyEntities := t.dirtySet.Get()
+	if len(dirtyEntities) == 0 {
+		return
 	}
 
-	return camera, nil
-}
-
-func (c *cameraResolver) Mobile() ecs.ComponentsArray[camera.MobileCameraComponent] {
-	return c.mobileCamera
-}
-func (c *cameraResolver) Limits() ecs.ComponentsArray[camera.CameraLimitsComponent] {
-	return c.cameraLimits
-}
-func (c *cameraResolver) Viewport() ecs.ComponentsArray[camera.ViewportComponent] {
-	return c.viewport
-}
-func (c *cameraResolver) NormalizedViewport() ecs.ComponentsArray[camera.NormalizedViewportComponent] {
-	return c.normalizedViewport
-}
-
-func (c *cameraResolver) Ortho() ecs.ComponentsArray[camera.OrthoComponent] {
-	return c.ortho
-}
-func (c *cameraResolver) OrthoResolution() ecs.ComponentsArray[camera.OrthoResolutionComponent] {
-	return c.orthoResolution
-}
-func (c *cameraResolver) Perspective() ecs.ComponentsArray[camera.PerspectiveComponent] {
-	return c.perspective
-}
-func (c *cameraResolver) DynamicPerspective() ecs.ComponentsArray[camera.DynamicPerspectiveComponent] {
-	return c.dynamicPerspective
+	for _, entity := range dirtyEntities {
+		cam, ok := t.cameraArray.Get(entity)
+		if !ok {
+			t.projectionsArray.Remove(entity)
+			continue
+		}
+		projID, ok := t.projectionIDs[cam.Projection]
+		if !ok {
+			t.projectionsArray.Remove(entity)
+			continue
+		}
+		projComp := projectionComponent{projID}
+		t.projectionsArray.Set(entity, projComp)
+	}
 }

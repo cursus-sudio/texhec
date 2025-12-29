@@ -108,11 +108,6 @@ func (s *system) Listen(render.RenderEvent) {
 		gl.Uniform1f(s.locations.GridDepth, s.gridDepth)
 
 		for _, cameraEntity := range s.world.Camera().Component().GetEntities() {
-			camera, err := s.world.Camera().GetObject(cameraEntity)
-			if err != nil {
-				continue
-			}
-
 			cameraGroups, ok := s.world.Groups().Component().Get(cameraEntity)
 			if !ok {
 				cameraGroups = groups.DefaultGroups()
@@ -122,10 +117,10 @@ func (s *system) Listen(render.RenderEvent) {
 				continue
 			}
 
-			cameraMatrix := camera.Mat4()
+			cameraMatrix := s.world.Camera().Mat4(cameraEntity)
 			gl.UniformMatrix4fv(s.locations.Camera, 1, false, &cameraMatrix[0])
 
-			gl.Viewport(camera.Viewport())
+			gl.Viewport(s.world.Camera().GetViewport(cameraEntity))
 			gl.DrawArrays(gl.POINTS, 0, layer.verticesCount)
 		}
 	}

@@ -48,6 +48,7 @@ func NewSetup(t *testing.T) Setup {
 }
 
 func (setup Setup) expectAbsolutePos(entity ecs.EntityID, expectedPos transform.PosComponent) {
+	setup.T.Helper()
 	pos, _ := setup.Transform().AbsolutePos().Get(entity)
 	if pos.Pos != expectedPos.Pos {
 		setup.T.Errorf("expected pos %v but has %v", expectedPos, pos)
@@ -55,6 +56,7 @@ func (setup Setup) expectAbsolutePos(entity ecs.EntityID, expectedPos transform.
 }
 
 func (setup Setup) expectAbsoluteSize(entity ecs.EntityID, expectedSize transform.SizeComponent) {
+	setup.T.Helper()
 	size, _ := setup.Transform().AbsoluteSize().Get(entity)
 	if size.Size != expectedSize.Size {
 		setup.T.Errorf("expected size %v but has %v", expectedSize, size)

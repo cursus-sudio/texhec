@@ -24,6 +24,8 @@ type save struct {
 }
 
 func (s tool) Init() {
+	s.groupsArray.SetEmpty(groups.DefaultGroups())
+
 	dirtySet := ecs.NewDirtySet()
 	s.groupsArray.AddDependency(s.inheritArray)
 	s.groupsArray.AddDependency(s.world.Hierarchy().Component())

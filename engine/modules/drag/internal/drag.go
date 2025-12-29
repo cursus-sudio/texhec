@@ -20,25 +20,21 @@ func NewSystem(
 
 func (s s) Register(w drag.World) error {
 	events.Listen(w.EventsBuilder(), func(event drag.DraggableEvent) {
-		camera, err := w.Camera().GetObject(event.Drag.Camera)
-		if err != nil {
-			return
-		}
 		entity := event.Entity
 
 		pos, _ := w.Transform().AbsolutePos().Get(entity)
 		rot, _ := w.Transform().AbsoluteRotation().Get(entity)
 
-		fromRay := camera.ShootRay(event.Drag.From)
-		toRay := camera.ShootRay(event.Drag.To)
+		fromRay := w.Camera().ShootRay(event.Drag.Camera, event.Drag.From)
+		toRay := w.Camera().ShootRay(event.Drag.Camera, event.Drag.To)
 
 		posDiff := toRay.Pos.Sub(fromRay.Pos)
 		pos.Pos = pos.Pos.Add(posDiff)
-		w.Transform().SetAbsolutePos(entity, pos)
+		w.Transform().AbsolutePos().Set(entity, pos)
 
 		rotDiff := mgl32.QuatBetweenVectors(toRay.Direction, fromRay.Direction)
 		rot.Rotation = rot.Rotation.Mul(rotDiff)
-		w.Transform().SetAbsoluteRotation(entity, rot)
+		w.Transform().AbsoluteRotation().Set(entity, rot)
 	})
 	return nil
 }

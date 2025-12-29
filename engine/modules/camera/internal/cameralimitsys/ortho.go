@@ -54,10 +54,6 @@ func (s *orthoSys) BeforeGet() {
 	saves := []save{}
 
 	for _, entity := range ei {
-		camera, err := s.Camera().GetObject(entity)
-		if err != nil {
-			continue
-		}
 		limits, ok := s.Camera().Limits().Get(entity)
 		if !ok {
 			continue
@@ -71,7 +67,7 @@ func (s *orthoSys) BeforeGet() {
 		if !ok {
 			continue
 		}
-		x, y, w, h := camera.Viewport()
+		x, y, w, h := s.Camera().GetViewport(entity)
 		halfWidth := float32(w-x) / 2 / ortho.Zoom
 		halfHeight := float32(h-y) / 2 / ortho.Zoom
 

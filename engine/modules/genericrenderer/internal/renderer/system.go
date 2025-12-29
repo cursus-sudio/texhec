@@ -205,11 +205,6 @@ func (m *system) Listen(render.RenderEvent) error {
 			cameraGroups = groups.DefaultGroups()
 		}
 
-		camera, err := m.Camera().GetObject(cameraEntity)
-		if err != nil {
-			continue
-		}
-
 		for _, entity := range m.GenericRenderer().Pipeline().GetEntities() {
 			entityGroups, ok := m.Groups().Component().Get(entity)
 			if !ok {
@@ -245,8 +240,8 @@ func (m *system) Listen(render.RenderEvent) error {
 			meshAsset.Use()
 			gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, meshAsset.EBO().ID())
 
-			mvp := camera.Mat4().Mul4(model)
-			gl.Viewport(camera.Viewport())
+			mvp := m.Camera().Mat4(cameraEntity).Mul4(model)
+			gl.Viewport(m.Camera().GetViewport(cameraEntity))
 			gl.UniformMatrix4fv(m.locations.Mvp, 1, false, &mvp[0])
 			gl.Uniform4fv(m.locations.Color, 1, &colorComponent.Color[0])
 

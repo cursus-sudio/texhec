@@ -7,6 +7,7 @@ import (
 	"engine/modules/genericrenderer"
 	"engine/modules/groups"
 	"engine/modules/inputs"
+	"engine/modules/layout"
 	"engine/modules/render"
 	"engine/modules/text"
 	"engine/modules/transform"
@@ -122,6 +123,10 @@ func (t tool) Init() error {
 	t.Hierarchy().SetParent(childWrapper, menu)
 	t.Groups().Inherit().Set(childWrapper, groups.InheritGroupsComponent{})
 	t.Transform().Parent().Set(childWrapper, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
+
+	t.Layout().Order().Set(childWrapper, layout.NewOrder(layout.OrderVectical))
+	t.Layout().Align().Set(childWrapper, layout.NewAlign(0, .5))
+	t.Layout().Gap().Set(childWrapper, layout.NewGap(10))
 
 	t.menu = menu
 	t.childWrapper = childWrapper

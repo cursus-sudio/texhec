@@ -62,12 +62,7 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) {
 		pos, _ := s.Transform().AbsolutePos().Get(cameraEntity)
 		rot, _ := s.Transform().AbsoluteRotation().Get(cameraEntity)
 
-		camera, err := s.Camera().GetObject(cameraEntity)
-		if err != nil {
-			continue
-		}
-
-		rayBefore := camera.ShootRay(mousePos)
+		rayBefore := s.Camera().ShootRay(cameraEntity, mousePos)
 
 		// apply zoom
 		ortho.Zoom *= mul
@@ -76,7 +71,7 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) {
 		s.Camera().Ortho().Set(cameraEntity, ortho)
 
 		// read after
-		rayAfter := camera.ShootRay(mousePos)
+		rayAfter := s.Camera().ShootRay(cameraEntity, mousePos)
 
 		// apply transform
 		pos.Pos = pos.Pos.Add(rayBefore.Pos.Sub(rayAfter.Pos))
@@ -84,7 +79,7 @@ func (s *scrollSystem) Listen(event sdl.MouseWheelEvent) {
 		rotationDifference := mgl32.QuatBetweenVectors(rayBefore.Direction, rayAfter.Direction)
 		rot.Rotation = rotationDifference.Mul(rot.Rotation)
 
-		s.Transform().SetAbsolutePos(cameraEntity, pos)
-		s.Transform().SetAbsoluteRotation(cameraEntity, rot)
+		s.Transform().AbsolutePos().Set(cameraEntity, pos)
+		s.Transform().AbsoluteRotation().Set(cameraEntity, rot)
 	}
 }

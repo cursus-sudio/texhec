@@ -85,15 +85,14 @@ func (s system) ListenRender(parent ecs.EntityID) error {
 	// collider
 	// click
 
+	children := []ecs.EntityID{}
+
 	// changes
 	labelEntity := s.NewEntity()
-	s.Hierarchy().SetParent(labelEntity, parent)
+	children = append(children, labelEntity)
 	s.Groups().Inherit().Set(labelEntity, groups.InheritGroupsComponent{})
 
 	s.Transform().Parent().Set(labelEntity, transform.NewParent(transform.RelativePos|transform.RelativeSizeX))
-	s.Transform().ParentPivotPoint().Set(labelEntity, transform.NewParentPivotPoint(.5, .5, 1))
-	s.Transform().PivotPoint().Set(labelEntity, transform.NewPivotPoint(.5, .5, 0))
-	s.Transform().Pos().Set(labelEntity, transform.NewPos(0, 25, 0))
 	s.Transform().Size().Set(labelEntity, transform.NewSize(1, 50, 1))
 
 	s.Text().Content().Set(labelEntity, text.TextComponent{Text: "SETTINGS"})
@@ -108,6 +107,8 @@ func (s system) ListenRender(parent ecs.EntityID) error {
 	}
 	btns := []Button{
 		{"SHOT", audio.NewPlayEvent(gamescenes.EffectChannel, s.gameAssets.ExampleAudio)},
+		{"SHOT2", audio.NewPlayEvent(gamescenes.EffectChannel, s.gameAssets.ExampleAudio)},
+		{"SHOT3", audio.NewPlayEvent(gamescenes.EffectChannel, s.gameAssets.ExampleAudio)},
 		{"QUIT", scenes.NewChangeSceneEvent(gamescenes.MenuID)},
 	}
 
@@ -117,26 +118,20 @@ func (s system) ListenRender(parent ecs.EntityID) error {
 	}
 	btnAspectRatio := btnAsset.AspectRatio()
 
-	for i, btn := range btns {
-		var height float32 = 50
-		var margin float32 = 10
+	for _, btn := range btns {
 		btnEntity := s.NewEntity()
-		s.Hierarchy().SetParent(btnEntity, parent)
+		children = append(children, btnEntity)
 		s.Groups().Inherit().Set(btnEntity, groups.InheritGroupsComponent{})
 
 		ecs.GetComponentsArray[temporaryToggleColorComponent](s).Set(btnEntity, temporaryToggleColorComponent{})
 
-		// btnTransform := transformTransaction.GetObject(btnEntity)
 		s.Transform().AspectRatio().Set(btnEntity, transform.NewAspectRatio(float32(btnAspectRatio.Dx()), float32(btnAspectRatio.Dy()), 0, transform.PrimaryAxisX))
 		s.Transform().Parent().Set(btnEntity, transform.NewParent(transform.RelativePos|transform.RelativeSizeX))
-		s.Transform().ParentPivotPoint().Set(btnEntity, transform.NewParentPivotPoint(.5, .5, 1))
-		s.Transform().PivotPoint().Set(btnEntity, transform.NewPivotPoint(.5, .5, 0))
-		s.Transform().MaxSize().Set(btnEntity, transform.NewMaxSize(0, height+margin-1, 0))
-		s.Transform().Pos().Set(btnEntity, transform.NewPos(0, float32(-i)*(height+margin)-25, 0))
-		s.Transform().Size().Set(btnEntity, transform.NewSize(1, height, 1))
+		s.Transform().MaxSize().Set(btnEntity, transform.NewMaxSize(0, 50, 0))
+		s.Transform().Size().Set(btnEntity, transform.NewSize(1, 50, 1))
 
-		s.World.Render().Mesh().Set(btnEntity, render.NewMesh(s.gameAssets.SquareMesh))
-		s.World.Render().Texture().Set(btnEntity, render.NewTexture(s.gameAssets.Hud.Btn))
+		s.Render().Mesh().Set(btnEntity, render.NewMesh(s.gameAssets.SquareMesh))
+		s.Render().Texture().Set(btnEntity, render.NewTexture(s.gameAssets.Hud.Btn))
 		s.GenericRenderer().Pipeline().Set(btnEntity, genericrenderer.PipelineComponent{})
 
 		s.Text().Content().Set(btnEntity, text.TextComponent{Text: btn.text})
@@ -147,5 +142,8 @@ func (s system) ListenRender(parent ecs.EntityID) error {
 		s.Inputs().KeepSelected().Set(btnEntity, inputs.KeepSelectedComponent{})
 		s.Collider().Component().Set(btnEntity, collider.NewCollider(s.gameAssets.SquareCollider))
 	}
+
+	s.Hierarchy().SetChildren(parent, children...)
+
 	return nil
 }

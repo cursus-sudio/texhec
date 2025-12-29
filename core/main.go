@@ -13,11 +13,8 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
-func Invalid() error { return nil }
-
 // golangci-lint run --fix
 func main() {
-	Invalid()
 	print("started\n")
 
 	{ // go tool pprof -http=:8080 cpu.pprof.cp

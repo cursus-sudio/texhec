@@ -25,6 +25,9 @@ func NewDragged(camera ecs.EntityID) DraggedComponent {
 // keeps element selected even if user drags outside
 type KeepSelectedComponent struct{}
 
+// this is special component stating that on click it enables clicking elements below
+// type StackComponent struct{}
+
 //
 
 type MouseLeftClickComponent struct{ Event any }

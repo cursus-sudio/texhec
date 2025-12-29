@@ -7,6 +7,7 @@ import (
 	"engine/services/media/window"
 	"errors"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/events"
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -25,7 +26,8 @@ type clickSystem struct {
 
 	window window.Api
 
-	moved        bool
+	maxMoved,
+	moved float32 // max distance
 	emitDrag     bool
 	movingCamera ecs.EntityID
 	movedEntity  *ecs.EntityID
@@ -45,8 +47,7 @@ func NewClickSystem(
 
 			window: window,
 
-			movedEntity: nil,
-			movedFrom:   nil,
+			maxMoved: 3,
 		}
 
 		events.ListenE(w.EventsBuilder(), s.ListenClick)
@@ -87,7 +88,11 @@ func (s *clickSystem) ListenMove(event sdl.MouseMotionEvent) {
 	}
 
 cleanUp:
-	s.moved = true
+	dist := mgl32.Vec2{
+		float32(s.movedFrom.X - to.X),
+		float32(s.movedFrom.Y - to.Y),
+	}.Len()
+	s.moved = dist + s.moved
 	s.movedFrom = &to
 }
 
@@ -106,7 +111,7 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
 
 	switch event.State {
 	case sdl.PRESSED:
-		s.moved = false
+		s.moved = 0
 		s.movedEntity = entity
 		s.emitDrag = true
 
@@ -131,7 +136,7 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
 			break
 		}
 
-		if _, ok := s.Inputs().KeepSelected().Get(*entity); !ok && s.moved {
+		if _, ok := s.Inputs().KeepSelected().Get(*entity); !ok && s.moved > s.maxMoved {
 			break
 		}
 

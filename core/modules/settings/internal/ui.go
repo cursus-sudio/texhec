@@ -138,7 +138,7 @@ func (s system) ListenRender(parent ecs.EntityID) error {
 		s.Text().FontSize().Set(btnEntity, text.FontSizeComponent{FontSize: 25})
 		s.Text().Align().Set(btnEntity, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
 
-		s.Inputs().MouseLeft().Set(btnEntity, inputs.NewMouseLeftClick(btn.event))
+		s.Inputs().LeftClick().Set(btnEntity, inputs.NewLeftClick(btn.event))
 		s.Inputs().KeepSelected().Set(btnEntity, inputs.KeepSelectedComponent{})
 		s.Collider().Component().Set(btnEntity, collider.NewCollider(s.gameAssets.SquareCollider))
 	}

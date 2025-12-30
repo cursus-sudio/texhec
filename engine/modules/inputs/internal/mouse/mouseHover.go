@@ -2,7 +2,10 @@ package mouse
 
 import (
 	"engine/modules/inputs"
+	"engine/modules/inputs/internal/tool"
 	"engine/services/ecs"
+	"engine/services/logger"
+	"slices"
 
 	"github.com/ogiusek/events"
 )
@@ -10,17 +13,20 @@ import (
 type hoverSystem struct {
 	inputs.World
 	inputs.InputsTool
-	target *ecs.EntityID
+	logger  logger.Logger
+	targets []inputs.Target
 }
 
 func NewHoverSystem(
 	inputsToolFactory inputs.ToolFactory,
+	logger logger.Logger,
 ) inputs.System {
 	return ecs.NewSystemRegister(func(w inputs.World) error {
 		s := &hoverSystem{
 			World:      w,
 			InputsTool: inputsToolFactory.Build(w),
-			target:     nil,
+			logger:     logger,
+			targets:    nil,
 		}
 
 		events.Listen(w.EventsBuilder(), s.Listen)
@@ -38,20 +44,34 @@ func (s *hoverSystem) handleMouseLeave(entity ecs.EntityID) {
 	events.EmitAny(s.Events(), mouseLeave.Event)
 }
 
-func (s *hoverSystem) Listen(event RayChangedTargetEvent) {
-	if s.target != nil {
-		s.handleMouseLeave(*s.target)
-	}
-	if event.EntityID == nil {
-		s.target = nil
-		return
-	}
-	s.target = event.EntityID
-	entity := *event.EntityID
+func (s *hoverSystem) Listen(event tool.RayChangedTargetEvent) {
+	left := []inputs.Target{}
+	entered := []inputs.Target{}
 
-	s.Inputs().Hovered().Set(entity, inputs.HoveredComponent{Camera: event.Camera})
-
-	if mouseEnter, ok := s.Inputs().MouseEnter().Get(entity); ok {
-		events.EmitAny(s.Events(), mouseEnter.Event)
+	for _, prevTarget := range s.targets {
+		if slices.Contains(event.Targets, prevTarget) {
+			continue
+		}
+		left = append(left, prevTarget)
 	}
+	for _, target := range event.Targets {
+		if slices.Contains(s.targets, target) {
+			continue
+		}
+		entered = append(entered, target)
+	}
+
+	for _, target := range left {
+		s.handleMouseLeave(target.Entity)
+	}
+
+	for _, target := range entered {
+		s.Inputs().Hovered().Set(target.Entity, inputs.HoveredComponent{Camera: target.Camera})
+
+		if mouseEnter, ok := s.Inputs().MouseEnter().Get(target.Entity); ok {
+			events.EmitAny(s.Events(), mouseEnter.Event)
+		}
+	}
+	s.targets = event.Targets
+
 }

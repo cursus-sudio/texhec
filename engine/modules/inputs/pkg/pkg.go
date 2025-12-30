@@ -31,14 +31,14 @@ func (pkg) Register(b ioc.Builder) {
 			Register(inputs.HoveredComponent{}).
 			Register(inputs.DraggedComponent{}).
 			Register(inputs.KeepSelectedComponent{}).
-			Register(inputs.MouseLeftClickComponent{}).
-			Register(inputs.MouseDoubleLeftClickComponent{}).
-			Register(inputs.MouseRightClickComponent{}).
-			Register(inputs.MouseDoubleRightClickComponent{}).
+			Register(inputs.LeftClickComponent{}).
+			Register(inputs.DoubleLeftClickComponent{}).
+			Register(inputs.RightClickComponent{}).
+			Register(inputs.DoubleRightClickComponent{}).
 			Register(inputs.MouseEnterComponent{}).
 			Register(inputs.MouseLeaveComponent{}).
-			Register(inputs.MouseHoverComponent{}).
-			Register(inputs.MouseDragComponent{}).
+			Register(inputs.HoverComponent{}).
+			Register(inputs.DragComponent{}).
 			// events
 			Register(inputs.QuitEvent{}).
 			Register(inputs.DragEvent{}).
@@ -46,7 +46,9 @@ func (pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) inputs.ToolFactory {
-		return tool.NewToolFactory()
+		return tool.NewToolFactory(
+			ioc.Get[logger.Logger](c),
+		)
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) inputs.System {
@@ -69,8 +71,11 @@ func (pkg) Register(b ioc.Builder) {
 				),
 				mouse.NewHoverSystem(
 					ioc.Get[inputs.ToolFactory](c),
+					ioc.Get[logger.Logger](c),
 				),
-				mouse.NewHoverEventsSystem(),
+				mouse.NewHoverEventsSystem(
+					ioc.Get[inputs.ToolFactory](c),
+				),
 				mouse.NewClickSystem(
 					ioc.Get[logger.Logger](c),
 					ioc.Get[window.Api](c),

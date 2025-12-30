@@ -8,6 +8,7 @@ import (
 	"engine/services/ecs"
 	"engine/services/logger"
 	"errors"
+	"slices"
 	"sync"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -141,28 +142,30 @@ func (t tool) Collider() collider.Interface { return t }
 
 func (t tool) Component() ecs.ComponentsArray[collider.Component] { return t.colliderArray }
 
-func (t tool) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) (collider.ObjectRayCollision, error) {
+func (t tool) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) *collider.ObjectRayCollision {
 	t.ApplyChanges()
 	entityGroups, ok := t.world.Groups().Component().Get(entity)
 	if !ok {
 		entityGroups = groups.DefaultGroups()
 	}
 	if entityGroups.GetSharedWith(ray.Groups).Mask == 0 {
-		return nil, nil
+		return nil
 	}
 
 	aabb := TransformAABB(t.world.Transform(), entity)
 	if ok, _ := RayAABBIntersect(ray, aabb); !ok {
-		return nil, nil
+		return nil
 	}
 
 	colliderComponent, ok := t.colliderArray.Get(entity)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	colliderAsset, err := assets.GetAsset[collider.ColliderAsset](t.assets, colliderComponent.ID)
 	if err != nil {
-		return nil, err
+		// invalid internal state
+		t.logger.Warn(err)
+		return nil
 	}
 
 	//
@@ -215,19 +218,20 @@ func (t tool) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) (collider.O
 	}
 
 	if closestHit == nil {
-		return nil, nil
+		return nil
 	}
 
 	collision := collider.NewObjectRayCollision(entity, *closestHit)
-	return collision, nil
+	return &collision
 }
 
-func (t tool) CollidesWithObject(entityA ecs.EntityID, entityB ecs.EntityID) (collider.ObjectObjectCollision, error) {
+func (t tool) CollidesWithObject(entityA ecs.EntityID, entityB ecs.EntityID) *collider.ObjectObjectCollision {
 	t.ApplyChanges()
-	return nil, errors.New("501")
+	t.logger.Warn(errors.New("501"))
+	return nil
 }
 
-func (t tool) ShootRay(ray collider.Ray) (collider.ObjectRayCollision, error) {
+func (t tool) Raycast(ray collider.Ray) *collider.ObjectRayCollision {
 	t.ApplyChanges()
 	chunkSize := t.ChunkSize()
 	gridX := floorF32ToInt(ray.Pos[0] / chunkSize)
@@ -239,39 +243,76 @@ func (t tool) ShootRay(ray collider.Ray) (collider.ObjectRayCollision, error) {
 
 	chunk, ok := t.Chunks()[chunkCoord]
 	if !ok {
-		return nil, nil
+		return nil
 	}
 
 	var closestHit *collider.RayHit
 	var closestEntity ecs.EntityID
 
 	for _, entity := range chunk.Get() {
-		collision, err := t.CollidesWithRay(entity, ray)
-		if err != nil {
-			return nil, err
-		}
+		collision := t.CollidesWithRay(entity, ray)
 		if collision == nil {
 			continue
 		}
 
-		if closestHit != nil && closestHit.Distance < collision.Hit().Distance {
+		if closestHit != nil && closestHit.Distance < collision.Hit.Distance {
 			continue
 		}
 
-		hit := collision.Hit()
+		hit := collision.Hit
 		closestHit = &hit
 		closestEntity = entity
 	}
 
 	if closestHit == nil {
-		return nil, nil
+		return nil
 	}
 
 	collision := collider.NewObjectRayCollision(closestEntity, *closestHit)
-	return collision, nil
+	return &collision
 }
 
-func (t tool) NarrowCollisions(entity ecs.EntityID) ([]ecs.EntityID, error) {
+func (t tool) RaycastAll(ray collider.Ray) []collider.ObjectRayCollision {
 	t.ApplyChanges()
-	return nil, errors.New("501")
+	chunkSize := t.ChunkSize()
+	gridX := floorF32ToInt(ray.Pos[0] / chunkSize)
+	gridY := floorF32ToInt(ray.Pos[1] / chunkSize)
+	chunkCoord := mgl32.Vec2{
+		float32(gridX) * chunkSize,
+		float32(gridY) * chunkSize,
+	}
+
+	chunk, ok := t.Chunks()[chunkCoord]
+	if !ok {
+		return nil
+	}
+
+	collisions := []collider.ObjectRayCollision{}
+
+	for _, entity := range chunk.Get() {
+		collision := t.CollidesWithRay(entity, ray)
+		if collision == nil {
+			continue
+		}
+
+		collisions = append(collisions, collider.NewObjectRayCollision(entity, collision.Hit))
+	}
+
+	slices.SortFunc(collisions, func(a, b collider.ObjectRayCollision) int {
+		if a.Hit.Distance < b.Hit.Distance {
+			return -1
+		}
+		if a.Hit.Distance > b.Hit.Distance {
+			return 1
+		}
+		return 0
+	})
+
+	return collisions
+}
+
+func (t tool) NarrowCollisions(entity ecs.EntityID) []ecs.EntityID {
+	t.ApplyChanges()
+	t.logger.Warn(errors.New("501"))
+	return nil
 }

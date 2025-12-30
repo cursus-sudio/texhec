@@ -72,7 +72,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			world.GenericRenderer().Pipeline().Set(draggable, genericrenderer.PipelineComponent{})
 
 			world.Collider().Component().Set(draggable, collider.NewCollider(gameAssets.SquareCollider))
-			world.Inputs().MouseDrag().Set(draggable, inputs.NewMouseDragComponent(drag.NewDraggable(draggable)))
+			world.Inputs().Drag().Set(draggable, inputs.NewDragComponent(drag.NewDraggable(draggable)))
 
 			world.Text().Content().Set(draggable, text.TextComponent{Text: strings.ToUpper("drag me")})
 			world.Text().Align().Set(draggable, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
@@ -97,7 +97,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			world.Render().Texture().Set(btn, render.NewTexture(gameAssets.Hud.Btn))
 			world.GenericRenderer().Pipeline().Set(btn, genericrenderer.PipelineComponent{})
 
-			world.Inputs().MouseLeft().Set(btn, inputs.NewMouseLeftClick(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
+			world.Inputs().LeftClick().Set(btn, inputs.NewLeftClick(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
 			world.Inputs().KeepSelected().Set(btn, inputs.KeepSelectedComponent{})
 			world.Collider().Component().Set(btn, collider.NewCollider(gameAssets.SquareCollider))
 

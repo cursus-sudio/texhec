@@ -6,6 +6,7 @@ import (
 	"engine/services/logger"
 	"engine/services/media/window"
 	"errors"
+	"slices"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/events"
@@ -27,11 +28,15 @@ type clickSystem struct {
 	window window.Api
 
 	maxMoved,
+
 	moved float32 // max distance
+
 	emitDrag     bool
 	movingCamera ecs.EntityID
 	movedEntity  *ecs.EntityID
 	movedFrom    *window.MousePos
+
+	stacked []ecs.EntityID
 }
 
 func NewClickSystem(
@@ -50,7 +55,7 @@ func NewClickSystem(
 			maxMoved: 3,
 		}
 
-		events.ListenE(w.EventsBuilder(), s.ListenClick)
+		events.Listen(w.EventsBuilder(), s.ListenClick)
 		events.Listen(w.EventsBuilder(), s.ListenMove)
 		return nil
 	})
@@ -76,7 +81,7 @@ func (s *clickSystem) ListenMove(event sdl.MouseMotionEvent) {
 
 	if s.movedEntity != nil {
 		entity := *s.movedEntity
-		dragComponent, ok := s.Inputs().MouseDrag().Get(entity)
+		dragComponent, ok := s.Inputs().Drag().Get(entity)
 		if !ok {
 			goto cleanUp
 		}
@@ -96,17 +101,39 @@ cleanUp:
 	s.movedFrom = &to
 }
 
-func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
-	entities := s.Inputs().Hovered().GetEntities()
-	if len(entities) > 1 {
-		return ErrCanHoverOverMaxOneEntity
+func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) {
+	stackedBefore := make([]ecs.EntityID, len(s.stacked))
+	copy(stackedBefore, s.stacked)
+
+	stacked := []ecs.EntityID{}
+	{
+		for _, collision := range s.Inputs().StackedData() {
+			stacked = append(stacked, collision.Entity)
+		}
 	}
 
 	var entity *ecs.EntityID
-	if len(entities) == 1 {
-		e := entities[0]
-		entity = &e
+
+	i := 0
+	for i = range s.stacked {
+		if len(stacked) == i || stacked[i] != s.stacked[i] {
+			break
+		}
 	}
+	if len(s.stacked) != i && len(stacked) != i && stacked[i] == s.stacked[i] {
+		i++
+	}
+
+	if i >= 0 && len(s.stacked) >= i && len(stacked) > i {
+		s.stacked = s.stacked[:i]
+		entity = &stacked[i]
+	} else if len(stacked) != 0 {
+		s.stacked = nil
+		entity = &stacked[0]
+	} else {
+		s.stacked = nil
+	}
+
 	pos := window.NewMousePos(event.X, event.Y)
 
 	switch event.State {
@@ -144,30 +171,61 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) error {
 
 		switch event.Button {
 		case sdl.BUTTON_LEFT:
-			if comp, ok := s.Inputs().MouseLeft().Get(*entity); ok {
+			if comp, ok := s.Inputs().LeftClick().Get(*entity); ok {
 				eventToEmit = comp.Event
 			}
 			switch event.Clicks {
 			case 2:
-				if comp, ok := s.Inputs().MouseDoubleLeft().Get(*entity); ok {
+				if comp, ok := s.Inputs().DoubleLeftClick().Get(*entity); ok {
 					eventToEmit = comp.Event
 				}
 			}
 		case sdl.BUTTON_RIGHT:
-			if comp, ok := s.Inputs().MouseRight().Get(*entity); ok {
+			if comp, ok := s.Inputs().RightClick().Get(*entity); ok {
 				eventToEmit = comp.Event
 			}
 			switch event.Clicks {
 			case 2:
-				if comp, ok := s.Inputs().MouseDoubleRight().Get(*entity); ok {
+				if comp, ok := s.Inputs().DoubleRightClick().Get(*entity); ok {
 					eventToEmit = comp.Event
 				}
 			}
+		}
+
+		if _, ok := s.Inputs().Stack().Get(*entity); !ok {
+			s.stacked = nil
+		} else if len(s.stacked) != 0 && s.stacked[0] == *entity {
+			s.stacked = s.stacked[:1]
+		} else {
+			s.stacked = append(s.stacked, *entity)
 		}
 
 		if eventToEmit != nil {
 			events.EmitAny(s.Events(), eventToEmit)
 		}
 	}
-	return nil
+
+	// find all added and removed
+	removed := []ecs.EntityID{}
+	for _, prevTarget := range stackedBefore {
+		if slices.Contains(s.stacked, prevTarget) {
+			continue
+		}
+		removed = append(removed, prevTarget)
+	}
+	added := []ecs.EntityID{}
+	for _, target := range s.stacked {
+		if slices.Contains(stackedBefore, target) {
+			continue
+		}
+		added = append(added, target)
+	}
+
+	for _, added := range added {
+		s.Inputs().Stacked().Set(added, inputs.StackedComponent{})
+	}
+
+	for _, removed := range removed {
+		s.Inputs().Stacked().Remove(removed)
+	}
 }

@@ -85,7 +85,7 @@ func addScene(
 	world.Render().Texture().Set(settingsEntity, render.NewTexture(gameAssets.Hud.Settings))
 	world.GenericRenderer().Pipeline().Set(settingsEntity, genericrenderer.PipelineComponent{})
 
-	world.Inputs().MouseLeft().Set(settingsEntity, inputs.NewMouseLeftClick(settings.EnterSettingsEvent{}))
+	world.Inputs().LeftClick().Set(settingsEntity, inputs.NewLeftClick(settings.EnterSettingsEvent{}))
 	world.Inputs().KeepSelected().Set(settingsEntity, inputs.KeepSelectedComponent{})
 	world.Collider().Component().Set(settingsEntity, collider.NewCollider(gameAssets.SquareCollider))
 

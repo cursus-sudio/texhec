@@ -18,18 +18,29 @@ type World interface {
 type Interface interface {
 	Hovered() ecs.ComponentsArray[HoveredComponent]
 	Dragged() ecs.ComponentsArray[DraggedComponent]
+	Stacked() ecs.ComponentsArray[StackedComponent]
 
 	KeepSelected() ecs.ComponentsArray[KeepSelectedComponent]
 
-	MouseLeft() ecs.ComponentsArray[MouseLeftClickComponent]
-	MouseDoubleLeft() ecs.ComponentsArray[MouseDoubleLeftClickComponent]
+	LeftClick() ecs.ComponentsArray[LeftClickComponent]
+	DoubleLeftClick() ecs.ComponentsArray[DoubleLeftClickComponent]
 
-	MouseRight() ecs.ComponentsArray[MouseRightClickComponent]
-	MouseDoubleRight() ecs.ComponentsArray[MouseDoubleRightClickComponent]
+	RightClick() ecs.ComponentsArray[RightClickComponent]
+	DoubleRightClick() ecs.ComponentsArray[DoubleRightClickComponent]
 
 	MouseEnter() ecs.ComponentsArray[MouseEnterComponent]
 	MouseLeave() ecs.ComponentsArray[MouseLeaveComponent]
 
-	MouseHover() ecs.ComponentsArray[MouseHoverComponent]
-	MouseDrag() ecs.ComponentsArray[MouseDragComponent]
+	Hover() ecs.ComponentsArray[HoverComponent]
+	Drag() ecs.ComponentsArray[DragComponent]
+
+	Stack() ecs.ComponentsArray[StackComponent]
+
+	// returns ordered targets with additional data
+	StackedData() []Target
+}
+
+type Target struct {
+	collider.ObjectRayCollision
+	Camera ecs.EntityID
 }

@@ -55,28 +55,6 @@ func Package(
 					return uint32(result)
 				},
 			),
-			relationpkg.SpatialRelationPackage(
-				func(w ecs.World) ecs.DirtySet {
-					dirtySet := ecs.NewDirtySet()
-					ecs.GetComponentsArray[tile.PosComponent](w).AddDirtySet(dirtySet)
-					return dirtySet
-				},
-				func(w ecs.World) func(entity ecs.EntityID) (tile.ColliderPos, bool) {
-					tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w)
-					return func(entity ecs.EntityID) (tile.ColliderPos, bool) {
-						tileComp, ok := tilePosArray.Get(entity)
-						if !ok && tileComp.Layer != mainLayer {
-							return tile.ColliderPos{}, false
-						}
-						return tileComp.GetColliderPos(), true
-					}
-				},
-				func(pos tile.ColliderPos) uint32 {
-					xMul := maxX - minX
-					result := (pos.X+minX)*xMul + (pos.Y + minY)
-					return uint32(result)
-				},
-			),
 		},
 	}
 }
@@ -89,7 +67,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 		return ecs.NewToolFactory(func(w tile.World) tile.TileTool {
 			return &tool{
 				ioc.Get[relation.ToolFactory[tile.PosComponent]](c).Build(w),
-				ioc.Get[relation.ToolFactory[tile.ColliderPos]](c).Build(w),
 				ecs.GetComponentsArray[tile.PosComponent](w),
 			}
 		})

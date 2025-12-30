@@ -114,7 +114,7 @@ func (t tool) Init() error {
 	t.Render().Texture().Set(quit, render.NewTexture(t.gameAssets.Tiles.Water))
 	t.GenericRenderer().Pipeline().Set(quit, genericrenderer.PipelineComponent{})
 
-	t.Inputs().MouseLeft().Set(quit, inputs.NewMouseLeftClick(ui.HideUiEvent{}))
+	t.Inputs().LeftClick().Set(quit, inputs.NewLeftClick(ui.HideUiEvent{}))
 	t.Inputs().KeepSelected().Set(quit, inputs.KeepSelectedComponent{})
 	t.Collider().Component().Set(quit, collider.NewCollider(t.gameAssets.SquareCollider))
 

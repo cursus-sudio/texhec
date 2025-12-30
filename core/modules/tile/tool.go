@@ -19,7 +19,6 @@ type World interface {
 }
 type Interface interface {
 	PosKey() relation.EntityToKeyTool[PosComponent]
-	ColliderPosKey() relation.EntityToKeyTool[ColliderPos]
 
 	Pos() ecs.ComponentsArray[PosComponent]
 }

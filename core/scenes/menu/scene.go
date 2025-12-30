@@ -110,7 +110,7 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				world.Render().TextureFrame().Set(btn, render.NewTextureFrameComponent(1))
 				world.GenericRenderer().Pipeline().Set(btn, genericrenderer.PipelineComponent{})
 
-				world.Inputs().MouseLeft().Set(btn, inputs.NewMouseLeftClick(button.OnClick))
+				world.Inputs().LeftClick().Set(btn, inputs.NewLeftClick(button.OnClick))
 				world.Collider().Component().Set(btn, collider.NewCollider(gameAssets.SquareCollider))
 				world.Inputs().KeepSelected().Set(btn, inputs.KeepSelectedComponent{})
 

@@ -6,7 +6,6 @@ import (
 	"engine/modules/collider"
 	"engine/modules/groups"
 	"engine/modules/uuid"
-	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/logger"
 
@@ -48,9 +47,9 @@ func (pkg pkg) Register(b ioc.Builder) {
 			if err := s.Register(w); err != nil {
 				return err
 			}
-			posIndex := tileToolFactory.Build(w).Tile().PosKey()
 			errs := ecs.RegisterSystems(w,
 				TileColliderSystem(
+					tileToolFactory,
 					logger,
 					pkg.tileSize,
 					pkg.gridDepth,
@@ -58,69 +57,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 					collider.NewCollider(ioc.Get[gameassets.GameAssets](c).SquareCollider),
 					ioc.Get[uuid.Factory](c),
 				),
-				ecs.NewSystemRegister(func(w tile.World) error {
-					entitiesPositions := datastructures.NewSparseArray[ecs.EntityID, tile.PosComponent]()
-					dirtyEntities := ecs.NewDirtySet()
-
-					posArray := ecs.GetComponentsArray[tile.PosComponent](w)
-					tileColliderArray := ecs.GetComponentsArray[ColliderComponent](w)
-
-					posArray.AddDirtySet(dirtyEntities)
-
-					w.Collider().Component().BeforeGet(func() {
-						entities := dirtyEntities.Get()
-						if len(entities) == 0 {
-							return
-						}
-						finalColliders := datastructures.NewSparseArray[ecs.EntityID, ColliderComponent]()
-						for _, entity := range entities {
-							if comp, ok := entitiesPositions.Get(entity); ok {
-								key := comp
-								key.Layer = pkg.mainLayer
-								if colliderEntity, ok := posIndex.Get(key); ok {
-									collider, ok := finalColliders.Get(colliderEntity)
-									if !ok {
-										collider, ok = tileColliderArray.Get(colliderEntity)
-									}
-									if !ok {
-										collider = NewCollider()
-										collider.Add(pkg.mainLayer)
-									}
-									collider.LayersBitmask = collider.LayersBitmask &^ uint8(comp.Layer)
-									finalColliders.Set(colliderEntity, collider)
-								}
-							}
-
-							pos, ok := posArray.Get(entity)
-							if !ok {
-								continue
-							}
-							key := pos
-							key.Layer = pkg.mainLayer
-							if colliderEntity, ok := posIndex.Get(key); ok {
-								collider, ok := finalColliders.Get(colliderEntity)
-								if !ok {
-									collider, ok = tileColliderArray.Get(colliderEntity)
-								}
-								if !ok {
-									collider = NewCollider()
-									collider.Add(pkg.mainLayer)
-								}
-								collider.LayersBitmask = collider.LayersBitmask | uint8(pos.Layer)
-								finalColliders.Set(colliderEntity, collider)
-							}
-						}
-
-						for _, entity := range finalColliders.GetIndices() {
-							value, ok := finalColliders.Get(entity)
-							if !ok {
-								continue
-							}
-							tileColliderArray.Set(entity, value)
-						}
-					})
-					return nil
-				}),
 			)
 			if len(errs) != 0 {
 				return errs[0]

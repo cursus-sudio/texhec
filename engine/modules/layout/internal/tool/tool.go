@@ -138,7 +138,7 @@ func (t tool) handleParentChildren(parent ecs.EntityID) []save {
 
 	for _, child := range children {
 		// pos
-		pos := transform.NewPos(0, 0, 0)
+		pos := transform.NewPos(0, 0, 1)
 		pos.Pos[order.Primary()] = progress
 
 		// pivot point

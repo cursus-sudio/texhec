@@ -8,9 +8,3 @@ type PosComponent struct {
 func NewPos(x, y int32, layer Layer) PosComponent {
 	return PosComponent{x, y, layer}
 }
-
-func (c PosComponent) GetColliderPos() ColliderPos { return ColliderPos{c.X, c.Y} }
-
-type ColliderPos struct {
-	X, Y int32
-}

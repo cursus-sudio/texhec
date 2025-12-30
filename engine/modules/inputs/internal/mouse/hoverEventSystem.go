@@ -10,16 +10,16 @@ import (
 
 type hoverEventSystem struct {
 	inputs.World
-	hoverEventArray ecs.ComponentsArray[inputs.MouseHoverComponent]
-	hoveredArray    ecs.ComponentsArray[inputs.HoveredComponent]
+	inputs.InputsTool
 }
 
-func NewHoverEventsSystem() inputs.System {
+func NewHoverEventsSystem(
+	inputsToolFactory inputs.ToolFactory,
+) inputs.System {
 	return ecs.NewSystemRegister(func(w inputs.World) error {
 		s := &hoverEventSystem{
-			World:           w,
-			hoverEventArray: ecs.GetComponentsArray[inputs.MouseHoverComponent](w),
-			hoveredArray:    ecs.GetComponentsArray[inputs.HoveredComponent](w),
+			World:      w,
+			InputsTool: inputsToolFactory.Build(w),
 		}
 		events.Listen(w.EventsBuilder(), s.Listen)
 		return nil
@@ -27,8 +27,8 @@ func NewHoverEventsSystem() inputs.System {
 }
 
 func (s *hoverEventSystem) Listen(event frames.FrameEvent) {
-	for _, entity := range s.hoveredArray.GetEntities() {
-		eventsComponent, ok := s.hoverEventArray.Get(entity)
+	for _, entity := range s.Inputs().Hovered().GetEntities() {
+		eventsComponent, ok := s.Inputs().Hover().Get(entity)
 		if !ok {
 			continue
 		}

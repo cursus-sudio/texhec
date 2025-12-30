@@ -1,11 +1,12 @@
 package mouse
 
 import (
-	"engine/modules/collider"
 	"engine/modules/inputs"
+	"engine/modules/inputs/internal/tool"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"engine/services/media/window"
+	"slices"
 
 	"github.com/ogiusek/events"
 	"github.com/veandco/go-sdl2/sdl"
@@ -17,18 +18,12 @@ func NewShootRayEvent() ShootRayEvent {
 	return ShootRayEvent{}
 }
 
-type RayChangedTargetEvent struct {
-	Camera   ecs.EntityID
-	EntityID *ecs.EntityID
-}
-
 type cameraRaySystem struct {
 	inputs.World
 	logger logger.Logger
 	window window.Api
-	events events.Events
 
-	hoversOverEntity *ecs.EntityID
+	targets []inputs.Target
 }
 
 func NewCameraRaySystem(
@@ -40,9 +35,8 @@ func NewCameraRaySystem(
 			World:  w,
 			logger: logger,
 			window: window,
-			events: w.Events(),
 
-			hoversOverEntity: nil,
+			targets: nil,
 		}
 		events.ListenE(w.EventsBuilder(), s.Listen)
 		events.Listen(w.EventsBuilder(), func(sdl.MouseButtonEvent) {
@@ -56,47 +50,41 @@ func NewCameraRaySystem(
 func (s *cameraRaySystem) Listen(args ShootRayEvent) error {
 	mousePos := s.window.GetMousePos()
 
-	var nearestCollision collider.ObjectRayCollision
-	var nearestCamera ecs.EntityID
+	targets := []inputs.Target{}
 	for _, cameraEntity := range s.Camera().Component().GetEntities() {
 		ray := s.Camera().ShootRay(cameraEntity, mousePos)
 
-		collision, err := s.Collider().ShootRay(ray)
-		if err != nil {
-			return err
-		}
-		if collision == nil {
-			continue
-		}
-		if nearestCollision == nil {
-			nearestCollision = collision
-			nearestCamera = cameraEntity
-			continue
-		}
-
-		if nearestCollision.Hit().Distance > collision.Hit().Distance {
-			nearestCollision = collision
-			nearestCamera = cameraEntity
+		cameraCollisions := s.Collider().RaycastAll(ray)
+		for _, collision := range cameraCollisions {
+			target := inputs.Target{
+				ObjectRayCollision: collision,
+				Camera:             cameraEntity,
+			}
+			targets = append(targets, target)
 		}
 	}
 
-	if nearestCollision == nil {
-		if s.hoversOverEntity != nil {
-			s.hoversOverEntity = nil
-			event := RayChangedTargetEvent{Camera: nearestCamera, EntityID: nil}
-			events.Emit(s.events, event)
+	slices.SortFunc(targets, func(a, b inputs.Target) int {
+		if a.Hit.Distance < b.Hit.Distance {
+			return -1
 		}
+		if a.Hit.Distance > b.Hit.Distance {
+			return 1
+		}
+		return 0
+	})
+
+	if slices.Equal(s.targets, targets) {
 		return nil
 	}
 
-	entity := nearestCollision.Entity()
-	if s.hoversOverEntity != nil && *s.hoversOverEntity == entity {
-		return nil
-	}
+	s.targets = targets
 
-	s.hoversOverEntity = &entity
-	event := RayChangedTargetEvent{Camera: nearestCamera, EntityID: &entity}
-	events.Emit(s.events, event)
+	targetsCopy := make([]inputs.Target, len(s.targets))
+	copy(targetsCopy, s.targets)
+	events.Emit(s.Events(), tool.RayChangedTargetEvent{
+		Targets: targetsCopy,
+	})
 
 	return nil
 }

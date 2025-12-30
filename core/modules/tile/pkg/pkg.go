@@ -58,7 +58,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 		return b.
 			// types
 			Register(tile.Layer(0)).
-			Register(tile.ColliderPos{}).
 			// events
 			Register(tile.TileClickEvent{}).
 			// components

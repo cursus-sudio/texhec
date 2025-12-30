@@ -2,6 +2,7 @@ package inputs
 
 import "engine/services/ecs"
 
+// many elements can be hovered at once
 type HoveredComponent struct {
 	Camera ecs.EntityID
 }
@@ -25,32 +26,38 @@ func NewDragged(camera ecs.EntityID) DraggedComponent {
 // keeps element selected even if user drags outside
 type KeepSelectedComponent struct{}
 
+// this is special component stating that on click it enables clicking elements below
+type StackComponent struct{}
+
+// this means that element got pressed and if not next that isn't going to be pressed
+type StackedComponent struct{}
+
 //
 
-type MouseLeftClickComponent struct{ Event any }
-type MouseDoubleLeftClickComponent struct{ Event any }
+type LeftClickComponent struct{ Event any }
+type DoubleLeftClickComponent struct{ Event any }
 
-type MouseRightClickComponent struct{ Event any }
-type MouseDoubleRightClickComponent struct{ Event any }
+type RightClickComponent struct{ Event any }
+type DoubleRightClickComponent struct{ Event any }
 
 type MouseEnterComponent struct{ Event any }
 type MouseLeaveComponent struct{ Event any }
 
-type MouseHoverComponent struct{ Event any }
-type MouseDragComponent struct{ Event any }
+type HoverComponent struct{ Event any }
+type DragComponent struct{ Event any }
 
-func NewMouseLeftClick(e any) MouseLeftClickComponent { return MouseLeftClickComponent{e} }
-func NewMouseDoubleLeftClick(e any) MouseDoubleLeftClickComponent {
-	return MouseDoubleLeftClickComponent{e}
+func NewLeftClick(e any) LeftClickComponent { return LeftClickComponent{e} }
+func NewDoubleLeftClick(e any) DoubleLeftClickComponent {
+	return DoubleLeftClickComponent{e}
 }
 
-func NewMouseRightClick(e any) MouseRightClickComponent { return MouseRightClickComponent{e} }
-func NewMouseDoubleRightClick(e any) MouseDoubleRightClickComponent {
-	return MouseDoubleRightClickComponent{e}
+func NewRightClick(e any) RightClickComponent { return RightClickComponent{e} }
+func NewDoubleRightClick(e any) DoubleRightClickComponent {
+	return DoubleRightClickComponent{e}
 }
 
 func NewMouseEnterComponent(event any) MouseEnterComponent { return MouseEnterComponent{event} }
 func NewMouseLeaveComponent(event any) MouseLeaveComponent { return MouseLeaveComponent{event} }
 
-func NewMouseHoverComponent(event any) MouseHoverComponent { return MouseHoverComponent{event} }
-func NewMouseDragComponent(event any) MouseDragComponent   { return MouseDragComponent{event} }
+func NewHoverComponent(event any) HoverComponent { return HoverComponent{event} }
+func NewDragComponent(event any) DragComponent   { return DragComponent{event} }

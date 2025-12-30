@@ -4,35 +4,21 @@ import (
 	"engine/services/ecs"
 )
 
-type ObjectRayCollision interface {
-	Entity() ecs.EntityID
-	Hit() RayHit
-}
-
-type objectRayCollision struct {
-	entity ecs.EntityID
-	hit    RayHit
+type ObjectRayCollision struct {
+	Entity ecs.EntityID
+	Hit    RayHit
 }
 
 func NewObjectRayCollision(entity ecs.EntityID, hit RayHit) ObjectRayCollision {
-	return &objectRayCollision{entity, hit}
+	return ObjectRayCollision{entity, hit}
 }
-
-func (c *objectRayCollision) Entity() ecs.EntityID { return c.entity }
-func (c *objectRayCollision) Hit() RayHit          { return c.hit }
 
 //
 
-type ObjectObjectCollision interface {
-	PolygonPairs() [][2]Polygon
-}
-
-type objectObjectCollision struct {
-	pairs [][2]Polygon
+type ObjectObjectCollision struct {
+	PolygonPairs [][2]Polygon
 }
 
 func NewObjectObjectCollision(pairs [][2]Polygon) ObjectObjectCollision {
-	return &objectObjectCollision{pairs: pairs}
+	return ObjectObjectCollision{PolygonPairs: pairs}
 }
-
-func (c *objectObjectCollision) PolygonPairs() [][2]Polygon { return c.pairs }

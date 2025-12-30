@@ -49,7 +49,7 @@ func NewSetup(t *testing.T) Setup {
 
 func (s Setup) Expect(entity ecs.EntityID, x, y float32) {
 	s.T.Helper()
-	expected := mgl32.Vec3{x, y}
+	expected := mgl32.Vec3{x, y, 1}
 	pos, _ := s.Transform().AbsolutePos().Get(entity)
 	if pos.Pos != expected {
 		pivot, _ := s.Transform().PivotPoint().Get(entity)

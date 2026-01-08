@@ -1,10 +1,14 @@
 package tile
 
+import (
+	"golang.org/x/exp/constraints"
+)
+
 type PosComponent struct {
-	X, Y  int32
+	X, Y  float32
 	Layer Layer
 }
 
-func NewPos(x, y int32, layer Layer) PosComponent {
-	return PosComponent{x, y, layer}
+func NewPos[Number constraints.Float | constraints.Integer](x, y Number, layer Layer) PosComponent {
+	return PosComponent{float32(x), float32(y), layer}
 }

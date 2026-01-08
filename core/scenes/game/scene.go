@@ -45,6 +45,9 @@ func addScene(
 	logger logger.Logger,
 	isServer bool,
 ) {
+	rows := 1000
+	cols := 1000
+
 	uiCamera := world.NewEntity()
 	world.Camera().Ortho().Set(uiCamera, camera.NewOrtho(-1000, +1000))
 	world.Groups().Component().Set(uiCamera, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
@@ -57,7 +60,7 @@ func addScene(
 	world.Camera().Mobile().Set(gameCamera, camera.NewMobileCamera())
 	world.Camera().Limits().Set(gameCamera, camera.NewCameraLimits(
 		mgl32.Vec3{0, 0, -1000},
-		mgl32.Vec3{100 * 100, 100 * 100, 1000},
+		mgl32.Vec3{100 * float32(rows), 100 * float32(cols), 1000},
 	))
 
 	signature := world.NewEntity()
@@ -94,8 +97,6 @@ func addScene(
 
 		tilesTypeArray := ecs.GetComponentsArray[definition.DefinitionLinkComponent](world)
 		tilesPosArray := ecs.GetComponentsArray[tile.PosComponent](world)
-		rows := 100
-		cols := 100
 		{
 			unit := world.NewEntity()
 			world.Tile().Pos().Set(unit, tile.NewPos(1, 1, tile.UnitLayer))
@@ -119,7 +120,7 @@ func addScene(
 			case 3:
 				tileType = definition.TileWater
 			}
-			tilesPosArray.Set(entity, tile.NewPos(int32(row), int32(col), tile.GroundLayer))
+			tilesPosArray.Set(entity, tile.NewPos(row, col, tile.GroundLayer))
 			tilesTypeArray.Set(entity, definition.NewLink(tileType))
 		}
 

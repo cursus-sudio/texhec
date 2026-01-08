@@ -51,7 +51,7 @@ func Package(
 				func(index tile.PosComponent) uint32 {
 					xMul := maxX - minX
 					yMul := xMul * (maxY - minY)
-					result := (index.X+minX)*xMul + (index.Y+minY)*yMul + (int32(index.Layer) + minZ)
+					result := (int32(index.X)+minX)*xMul + (int32(index.Y)+minY)*yMul + (int32(index.Layer) + minZ)
 					return uint32(result)
 				},
 			),

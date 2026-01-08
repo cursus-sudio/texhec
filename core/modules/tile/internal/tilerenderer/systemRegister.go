@@ -23,7 +23,7 @@ import (
 )
 
 type TileData struct {
-	PosX, PosY int32
+	PosX, PosY float32
 	Type       definition.DefinitionID
 }
 

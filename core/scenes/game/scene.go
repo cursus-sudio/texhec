@@ -45,8 +45,8 @@ func addScene(
 	logger logger.Logger,
 	isServer bool,
 ) {
-	rows := 1000
-	cols := 1000
+	rows := 100
+	cols := 100
 
 	uiCamera := world.NewEntity()
 	world.Camera().Ortho().Set(uiCamera, camera.NewOrtho(-1000, +1000))
@@ -132,12 +132,17 @@ func addScene(
 	}
 
 	if isServer {
-		err := world.Connection().Host(":8000", func(cc connection.ConnectionComponent) {
+		listenerEntity := world.NewEntity()
+		listener, err := world.Connection().Host(":8000", func(cc connection.ConnectionComponent) {
 			entity := world.NewEntity()
 			world.NetSync().Client().Set(entity, netsync.ClientComponent{})
 			world.Connection().Component().Set(entity, cc)
 		})
-		logger.Warn(err)
+		if err != nil {
+			logger.Warn(err)
+			return
+		}
+		world.Connection().Listener().Set(listenerEntity, listener)
 	} else {
 		comp, err := world.Connection().Connect(":8000")
 		if err != nil {

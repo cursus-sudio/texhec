@@ -3,6 +3,7 @@ package connection
 import (
 	"engine/modules/uuid"
 	"engine/services/ecs"
+	"net"
 )
 
 // system
@@ -22,6 +23,20 @@ type Conn interface {
 }
 
 // components
+
+type ListenerComponent struct {
+	listener net.Listener
+}
+
+func NewListener(listener net.Listener) ListenerComponent {
+	return ListenerComponent{listener}
+}
+
+func (comp ListenerComponent) Listener() net.Listener {
+	return comp.listener
+}
+
+//
 
 type ConnectionComponent struct {
 	conn Conn
@@ -47,8 +62,9 @@ type World interface {
 }
 type Interface interface {
 	Component() ecs.ComponentsArray[ConnectionComponent]
+	Listener() ecs.ComponentsArray[ListenerComponent]
 
-	Host(addr string, conn func(ConnectionComponent)) error
+	Host(addr string, conn func(ConnectionComponent)) (ListenerComponent, error)
 	Connect(addr string) (ConnectionComponent, error)
 	MockConnectionPair() (c1, c2 ConnectionComponent)
 

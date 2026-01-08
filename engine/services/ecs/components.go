@@ -24,8 +24,9 @@ type Component interface{}
 
 func getComponentType(component Component) componentType {
 	typeOfComponent := reflect.TypeOf(component)
-	if typeOfComponent.Kind() != reflect.Struct {
-		panic("component has to be a struct (cannot use pointers under the hood)")
+	kind := typeOfComponent.Kind()
+	if kind != reflect.Struct && kind != reflect.Array {
+		panic("component has to be a struct or array (cannot use pointers under the hood)")
 	}
 	return newComponentType(typeOfComponent)
 }

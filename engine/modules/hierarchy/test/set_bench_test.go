@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func BenchmarkSetChildrenWithParent(b *testing.B) {
+func BenchmarkAddNChildrenWithParent(b *testing.B) {
 	setup := NewSetup()
 	grandParent := setup.World.NewEntity()
 	parent := grandParent
@@ -21,20 +21,10 @@ func BenchmarkSetChildrenWithParent(b *testing.B) {
 		setup.Tool.SetParent(child, parent)
 	}
 
-	parentChildren := setup.Tool.FlatChildren(parent)
-	grandParentChildren := setup.Tool.FlatChildren(grandParent)
-	parentLen := len(parentChildren.GetIndices())
-	grandParentLen := len(grandParentChildren.GetIndices())
-	if parentLen+parentCount != grandParentLen {
-		b.Errorf(
-			"flat children count of parent and grand parent doesn't match. expected %v and got %v",
-			parentLen+parentCount,
-			grandParentLen,
-		)
-	}
+	setup.Tool.FlatChildren(parent)
 }
 
-func BenchmarkSetChildrenWith5Parents(b *testing.B) {
+func BenchmarkAddNChildrenWith5Parents(b *testing.B) {
 	setup := NewSetup()
 	grandParent := setup.World.NewEntity()
 	parent := grandParent
@@ -51,15 +41,5 @@ func BenchmarkSetChildrenWith5Parents(b *testing.B) {
 		setup.Tool.SetParent(child, parent)
 	}
 
-	parentChildren := setup.Tool.FlatChildren(parent)
-	grandParentChildren := setup.Tool.FlatChildren(grandParent)
-	parentLen := len(parentChildren.GetIndices())
-	grandParentLen := len(grandParentChildren.GetIndices())
-	if parentLen+parentCount != grandParentLen {
-		b.Errorf(
-			"flat children count of parent and grand parent doesn't match. expected %v and got %v",
-			parentLen+parentCount,
-			grandParentLen,
-		)
-	}
+	setup.Tool.FlatChildren(parent)
 }

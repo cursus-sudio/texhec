@@ -1,12 +1,12 @@
 #version 460 core
 
-layout(location = 0) in int x;
-layout(location = 1) in int y;
+layout(location = 0) in float x;
+layout(location = 1) in float y;
 layout(location = 2) in int tileType;
 
 out GS {
-    flat int x;
-    flat int y;
+    flat float x;
+    flat float y;
     flat int tileType;
 } fs_out;
 

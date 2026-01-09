@@ -7,8 +7,8 @@ layout(triangle_strip, max_vertices = 4) out;
 //
 
 in GS {
-    flat int x;
-    flat int y;
+    flat float x;
+    flat float y;
     flat int tileType;
 } gs_in[];
 
@@ -24,8 +24,8 @@ uniform int tileSize;
 uniform float gridDepth;
 
 void main() {
-    int xIn = gs_in[0].x;
-    int yIn = gs_in[0].y;
+    float xIn = gs_in[0].x;
+    float yIn = gs_in[0].y;
     int tileType = gs_in[0].tileType;
 
     // shared outputs
@@ -33,8 +33,8 @@ void main() {
 
     for (int cornerX = 0; cornerX < 2; cornerX++) {
         for (int cornerY = 0; cornerY < 2; cornerY++) {
-            int x = xIn + cornerX;
-            int y = yIn + cornerY;
+            float x = xIn + float(cornerX);
+            float y = yIn + float(cornerY);
 
             vec4 pos = vec4(x * tileSize, y * tileSize, gridDepth, 1.);
 

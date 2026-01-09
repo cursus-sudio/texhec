@@ -15,9 +15,14 @@ import (
 
 type tool struct {
 	*factory
-	dirtySet        ecs.DirtySet
-	connections     datastructures.Set[connection.Conn]
-	connectionArray ecs.ComponentsArray[connection.ConnectionComponent]
+
+	listenersDirtySet ecs.DirtySet
+	listeners         datastructures.Set[net.Listener]
+	listenersArray    ecs.ComponentsArray[connection.ListenerComponent]
+
+	connectionDirtySet ecs.DirtySet
+	connections        datastructures.Set[connection.Conn]
+	connectionArray    ecs.ComponentsArray[connection.ConnectionComponent]
 }
 
 func NewToolFactory(
@@ -33,24 +38,59 @@ func NewToolFactory(
 		}
 		t := tool{
 			NewFactory(codec, logger),
+
+			ecs.NewDirtySet(),
+			datastructures.NewSet[net.Listener](),
+			ecs.GetComponentsArray[connection.ListenerComponent](w),
+
 			ecs.NewDirtySet(),
 			datastructures.NewSet[connection.Conn](),
 			ecs.GetComponentsArray[connection.ConnectionComponent](w),
 		}
 		w.SaveGlobal(t)
 		events.Listen(w.EventsBuilder(), func(frames.FrameEvent) {
-			t.BeforeGet()
+			t.BeforeConnectionGet()
 		})
 
-		t.connectionArray.AddDirtySet(t.dirtySet)
-		t.connectionArray.BeforeGet(t.BeforeGet)
+		t.listenersArray.AddDirtySet(t.listenersDirtySet)
+		t.listenersArray.BeforeGet(t.BeforeListenerGet)
+
+		t.connectionArray.AddDirtySet(t.connectionDirtySet)
+		t.connectionArray.BeforeGet(t.BeforeConnectionGet)
 
 		return t
 	})
 }
 
-func (t tool) BeforeGet() {
-	if entities := t.dirtySet.Get(); len(entities) == 0 {
+func (t tool) BeforeListenerGet() {
+	if entities := t.connectionDirtySet.Get(); len(entities) == 0 {
+		return
+	}
+	present := datastructures.NewSet[net.Listener]()
+	for _, entity := range t.listenersArray.GetEntities() {
+		comp, ok := t.listenersArray.Get(entity)
+		if !ok {
+			continue
+		}
+		conn := comp.Listener()
+		if conn == nil {
+			continue
+		}
+		present.Add(conn)
+	}
+
+	for _, listener := range t.listeners.Get() {
+		_, ok := present.GetIndex(listener)
+		if ok {
+			continue
+		}
+		t.listeners.RemoveElements(listener)
+		_ = listener.Close()
+	}
+}
+
+func (t tool) BeforeConnectionGet() {
+	if entities := t.connectionDirtySet.Get(); len(entities) == 0 {
 		return
 	}
 	present := datastructures.NewSet[connection.Conn]()
@@ -81,12 +121,16 @@ func (t tool) Connection() connection.Interface { return t }
 func (t tool) Component() ecs.ComponentsArray[connection.ConnectionComponent] {
 	return t.connectionArray
 }
+func (t tool) Listener() ecs.ComponentsArray[connection.ListenerComponent] {
+	return t.listenersArray
+}
 
-func (t tool) Host(addr string, onConn func(connection.ConnectionComponent)) error {
+func (t tool) Host(addr string, onConn func(connection.ConnectionComponent)) (connection.ListenerComponent, error) {
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		return err
+		return connection.ListenerComponent{}, err
 	}
+	t.listeners.Add(listener)
 	go func() {
 		for {
 			rawConn, err := listener.Accept()
@@ -100,7 +144,7 @@ func (t tool) Host(addr string, onConn func(connection.ConnectionComponent)) err
 		}
 		_ = listener.Close()
 	}()
-	return nil
+	return connection.NewListener(listener), nil
 }
 
 func (t tool) Connect(addr string) (connection.ConnectionComponent, error) {
@@ -131,4 +175,17 @@ func (t tool) TransferConnection(entityFrom, entityTo ecs.EntityID) error {
 	t.connectionArray.Remove(entityFrom)
 	t.connectionArray.Set(entityTo, comp)
 	return nil
+}
+
+//
+
+func (t tool) Release() {
+	for _, connection := range t.connections.Get() {
+		_ = connection.Close()
+		t.connections.RemoveElements(connection)
+	}
+	for _, listener := range t.listeners.Get() {
+		_ = listener.Close()
+		t.listeners.RemoveElements(listener)
+	}
 }

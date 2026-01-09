@@ -47,13 +47,9 @@ func TileColliderSystem(
 			if len(ei) == 0 {
 				return
 			}
-			// groups
-			for _, entity := range ei {
-				w.Groups().Component().Set(entity, tileGroups)
-			}
 
-			// pos
 			for _, entity := range ei {
+
 				pos, ok := tileTool.Tile().Pos().Get(entity)
 				if !ok {
 					continue
@@ -64,25 +60,17 @@ func TileColliderSystem(
 					gridDepth+float32(pos.Layer),
 				)
 				w.Transform().Pos().Set(entity, transformPos)
-				comp := inputs.NewLeftClick(tile.NewTileClickEvent(pos))
-				w.Inputs().LeftClick().Set(entity, comp)
-				w.Inputs().Stack().Set(entity, inputs.StackComponent{})
-			}
-
-			// transform
-			for _, entity := range ei {
 				w.Transform().Size().Set(entity, transform.NewSize(float32(tileSize), float32(tileSize), 1))
-			}
-
-			// collider
-			for _, entity := range ei {
+				w.Inputs().LeftClick().Set(entity, inputs.NewLeftClick(tile.NewTileClickEvent(pos)))
+				w.Inputs().Stack().Set(entity, inputs.StackComponent{})
 				w.Collider().Component().Set(entity, colliderComponent)
+				w.Groups().Component().Set(entity, tileGroups)
 			}
 		}
 
-		w.Collider().Component().BeforeGet(applyTileCollider)
 		w.Transform().Size().BeforeGet(applyTileCollider)
 		w.Transform().Pos().BeforeGet(applyTileCollider)
+		w.Collider().Component().BeforeGet(applyTileCollider)
 		w.Inputs().LeftClick().BeforeGet(applyTileCollider)
 		w.Inputs().Stack().BeforeGet(applyTileCollider)
 		w.Groups().Component().BeforeGet(applyTileCollider)

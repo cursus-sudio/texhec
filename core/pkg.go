@@ -133,8 +133,8 @@ func getDic() ioc.Dic {
 		console.Package(),
 		media.Package(window, ctx),
 		// ecs.Package(), // scenes register world so ecs package isn't registered
-		// frames.Package(1, 60),
-		frames.Package(1, 10000),
+		frames.Package(1, 60),
+		// frames.Package(1, 10000),
 		scenes.Package(),
 
 		texture.Package(),

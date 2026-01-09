@@ -23,7 +23,7 @@ func newSpatialIndex[IndexType any](
 	componentIndex func(ecs.EntityID) (IndexType, bool),
 	indexNumber func(IndexType) uint32,
 ) relation.EntityToKeyTool[IndexType] {
-	indexGlobal := spatialRelation[IndexType]{
+	indexGlobal := &spatialRelation[IndexType]{
 		world:    w,
 		dirtySet: dirtySet,
 
@@ -38,7 +38,7 @@ func newSpatialIndex[IndexType any](
 	return indexGlobal
 }
 
-func (i spatialRelation[IndexType]) Get(index IndexType) (ecs.EntityID, bool) {
+func (i *spatialRelation[IndexType]) Get(index IndexType) (ecs.EntityID, bool) {
 	for _, entity := range i.dirtySet.Get() {
 		indexType, ok := i.componentIndex(entity)
 		if !ok {

@@ -39,41 +39,41 @@ type tool struct {
 	dynamicPerspective ecs.ComponentsArray[camera.DynamicPerspectiveComponent]
 }
 
-func (t tool) Camera() camera.Interface { return t }
+func (t *tool) Camera() camera.Interface { return t }
 
-func (t tool) Component() ecs.ComponentsArray[camera.Component] {
+func (t *tool) Component() ecs.ComponentsArray[camera.Component] {
 	return t.cameraArray
 }
 
-func (t tool) Mobile() ecs.ComponentsArray[camera.MobileCameraComponent] {
+func (t *tool) Mobile() ecs.ComponentsArray[camera.MobileCameraComponent] {
 	return t.mobileCamera
 }
-func (t tool) Limits() ecs.ComponentsArray[camera.CameraLimitsComponent] {
+func (t *tool) Limits() ecs.ComponentsArray[camera.CameraLimitsComponent] {
 	return t.cameraLimits
 }
-func (t tool) Viewport() ecs.ComponentsArray[camera.ViewportComponent] {
+func (t *tool) Viewport() ecs.ComponentsArray[camera.ViewportComponent] {
 	return t.viewport
 }
-func (t tool) NormalizedViewport() ecs.ComponentsArray[camera.NormalizedViewportComponent] {
+func (t *tool) NormalizedViewport() ecs.ComponentsArray[camera.NormalizedViewportComponent] {
 	return t.normalizedViewport
 }
 
-func (t tool) Ortho() ecs.ComponentsArray[camera.OrthoComponent] {
+func (t *tool) Ortho() ecs.ComponentsArray[camera.OrthoComponent] {
 	return t.ortho
 }
-func (t tool) OrthoResolution() ecs.ComponentsArray[camera.OrthoResolutionComponent] {
+func (t *tool) OrthoResolution() ecs.ComponentsArray[camera.OrthoResolutionComponent] {
 	return t.orthoResolution
 }
-func (t tool) Perspective() ecs.ComponentsArray[camera.PerspectiveComponent] {
+func (t *tool) Perspective() ecs.ComponentsArray[camera.PerspectiveComponent] {
 	return t.perspective
 }
-func (t tool) DynamicPerspective() ecs.ComponentsArray[camera.DynamicPerspectiveComponent] {
+func (t *tool) DynamicPerspective() ecs.ComponentsArray[camera.DynamicPerspectiveComponent] {
 	return t.dynamicPerspective
 }
 
 //
 
-func (t tool) GetViewport(entity ecs.EntityID) (x, y, w, h int32) {
+func (t *tool) GetViewport(entity ecs.EntityID) (x, y, w, h int32) {
 	viewportComponent, ok := t.viewport.Get(entity)
 	if ok {
 		return viewportComponent.Viewport()
@@ -86,7 +86,7 @@ func (t tool) GetViewport(entity ecs.EntityID) (x, y, w, h int32) {
 	w, h = t.window.Window().GetSize()
 	return 0, 0, w, h
 }
-func (t tool) Mat4(entity ecs.EntityID) mgl32.Mat4 {
+func (t *tool) Mat4(entity ecs.EntityID) mgl32.Mat4 {
 	comp, ok := t.projectionsArray.Get(entity)
 	if !ok {
 		return mgl32.Mat4{}
@@ -97,7 +97,7 @@ func (t tool) Mat4(entity ecs.EntityID) mgl32.Mat4 {
 	}
 	return data.Mat4(entity)
 }
-func (t tool) ShootRay(camera ecs.EntityID, mousePos window.MousePos) collider.Ray {
+func (t *tool) ShootRay(camera ecs.EntityID, mousePos window.MousePos) collider.Ray {
 	comp, ok := t.projectionsArray.Get(camera)
 	if !ok {
 		return collider.Ray{}
@@ -115,7 +115,7 @@ func (t tool) ShootRay(camera ecs.EntityID, mousePos window.MousePos) collider.R
 
 //
 
-func (t tool) BeforeGet() {
+func (t *tool) BeforeGet() {
 	dirtyEntities := t.dirtySet.Get()
 	if len(dirtyEntities) == 0 {
 		return

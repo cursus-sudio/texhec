@@ -49,8 +49,8 @@ func NewTool(
 	netSyncToolFactory netsync.ToolFactory,
 	logger logger.Logger,
 	world netsync.World,
-) Tool {
-	t := Tool{
+) *Tool {
+	t := &Tool{
 		config,
 		&toolState{
 			nil,
@@ -116,7 +116,7 @@ func NewTool(
 
 // public methods
 
-func (t Tool) BeforeEvent(event any) {
+func (t *Tool) BeforeEvent(event any) {
 	t.loadConnections()
 	if len(t.NetSync().Client().GetEntities()) == 0 {
 		return
@@ -129,7 +129,7 @@ func (t Tool) BeforeEvent(event any) {
 	t.recordingID = t.Record().UUID().StartRecording(t.RecordConfig)
 }
 
-func (t Tool) AfterEvent(event any) {
+func (t *Tool) AfterEvent(event any) {
 	t.loadConnections()
 	if len(t.NetSync().Client().GetEntities()) == 0 {
 		return
@@ -141,7 +141,7 @@ func (t Tool) AfterEvent(event any) {
 	t.recordingID = 0
 }
 
-func (t Tool) OnTransparentEvent(event any) {
+func (t *Tool) OnTransparentEvent(event any) {
 	if len(t.NetSync().Client().GetEntities()) == 0 {
 		return
 	}
@@ -155,12 +155,12 @@ func (t Tool) OnTransparentEvent(event any) {
 	}
 }
 
-func (t Tool) ListenFetchState(entity ecs.EntityID, dto clienttypes.FetchStateDTO) {
+func (t *Tool) ListenFetchState(entity ecs.EntityID, dto clienttypes.FetchStateDTO) {
 	state := t.Record().UUID().GetState(t.RecordConfig)
 	t.sendVisible(entity, nil, state)
 }
 
-func (t Tool) ListenEmitEvent(entity ecs.EntityID, dto clienttypes.EmitEventDTO) {
+func (t *Tool) ListenEmitEvent(entity ecs.EntityID, dto clienttypes.EmitEventDTO) {
 	conn, ok := t.Connection().Component().Get(entity)
 	if !ok {
 		return
@@ -175,7 +175,7 @@ func (t Tool) ListenEmitEvent(entity ecs.EntityID, dto clienttypes.EmitEventDTO)
 	events.EmitAny(t.Events(), event)
 }
 
-func (t Tool) ListenTransparentEvent(entity ecs.EntityID, dto clienttypes.TransparentEventDTO) {
+func (t *Tool) ListenTransparentEvent(entity ecs.EntityID, dto clienttypes.TransparentEventDTO) {
 	conn, ok := t.Connection().Component().Get(entity)
 	if !ok {
 		return
@@ -191,7 +191,7 @@ func (t Tool) ListenTransparentEvent(entity ecs.EntityID, dto clienttypes.Transp
 
 // private methods
 
-func (t Tool) loadConnections() {
+func (t *Tool) loadConnections() {
 	for _, entity := range t.dirtySet.Get() {
 		if ok := t.listeners.Get(entity); ok {
 			continue
@@ -226,7 +226,7 @@ func (t Tool) loadConnections() {
 	}
 }
 
-func (t Tool) sendVisible(client ecs.EntityID, eventUUID *uuid.UUID, changes record.UUIDRecording) {
+func (t *Tool) sendVisible(client ecs.EntityID, eventUUID *uuid.UUID, changes record.UUIDRecording) {
 	connComp, ok := t.Connection().Component().Get(client)
 	if !ok {
 		return
@@ -269,7 +269,7 @@ func (t Tool) sendVisible(client ecs.EntityID, eventUUID *uuid.UUID, changes rec
 	}()
 }
 
-func (t Tool) emitChanges(eventUUID uuid.UUID, changes record.UUIDRecording) {
+func (t *Tool) emitChanges(eventUUID uuid.UUID, changes record.UUIDRecording) {
 	for _, client := range t.NetSync().Client().GetEntities() {
 		t.sendVisible(client, &eventUUID, changes)
 	}

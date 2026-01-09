@@ -24,7 +24,7 @@ func NewToolFactory(logger logger.Logger) groups.ToolFactory {
 		if t, ok := ecs.GetGlobal[tool](w); ok {
 			return t
 		}
-		t := tool{
+		t := &tool{
 			logger: logger,
 
 			world:        w,
@@ -37,13 +37,13 @@ func NewToolFactory(logger logger.Logger) groups.ToolFactory {
 	})
 }
 
-func (t tool) Groups() groups.Interface {
+func (t *tool) Groups() groups.Interface {
 	return t
 }
 
-func (t tool) Component() ecs.ComponentsArray[groups.GroupsComponent] {
+func (t *tool) Component() ecs.ComponentsArray[groups.GroupsComponent] {
 	return t.groupsArray
 }
-func (t tool) Inherit() ecs.ComponentsArray[groups.InheritGroupsComponent] {
+func (t *tool) Inherit() ecs.ComponentsArray[groups.InheritGroupsComponent] {
 	return t.inheritArray
 }

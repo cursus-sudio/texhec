@@ -104,7 +104,7 @@ func (f *textRendererRegister) Register(w text.World) error {
 		return err
 	}
 
-	renderer := textRenderer{
+	renderer := &textRenderer{
 		textRendererRegister: f,
 
 		World: w,

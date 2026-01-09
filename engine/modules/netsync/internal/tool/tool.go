@@ -17,7 +17,7 @@ func NewToolFactory() netsync.ToolFactory {
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		t := tool{
+		t := &tool{
 			server: ecs.GetComponentsArray[netsync.ServerComponent](w),
 			client: ecs.GetComponentsArray[netsync.ClientComponent](w),
 		}
@@ -25,9 +25,9 @@ func NewToolFactory() netsync.ToolFactory {
 	})
 }
 
-func (t tool) NetSync() netsync.Interface {
+func (t *tool) NetSync() netsync.Interface {
 	return t
 }
 
-func (t tool) Server() ecs.ComponentsArray[netsync.ServerComponent] { return t.server }
-func (t tool) Client() ecs.ComponentsArray[netsync.ClientComponent] { return t.client }
+func (t *tool) Server() ecs.ComponentsArray[netsync.ServerComponent] { return t.server }
+func (t *tool) Client() ecs.ComponentsArray[netsync.ClientComponent] { return t.client }

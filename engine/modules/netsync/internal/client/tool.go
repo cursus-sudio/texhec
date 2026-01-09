@@ -61,8 +61,8 @@ func NewTool(
 	netSyncToolFactory netsync.ToolFactory,
 	logger logger.Logger,
 	world netsync.World,
-) Tool {
-	t := Tool{
+) *Tool {
+	t := &Tool{
 		config,
 		&toolState{
 			true,

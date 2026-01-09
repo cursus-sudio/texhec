@@ -24,7 +24,7 @@ func NewToolFactory(
 		if t, ok := ecs.GetGlobal[tool](w); ok {
 			return t
 		}
-		t := tool{
+		t := &tool{
 			ecs.GetComponentsArray[uuid.Component](w),
 			toolFactory.Build(w),
 			uuidFactory,
@@ -35,10 +35,10 @@ func NewToolFactory(
 	})
 }
 
-func (t tool) UUID() uuid.Interface { return t }
+func (t *tool) UUID() uuid.Interface { return t }
 
-func (t tool) Component() ecs.ComponentsArray[uuid.Component] { return t.uuidArray }
+func (t *tool) Component() ecs.ComponentsArray[uuid.Component] { return t.uuidArray }
 
-func (t tool) Entity(uuid uuid.UUID) (ecs.EntityID, bool) {
+func (t *tool) Entity(uuid uuid.UUID) (ecs.EntityID, bool) {
 	return t.Get(uuid)
 }

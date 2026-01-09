@@ -23,7 +23,7 @@ func NewTool(
 	logger logger.Logger,
 ) text.ToolFactory {
 	return ecs.NewToolFactory(func(w text.World) text.TextTool {
-		return tool{
+		return &tool{
 			logger,
 			w,
 			ecs.GetComponentsArray[text.BreakComponent](w),
@@ -36,16 +36,16 @@ func NewTool(
 	})
 }
 
-func (t tool) Text() text.Interface { return t }
+func (t *tool) Text() text.Interface { return t }
 
-func (t tool) Break() ecs.ComponentsArray[text.BreakComponent]           { return t.breakArray }
-func (t tool) Content() ecs.ComponentsArray[text.TextComponent]          { return t.textArray }
-func (t tool) Align() ecs.ComponentsArray[text.TextAlignComponent]       { return t.textAlignArray }
-func (t tool) Color() ecs.ComponentsArray[text.TextColorComponent]       { return t.textColorArray }
-func (t tool) FontFamily() ecs.ComponentsArray[text.FontFamilyComponent] { return t.fontFamilyArray }
-func (t tool) FontSize() ecs.ComponentsArray[text.FontSizeComponent]     { return t.fontSizeArray }
+func (t *tool) Break() ecs.ComponentsArray[text.BreakComponent]           { return t.breakArray }
+func (t *tool) Content() ecs.ComponentsArray[text.TextComponent]          { return t.textArray }
+func (t *tool) Align() ecs.ComponentsArray[text.TextAlignComponent]       { return t.textAlignArray }
+func (t *tool) Color() ecs.ComponentsArray[text.TextColorComponent]       { return t.textColorArray }
+func (t *tool) FontFamily() ecs.ComponentsArray[text.FontFamilyComponent] { return t.fontFamilyArray }
+func (t *tool) FontSize() ecs.ComponentsArray[text.FontSizeComponent]     { return t.fontSizeArray }
 
-func (t tool) AddDirtySet(set ecs.DirtySet) {
+func (t *tool) AddDirtySet(set ecs.DirtySet) {
 	t.breakArray.AddDirtySet(set)
 	t.textAlignArray.AddDirtySet(set)
 	t.textColorArray.AddDirtySet(set)

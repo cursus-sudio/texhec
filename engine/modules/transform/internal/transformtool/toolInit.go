@@ -14,7 +14,7 @@ type save struct {
 	size   transform.AbsoluteSizeComponent
 }
 
-func (t tool) Init() {
+func (t *tool) Init() {
 	arrays := []ecs.AnyComponentArray{
 		t.absolutePosArray,
 		t.absoluteRotationArray,

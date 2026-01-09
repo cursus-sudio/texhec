@@ -10,7 +10,7 @@ type absolutePosArray struct {
 	ecs.ComponentsArray[transform.AbsolutePosComponent]
 }
 
-func (t absolutePosArray) Set(entity ecs.EntityID, absolutePos transform.AbsolutePosComponent) {
+func (t *absolutePosArray) Set(entity ecs.EntityID, absolutePos transform.AbsolutePosComponent) {
 	size, _ := t.t.absoluteSizeArray.Get(entity)
 	pos := transform.NewPos(absolutePos.Pos.
 		Sub(t.t.GetRelativeParentPos(entity)).
@@ -26,7 +26,7 @@ type absoluteSizeArray struct {
 	ecs.ComponentsArray[transform.AbsoluteSizeComponent]
 }
 
-func (t absoluteSizeArray) Set(entity ecs.EntityID, absoluteSize transform.AbsoluteSizeComponent) {
+func (t *absoluteSizeArray) Set(entity ecs.EntityID, absoluteSize transform.AbsoluteSizeComponent) {
 	parentSize := t.t.GetRelativeParentSize(entity)
 	size := transform.NewSize(
 		absoluteSize.Size[0]/parentSize[0],
@@ -44,7 +44,7 @@ type absoluteRotationArray struct {
 	ecs.ComponentsArray[transform.AbsoluteRotationComponent]
 }
 
-func (t absoluteRotationArray) Set(entity ecs.EntityID, absoluteRot transform.AbsoluteRotationComponent) {
+func (t *absoluteRotationArray) Set(entity ecs.EntityID, absoluteRot transform.AbsoluteRotationComponent) {
 	rot := transform.NewRotation(absoluteRot.Rotation.
 		Mul(t.t.GetRelativeParentRotation(entity).Inverse()))
 

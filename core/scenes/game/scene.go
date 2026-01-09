@@ -45,8 +45,8 @@ func addScene(
 	logger logger.Logger,
 	isServer bool,
 ) {
-	rows := 100
-	cols := 100
+	rows := 1000
+	cols := 1000
 
 	uiCamera := world.NewEntity()
 	world.Camera().Ortho().Set(uiCamera, camera.NewOrtho(-1000, +1000))

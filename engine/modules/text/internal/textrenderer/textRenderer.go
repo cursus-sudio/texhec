@@ -186,7 +186,7 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 	}
 }
 
-func (s textRenderer) Release() {
+func (s *textRenderer) Release() {
 	for _, batch := range s.fontsBatches.GetValues() {
 		batch.Release()
 	}

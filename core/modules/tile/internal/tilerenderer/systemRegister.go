@@ -33,7 +33,7 @@ type global struct {
 	layers       []*layer
 }
 
-func (g global) Release() {
+func (g *global) Release() {
 	g.program.Release()
 	g.textureArray.Release()
 	for _, layer := range g.layers {
@@ -151,7 +151,7 @@ func (factory TileRenderSystemRegister) Register(w tile.World) error {
 		layers = append(layers, layer)
 	}
 
-	g := global{p, textureArray, layers}
+	g := &global{p, textureArray, layers}
 	w.SaveGlobal(g)
 
 	dirtySet := ecs.NewDirtySet()

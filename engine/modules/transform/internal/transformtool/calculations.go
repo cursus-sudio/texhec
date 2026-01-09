@@ -7,7 +7,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-func (t tool) GetRelativeParentPos(entity ecs.EntityID) mgl32.Vec3 {
+func (t *tool) GetRelativeParentPos(entity ecs.EntityID) mgl32.Vec3 {
 	parent, ok := t.world.Hierarchy().Component().Get(entity)
 	if !ok {
 		return mgl32.Vec3{}
@@ -27,7 +27,7 @@ func (t tool) GetRelativeParentPos(entity ecs.EntityID) mgl32.Vec3 {
 	})
 }
 
-func (t tool) GetPivotPos(entity ecs.EntityID, size transform.AbsoluteSizeComponent) mgl32.Vec3 {
+func (t *tool) GetPivotPos(entity ecs.EntityID, size transform.AbsoluteSizeComponent) mgl32.Vec3 {
 	pivot, _ := t.pivotPointArray.Get(entity)
 	if pivot == t.defaultPivot {
 		return mgl32.Vec3{}
@@ -42,7 +42,7 @@ func (t tool) GetPivotPos(entity ecs.EntityID, size transform.AbsoluteSizeCompon
 
 //
 
-func (t tool) GetRelativeParentRotation(entity ecs.EntityID) mgl32.Quat {
+func (t *tool) GetRelativeParentRotation(entity ecs.EntityID) mgl32.Quat {
 	parent, ok := t.world.Hierarchy().Component().Get(entity)
 	if !ok {
 		return mgl32.QuatIdent()
@@ -57,7 +57,7 @@ func (t tool) GetRelativeParentRotation(entity ecs.EntityID) mgl32.Quat {
 
 //
 
-func (t tool) GetRelativeParentSize(entity ecs.EntityID) mgl32.Vec3 {
+func (t *tool) GetRelativeParentSize(entity ecs.EntityID) mgl32.Vec3 {
 	size := t.defaultSize.Size
 	parent, ok := t.world.Hierarchy().Component().Get(entity)
 	if !ok {
@@ -77,7 +77,7 @@ func (t tool) GetRelativeParentSize(entity ecs.EntityID) mgl32.Vec3 {
 	return size
 }
 
-func (t tool) ApplyMinMaxSize(entity ecs.EntityID, size *transform.SizeComponent) {
+func (t *tool) ApplyMinMaxSize(entity ecs.EntityID, size *transform.SizeComponent) {
 	if maxSize, ok := t.maxSizeArray.Get(entity); ok {
 		if maxSize.Size[0] != 0 && size.Size[0] > maxSize.Size[0] {
 			size.Size[0] = maxSize.Size[0]
@@ -105,7 +105,7 @@ func (t tool) ApplyMinMaxSize(entity ecs.EntityID, size *transform.SizeComponent
 // its used by full ApplyAspectRatio method.
 // ignores min and max size.
 // also concludes that aspect ratio is verified.
-func (t tool) getAspectRatio(size transform.SizeComponent, ratio transform.AspectRatioComponent) transform.SizeComponent {
+func (t *tool) getAspectRatio(size transform.SizeComponent, ratio transform.AspectRatioComponent) transform.SizeComponent {
 	var base float32
 	switch ratio.PrimaryAxis {
 	case transform.PrimaryAxisX:
@@ -130,7 +130,7 @@ func (t tool) getAspectRatio(size transform.SizeComponent, ratio transform.Aspec
 }
 
 // integrates min and max size
-func (t tool) ApplyAspectRatio(entity ecs.EntityID, size *transform.SizeComponent) {
+func (t *tool) ApplyAspectRatio(entity ecs.EntityID, size *transform.SizeComponent) {
 	ratio, _ := t.aspectRatioArray.Get(entity)
 	if ratio.PrimaryAxis == 0 || ratio.PrimaryAxis > 3 || ratio.AspectRatio[ratio.PrimaryAxis-1] == 0 {
 		return
@@ -194,7 +194,7 @@ func (t tool) ApplyAspectRatio(entity ecs.EntityID, size *transform.SizeComponen
 
 //
 
-func (t tool) CalculateAbsolutePos(entity ecs.EntityID, size transform.AbsoluteSizeComponent) transform.AbsolutePosComponent {
+func (t *tool) CalculateAbsolutePos(entity ecs.EntityID, size transform.AbsoluteSizeComponent) transform.AbsolutePosComponent {
 	pos, _ := t.posArray.Get(entity)
 	relativeToParentPos := t.GetRelativeParentPos(entity)
 	pivotPos := t.GetPivotPos(entity, size)
@@ -205,14 +205,14 @@ func (t tool) CalculateAbsolutePos(entity ecs.EntityID, size transform.AbsoluteS
 
 	return transform.AbsolutePosComponent(pos)
 }
-func (t tool) CalculateAbsoluteRot(entity ecs.EntityID) transform.AbsoluteRotationComponent {
+func (t *tool) CalculateAbsoluteRot(entity ecs.EntityID) transform.AbsoluteRotationComponent {
 	rot, _ := t.rotationArray.Get(entity)
 	rot.Rotation = rot.Rotation.
 		Mul(t.GetRelativeParentRotation(entity))
 
 	return transform.AbsoluteRotationComponent(rot)
 }
-func (t tool) CalculateAbsoluteSize(entity ecs.EntityID) transform.AbsoluteSizeComponent {
+func (t *tool) CalculateAbsoluteSize(entity ecs.EntityID) transform.AbsoluteSizeComponent {
 	size, _ := t.sizeArray.Get(entity)
 
 	relativeParentSize := t.GetRelativeParentSize(entity)
@@ -227,7 +227,7 @@ func (t tool) CalculateAbsoluteSize(entity ecs.EntityID) transform.AbsoluteSizeC
 	return transform.AbsoluteSizeComponent(size)
 }
 
-func (t tool) CalculateAbsolute(
+func (t *tool) CalculateAbsolute(
 	entity ecs.EntityID,
 ) (transform.AbsolutePosComponent, transform.AbsoluteRotationComponent, transform.AbsoluteSizeComponent) {
 	rot := t.CalculateAbsoluteRot(entity)

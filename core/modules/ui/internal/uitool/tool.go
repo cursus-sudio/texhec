@@ -45,8 +45,8 @@ func NewTool(
 	world ui.World,
 	gameAssets gameassets.GameAssets,
 	logger logger.Logger,
-) tool {
-	t := tool{
+) *tool {
+	t := &tool{
 		changing: &changing{},
 
 		animationDuration: animationDuration,
@@ -63,7 +63,7 @@ func NewTool(
 	return t
 }
 
-func (t tool) Init() error {
+func (t *tool) Init() error {
 	cameras := t.uiCameraArray.GetEntities()
 	if len(cameras) == 0 {
 		return nil
@@ -138,7 +138,7 @@ func (t tool) Init() error {
 	return nil
 }
 
-func (t tool) ResetChildWrapper() error {
+func (t *tool) ResetChildWrapper() error {
 	if !t.isInitialized {
 		err := t.Init()
 		if err != nil {
@@ -152,11 +152,11 @@ func (t tool) ResetChildWrapper() error {
 	return nil
 }
 
-func (t tool) Ui() ui.Interface { return t }
+func (t *tool) Ui() ui.Interface { return t }
 
-func (t tool) UiCamera() ecs.ComponentsArray[ui.UiCameraComponent] { return t.uiCameraArray }
+func (t *tool) UiCamera() ecs.ComponentsArray[ui.UiCameraComponent] { return t.uiCameraArray }
 
-func (t tool) Show() ecs.EntityID {
+func (t *tool) Show() ecs.EntityID {
 	t.logger.Warn(t.ResetChildWrapper())
 	if !t.active {
 		t.active = true
@@ -170,7 +170,7 @@ func (t tool) Show() ecs.EntityID {
 	return t.childWrapper
 }
 
-func (t tool) Hide() {
+func (t *tool) Hide() {
 	if t.active {
 		t.active = false
 		events.Emit(t.Events(), transition.NewTransitionEvent(
@@ -182,7 +182,7 @@ func (t tool) Hide() {
 	}
 }
 
-// func (t tool) Buttons(buttons ...ui.Button) []ecs.EntityID {
+// func (t* tool) Buttons(buttons ...ui.Button) []ecs.EntityID {
 // 	entities := []ecs.EntityID{}
 //
 // 	btnAsset, err := assets.GetAsset[render.TextureAsset](assetsService, gameAssets.Hud.Btn)

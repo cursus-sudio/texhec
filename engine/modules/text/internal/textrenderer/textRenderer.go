@@ -81,19 +81,20 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 			fonts.Set(s.fontKeys.GetKey(family.FontFamily), family.FontFamily)
 		}
 
+		// we don't remove unused fonts so i'll leave this commented
 		// remove unused fonts
-		for _, key := range s.fontsBatches.GetIndices() {
-			if _, ok := fonts.Get(key); ok {
-				continue
-			}
-			batch, ok := s.fontsBatches.Get(key)
-			if !ok {
-				continue
-			}
-			fonts.Remove(key)
-			batch.Release()
-			s.fontsBatches.Remove(key)
-		}
+		// for _, key := range s.fontsBatches.GetIndices() {
+		// 	if _, ok := fonts.Get(key); ok {
+		// 		continue
+		// 	}
+		// 	batch, ok := s.fontsBatches.Get(key)
+		// 	if !ok {
+		// 		continue
+		// 	}
+		// 	fonts.Remove(key)
+		// 	batch.Release()
+		// 	s.fontsBatches.Remove(key)
+		// }
 
 		// add freshly added fonts
 		for _, value := range fonts.GetValues() {

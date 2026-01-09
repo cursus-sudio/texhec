@@ -29,7 +29,7 @@ type Config struct {
 	AuthorizeEvent      map[reflect.Type]func(any) error
 }
 
-func (config Config) Auth(client ecs.EntityID, event any) (any, error) {
+func (config *Config) Auth(client ecs.EntityID, event any) (any, error) {
 	eventValue := reflect.ValueOf(event)
 	eventType := eventValue.Type()
 	if _, ok := config.AllowedClientEvents[eventType]; !ok {

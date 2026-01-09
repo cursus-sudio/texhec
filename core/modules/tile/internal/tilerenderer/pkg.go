@@ -34,7 +34,7 @@ func Package(
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) TileRenderSystemRegister {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) *TileRenderSystemRegister {
 		return NewTileRenderSystemRegister(
 			ioc.Get[texturearray.Factory](c),
 			ioc.Get[logger.Logger](c),
@@ -48,10 +48,10 @@ func (pkg pkg) Register(b ioc.Builder) {
 		)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.TileAssets {
-		return ioc.Get[TileRenderSystemRegister](c)
+		return ioc.Get[*TileRenderSystemRegister](c)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.SystemRenderer {
-		return ioc.Get[TileRenderSystemRegister](c)
+		return ioc.Get[*TileRenderSystemRegister](c)
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) vbo.VBOFactory[TileData] {

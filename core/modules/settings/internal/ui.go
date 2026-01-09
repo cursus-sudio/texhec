@@ -64,7 +64,7 @@ func NewSystem(
 	})
 }
 
-func (s system) ListenOnTick(frames.TickEvent) {
+func (s *system) ListenOnTick(frames.TickEvent) {
 	toggleArray := ecs.GetComponentsArray[temporaryToggleColorComponent](s)
 	for _, entity := range toggleArray.GetEntities() {
 		color, ok := s.Render().Color().Get(entity)
@@ -80,7 +80,7 @@ func (s system) ListenOnTick(frames.TickEvent) {
 
 }
 
-func (s system) ListenRender(parent ecs.EntityID) error {
+func (s *system) ListenRender(parent ecs.EntityID) error {
 	// render
 	// collider
 	// click

@@ -46,7 +46,7 @@ func (f *factory) NewConnection(rawConn net.Conn) connection.Conn {
 
 		_ = rawConn.Close()
 	}()
-	return conn{
+	return &conn{
 		factory:  f,
 		conn:     rawConn,
 		messages: messages,

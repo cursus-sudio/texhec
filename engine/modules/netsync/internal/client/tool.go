@@ -135,7 +135,7 @@ func NewTool(
 // public methods
 
 // doesn't send event to server
-func (t Tool) BeforeEventRecord(event any) {
+func (t *Tool) BeforeEventRecord(event any) {
 	t.loadConnections()
 	clientConn := t.getConnection()
 	if clientConn == nil {
@@ -166,7 +166,7 @@ func (t Tool) BeforeEventRecord(event any) {
 	}
 }
 
-func (t Tool) BeforeEvent(event any) {
+func (t *Tool) BeforeEvent(event any) {
 	t.loadConnections()
 	clientConn := t.getConnection()
 	if clientConn == nil {
@@ -183,7 +183,7 @@ func (t Tool) BeforeEvent(event any) {
 	}
 }
 
-func (t Tool) AfterEvent(event any) {
+func (t *Tool) AfterEvent(event any) {
 	conn := t.getConnection()
 	if conn == nil {
 		return
@@ -207,7 +207,7 @@ func (t Tool) AfterEvent(event any) {
 	t.predictions = append(t.predictions, newPrediction)
 }
 
-func (t Tool) OnTransparentEvent(event any) {
+func (t *Tool) OnTransparentEvent(event any) {
 	if t.receivedTransparentEvent {
 		t.receivedTransparentEvent = false
 		return
@@ -222,7 +222,7 @@ func (t Tool) OnTransparentEvent(event any) {
 	t.logger.Warn(err)
 }
 
-func (t Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
+func (t *Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
 	conn := t.getConnection()
 	if conn == nil {
 		return
@@ -274,7 +274,7 @@ func (t Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
 }
 
 // reconciliate
-func (t Tool) ListenSendState(dto servertypes.SendStateDTO) {
+func (t *Tool) ListenSendState(dto servertypes.SendStateDTO) {
 	conn := t.getConnection()
 	if conn == nil {
 		return
@@ -289,7 +289,7 @@ func (t Tool) ListenSendState(dto servertypes.SendStateDTO) {
 	t.Record().UUID().Apply(t.RecordConfig, dto.State)
 }
 
-func (t Tool) ListenTransparentEvent(dto servertypes.TransparentEventDTO) {
+func (t *Tool) ListenTransparentEvent(dto servertypes.TransparentEventDTO) {
 	if t.sentTransparentEvent {
 		t.sentTransparentEvent = false
 		return
@@ -304,7 +304,7 @@ func (t Tool) ListenTransparentEvent(dto servertypes.TransparentEventDTO) {
 
 // private methods
 
-func (t Tool) loadConnections() {
+func (t *Tool) loadConnections() {
 	ei := t.dirtySet.Get()
 	if len(ei) == 0 {
 		return
@@ -347,7 +347,7 @@ func (t Tool) loadConnections() {
 	}(entity)
 }
 
-func (t Tool) undoPredictions() []clienttypes.PredictedEvent {
+func (t *Tool) undoPredictions() []clienttypes.PredictedEvent {
 	// add events to the list
 	var unDoneEvents []clienttypes.PredictedEvent
 	snapshots := make([]record.UUIDRecording, len(t.predictions))
@@ -361,14 +361,14 @@ func (t Tool) undoPredictions() []clienttypes.PredictedEvent {
 	return unDoneEvents
 }
 
-func (t Tool) applyPredictedEvents(predictedEvents []clienttypes.PredictedEvent) {
+func (t *Tool) applyPredictedEvents(predictedEvents []clienttypes.PredictedEvent) {
 	for _, predictedEvent := range predictedEvents[1:] {
 		t.recordNextEvent = false
 		events.EmitAny(t.Events(), predictedEvent.Event)
 	}
 }
 
-func (t Tool) getConnection() connection.Conn {
+func (t *Tool) getConnection() connection.Conn {
 	var conn connection.Conn
 	if entities := t.NetSync().Server().GetEntities(); len(entities) == 1 {
 		server := entities[0]

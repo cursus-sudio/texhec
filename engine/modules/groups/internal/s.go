@@ -5,7 +5,7 @@ import (
 	"engine/services/ecs"
 )
 
-func (t tool) calculateGroup(entity ecs.EntityID) (groups.GroupsComponent, bool) {
+func (t *tool) calculateGroup(entity ecs.EntityID) (groups.GroupsComponent, bool) {
 	def := groups.GroupsComponent{}
 	parent, ok := t.world.Hierarchy().Parent(entity)
 	if !ok {
@@ -23,7 +23,7 @@ type save struct {
 	groups groups.GroupsComponent
 }
 
-func (s tool) Init() {
+func (s *tool) Init() {
 	s.groupsArray.SetEmpty(groups.DefaultGroups())
 
 	dirtySet := ecs.NewDirtySet()

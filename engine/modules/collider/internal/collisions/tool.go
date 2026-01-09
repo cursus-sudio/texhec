@@ -68,7 +68,7 @@ func floorF32ToInt(num float32) int {
 	return int(num)
 }
 
-func (c tool) getPositions(aabb collider.AABB) []mgl32.Vec2 {
+func (c *tool) getPositions(aabb collider.AABB) []mgl32.Vec2 {
 	minPos, maxPos := aabb.Min.Vec2(), aabb.Max.Vec2()
 	minGridX := floorF32ToInt(minPos.X() / c.chunkSize)
 	minGridY := floorF32ToInt(minPos.Y() / c.chunkSize)

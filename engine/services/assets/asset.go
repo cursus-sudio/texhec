@@ -14,4 +14,4 @@ func NewGoAsset(asset GoAsset) GoAsset {
 	return &goAsset{asset: asset}
 }
 
-func (a goAsset) Release() {}
+func (a *goAsset) Release() {}

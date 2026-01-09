@@ -26,7 +26,7 @@ func NewSysT[Component transition.Lerp[Component]](
 	easingService transition.EasingService,
 ) transition.System {
 	return ecs.NewSystemRegister(func(world transition.World) error {
-		s := sysT[Component]{
+		s := &sysT[Component]{
 			world,
 			ecs.NewDirtySet(),
 
@@ -47,11 +47,11 @@ func NewSysT[Component transition.Lerp[Component]](
 	})
 }
 
-func (s sysT[Component]) ListenTransition(event transition.TransitionEvent[Component]) {
+func (s *sysT[Component]) ListenTransition(event transition.TransitionEvent[Component]) {
 	s.transitionArray.Set(event.Entity, event.Component)
 }
 
-func (s sysT[Component]) ListenFrame(event frames.FrameEvent) {
+func (s *sysT[Component]) ListenFrame(event frames.FrameEvent) {
 	ei := s.dirtySet.Get()
 
 	for _, entity := range ei {

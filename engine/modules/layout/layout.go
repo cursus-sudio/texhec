@@ -49,8 +49,8 @@ type OrderComponent struct {
 	Order Order // default horizontal
 }
 
-func (order OrderComponent) Primary() Order   { return order.Order }
-func (order OrderComponent) Secondary() Order { return 1 - order.Order }
+func (order *OrderComponent) Primary() Order   { return order.Order }
+func (order *OrderComponent) Secondary() Order { return 1 - order.Order }
 
 func NewOrder(order Order) OrderComponent {
 	return OrderComponent{order}

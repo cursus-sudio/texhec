@@ -8,15 +8,15 @@ import (
 )
 
 func TestSize(t *testing.T) {
-	setup := NewSetup(t)
+	setup := NewSetup()
 	entity := setup.NewEntity()
 
 	setup.Transform().Size().Set(entity, transform.NewSize(10, 10, 10))
-	setup.expectAbsoluteSize(entity, transform.NewSize(10, 10, 10))
+	setup.expectAbsoluteSize(t, entity, transform.NewSize(10, 10, 10))
 
 	setup.Transform().Size().Set(entity, transform.NewSize(15, 15, 15))
-	setup.expectAbsoluteSize(entity, transform.NewSize(15, 15, 15))
+	setup.expectAbsoluteSize(t, entity, transform.NewSize(15, 15, 15))
 
 	setup.Transform().AbsoluteSize().Set(entity, transform.AbsoluteSizeComponent{Size: mgl32.Vec3{5, 5, 5}})
-	setup.expectAbsoluteSize(entity, transform.NewSize(5, 5, 5))
+	setup.expectAbsoluteSize(t, entity, transform.NewSize(5, 5, 5))
 }

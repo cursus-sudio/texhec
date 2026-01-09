@@ -24,9 +24,9 @@ type tool struct {
 	absoluteSizeArray     ecs.ComponentsArray[transform.AbsoluteSizeComponent]
 	absoluteRotationArray ecs.ComponentsArray[transform.AbsoluteRotationComponent]
 
-	absolutePosWrapped      absolutePosArray
-	absoluteSizeWrapped     absoluteSizeArray
-	absoluteRotationWrapped absoluteRotationArray
+	absolutePosWrapper      ecs.ComponentsArray[transform.AbsolutePosComponent]
+	absoluteSizeWrapper     ecs.ComponentsArray[transform.AbsoluteSizeComponent]
+	absoluteRotationWrapper ecs.ComponentsArray[transform.AbsoluteRotationComponent]
 
 	posArray              ecs.ComponentsArray[transform.PosComponent]
 	rotationArray         ecs.ComponentsArray[transform.RotationComponent]
@@ -54,7 +54,7 @@ func NewTransformTool(
 		if tool, ok := ecs.GetGlobal[tool](w); ok {
 			return tool
 		}
-		tool := tool{
+		tool := &tool{
 			logger,
 			w,
 			ecs.NewDirtySet(),
@@ -65,9 +65,9 @@ func NewTransformTool(
 			ecs.GetComponentsArray[transform.AbsolutePosComponent](w),
 			ecs.GetComponentsArray[transform.AbsoluteSizeComponent](w),
 			ecs.GetComponentsArray[transform.AbsoluteRotationComponent](w),
-			absolutePosArray{},
-			absoluteSizeArray{},
-			absoluteRotationArray{},
+			nil,
+			nil,
+			nil,
 			ecs.GetComponentsArray[transform.PosComponent](w),
 			ecs.GetComponentsArray[transform.RotationComponent](w),
 			ecs.GetComponentsArray[transform.SizeComponent](w),
@@ -78,14 +78,11 @@ func NewTransformTool(
 			ecs.GetComponentsArray[transform.ParentComponent](w),
 			ecs.GetComponentsArray[transform.ParentPivotPointComponent](w),
 		}
-		tool.absolutePosWrapped.t = &tool
-		tool.absolutePosWrapped.ComponentsArray = tool.absolutePosArray
+		// tool.Interface = tool
 
-		tool.absoluteSizeWrapped.t = &tool
-		tool.absoluteSizeWrapped.ComponentsArray = tool.absoluteSizeArray
-
-		tool.absoluteRotationWrapped.t = &tool
-		tool.absoluteRotationWrapped.ComponentsArray = tool.absoluteRotationArray
+		tool.absolutePosWrapper = &absolutePosArray{tool, tool.absolutePosArray}
+		tool.absoluteSizeWrapper = &absoluteSizeArray{tool, tool.absoluteSizeArray}
+		tool.absoluteRotationWrapper = &absoluteRotationArray{tool, tool.absoluteRotationArray}
 
 		w.SaveGlobal(tool)
 		tool.Init()
@@ -93,7 +90,7 @@ func NewTransformTool(
 	})
 }
 
-func (t tool) BeforeGet() {
+func (t *tool) BeforeGet() {
 	entities := t.dirtySet.Get()
 	if len(entities) == 0 {
 		return
@@ -144,46 +141,46 @@ func (t tool) BeforeGet() {
 	t.dirtySet.Clear()
 }
 
-func (t tool) Transform() transform.Interface { return t }
+func (t *tool) Transform() transform.Interface { return t }
 
-func (t tool) AbsolutePos() ecs.ComponentsArray[transform.AbsolutePosComponent] {
-	return t.absolutePosWrapped
+func (t *tool) AbsolutePos() ecs.ComponentsArray[transform.AbsolutePosComponent] {
+	return t.absolutePosWrapper
 }
-func (t tool) AbsoluteRotation() ecs.ComponentsArray[transform.AbsoluteRotationComponent] {
-	return t.absoluteRotationWrapped
+func (t *tool) AbsoluteRotation() ecs.ComponentsArray[transform.AbsoluteRotationComponent] {
+	return t.absoluteRotationWrapper
 }
-func (t tool) AbsoluteSize() ecs.ComponentsArray[transform.AbsoluteSizeComponent] {
-	return t.absoluteSizeWrapped
+func (t *tool) AbsoluteSize() ecs.ComponentsArray[transform.AbsoluteSizeComponent] {
+	return t.absoluteSizeWrapper
 }
-func (t tool) Pos() ecs.ComponentsArray[transform.PosComponent] {
+func (t *tool) Pos() ecs.ComponentsArray[transform.PosComponent] {
 	return t.posArray
 }
-func (t tool) Rotation() ecs.ComponentsArray[transform.RotationComponent] {
+func (t *tool) Rotation() ecs.ComponentsArray[transform.RotationComponent] {
 	return t.rotationArray
 }
-func (t tool) Size() ecs.ComponentsArray[transform.SizeComponent] {
+func (t *tool) Size() ecs.ComponentsArray[transform.SizeComponent] {
 	return t.sizeArray
 }
-func (t tool) MaxSize() ecs.ComponentsArray[transform.MaxSizeComponent] {
+func (t *tool) MaxSize() ecs.ComponentsArray[transform.MaxSizeComponent] {
 	return t.maxSizeArray
 }
-func (t tool) MinSize() ecs.ComponentsArray[transform.MinSizeComponent] {
+func (t *tool) MinSize() ecs.ComponentsArray[transform.MinSizeComponent] {
 	return t.minSizeArray
 }
-func (t tool) AspectRatio() ecs.ComponentsArray[transform.AspectRatioComponent] {
+func (t *tool) AspectRatio() ecs.ComponentsArray[transform.AspectRatioComponent] {
 	return t.aspectRatioArray
 }
-func (t tool) PivotPoint() ecs.ComponentsArray[transform.PivotPointComponent] {
+func (t *tool) PivotPoint() ecs.ComponentsArray[transform.PivotPointComponent] {
 	return t.pivotPointArray
 }
-func (t tool) Parent() ecs.ComponentsArray[transform.ParentComponent] {
+func (t *tool) Parent() ecs.ComponentsArray[transform.ParentComponent] {
 	return t.parentMaskArray
 }
-func (t tool) ParentPivotPoint() ecs.ComponentsArray[transform.ParentPivotPointComponent] {
+func (t *tool) ParentPivotPoint() ecs.ComponentsArray[transform.ParentPivotPointComponent] {
 	return t.parentPivotPointArray
 }
 
-func (t tool) Mat4(entity ecs.EntityID) mgl32.Mat4 {
+func (t *tool) Mat4(entity ecs.EntityID) mgl32.Mat4 {
 	pos, ok := t.absolutePosArray.Get(entity)
 	if !ok {
 		pos.Pos = mgl32.Vec3{0, 0, 0}
@@ -203,7 +200,7 @@ func (t tool) Mat4(entity ecs.EntityID) mgl32.Mat4 {
 	return translation.Mul4(rotation).Mul4(scale)
 }
 
-func (t tool) AddDirtySet(set ecs.DirtySet) {
+func (t *tool) AddDirtySet(set ecs.DirtySet) {
 	t.absolutePosArray.AddDirtySet(set)
 	t.absoluteRotationArray.AddDirtySet(set)
 	t.absoluteSizeArray.AddDirtySet(set)

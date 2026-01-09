@@ -36,7 +36,7 @@ type GameAssets struct {
 
 	SquareMesh     assets.AssetID `path:"square mesh"`
 	SquareCollider assets.AssetID `path:"square collider"`
-	FontAsset      assets.AssetID `path:"font3.ttf"`
+	FontAsset      assets.AssetID `path:"font1.ttf"`
 }
 
 type HudAssets struct {

@@ -17,8 +17,8 @@ type Global any
 
 func GetGlobalType(register Global) GlobalType {
 	typeOfGlobal := reflect.TypeOf(register)
-	if typeOfGlobal.Kind() != reflect.Struct {
-		panic("register has to be a struct (can use pointers under the hood)")
+	if typeOfGlobal.Kind() != reflect.Pointer {
+		panic("globals have to be pointers")
 	}
 	return GlobalType{typeOfGlobal}
 }
@@ -34,14 +34,13 @@ type Cleanable interface {
 	Release()
 }
 
-func GetGlobal[GlobalT Global](w World) (GlobalT, bool) {
-	var zero GlobalT
-	registerType := GetGlobalType(zero)
+func GetGlobal[GlobalT Global](w World) (*GlobalT, bool) {
+	registerType := GetGlobalType((*GlobalT)(nil))
 	value, ok := w.GetGlobal(registerType)
 	if !ok {
-		return zero, ok
+		return nil, ok
 	}
-	return value.(GlobalT), true
+	return value.(*GlobalT), true
 }
 
 // impl

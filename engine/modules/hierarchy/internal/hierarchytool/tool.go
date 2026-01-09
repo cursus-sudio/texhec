@@ -33,7 +33,7 @@ func NewTool(logger logger.Logger) hierarchy.ToolFactory {
 			return tool
 		}
 
-		t := tool{
+		t := &tool{
 			logger,
 			w,
 			ecs.GetComponentsArray[hierarchy.Component](w),
@@ -51,14 +51,14 @@ func NewTool(logger logger.Logger) hierarchy.ToolFactory {
 	})
 }
 
-func (t tool) Hierarchy() hierarchy.Interface {
+func (t *tool) Hierarchy() hierarchy.Interface {
 	return t
 }
-func (t tool) Component() ecs.ComponentsArray[hierarchy.Component] {
+func (t *tool) Component() ecs.ComponentsArray[hierarchy.Component] {
 	return t.hierarchyArray
 }
 
-func (t tool) IsChildOf(child ecs.EntityID, wantedParent ecs.EntityID) bool {
+func (t *tool) IsChildOf(child ecs.EntityID, wantedParent ecs.EntityID) bool {
 	for {
 		parent, ok := t.Parent(child)
 		if !ok {
@@ -71,18 +71,18 @@ func (t tool) IsChildOf(child ecs.EntityID, wantedParent ecs.EntityID) bool {
 	}
 }
 
-func (t tool) SetParent(child ecs.EntityID, parent ecs.EntityID) {
+func (t *tool) SetParent(child ecs.EntityID, parent ecs.EntityID) {
 	t.hierarchyArray.Set(child, hierarchy.NewParent(parent))
 }
 
-func (t tool) Parent(child ecs.EntityID) (ecs.EntityID, bool) {
+func (t *tool) Parent(child ecs.EntityID) (ecs.EntityID, bool) {
 	comp, ok := t.hierarchyArray.Get(child)
 	return comp.Parent, ok
 }
 
 //
 
-func (t tool) GetParents(child ecs.EntityID) datastructures.SparseSet[ecs.EntityID] {
+func (t *tool) GetParents(child ecs.EntityID) datastructures.SparseSet[ecs.EntityID] {
 	orderedParents := t.GetOrderedParents(child)
 
 	parents := datastructures.NewSparseSet[ecs.EntityID]()
@@ -92,7 +92,7 @@ func (t tool) GetParents(child ecs.EntityID) datastructures.SparseSet[ecs.Entity
 	return parents
 }
 
-func (t tool) GetOrderedParents(child ecs.EntityID) []ecs.EntityID {
+func (t *tool) GetOrderedParents(child ecs.EntityID) []ecs.EntityID {
 	parents := []ecs.EntityID{child}
 	for {
 		parent, ok := t.hierarchyArray.Get(child)
@@ -109,7 +109,7 @@ func (t tool) GetOrderedParents(child ecs.EntityID) []ecs.EntityID {
 
 //
 
-func (t tool) SetChildren(parent ecs.EntityID, children ...ecs.EntityID) {
+func (t *tool) SetChildren(parent ecs.EntityID, children ...ecs.EntityID) {
 	previousChildren := t.Children(parent).GetIndices()
 	for _, child := range previousChildren {
 		t.hierarchyArray.Remove(child)
@@ -123,7 +123,7 @@ func (t tool) SetChildren(parent ecs.EntityID, children ...ecs.EntityID) {
 
 //
 
-func (t tool) Children(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID] {
+func (t *tool) Children(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID] {
 	t.BeforeGet()
 	children, ok := t.children.Get(parent)
 	if !ok {
@@ -132,7 +132,7 @@ func (t tool) Children(parent ecs.EntityID) datastructures.SparseSetReader[ecs.E
 	return children
 }
 
-func (t tool) FlatChildren(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID] {
+func (t *tool) FlatChildren(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID] {
 	t.BeforeGet()
 	flatChildren, ok := t.flatChildren.Get(parent)
 	if !ok {
@@ -143,7 +143,7 @@ func (t tool) FlatChildren(parent ecs.EntityID) datastructures.SparseSetReader[e
 
 //
 
-func (t tool) BeforeGet() {
+func (t *tool) BeforeGet() {
 	dirtyEntities := t.dirtySet.Get()
 	if len(dirtyEntities) == 0 {
 		return
@@ -155,7 +155,7 @@ func (t tool) BeforeGet() {
 	t.dirtySet.Clear()
 }
 
-func (t tool) handleEntityChange(child ecs.EntityID) {
+func (t *tool) handleEntityChange(child ecs.EntityID) {
 	parent, parentOk := t.parents.Get(child)
 	hierarchy, hierarchyOk := t.hierarchyArray.Get(child)
 	_, isParent := t.parentArray.Get(child)

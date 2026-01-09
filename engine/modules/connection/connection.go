@@ -32,7 +32,7 @@ func NewListener(listener net.Listener) ListenerComponent {
 	return ListenerComponent{listener}
 }
 
-func (comp ListenerComponent) Listener() net.Listener {
+func (comp *ListenerComponent) Listener() net.Listener {
 	return comp.listener
 }
 
@@ -46,7 +46,7 @@ func NewConnection(conn Conn) ConnectionComponent {
 	return ConnectionComponent{conn}
 }
 
-func (comp ConnectionComponent) Conn() Conn {
+func (comp *ConnectionComponent) Conn() Conn {
 	return comp.conn
 }
 

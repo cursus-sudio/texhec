@@ -21,7 +21,7 @@ func newMapIndex[IndexType comparable](
 	dirtySet ecs.DirtySet,
 	componentIndex func(ecs.EntityID) (IndexType, bool),
 ) relation.EntityToKeyTool[IndexType] {
-	indexGlobal := mapRelation[IndexType]{
+	indexGlobal := &mapRelation[IndexType]{
 		world:    w,
 		dirtySet: dirtySet,
 
@@ -35,7 +35,7 @@ func newMapIndex[IndexType comparable](
 	return indexGlobal
 }
 
-func (i mapRelation[IndexType]) Get(index IndexType) (ecs.EntityID, bool) {
+func (i *mapRelation[IndexType]) Get(index IndexType) (ecs.EntityID, bool) {
 	for _, entity := range i.dirtySet.Get() {
 		indexType, ok := i.componentIndex(entity)
 		if !ok {
@@ -53,7 +53,7 @@ func (i mapRelation[IndexType]) Get(index IndexType) (ecs.EntityID, bool) {
 	return entity, ok
 }
 
-func (i mapRelation[IndexType]) Upsert(ei []ecs.EntityID) {
+func (i *mapRelation[IndexType]) Upsert(ei []ecs.EntityID) {
 	for _, entity := range ei {
 		indexType, ok := i.componentIndex(entity)
 		if !ok {
@@ -63,7 +63,7 @@ func (i mapRelation[IndexType]) Upsert(ei []ecs.EntityID) {
 	}
 }
 
-func (i mapRelation[IndexType]) Remove(ei []ecs.EntityID) {
+func (i *mapRelation[IndexType]) Remove(ei []ecs.EntityID) {
 	for _, entity := range ei {
 		indexType, ok := i.componentIndex(entity)
 		if !ok {

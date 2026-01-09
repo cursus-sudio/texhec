@@ -48,7 +48,7 @@ type releasable struct {
 	locations           locations
 }
 
-func (r releasable) Release() {
+func (r *releasable) Release() {
 	r.program.Release()
 	for _, texture := range r.textures {
 		texture.Release()
@@ -70,7 +70,7 @@ type system struct {
 	vboFactory     vbo.VBOFactory[genericrenderer.Vertex]
 	textureFactory texture.Factory
 
-	releasable
+	*releasable
 }
 
 func NewSystem(
@@ -108,7 +108,7 @@ func NewSystem(
 			return err
 		}
 
-		releasable := releasable{
+		releasable := &releasable{
 			texturesImagesCount: make(map[render.TextureComponent]int),
 			textures:            make(map[textureKey]texture.Texture),
 			meshes:              make(map[assets.AssetID]vao.VAO),

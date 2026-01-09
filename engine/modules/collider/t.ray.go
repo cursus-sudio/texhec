@@ -46,7 +46,7 @@ func (r *Ray) Apply(transform mgl32.Mat4) {
 	r.MaxDistance = newMaxDistance
 }
 
-func (r Ray) HitPoint() mgl32.Vec3 { return r.Pos.Add(r.Direction.Mul(r.MaxDistance)) }
+func (r *Ray) HitPoint() mgl32.Vec3 { return r.Pos.Add(r.Direction.Mul(r.MaxDistance)) }
 
 //
 

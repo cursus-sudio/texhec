@@ -33,7 +33,7 @@ type global struct {
 	layers       []*layer
 }
 
-func (g global) Release() {
+func (g *global) Release() {
 	g.program.Release()
 	g.textureArray.Release()
 	for _, layer := range g.layers {
@@ -68,8 +68,8 @@ func NewTileRenderSystemRegister(
 	gridDepth float32,
 	layers int32,
 	groups groups.GroupsComponent,
-) TileRenderSystemRegister {
-	return TileRenderSystemRegister{
+) *TileRenderSystemRegister {
+	return &TileRenderSystemRegister{
 		logger:              logger,
 		window:              window,
 		textures:            datastructures.NewSparseArray[uint32, image.Image](),
@@ -85,7 +85,7 @@ func NewTileRenderSystemRegister(
 	}
 }
 
-func (service TileRenderSystemRegister) AddType(addedAssets datastructures.SparseArray[definition.DefinitionID, assets.AssetID]) {
+func (service *TileRenderSystemRegister) AddType(addedAssets datastructures.SparseArray[definition.DefinitionID, assets.AssetID]) {
 	for _, assetIndex := range addedAssets.GetIndices() {
 		asset, _ := addedAssets.Get(assetIndex)
 		texture, err := assets.GetAsset[render.TextureAsset](service.assets, asset)
@@ -97,7 +97,7 @@ func (service TileRenderSystemRegister) AddType(addedAssets datastructures.Spars
 	}
 }
 
-func (factory TileRenderSystemRegister) Register(w tile.World) error {
+func (factory *TileRenderSystemRegister) Register(w tile.World) error {
 	vert, err := shader.NewShader(vertSource, shader.VertexShader)
 	if err != nil {
 		return err
@@ -151,7 +151,7 @@ func (factory TileRenderSystemRegister) Register(w tile.World) error {
 		layers = append(layers, layer)
 	}
 
-	g := global{p, textureArray, layers}
+	g := &global{p, textureArray, layers}
 	w.SaveGlobal(g)
 
 	dirtySet := ecs.NewDirtySet()

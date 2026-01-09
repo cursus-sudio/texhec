@@ -22,10 +22,9 @@ type world struct {
 
 type Setup struct {
 	world
-	T *testing.T
 }
 
-func NewSetup(t *testing.T) Setup {
+func NewSetup() Setup {
 	b := ioc.NewBuilder()
 	for _, pkg := range []ioc.Pkg{
 		logger.Package(true, func(c ioc.Dic, message string) { print(message) }),
@@ -41,24 +40,21 @@ func NewSetup(t *testing.T) Setup {
 	}
 	world.HierarchyTool = ioc.Get[hierarchy.ToolFactory](c).Build(world)
 	world.TransformTool = ioc.Get[transform.ToolFactory](c).Build(world)
-	return Setup{
-		world,
-		t,
-	}
+	return Setup{world}
 }
 
-func (setup Setup) expectAbsolutePos(entity ecs.EntityID, expectedPos transform.PosComponent) {
-	setup.T.Helper()
+func (setup Setup) expectAbsolutePos(t *testing.T, entity ecs.EntityID, expectedPos transform.PosComponent) {
+	t.Helper()
 	pos, _ := setup.Transform().AbsolutePos().Get(entity)
 	if pos.Pos != expectedPos.Pos {
-		setup.T.Errorf("expected pos %v but has %v", expectedPos, pos)
+		t.Errorf("expected pos %v but has %v", expectedPos, pos)
 	}
 }
 
-func (setup Setup) expectAbsoluteSize(entity ecs.EntityID, expectedSize transform.SizeComponent) {
-	setup.T.Helper()
+func (setup Setup) expectAbsoluteSize(t *testing.T, entity ecs.EntityID, expectedSize transform.SizeComponent) {
+	t.Helper()
 	size, _ := setup.Transform().AbsoluteSize().Get(entity)
 	if size.Size != expectedSize.Size {
-		setup.T.Errorf("expected size %v but has %v", expectedSize, size)
+		t.Errorf("expected size %v but has %v", expectedSize, size)
 	}
 }

@@ -18,11 +18,11 @@ type tool[Component transition.Lerp[Component]] struct {
 	*state[Component]
 }
 
-func NewTool[Component transition.Lerp[Component]](w ecs.World) tool[Component] {
+func NewTool[Component transition.Lerp[Component]](w ecs.World) *tool[Component] {
 	config := record.NewConfig()
 	record.AddToConfig[Component](config)
 
-	return tool[Component]{
+	return &tool[Component]{
 		state: &state[Component]{
 			recordingID: 0,
 			config:      config,

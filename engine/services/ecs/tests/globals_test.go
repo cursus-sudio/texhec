@@ -15,8 +15,8 @@ func (r Register) Release() {
 func TestRegistry(t *testing.T) {
 	world := ecs.NewWorld()
 
-	r1 := Register{&register{1}}
-	r2 := Register{&register{2}}
+	r1 := &Register{&register{1}}
+	r2 := &Register{&register{2}}
 
 	if _, ok := ecs.GetGlobal[Register](world); ok {
 		t.Errorf("got register from empty world")

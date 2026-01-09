@@ -46,7 +46,7 @@ func NewToolFactory(
 		world.Transform().AddDirtySet(dirtySet)
 		colliderArray := ecs.GetComponentsArray[collider.Component](world)
 		colliderArray.AddDirtySet(dirtySet)
-		t := tool{
+		t := &tool{
 			logger:        logger,
 			world:         world,
 			colliderArray: colliderArray,
@@ -68,7 +68,7 @@ func floorF32ToInt(num float32) int {
 	return int(num)
 }
 
-func (c tool) getPositions(aabb collider.AABB) []mgl32.Vec2 {
+func (c *tool) getPositions(aabb collider.AABB) []mgl32.Vec2 {
 	minPos, maxPos := aabb.Min.Vec2(), aabb.Max.Vec2()
 	minGridX := floorF32ToInt(minPos.X() / c.chunkSize)
 	minGridY := floorF32ToInt(minPos.Y() / c.chunkSize)
@@ -89,12 +89,12 @@ func (c tool) getPositions(aabb collider.AABB) []mgl32.Vec2 {
 	return positions
 }
 
-func (t tool) ChunkSize() float32                                      { return t.chunkSize }
-func (t tool) Chunks() map[mgl32.Vec2]datastructures.Set[ecs.EntityID] { return t.chunks }
+func (t *tool) ChunkSize() float32                                      { return t.chunkSize }
+func (t *tool) Chunks() map[mgl32.Vec2]datastructures.Set[ecs.EntityID] { return t.chunks }
 
 // tracking
 
-func (t tool) ApplyChanges() {
+func (t *tool) ApplyChanges() {
 	entities := t.dirtySet.Get()
 	t.Remove(entities...)
 	for _, entity := range entities {
@@ -115,7 +115,7 @@ func (t tool) ApplyChanges() {
 	}
 }
 
-func (t tool) Remove(entities ...ecs.EntityID) {
+func (t *tool) Remove(entities ...ecs.EntityID) {
 	for _, entity := range entities {
 		positions, ok := t.entitiesPositions[entity]
 		if !ok {
@@ -138,11 +138,11 @@ func (t tool) Remove(entities ...ecs.EntityID) {
 
 //
 
-func (t tool) Collider() collider.Interface { return t }
+func (t *tool) Collider() collider.Interface { return t }
 
-func (t tool) Component() ecs.ComponentsArray[collider.Component] { return t.colliderArray }
+func (t *tool) Component() ecs.ComponentsArray[collider.Component] { return t.colliderArray }
 
-func (t tool) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) *collider.ObjectRayCollision {
+func (t *tool) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) *collider.ObjectRayCollision {
 	t.ApplyChanges()
 	entityGroups, ok := t.world.Groups().Component().Get(entity)
 	if !ok {
@@ -225,13 +225,13 @@ func (t tool) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) *collider.O
 	return &collision
 }
 
-func (t tool) CollidesWithObject(entityA ecs.EntityID, entityB ecs.EntityID) *collider.ObjectObjectCollision {
+func (t *tool) CollidesWithObject(entityA ecs.EntityID, entityB ecs.EntityID) *collider.ObjectObjectCollision {
 	t.ApplyChanges()
 	t.logger.Warn(errors.New("501"))
 	return nil
 }
 
-func (t tool) Raycast(ray collider.Ray) *collider.ObjectRayCollision {
+func (t *tool) Raycast(ray collider.Ray) *collider.ObjectRayCollision {
 	t.ApplyChanges()
 	chunkSize := t.ChunkSize()
 	gridX := floorF32ToInt(ray.Pos[0] / chunkSize)
@@ -272,7 +272,7 @@ func (t tool) Raycast(ray collider.Ray) *collider.ObjectRayCollision {
 	return &collision
 }
 
-func (t tool) RaycastAll(ray collider.Ray) []collider.ObjectRayCollision {
+func (t *tool) RaycastAll(ray collider.Ray) []collider.ObjectRayCollision {
 	t.ApplyChanges()
 	chunkSize := t.ChunkSize()
 	gridX := floorF32ToInt(ray.Pos[0] / chunkSize)
@@ -311,7 +311,7 @@ func (t tool) RaycastAll(ray collider.Ray) []collider.ObjectRayCollision {
 	return collisions
 }
 
-func (t tool) NarrowCollisions(entity ecs.EntityID) []ecs.EntityID {
+func (t *tool) NarrowCollisions(entity ecs.EntityID) []ecs.EntityID {
 	t.ApplyChanges()
 	t.logger.Warn(errors.New("501"))
 	return nil

@@ -19,7 +19,7 @@ func NewToolFactory() definition.ToolFactory {
 		if t, ok := ecs.GetGlobal[tool](w); ok {
 			return t
 		}
-		t := tool{
+		t := &tool{
 			definitionArray:     ecs.GetComponentsArray[definition.DefinitionComponent](w),
 			definitionLinkArray: ecs.GetComponentsArray[definition.DefinitionLinkComponent](w),
 		}
@@ -28,10 +28,10 @@ func NewToolFactory() definition.ToolFactory {
 	})
 }
 
-func (t tool) Definition() definition.Interface { return t }
-func (t tool) Component() ecs.ComponentsArray[definition.DefinitionComponent] {
+func (t *tool) Definition() definition.Interface { return t }
+func (t *tool) Component() ecs.ComponentsArray[definition.DefinitionComponent] {
 	return t.definitionArray
 }
-func (t tool) Link() ecs.ComponentsArray[definition.DefinitionLinkComponent] {
+func (t *tool) Link() ecs.ComponentsArray[definition.DefinitionLinkComponent] {
 	return t.definitionLinkArray
 }

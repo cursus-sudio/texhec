@@ -54,9 +54,9 @@ func (f *toolFactory) Register(
 
 func (f *toolFactory) Build(world camera.World) camera.CameraTool {
 	if t, ok := ecs.GetGlobal[tool](world); ok {
-		return &t
+		return t
 	}
-	t := tool{
+	t := &tool{
 		World: world,
 
 		cameraArray:      ecs.GetComponentsArray[camera.Component](world),

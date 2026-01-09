@@ -18,7 +18,7 @@ func NewToolFactory() transition.ToolFactory {
 		if t, ok := ecs.GetGlobal[tool](w); ok {
 			return t
 		}
-		t := tool{
+		t := &tool{
 			ecs.GetComponentsArray[transition.EasingComponent](w),
 		}
 
@@ -27,10 +27,10 @@ func NewToolFactory() transition.ToolFactory {
 	})
 }
 
-func (t tool) Transition() transition.Interface {
+func (t *tool) Transition() transition.Interface {
 	return t
 }
 
-func (t tool) Easing() ecs.ComponentsArray[transition.EasingComponent] {
+func (t *tool) Easing() ecs.ComponentsArray[transition.EasingComponent] {
 	return t.easing
 }

@@ -30,7 +30,7 @@ func NewLayoutToolFactory(
 			return t
 		}
 
-		t := tool{
+		t := &tool{
 			logger,
 			w,
 			ecs.GetComponentsArray[layout.AlignComponent](w),
@@ -45,17 +45,17 @@ func NewLayoutToolFactory(
 	})
 }
 
-func (t tool) Layout() layout.Interface {
+func (t *tool) Layout() layout.Interface {
 	return t
 }
 
-func (t tool) Align() ecs.ComponentsArray[layout.AlignComponent] { return t.align }
-func (t tool) Order() ecs.ComponentsArray[layout.OrderComponent] { return t.order }
-func (t tool) Gap() ecs.ComponentsArray[layout.GapComponent]     { return t.gap }
+func (t *tool) Align() ecs.ComponentsArray[layout.AlignComponent] { return t.align }
+func (t *tool) Order() ecs.ComponentsArray[layout.OrderComponent] { return t.order }
+func (t *tool) Gap() ecs.ComponentsArray[layout.GapComponent]     { return t.gap }
 
 //
 
-func (t tool) Init() {
+func (t *tool) Init() {
 	// t.order.SetEmpty(layout.NewOrder(layout.OrderHorizontal))
 	t.align.SetEmpty(layout.NewAlign(.5, .5))
 	t.gap.SetEmpty(layout.NewGap(0))
@@ -84,7 +84,7 @@ type save struct {
 	parentPivot transform.ParentPivotPointComponent
 }
 
-func (t tool) BeforeGet() {
+func (t *tool) BeforeGet() {
 	for _, child := range t.dirtyChildren.Get() {
 		if parent, ok := t.Hierarchy().Parent(child); ok {
 			t.dirtyParents.Dirty(parent)
@@ -111,7 +111,7 @@ func (t tool) BeforeGet() {
 	}
 }
 
-func (t tool) handleParentChildren(parent ecs.EntityID) []save {
+func (t *tool) handleParentChildren(parent ecs.EntityID) []save {
 	children := t.Hierarchy().Children(parent).GetIndices()
 	if len(children) == 0 {
 		return nil

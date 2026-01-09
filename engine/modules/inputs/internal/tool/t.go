@@ -50,7 +50,7 @@ func NewToolFactory(
 			return t
 		}
 		stack := []inputs.Target{}
-		t := tool{
+		t := &tool{
 			logger,
 			ecs.GetComponentsArray[inputs.HoveredComponent](w),
 			ecs.GetComponentsArray[inputs.DraggedComponent](w),
@@ -82,35 +82,37 @@ func NewToolFactory(
 	})
 }
 
-func (t tool) Inputs() inputs.Interface {
+func (t *tool) Inputs() inputs.Interface {
 	return t
 }
 
-func (t tool) Hovered() ecs.ComponentsArray[inputs.HoveredComponent] { return t.hovered }
-func (t tool) Dragged() ecs.ComponentsArray[inputs.DraggedComponent] { return t.dragged }
-func (t tool) Stacked() ecs.ComponentsArray[inputs.StackedComponent] { return t.stacked }
+func (t *tool) Hovered() ecs.ComponentsArray[inputs.HoveredComponent] { return t.hovered }
+func (t *tool) Dragged() ecs.ComponentsArray[inputs.DraggedComponent] { return t.dragged }
+func (t *tool) Stacked() ecs.ComponentsArray[inputs.StackedComponent] { return t.stacked }
 
-func (t tool) KeepSelected() ecs.ComponentsArray[inputs.KeepSelectedComponent] { return t.keepSelected }
+func (t *tool) KeepSelected() ecs.ComponentsArray[inputs.KeepSelectedComponent] {
+	return t.keepSelected
+}
 
-func (t tool) LeftClick() ecs.ComponentsArray[inputs.LeftClickComponent] { return t.mouseLeft }
-func (t tool) DoubleLeftClick() ecs.ComponentsArray[inputs.DoubleLeftClickComponent] {
+func (t *tool) LeftClick() ecs.ComponentsArray[inputs.LeftClickComponent] { return t.mouseLeft }
+func (t *tool) DoubleLeftClick() ecs.ComponentsArray[inputs.DoubleLeftClickComponent] {
 	return t.mouseDoubleLeft
 }
 
-func (t tool) RightClick() ecs.ComponentsArray[inputs.RightClickComponent] { return t.mouseRight }
-func (t tool) DoubleRightClick() ecs.ComponentsArray[inputs.DoubleRightClickComponent] {
+func (t *tool) RightClick() ecs.ComponentsArray[inputs.RightClickComponent] { return t.mouseRight }
+func (t *tool) DoubleRightClick() ecs.ComponentsArray[inputs.DoubleRightClickComponent] {
 	return t.mouseDoubleRight
 }
 
-func (t tool) MouseEnter() ecs.ComponentsArray[inputs.MouseEnterComponent] { return t.mouseEnter }
-func (t tool) MouseLeave() ecs.ComponentsArray[inputs.MouseLeaveComponent] { return t.mouseLeave }
+func (t *tool) MouseEnter() ecs.ComponentsArray[inputs.MouseEnterComponent] { return t.mouseEnter }
+func (t *tool) MouseLeave() ecs.ComponentsArray[inputs.MouseLeaveComponent] { return t.mouseLeave }
 
-func (t tool) Hover() ecs.ComponentsArray[inputs.HoverComponent] { return t.mouseHover }
-func (t tool) Drag() ecs.ComponentsArray[inputs.DragComponent]   { return t.mouseDrag }
+func (t *tool) Hover() ecs.ComponentsArray[inputs.HoverComponent] { return t.mouseHover }
+func (t *tool) Drag() ecs.ComponentsArray[inputs.DragComponent]   { return t.mouseDrag }
 
-func (t tool) Stack() ecs.ComponentsArray[inputs.StackComponent] { return t.stack }
+func (t *tool) Stack() ecs.ComponentsArray[inputs.StackComponent] { return t.stack }
 
-func (t tool) StackedData() []inputs.Target {
+func (t *tool) StackedData() []inputs.Target {
 	stackCopy := make([]inputs.Target, len(*t.stackData))
 	copy(stackCopy, *t.stackData)
 	return stackCopy

@@ -11,10 +11,10 @@ type conn struct {
 	messages chan any
 }
 
-func (conn conn) Close() error       { return conn.conn.Close() }
-func (conn conn) Messages() chan any { return conn.messages }
+func (conn *conn) Close() error       { return conn.conn.Close() }
+func (conn *conn) Messages() chan any { return conn.messages }
 
-func (conn conn) Send(message any) error {
+func (conn *conn) Send(message any) error {
 	bytes, err := conn.codec.Encode(message)
 	if err != nil {
 		return err

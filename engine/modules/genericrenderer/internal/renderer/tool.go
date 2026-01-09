@@ -20,7 +20,7 @@ func NewToolFactory() genericrenderer.ToolFactory {
 		if t, ok := ecs.GetGlobal[tool](w); ok {
 			return t
 		}
-		t := tool{
+		t := &tool{
 			w,
 			ecs.GetComponentsArray[genericrenderer.PipelineComponent](w),
 		}
@@ -29,10 +29,10 @@ func NewToolFactory() genericrenderer.ToolFactory {
 	})
 }
 
-func (t tool) GenericRenderer() genericrenderer.Interface {
+func (t *tool) GenericRenderer() genericrenderer.Interface {
 	return t
 }
 
-func (t tool) Pipeline() ecs.ComponentsArray[genericrenderer.PipelineComponent] {
+func (t *tool) Pipeline() ecs.ComponentsArray[genericrenderer.PipelineComponent] {
 	return t.pipelineArray
 }

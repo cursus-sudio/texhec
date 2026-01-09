@@ -36,7 +36,7 @@ func NewToolFactory(
 		if t, ok := ecs.GetGlobal[tool](w); ok {
 			return t
 		}
-		t := tool{
+		t := &tool{
 			NewFactory(codec, logger),
 
 			ecs.NewDirtySet(),
@@ -62,7 +62,7 @@ func NewToolFactory(
 	})
 }
 
-func (t tool) BeforeListenerGet() {
+func (t *tool) BeforeListenerGet() {
 	if entities := t.connectionDirtySet.Get(); len(entities) == 0 {
 		return
 	}
@@ -89,7 +89,7 @@ func (t tool) BeforeListenerGet() {
 	}
 }
 
-func (t tool) BeforeConnectionGet() {
+func (t *tool) BeforeConnectionGet() {
 	if entities := t.connectionDirtySet.Get(); len(entities) == 0 {
 		return
 	}
@@ -116,16 +116,16 @@ func (t tool) BeforeConnectionGet() {
 	}
 }
 
-func (t tool) Connection() connection.Interface { return t }
+func (t *tool) Connection() connection.Interface { return t }
 
-func (t tool) Component() ecs.ComponentsArray[connection.ConnectionComponent] {
+func (t *tool) Component() ecs.ComponentsArray[connection.ConnectionComponent] {
 	return t.connectionArray
 }
-func (t tool) Listener() ecs.ComponentsArray[connection.ListenerComponent] {
+func (t *tool) Listener() ecs.ComponentsArray[connection.ListenerComponent] {
 	return t.listenersArray
 }
 
-func (t tool) Host(addr string, onConn func(connection.ConnectionComponent)) (connection.ListenerComponent, error) {
+func (t *tool) Host(addr string, onConn func(connection.ConnectionComponent)) (connection.ListenerComponent, error) {
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		return connection.ListenerComponent{}, err
@@ -147,7 +147,7 @@ func (t tool) Host(addr string, onConn func(connection.ConnectionComponent)) (co
 	return connection.NewListener(listener), nil
 }
 
-func (t tool) Connect(addr string) (connection.ConnectionComponent, error) {
+func (t *tool) Connect(addr string) (connection.ConnectionComponent, error) {
 	rawConn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return connection.ConnectionComponent{}, err
@@ -158,7 +158,7 @@ func (t tool) Connect(addr string) (connection.ConnectionComponent, error) {
 	return connComp, nil
 }
 
-func (t tool) MockConnectionPair() (connection.ConnectionComponent, connection.ConnectionComponent) {
+func (t *tool) MockConnectionPair() (connection.ConnectionComponent, connection.ConnectionComponent) {
 	rawC1, rawC2 := net.Pipe()
 	c1, c2 := t.NewConnection(rawC1), t.NewConnection(rawC2)
 	t.connections.Add(c1)
@@ -167,7 +167,7 @@ func (t tool) MockConnectionPair() (connection.ConnectionComponent, connection.C
 	return comp1, comp2
 }
 
-func (t tool) TransferConnection(entityFrom, entityTo ecs.EntityID) error {
+func (t *tool) TransferConnection(entityFrom, entityTo ecs.EntityID) error {
 	comp, ok := t.connectionArray.Get(entityFrom)
 	if !ok {
 		return nil
@@ -179,7 +179,7 @@ func (t tool) TransferConnection(entityFrom, entityTo ecs.EntityID) error {
 
 //
 
-func (t tool) Release() {
+func (t *tool) Release() {
 	for _, connection := range t.connections.Get() {
 		_ = connection.Close()
 		t.connections.RemoveElements(connection)

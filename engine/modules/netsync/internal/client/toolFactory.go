@@ -12,9 +12,9 @@ func NewToolFactory(
 	config config.Config,
 	netSyncToolFactory netsync.ToolFactory,
 	logger logger.Logger,
-) ecs.ToolFactory[netsync.World, Tool] {
+) ecs.ToolFactory[netsync.World, *Tool] {
 	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(w netsync.World) Tool {
+	return ecs.NewToolFactory(func(w netsync.World) *Tool {
 		mutex.Lock()
 		defer mutex.Unlock()
 		if t, ok := ecs.GetGlobal[Tool](w); ok {

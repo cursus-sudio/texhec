@@ -11,6 +11,7 @@ var ErrInvalidType error = errors.New("expected an error component")
 // interface
 
 type BeforeGet func()
+type OnMod func(EntityID)
 
 type AnyComponentArray interface {
 	GetAny(entity EntityID) (any, bool)
@@ -25,6 +26,9 @@ type AnyComponentArray interface {
 	AddDependency(AnyComponentArray)
 	AddDirtySet(DirtySet)
 	BeforeGet(BeforeGet)
+
+	OnUpsert(OnMod)
+	OnRemove(OnMod)
 }
 
 type ComponentsArray[Component any] interface {
@@ -48,6 +52,8 @@ type componentsArray[Component any] struct {
 	dependencies []AnyComponentArray
 	dirtySets    datastructures.Set[DirtySet]
 	beforeGets   []BeforeGet
+	onUpsert     []OnMod
+	onRemove     []OnMod
 }
 
 func NewComponentsArray[Component any](entities entitiesInterface) *componentsArray[Component] {
@@ -64,6 +70,8 @@ func NewComponentsArray[Component any](entities entitiesInterface) *componentsAr
 		dependencies: nil,
 		dirtySets:    datastructures.NewSet[DirtySet](),
 		beforeGets:   nil,
+		onUpsert:     nil,
+		onRemove:     nil,
 	}
 	return array
 }
@@ -75,6 +83,9 @@ func (c *componentsArray[Component]) Set(entity EntityID, component Component) {
 	}
 	c.entities.EnsureExists(entity)
 	c.components.Set(entity, component)
+	for _, onMod := range c.onUpsert {
+		onMod(entity)
+	}
 	for _, dirtySet := range c.dirtySets.Get() {
 		if !dirtySet.Ok() {
 			c.dirtySets.RemoveElements(dirtySet)
@@ -103,6 +114,9 @@ func (c *componentsArray[Component]) Remove(entity EntityID) {
 		return
 	}
 	c.components.Remove(entity)
+	for _, onMod := range c.onRemove {
+		onMod(entity)
+	}
 	for _, dirtySet := range c.dirtySets.Get() {
 		for _, entity := range entities {
 			if !dirtySet.Ok() {
@@ -172,4 +186,12 @@ func (c *componentsArray[Component]) BeforeGet(listener BeforeGet) {
 	// else if they won't be called again
 	//   then nothing will change
 	c.beforeGets = append([]BeforeGet{listener}, c.beforeGets...)
+}
+
+func (c *componentsArray[Component]) OnUpsert(onUpsert OnMod) {
+	c.onUpsert = append(c.onUpsert, onUpsert)
+}
+
+func (c *componentsArray[Component]) OnRemove(onRemove OnMod) {
+	c.onRemove = append(c.onRemove, onRemove)
 }

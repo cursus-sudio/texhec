@@ -93,5 +93,16 @@ func TestSetChildren(t *testing.T) {
 	setAndExpect(10010, 10011, 10012, 10013, 10014) // this is real example
 	setAndExpect(10010, 10011, 10012, 10013, 10014)
 	setAndExpect(10010, 10013, 10012, 10011, 10014)
+}
 
+func TestChildrenRemoval(t *testing.T) {
+	setup := NewSetup()
+	parent := setup.World.NewEntity()
+	child := setup.World.NewEntity()
+	setup.Tool.SetParent(child, parent)
+	setup.World.RemoveEntity(parent)
+	if exists := setup.World.EntityExists(child); exists {
+		t.Error("expected entity to stop existing")
+		return
+	}
 }

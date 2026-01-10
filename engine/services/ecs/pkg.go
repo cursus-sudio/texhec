@@ -1,6 +1,7 @@
 package ecs
 
 import (
+	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -12,5 +13,7 @@ func Package() ioc.Pkg {
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) World { return NewWorld() })
+	ioc.RegisterSingleton(b, func(c ioc.Dic) World {
+		return newConnectedWorld(ioc.Get[events.Builder](c))
+	})
 }

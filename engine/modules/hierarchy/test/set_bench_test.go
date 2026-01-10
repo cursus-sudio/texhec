@@ -1,6 +1,7 @@
 package test
 
 import (
+	"engine/services/ecs"
 	"testing"
 )
 
@@ -20,8 +21,6 @@ func BenchmarkAddNChildrenWithParent(b *testing.B) {
 		child := setup.World.NewEntity()
 		setup.Tool.SetParent(child, parent)
 	}
-
-	setup.Tool.FlatChildren(parent)
 }
 
 func BenchmarkAddNChildrenWith5Parents(b *testing.B) {
@@ -40,6 +39,33 @@ func BenchmarkAddNChildrenWith5Parents(b *testing.B) {
 		child := setup.World.NewEntity()
 		setup.Tool.SetParent(child, parent)
 	}
+}
 
-	setup.Tool.FlatChildren(parent)
+func BenchmarkRemoveNChildren(b *testing.B) {
+	setup := NewSetup()
+	parent := setup.World.NewEntity()
+
+	children := make([]ecs.EntityID, b.N)
+	for i := 0; i < b.N; i++ {
+		children[i] = setup.World.NewEntity()
+		setup.Tool.SetParent(children[i], parent)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		setup.World.RemoveEntity(children[i])
+	}
+}
+
+func BenchmarkRemoveParentWithNChildren(b *testing.B) {
+	setup := NewSetup()
+	parent := setup.World.NewEntity()
+
+	for i := 0; i < b.N; i++ {
+		child := setup.World.NewEntity()
+		setup.Tool.SetParent(child, parent)
+	}
+
+	b.ResetTimer()
+	setup.World.RemoveEntity(parent)
 }

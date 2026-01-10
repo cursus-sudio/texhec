@@ -20,6 +20,20 @@ type world struct {
 	eventsInterface
 }
 
+func newConnectedWorld(b events.Builder) World {
+	entitiesImpl := newEntities()
+	componentsImpl := newComponents(entitiesImpl.entities)
+	globalsImpl := newGlobals()
+	eventsImpl := newEvents(b)
+
+	return &world{
+		entitiesInterface: entitiesImpl,
+		componentsImpl:    componentsImpl,
+		globalsInterface:  globalsImpl,
+		eventsInterface:   eventsImpl,
+	}
+}
+
 func NewWorld() World {
 	entitiesImpl := newEntities()
 	componentsImpl := newComponents(entitiesImpl.entities)
@@ -40,8 +54,11 @@ func (world world) NewEntity() EntityID {
 }
 
 func (world world) RemoveEntity(entity EntityID) {
-	world.componentsImpl.RemoveEntity(entity)
 	world.entitiesInterface.RemoveEntity(entity)
+
+	for _, arr := range world.storage.arrays {
+		arr.Remove(entity)
+	}
 }
 
 func (world world) GetEntities() []EntityID {

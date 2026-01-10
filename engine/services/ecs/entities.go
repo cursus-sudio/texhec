@@ -27,7 +27,7 @@ type entitiesInterface interface {
 
 type entitiesImpl struct {
 	counter uint64
-	holes   datastructures.Set[EntityID]
+	holes   datastructures.SparseSet[EntityID]
 
 	entities datastructures.SparseSet[EntityID]
 }
@@ -35,7 +35,7 @@ type entitiesImpl struct {
 func newEntities() *entitiesImpl {
 	return &entitiesImpl{
 		counter:  0,
-		holes:    datastructures.NewSet[EntityID](),
+		holes:    datastructures.NewSparseSet[EntityID](),
 		entities: datastructures.NewSparseSet[EntityID](),
 	}
 }
@@ -49,7 +49,8 @@ func (entitiesStorage *entitiesImpl) EntityExists(entity EntityID) bool {
 }
 
 func (entitiesStorage *entitiesImpl) NewEntity() EntityID {
-	if id, ok := entitiesStorage.holes.GetStored(0); ok {
+	if holes := entitiesStorage.holes.GetIndices(); len(holes) != 0 {
+		id := holes[0]
 		_ = entitiesStorage.holes.Remove(0)
 		entitiesStorage.entities.Add(id)
 		return id
@@ -65,8 +66,11 @@ func (entitiesStorage *entitiesImpl) EnsureExists(entity EntityID) {
 	if ok := entitiesStorage.entities.Get(entity); ok {
 		return
 	}
+	for i := entity; i < EntityID(entitiesStorage.counter); i++ {
+		entitiesStorage.holes.Add(entity)
+	}
 	entitiesStorage.entities.Add(entity)
-	entitiesStorage.holes.RemoveElements(entity)
+	entitiesStorage.holes.Remove(entity)
 }
 
 func (entitiesStorage *entitiesImpl) RemoveEntity(entity EntityID) {

@@ -17,9 +17,6 @@ type tool struct {
 	hierarchyArray ecs.ComponentsArray[hierarchy.Component]
 	parentArray    ecs.ComponentsArray[parentComponent]
 
-	hierarchyDirtySet ecs.DirtySet
-	parentDirtySet    ecs.DirtySet
-
 	parents      datastructures.SparseArray[ecs.EntityID, ecs.EntityID]
 	children     datastructures.SparseArray[ecs.EntityID, datastructures.SparseSet[ecs.EntityID]]
 	flatChildren datastructures.SparseArray[ecs.EntityID, datastructures.SparseSet[ecs.EntityID]]
@@ -39,15 +36,14 @@ func NewTool(logger logger.Logger) hierarchy.ToolFactory {
 			w,
 			ecs.GetComponentsArray[hierarchy.Component](w),
 			ecs.GetComponentsArray[parentComponent](w),
-			ecs.NewDirtySet(),
-			ecs.NewDirtySet(),
 			datastructures.NewSparseArray[ecs.EntityID, ecs.EntityID](),
 			datastructures.NewSparseArray[ecs.EntityID, datastructures.SparseSet[ecs.EntityID]](),
 			datastructures.NewSparseArray[ecs.EntityID, datastructures.SparseSet[ecs.EntityID]](),
 		}
 		w.SaveGlobal(t)
-		t.hierarchyArray.AddDirtySet(t.hierarchyDirtySet)
-		t.parentArray.AddDirtySet(t.parentDirtySet)
+		t.hierarchyArray.OnUpsert(t.handleHierarchyChange)
+		t.hierarchyArray.OnRemove(t.handleHierarchyChange)
+		t.parentArray.OnRemove(t.handleParentChange)
 
 		return t
 	})
@@ -132,7 +128,6 @@ func (t *tool) SetChildren(parent ecs.EntityID, children ...ecs.EntityID) {
 		t.hierarchyArray.Remove(child)
 	}
 
-	t.BeforeGet()
 	for i := 0; i < len(children); i++ {
 		t.SetParent(children[i], parent)
 	}
@@ -141,7 +136,6 @@ func (t *tool) SetChildren(parent ecs.EntityID, children ...ecs.EntityID) {
 //
 
 func (t *tool) Children(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID] {
-	t.BeforeGet()
 	children, ok := t.children.Get(parent)
 	if !ok {
 		return datastructures.NewSparseSet[ecs.EntityID]()
@@ -149,8 +143,7 @@ func (t *tool) Children(parent ecs.EntityID) datastructures.SparseSetReader[ecs.
 	return children
 }
 
-func (t *tool) FlatChildren(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID] {
-	t.BeforeGet()
+func (t *tool) GetFlatChildren(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID] {
 	if flatChildren, ok := t.flatChildren.Get(parent); ok {
 		return flatChildren
 	}
@@ -183,23 +176,11 @@ func (t *tool) FlatChildren(parent ecs.EntityID) datastructures.SparseSetReader[
 	return flatChildren
 }
 
-//
-
-func (t *tool) BeforeGet() {
-	// order here matters
-	if dirtyHierarchyEntities := t.hierarchyDirtySet.Get(); len(dirtyHierarchyEntities) != 0 {
-		for _, child := range dirtyHierarchyEntities {
-			t.handleHierarchyChange(child)
-		}
-	}
-	if dirtyParentEntities := t.parentDirtySet.Get(); len(dirtyParentEntities) != 0 {
-		for _, child := range dirtyParentEntities {
-			t.handleParentChange(child)
-		}
-		t.parentDirtySet.Clear()
-		t.hierarchyDirtySet.Clear()
-	}
+func (t *tool) FlatChildren(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID] {
+	return t.GetFlatChildren(parent)
 }
+
+//
 
 func (t *tool) handleHierarchyChange(child ecs.EntityID) {
 	previousParent, previousParentOk := t.parents.Get(child)
@@ -251,10 +232,7 @@ func (t *tool) handleParentChange(parent ecs.EntityID) {
 		return
 	}
 
-	children, ok := t.flatChildren.Get(parent)
-	if !ok {
-		return
-	}
+	children := t.GetFlatChildren(parent)
 
 	for _, parent := range t.GetOrderedParents(parent) {
 		t.flatChildren.Remove(parent)
@@ -263,9 +241,9 @@ func (t *tool) handleParentChange(parent ecs.EntityID) {
 	t.children.Remove(parent)
 	t.flatChildren.Remove(parent)
 	for _, child := range children.GetIndices() {
-		t.world.RemoveEntity(child)
 		t.flatChildren.Remove(child)
 		t.children.Remove(child)
 		t.parents.Remove(child)
+		t.world.RemoveEntity(child)
 	}
 }

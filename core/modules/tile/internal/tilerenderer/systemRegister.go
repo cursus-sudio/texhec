@@ -15,7 +15,6 @@ import (
 	"engine/services/graphics/vao"
 	"engine/services/graphics/vao/ebo"
 	"engine/services/graphics/vao/vbo"
-	"engine/services/media/window"
 	"image"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -31,7 +30,6 @@ type TileData struct {
 //
 
 type TileRenderSystemRegister struct {
-	Window              window.Api               `inject:"1"`
 	TextureArrayFactory texturearray.Factory     `inject:"1"`
 	VboFactory          vbo.VBOFactory[TileData] `inject:"1"`
 
@@ -136,7 +134,6 @@ func (factory *TileRenderSystemRegister) Register() error {
 	s := system{
 		program:   p,
 		locations: locations,
-		window:    factory.Window,
 
 		textureArray: textureArray,
 		rendered:     datastructures.NewSparseArray[ecs.EntityID, tile.PosComponent](),

@@ -13,7 +13,6 @@ import (
 	"engine/services/graphics/texturearray"
 	"engine/services/graphics/vao"
 	"engine/services/graphics/vao/vbo"
-	"engine/services/media/window"
 	"image"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -43,7 +42,6 @@ type layer struct {
 type system struct {
 	program   program.Program
 	locations locations
-	window    window.Api
 
 	textureArray texturearray.TextureArray
 	rendered     datastructures.SparseArray[ecs.EntityID, tile.PosComponent]
@@ -89,7 +87,7 @@ func (s *system) Listen(render.RenderEvent) {
 		s.rendered.Set(entity, tilePos)
 	}
 
-	w, h := s.window.Window().GetSize()
+	w, h := s.Window.Window().GetSize()
 	defer func() { gl.Viewport(0, 0, w, h) }()
 	for _, layer := range s.layers {
 		if layer.changed {

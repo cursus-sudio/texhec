@@ -6,15 +6,18 @@ import (
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-type resizeSystem struct{}
+type resizeSystem struct {
+	EventsBuilder events.Builder `inject:"1"`
+}
 
-func NewResizeSystem(eventsBuilder events.Builder) inputs.System {
+func NewResizeSystem(c ioc.Dic) inputs.System {
 	return ecs.NewSystemRegister(func() error {
-		s := &resizeSystem{}
-		events.Listen(eventsBuilder, s.Listen)
+		s := ioc.GetServices[*resizeSystem](c)
+		events.Listen(s.EventsBuilder, s.Listen)
 		return nil
 	})
 }

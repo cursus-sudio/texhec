@@ -8,28 +8,22 @@ import (
 	"time"
 
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type logsSystem struct {
-	World   ecs.World
-	Console console.Console
+	World         ecs.World       `inject:"1"`
+	Console       console.Console `inject:"1"`
+	EventsBuilder events.Builder  `inject:"1"`
 
 	frames []time.Time
 }
 
-func NewFpsLoggerSystem(
-	eventsBuilder events.Builder,
-	w ecs.World,
-	console console.Console,
-) ecs.SystemRegister {
+func NewFpsLoggerSystem(c ioc.Dic) ecs.SystemRegister {
 	return ecs.NewSystemRegister(func() error {
-		s := &logsSystem{
-			World:   w,
-			Console: console,
-
-			frames: make([]time.Time, 60),
-		}
-		events.Listen(eventsBuilder, s.Listen)
+		s := ioc.GetServices[*logsSystem](c)
+		s.frames = make([]time.Time, 60)
+		events.Listen(s.EventsBuilder, s.Listen)
 		return nil
 	})
 }

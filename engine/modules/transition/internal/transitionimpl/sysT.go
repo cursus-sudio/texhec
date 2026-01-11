@@ -7,43 +7,35 @@ import (
 	"engine/services/logger"
 
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type sysT[Component transition.Lerp[Component]] struct {
-	world    ecs.World
+	World         ecs.World                `inject:"1"`
+	Logger        logger.Logger            `inject:"1"`
+	EasingService transition.EasingService `inject:"1"`
+	EventsBuilder events.Builder           `inject:"1"`
+
 	dirtySet ecs.DirtySet
 
 	transitionArray ecs.ComponentsArray[transition.TransitionComponent[Component]]
 	easingArray     ecs.ComponentsArray[transition.EasingComponent]
 	componentArray  ecs.ComponentsArray[Component]
-
-	logger        logger.Logger
-	easingService transition.EasingService
 }
 
-func NewSysT[Component transition.Lerp[Component]](
-	world ecs.World,
-	eventsBuilder events.Builder,
-	logger logger.Logger,
-	easingService transition.EasingService,
-) transition.System {
+func NewSysT[Component transition.Lerp[Component]](c ioc.Dic) transition.System {
 	return ecs.NewSystemRegister(func() error {
-		s := &sysT[Component]{
-			world,
-			ecs.NewDirtySet(),
+		s := ioc.GetServices[*sysT[Component]](c)
 
-			ecs.GetComponentsArray[transition.TransitionComponent[Component]](world),
-			ecs.GetComponentsArray[transition.EasingComponent](world),
-			ecs.GetComponentsArray[Component](world),
+		s.dirtySet = ecs.NewDirtySet()
+		s.transitionArray = ecs.GetComponentsArray[transition.TransitionComponent[Component]](s.World)
+		s.easingArray = ecs.GetComponentsArray[transition.EasingComponent](s.World)
+		s.componentArray = ecs.GetComponentsArray[Component](s.World)
 
-			logger,
-			easingService,
-		}
-
-		events.Listen(eventsBuilder, s.ListenTransition)
+		events.Listen(s.EventsBuilder, s.ListenTransition)
 
 		s.transitionArray.AddDirtySet(s.dirtySet)
-		events.Listen(eventsBuilder, s.ListenFrame)
+		events.Listen(s.EventsBuilder, s.ListenFrame)
 
 		return nil
 	})
@@ -70,7 +62,7 @@ func (s *sysT[Component]) ListenFrame(event frames.FrameEvent) {
 
 		easingComponent, ok := s.easingArray.Get(entity)
 		if ok {
-			if fn, ok := s.easingService.Get(easingComponent.ID); ok {
+			if fn, ok := s.EasingService.Get(easingComponent.ID); ok {
 				progress = fn(progress)
 			}
 		}

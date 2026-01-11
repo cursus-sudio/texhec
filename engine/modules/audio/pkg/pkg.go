@@ -3,10 +3,8 @@ package audiopkg
 import (
 	"engine/modules/audio"
 	"engine/modules/audio/internal"
-	"engine/services/assets"
 	"engine/services/codec"
 
-	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -26,17 +24,12 @@ func (pkg) Register(b ioc.Builder) {
 			Register(audio.SetChannelVolumeEvent{})
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) internal.Service {
-		return internal.NewService(
-			ioc.Get[assets.Assets](c),
-		)
+		return internal.NewService(c)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) audio.PlayerService { return ioc.Get[internal.Service](c) })
 	ioc.RegisterSingleton(b, func(c ioc.Dic) audio.VolumeService { return ioc.Get[internal.Service](c) })
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) audio.System {
-		return internal.NewSystem(
-			ioc.Get[internal.Service](c),
-			ioc.Get[events.Builder](c),
-		)
+		return internal.NewSystem(c)
 	})
 }

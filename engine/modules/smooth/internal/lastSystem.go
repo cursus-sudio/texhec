@@ -1,24 +1,20 @@
 package internal
 
 import (
-	"engine/modules/record"
 	"engine/modules/smooth"
 	"engine/modules/transition"
 	"engine/services/ecs"
 	"engine/services/frames"
 
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
-func NewLastSystem[Component transition.Lerp[Component]](
-	eventsBuilder events.Builder,
-	world ecs.World,
-	record record.Service,
-	service *Service[Component],
-) smooth.StopSystem {
+func NewLastSystem[Component transition.Lerp[Component]](c ioc.Dic) smooth.StopSystem {
 	return ecs.NewSystemRegister(func() error {
-		events.Listen(eventsBuilder, func(tick frames.TickEvent) {
-			r, ok := record.Entity().Stop(service.recordingID)
+		s := ioc.GetServices[*system[Component]](c)
+		events.Listen(s.EventsBuilder, func(tick frames.TickEvent) {
+			r, ok := s.Record.Entity().Stop(s.Service.recordingID)
 			if !ok {
 				return
 			}
@@ -31,12 +27,12 @@ func NewLastSystem[Component transition.Lerp[Component]](
 				if !ok {
 					continue
 				}
-				after, ok := service.componentArray.Get(entity)
+				after, ok := s.Service.componentArray.Get(entity)
 				if !ok {
 					continue
 				}
 				lerpComponent := transition.NewTransition(before, after, tick.Delta)
-				service.lerpArray.Set(entity, lerpComponent)
+				s.Service.lerpArray.Set(entity, lerpComponent)
 			}
 		})
 

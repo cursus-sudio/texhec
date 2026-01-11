@@ -3,10 +3,7 @@ package groupspkg
 import (
 	"engine/modules/groups"
 	"engine/modules/groups/internal"
-	"engine/modules/hierarchy"
 	"engine/services/codec"
-	"engine/services/ecs"
-	"engine/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -25,10 +22,6 @@ func (pkg) Register(b ioc.Builder) {
 			Register(groups.GroupsComponent{})
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) groups.Service {
-		return internal.NewService(
-			ioc.Get[ecs.World](c),
-			ioc.Get[hierarchy.Service](c),
-			ioc.Get[logger.Logger](c),
-		)
+		return internal.NewService(c)
 	})
 }

@@ -2,21 +2,22 @@ package internal
 
 import (
 	"core/modules/definition"
+	"engine"
 	"engine/services/ecs"
+
+	"github.com/ogiusek/ioc/v2"
 )
 
 type service struct {
+	World               engine.World `inject:"1"`
 	definitionArray     ecs.ComponentsArray[definition.DefinitionComponent]
 	definitionLinkArray ecs.ComponentsArray[definition.DefinitionLinkComponent]
 }
 
-func NewService(
-	w ecs.World,
-) definition.Service {
-	t := &service{
-		definitionArray:     ecs.GetComponentsArray[definition.DefinitionComponent](w),
-		definitionLinkArray: ecs.GetComponentsArray[definition.DefinitionLinkComponent](w),
-	}
+func NewService(c ioc.Dic) definition.Service {
+	t := ioc.GetServices[*service](c)
+	t.definitionArray = ecs.GetComponentsArray[definition.DefinitionComponent](t.World)
+	t.definitionLinkArray = ecs.GetComponentsArray[definition.DefinitionLinkComponent](t.World)
 
 	return t
 }

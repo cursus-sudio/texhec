@@ -10,55 +10,39 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type dragSystem struct {
 	isHeld bool
 	button uint8
 
-	world     ecs.World
-	transform transform.Service
-	camera    camera.Service
+	World     ecs.World         `inject:"1"`
+	Transform transform.Service `inject:"1"`
+	Camera    camera.Service    `inject:"1"`
 
-	window window.Api
-	logger logger.Logger
+	EventsBuilder events.Builder `inject:"1"`
+	Window        window.Api     `inject:"1"`
+	Logger        logger.Logger  `inject:"1"`
 }
 
-func NewDragSystem(
-	dragButton uint8,
-
-	world ecs.World,
-	transform transform.Service,
-	camera camera.Service,
-
-	eventsBuilder events.Builder,
-	window window.Api,
-	logger logger.Logger,
-) camera.System {
+func NewDragSystem(c ioc.Dic, dragButton uint8) camera.System {
 	return ecs.NewSystemRegister(func() error {
-		s := &dragSystem{
-			isHeld: false,
-			button: dragButton,
-
-			world:     world,
-			transform: transform,
-			camera:    camera,
-
-			window: window,
-			logger: logger,
-		}
-		events.Listen(eventsBuilder, s.Listen)
+		s := ioc.GetServices[*dragSystem](c)
+		s.isHeld = false
+		s.button = dragButton
+		events.Listen(s.EventsBuilder, s.Listen)
 		return nil
 	})
 }
 
 func (s *dragSystem) Listen(e inputs.DragEvent) {
-	for _, cameraEntity := range s.camera.Mobile().GetEntities() {
-		pos, _ := s.transform.AbsolutePos().Get(cameraEntity)
-		rot, _ := s.transform.AbsoluteRotation().Get(cameraEntity)
+	for _, cameraEntity := range s.Camera.Mobile().GetEntities() {
+		pos, _ := s.Transform.AbsolutePos().Get(cameraEntity)
+		rot, _ := s.Transform.AbsoluteRotation().Get(cameraEntity)
 
-		rayBefore := s.camera.ShootRay(cameraEntity, e.From)
-		rayAfter := s.camera.ShootRay(cameraEntity, e.To)
+		rayBefore := s.Camera.ShootRay(cameraEntity, e.From)
+		rayAfter := s.Camera.ShootRay(cameraEntity, e.To)
 
 		// apply difference
 		pos.Pos = pos.Pos.Add(rayBefore.Pos.Sub(rayAfter.Pos))
@@ -66,7 +50,7 @@ func (s *dragSystem) Listen(e inputs.DragEvent) {
 		rotationDifference := mgl32.QuatBetweenVectors(rayBefore.Direction, rayAfter.Direction)
 		rot.Rotation = rotationDifference.Mul(rot.Rotation)
 
-		s.transform.AbsolutePos().Set(cameraEntity, pos)
-		s.transform.AbsoluteRotation().Set(cameraEntity, rot)
+		s.Transform.AbsolutePos().Set(cameraEntity, pos)
+		s.Transform.AbsoluteRotation().Set(cameraEntity, rot)
 	}
 }

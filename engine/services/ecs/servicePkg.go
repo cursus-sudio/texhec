@@ -36,3 +36,14 @@ func RegisterSystems(systems ...SystemRegister) []error {
 	}
 	return errs
 }
+
+//
+
+// this method would be highly beneficial but
+// it isn't possible without a way to initialize an componentsArray[T]
+
+// service is a pointer to a struct
+// takes every field with tag `ecs:"1"` and initializes it
+// initialization works for ecs.ComponentsArray[T] and ecs.DirtySet
+// func InitService(world World, service any) {
+// }

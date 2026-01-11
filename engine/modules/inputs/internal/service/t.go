@@ -6,6 +6,7 @@ import (
 	"engine/services/logger"
 
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type RayChangedTargetEvent struct {
@@ -13,7 +14,9 @@ type RayChangedTargetEvent struct {
 }
 
 type service struct {
-	logger logger.Logger
+	Logger        logger.Logger  `inject:"1"`
+	World         ecs.World      `inject:"1"`
+	EventsBuilder events.Builder `inject:"1"`
 
 	hovered ecs.ComponentsArray[inputs.HoveredComponent]
 	dragged ecs.ComponentsArray[inputs.DraggedComponent]
@@ -21,11 +24,11 @@ type service struct {
 
 	keepSelected ecs.ComponentsArray[inputs.KeepSelectedComponent]
 
-	mouseLeft       ecs.ComponentsArray[inputs.LeftClickComponent]
-	mouseDoubleLeft ecs.ComponentsArray[inputs.DoubleLeftClickComponent]
+	leftClick       ecs.ComponentsArray[inputs.LeftClickComponent]
+	doubleLeftClick ecs.ComponentsArray[inputs.DoubleLeftClickComponent]
 
-	mouseRight       ecs.ComponentsArray[inputs.RightClickComponent]
-	mouseDoubleRight ecs.ComponentsArray[inputs.DoubleRightClickComponent]
+	rightClick       ecs.ComponentsArray[inputs.RightClickComponent]
+	doubleRightClick ecs.ComponentsArray[inputs.DoubleRightClickComponent]
 
 	mouseEnter ecs.ComponentsArray[inputs.MouseEnterComponent]
 	mouseLeave ecs.ComponentsArray[inputs.MouseLeaveComponent]
@@ -38,37 +41,33 @@ type service struct {
 	stackData *[]inputs.Target
 }
 
-func NewService(
-	logger logger.Logger,
-	eventsBuilder events.Builder,
-	w ecs.World,
-) inputs.Service {
+func NewService(c ioc.Dic) inputs.Service {
+	t := ioc.GetServices[*service](c)
+	t.hovered = ecs.GetComponentsArray[inputs.HoveredComponent](t.World)
+	t.dragged = ecs.GetComponentsArray[inputs.DraggedComponent](t.World)
+	t.stacked = ecs.GetComponentsArray[inputs.StackedComponent](t.World)
+
+	t.keepSelected = ecs.GetComponentsArray[inputs.KeepSelectedComponent](t.World)
+
+	t.leftClick = ecs.GetComponentsArray[inputs.LeftClickComponent](t.World)
+	t.doubleLeftClick = ecs.GetComponentsArray[inputs.DoubleLeftClickComponent](t.World)
+
+	t.rightClick = ecs.GetComponentsArray[inputs.RightClickComponent](t.World)
+	t.doubleRightClick = ecs.GetComponentsArray[inputs.DoubleRightClickComponent](t.World)
+
+	t.mouseEnter = ecs.GetComponentsArray[inputs.MouseEnterComponent](t.World)
+	t.mouseLeave = ecs.GetComponentsArray[inputs.MouseLeaveComponent](t.World)
+
+	t.mouseHover = ecs.GetComponentsArray[inputs.HoverComponent](t.World)
+	t.mouseDrag = ecs.GetComponentsArray[inputs.DragComponent](t.World)
+
+	t.stack = ecs.GetComponentsArray[inputs.StackComponent](t.World)
+
+	ecs.GetComponentsArray[inputs.StackComponent](t.World)
+
 	stack := []inputs.Target{}
-	t := &service{
-		logger,
-		ecs.GetComponentsArray[inputs.HoveredComponent](w),
-		ecs.GetComponentsArray[inputs.DraggedComponent](w),
-		ecs.GetComponentsArray[inputs.StackedComponent](w),
-
-		ecs.GetComponentsArray[inputs.KeepSelectedComponent](w),
-
-		ecs.GetComponentsArray[inputs.LeftClickComponent](w),
-		ecs.GetComponentsArray[inputs.DoubleLeftClickComponent](w),
-
-		ecs.GetComponentsArray[inputs.RightClickComponent](w),
-		ecs.GetComponentsArray[inputs.DoubleRightClickComponent](w),
-
-		ecs.GetComponentsArray[inputs.MouseEnterComponent](w),
-		ecs.GetComponentsArray[inputs.MouseLeaveComponent](w),
-
-		ecs.GetComponentsArray[inputs.HoverComponent](w),
-		ecs.GetComponentsArray[inputs.DragComponent](w),
-
-		ecs.GetComponentsArray[inputs.StackComponent](w),
-
-		&stack,
-	}
-	events.Listen(eventsBuilder, func(e RayChangedTargetEvent) {
+	t.stackData = &stack
+	events.Listen(t.EventsBuilder, func(e RayChangedTargetEvent) {
 		*t.stackData = e.Targets
 	})
 	return t
@@ -82,14 +81,14 @@ func (t *service) KeepSelected() ecs.ComponentsArray[inputs.KeepSelectedComponen
 	return t.keepSelected
 }
 
-func (t *service) LeftClick() ecs.ComponentsArray[inputs.LeftClickComponent] { return t.mouseLeft }
+func (t *service) LeftClick() ecs.ComponentsArray[inputs.LeftClickComponent] { return t.leftClick }
 func (t *service) DoubleLeftClick() ecs.ComponentsArray[inputs.DoubleLeftClickComponent] {
-	return t.mouseDoubleLeft
+	return t.doubleLeftClick
 }
 
-func (t *service) RightClick() ecs.ComponentsArray[inputs.RightClickComponent] { return t.mouseRight }
+func (t *service) RightClick() ecs.ComponentsArray[inputs.RightClickComponent] { return t.rightClick }
 func (t *service) DoubleRightClick() ecs.ComponentsArray[inputs.DoubleRightClickComponent] {
-	return t.mouseDoubleRight
+	return t.doubleRightClick
 }
 
 func (t *service) MouseEnter() ecs.ComponentsArray[inputs.MouseEnterComponent] { return t.mouseEnter }

@@ -7,7 +7,7 @@ import (
 
 func (t *service) calculateGroup(entity ecs.EntityID) (groups.GroupsComponent, bool) {
 	def := groups.GroupsComponent{}
-	parent, ok := t.hierarchy.Parent(entity)
+	parent, ok := t.Hierarchy.Parent(entity)
 	if !ok {
 		return def, false
 	}
@@ -28,7 +28,7 @@ func (s *service) Init() {
 
 	dirtySet := ecs.NewDirtySet()
 	s.groupsArray.AddDependency(s.inheritArray)
-	s.groupsArray.AddDependency(s.hierarchy.Component())
+	s.groupsArray.AddDependency(s.Hierarchy.Component())
 
 	s.groupsArray.AddDirtySet(dirtySet)
 
@@ -67,7 +67,7 @@ func (s *service) Init() {
 				groups: groups,
 			})
 
-			for _, child := range s.hierarchy.Children(entity).GetIndices() {
+			for _, child := range s.Hierarchy.Children(entity).GetIndices() {
 				if _, ok := s.inheritArray.Get(child); ok {
 					children = append(children, child)
 				}

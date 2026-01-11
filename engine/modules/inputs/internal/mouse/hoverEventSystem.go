@@ -6,38 +6,32 @@ import (
 	"engine/services/frames"
 
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type hoverEventSystem struct {
-	world  ecs.World
-	inputs inputs.Service
+	World  ecs.World      `inject:"1"`
+	Inputs inputs.Service `inject:"1"`
 
-	events events.Events
+	EventsBuilder events.Builder `inject:"1"`
+	Events        events.Events  `inject:"1"`
 }
 
-func NewHoverEventsSystem(
-	eventsBuilder events.Builder,
-	world ecs.World,
-	inputs inputs.Service,
-) inputs.System {
+func NewHoverEventsSystem(c ioc.Dic) inputs.System {
 	return ecs.NewSystemRegister(func() error {
-		s := &hoverEventSystem{
-			world:  world,
-			inputs: inputs,
-			events: eventsBuilder.Events(),
-		}
-		events.Listen(eventsBuilder, s.Listen)
+		s := ioc.GetServices[*hoverEventSystem](c)
+		events.Listen(s.EventsBuilder, s.Listen)
 		return nil
 	})
 }
 
 func (s *hoverEventSystem) Listen(event frames.FrameEvent) {
-	for _, entity := range s.inputs.Hovered().GetEntities() {
-		eventsComponent, ok := s.inputs.Hover().Get(entity)
+	for _, entity := range s.Inputs.Hovered().GetEntities() {
+		eventsComponent, ok := s.Inputs.Hover().Get(entity)
 		if !ok {
 			continue
 		}
 
-		events.EmitAny(s.events, eventsComponent.Event)
+		events.EmitAny(s.Events, eventsComponent.Event)
 	}
 }

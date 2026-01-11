@@ -6,16 +6,17 @@ import (
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
-type clearSystem struct{}
+type clearSystem struct {
+	EventsBuilder events.Builder `inject:"1"`
+}
 
-func NewClearSystem(
-	eventsBuilder events.Builder,
-) render.System {
+func NewClearSystem(c ioc.Dic) render.System {
 	return ecs.NewSystemRegister(func() error {
-		s := &clearSystem{}
-		events.Listen(eventsBuilder, s.Listen)
+		s := ioc.GetServices[*clearSystem](c)
+		events.Listen(s.EventsBuilder, s.Listen)
 		return nil
 	})
 }

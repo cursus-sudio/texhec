@@ -23,8 +23,7 @@ type Service struct {
 }
 
 func NewService(c ioc.Dic) scene.Service {
-	v := ioc.GetServices[Service](c)
-	service := &v
+	service := ioc.GetServices[*Service](c)
 	service.scenes = make(map[scene.ID]scene.Scene)
 	service.scene = service.World.NewEntity()
 

@@ -7,38 +7,29 @@ import (
 	"engine/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type orthoSys struct {
-	world     ecs.World
-	transform transform.Service
-	camera    camera.Service
+	World     ecs.World         `inject:"1"`
+	Transform transform.Service `inject:"1"`
+	Camera    camera.Service    `inject:"1"`
 
 	dirtySet ecs.DirtySet
 
-	logger logger.Logger
+	Logger logger.Logger `inject:"1"`
 }
 
-func NewOrthoSys(
-	world ecs.World,
-	transform transform.Service,
-	camera camera.Service,
-	logger logger.Logger,
-) camera.System {
-	s := &orthoSys{
-		world:     world,
-		transform: transform,
-		camera:    camera,
+func NewOrthoSys(c ioc.Dic) camera.System {
+	s := ioc.GetServices[*orthoSys](c)
+	s.dirtySet = ecs.NewDirtySet()
 
-		dirtySet: ecs.NewDirtySet(),
-		logger:   logger,
-	}
-	s.transform.AddDirtySet(s.dirtySet)
-	s.camera.Limits().AddDirtySet(s.dirtySet)
-	s.camera.Ortho().AddDirtySet(s.dirtySet)
-	s.camera.Viewport().AddDirtySet(s.dirtySet)
-	s.camera.NormalizedViewport().AddDirtySet(s.dirtySet)
-	s.transform.AbsolutePos().BeforeGet(s.BeforeGet)
+	s.Transform.AddDirtySet(s.dirtySet)
+	s.Camera.Limits().AddDirtySet(s.dirtySet)
+	s.Camera.Ortho().AddDirtySet(s.dirtySet)
+	s.Camera.Viewport().AddDirtySet(s.dirtySet)
+	s.Camera.NormalizedViewport().AddDirtySet(s.dirtySet)
+	s.Transform.AbsolutePos().BeforeGet(s.BeforeGet)
 
 	return nil
 }
@@ -55,20 +46,20 @@ func (s *orthoSys) BeforeGet() {
 	saves := []save{}
 
 	for _, entity := range ei {
-		limits, ok := s.camera.Limits().Get(entity)
+		limits, ok := s.Camera.Limits().Get(entity)
 		if !ok {
 			continue
 		}
-		ortho, ok := s.camera.Ortho().Get(entity)
+		ortho, ok := s.Camera.Ortho().Get(entity)
 		if !ok {
 			continue
 		}
 
-		pos, ok := s.transform.AbsolutePos().Get(entity)
+		pos, ok := s.Transform.AbsolutePos().Get(entity)
 		if !ok {
 			continue
 		}
-		x, y, w, h := s.camera.GetViewport(entity)
+		x, y, w, h := s.Camera.GetViewport(entity)
 		halfWidth := float32(w-x) / 2 / ortho.Zoom
 		halfHeight := float32(h-y) / 2 / ortho.Zoom
 
@@ -106,6 +97,6 @@ func (s *orthoSys) BeforeGet() {
 		saves = append(saves, save{entity, pos})
 	}
 	for _, save := range saves {
-		s.transform.AbsolutePos().Set(save.entity, save.pos)
+		s.Transform.AbsolutePos().Set(save.entity, save.pos)
 	}
 }

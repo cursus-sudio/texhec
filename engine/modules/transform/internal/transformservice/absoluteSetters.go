@@ -11,12 +11,12 @@ type absolutePosArray struct {
 }
 
 func (t *absolutePosArray) Set(entity ecs.EntityID, absolutePos transform.AbsolutePosComponent) {
-	size, _ := t.t.absoluteSizeArray.Get(entity)
+	size, _ := t.t.AbsoluteSizeArray.Get(entity)
 	pos := transform.NewPos(absolutePos.Pos.
 		Sub(t.t.GetRelativeParentPos(entity)).
 		Sub(t.t.GetPivotPos(entity, size)).Elem())
 
-	t.t.posArray.Set(entity, pos)
+	t.t.PosArray.Set(entity, pos)
 }
 
 //
@@ -34,7 +34,7 @@ func (t *absoluteSizeArray) Set(entity ecs.EntityID, absoluteSize transform.Abso
 		absoluteSize.Size[2]/parentSize[2],
 	)
 
-	t.t.sizeArray.Set(entity, size)
+	t.t.SizeArray.Set(entity, size)
 }
 
 //
@@ -48,5 +48,5 @@ func (t *absoluteRotationArray) Set(entity ecs.EntityID, absoluteRot transform.A
 	rot := transform.NewRotation(absoluteRot.Rotation.
 		Mul(t.t.GetRelativeParentRotation(entity).Inverse()))
 
-	t.t.rotationArray.Set(entity, rot)
+	t.t.RotationArray.Set(entity, rot)
 }

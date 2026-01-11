@@ -5,32 +5,25 @@ import (
 	"engine/modules/hierarchy"
 	"engine/services/ecs"
 	"engine/services/logger"
+
+	"github.com/ogiusek/ioc/v2"
 )
 
 type service struct {
-	logger logger.Logger
+	Logger logger.Logger `inject:"1"`
 
-	world     ecs.World
-	hierarchy hierarchy.Service
+	World     ecs.World         `inject:"1"`
+	Hierarchy hierarchy.Service `inject:"1"`
 
 	inheritArray ecs.ComponentsArray[groups.InheritGroupsComponent]
 	groupsArray  ecs.ComponentsArray[groups.GroupsComponent]
 }
 
-func NewService(
-	w ecs.World,
-	hierarchy hierarchy.Service,
-	logger logger.Logger,
-) groups.Service {
-	t := &service{
-		logger: logger,
+func NewService(c ioc.Dic) groups.Service {
+	t := ioc.GetServices[*service](c)
 
-		world:     w,
-		hierarchy: hierarchy,
-
-		inheritArray: ecs.GetComponentsArray[groups.InheritGroupsComponent](w),
-		groupsArray:  ecs.GetComponentsArray[groups.GroupsComponent](w),
-	}
+	t.inheritArray = ecs.GetComponentsArray[groups.InheritGroupsComponent](t.World)
+	t.groupsArray = ecs.GetComponentsArray[groups.GroupsComponent](t.World)
 	t.Init()
 	return t
 }

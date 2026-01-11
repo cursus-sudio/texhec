@@ -8,44 +8,36 @@ import (
 	"slices"
 
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type hoverSystem struct {
-	events  events.Events
-	world   ecs.World
-	inputs  inputs.Service
-	logger  logger.Logger
-	targets []inputs.Target
+	EventsBuilder events.Builder `inject:"1"`
+	Events        events.Events  `inject:"1"`
+	World         ecs.World      `inject:"1"`
+	Inputs        inputs.Service `inject:"1"`
+	Logger        logger.Logger  `inject:"1"`
+	targets       []inputs.Target
 }
 
-func NewHoverSystem(
-	eventsBuilder events.Builder,
-	world ecs.World,
-	inputs inputs.Service,
-	logger logger.Logger,
-) inputs.System {
+func NewHoverSystem(c ioc.Dic) inputs.System {
 	return ecs.NewSystemRegister(func() error {
-		s := &hoverSystem{
-			events:  eventsBuilder.Events(),
-			world:   world,
-			inputs:  inputs,
-			logger:  logger,
-			targets: nil,
-		}
+		s := ioc.GetServices[*hoverSystem](c)
+		s.targets = nil
 
-		events.Listen(eventsBuilder, s.Listen)
+		events.Listen(s.EventsBuilder, s.Listen)
 		return nil
 	})
 }
 
 func (s *hoverSystem) handleMouseLeave(entity ecs.EntityID) {
-	s.inputs.Hovered().Remove(entity)
+	s.Inputs.Hovered().Remove(entity)
 
-	mouseLeave, ok := s.inputs.MouseLeave().Get(entity)
+	mouseLeave, ok := s.Inputs.MouseLeave().Get(entity)
 	if !ok {
 		return
 	}
-	events.EmitAny(s.events, mouseLeave.Event)
+	events.EmitAny(s.Events, mouseLeave.Event)
 }
 
 func (s *hoverSystem) Listen(event service.RayChangedTargetEvent) {
@@ -70,10 +62,10 @@ func (s *hoverSystem) Listen(event service.RayChangedTargetEvent) {
 	}
 
 	for _, target := range entered {
-		s.inputs.Hovered().Set(target.Entity, inputs.HoveredComponent{Camera: target.Camera})
+		s.Inputs.Hovered().Set(target.Entity, inputs.HoveredComponent{Camera: target.Camera})
 
-		if mouseEnter, ok := s.inputs.MouseEnter().Get(target.Entity); ok {
-			events.EmitAny(s.events, mouseEnter.Event)
+		if mouseEnter, ok := s.Inputs.MouseEnter().Get(target.Entity); ok {
+			events.EmitAny(s.Events, mouseEnter.Event)
 		}
 	}
 	s.targets = event.Targets

@@ -1,13 +1,10 @@
 package transformpkg
 
 import (
-	"engine/modules/hierarchy"
 	"engine/modules/transform"
 	"engine/modules/transform/internal/transformservice"
 	transitionpkg "engine/modules/transition/pkg"
 	"engine/services/codec"
-	"engine/services/ecs"
-	"engine/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
@@ -54,10 +51,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 	}
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) transform.Service {
-		return transformservice.NewService(
-			ioc.Get[ecs.World](c),
-			ioc.Get[hierarchy.Service](c),
-			ioc.Get[logger.Logger](c),
+		return transformservice.NewService(c,
 			pkg.defaultRot,
 			pkg.defaultSize,
 			pkg.defaultPivot,

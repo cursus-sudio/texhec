@@ -4,7 +4,6 @@ import (
 	"core/modules/definition"
 	"core/modules/definition/internal"
 	"engine/services/codec"
-	"engine/services/ecs"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -23,6 +22,6 @@ func (pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) definition.Service {
-		return internal.NewService(ioc.Get[ecs.World](c))
+		return internal.NewService(c)
 	})
 }

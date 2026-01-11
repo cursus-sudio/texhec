@@ -5,12 +5,12 @@ import (
 	"engine/services/ecs"
 
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
-func NewSystem(
-	s Service,
-	eventsBuilder events.Builder,
-) audio.System {
+func NewSystem(c ioc.Dic) audio.System {
+	s := ioc.Get[Service](c)
+	eventsBuilder := ioc.Get[events.Builder](c)
 	return ecs.NewSystemRegister(func() error {
 		events.ListenE(eventsBuilder, func(e audio.StopEvent) error {
 			return s.Stop(e.Channel)

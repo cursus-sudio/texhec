@@ -8,6 +8,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/ogiusek/ioc/v2"
 )
 
 // note: glyph size is (0-1(width is between), 1 (height is const)) and
@@ -28,13 +29,14 @@ type LayoutService interface {
 }
 
 type layoutService struct {
-	world     ecs.World
-	transform transform.Service
-	text      text.Service
+	Logger logger.Logger `inject:"1"`
 
-	logger      logger.Logger
-	fontService FontService
-	fontsKeys   FontKeys
+	World     ecs.World         `inject:"1"`
+	Transform transform.Service `inject:"1"`
+	Text      text.Service      `inject:"1"`
+
+	FontService FontService `inject:"1"`
+	FontsKeys   FontKeys    `inject:"1"`
 
 	defaultFontFamily text.FontFamilyComponent
 	defaultFontSize   text.FontSizeComponent
@@ -43,37 +45,22 @@ type layoutService struct {
 	defaultTextAlign text.TextAlignComponent
 }
 
-func NewLayoutService(
-	world ecs.World,
-	transform transform.Service,
-	textService text.Service,
-
-	logger logger.Logger,
-	fontService FontService,
-	fontsKeys FontKeys,
-
+func NewLayoutService(c ioc.Dic,
 	defaultFontFamily text.FontFamilyComponent,
 	defaultFontSize text.FontSizeComponent,
 	// defaultOverflow text.Overflow,
 	defaultBreak text.BreakComponent,
 	defaultTextAlign text.TextAlignComponent,
 ) LayoutService {
-	return &layoutService{
-		world:     world,
-		transform: transform,
-		text:      textService,
+	s := ioc.GetServices[*layoutService](c)
 
-		logger:      logger,
-		fontService: fontService,
-		fontsKeys:   fontsKeys,
+	s.defaultFontFamily = defaultFontFamily
+	s.defaultFontSize = defaultFontSize
+	// s.defaultOverflow = defaultOverflow
+	s.defaultBreak = defaultBreak
+	s.defaultTextAlign = defaultTextAlign
 
-		defaultFontFamily: defaultFontFamily,
-		defaultFontSize:   defaultFontSize,
-		// defaultOverflow:   defaultOverflow,
-		defaultBreak:     defaultBreak,
-		defaultTextAlign: defaultTextAlign,
-	}
-
+	return s
 }
 
 type lineLetter struct {
@@ -94,16 +81,16 @@ type line struct {
 func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	// TODO add overflow read, text align read and transform modification
 
-	size, _ := s.transform.AbsoluteSize().Get(entity)
-	textComponent, ok := s.text.Content().Get(entity)
+	size, _ := s.Transform.AbsoluteSize().Get(entity)
+	textComponent, ok := s.Text.Content().Get(entity)
 	if !ok {
 		return Layout{}, nil
 	}
-	fontFamily, ok := s.text.FontFamily().Get(entity)
+	fontFamily, ok := s.Text.FontFamily().Get(entity)
 	if !ok {
 		fontFamily = s.defaultFontFamily
 	}
-	fontSize, ok := s.text.FontSize().Get(entity)
+	fontSize, ok := s.Text.FontSize().Get(entity)
 	if !ok {
 		fontSize = s.defaultFontSize
 	}
@@ -111,16 +98,16 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	// if err != nil {
 	// 	overflow = s.defaultOverflow
 	// }
-	breakComponent, ok := s.text.Break().Get(entity)
+	breakComponent, ok := s.Text.Break().Get(entity)
 	if !ok {
 		breakComponent = s.defaultBreak
 	}
-	textAlign, ok := s.text.Align().Get(entity)
+	textAlign, ok := s.Text.Align().Get(entity)
 	if !ok {
 		textAlign = s.defaultTextAlign
 	}
 
-	font, err := s.fontService.AssetFont(fontFamily.FontFamily)
+	font, err := s.FontService.AssetFont(fontFamily.FontFamily)
 	if err != nil {
 		return Layout{}, err
 	}
@@ -239,7 +226,7 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	layout := Layout{
 		Glyphs:   glyphs,
 		FontSize: uint32(fontSize.FontSize),
-		Font:     s.fontsKeys.GetKey(fontFamily.FontFamily),
+		Font:     s.FontsKeys.GetKey(fontFamily.FontFamily),
 	}
 	return layout, nil
 }

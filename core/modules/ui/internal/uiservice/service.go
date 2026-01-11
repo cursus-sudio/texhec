@@ -19,6 +19,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type changing struct {
@@ -29,32 +30,20 @@ type changing struct {
 }
 
 type service struct {
-	*changing
+	GameAssets   gameassets.GameAssets `inject:"1"`
+	engine.World `inject:"1"`
 
 	animationDuration time.Duration
 
-	gameAssets gameassets.GameAssets
-
-	engine.World
 	uiCameraArray ecs.ComponentsArray[ui.UiCameraComponent]
+	*changing
 }
 
-func NewService(
-	world engine.World,
-	animationDuration time.Duration,
-	gameAssets gameassets.GameAssets,
-) *service {
-	t := &service{
-		changing: &changing{},
-
-		animationDuration: animationDuration,
-
-		World: world,
-
-		gameAssets: gameAssets,
-
-		uiCameraArray: ecs.GetComponentsArray[ui.UiCameraComponent](world),
-	}
+func NewService(c ioc.Dic, animationDuration time.Duration) *service {
+	t := ioc.GetServices[*service](c)
+	t.animationDuration = animationDuration
+	t.uiCameraArray = ecs.GetComponentsArray[ui.UiCameraComponent](t.World)
+	t.changing = &changing{}
 
 	t.Logger.Warn(t.Init())
 
@@ -75,7 +64,7 @@ func (t *service) Init() error {
 
 	// objects
 	// menu
-	menu := t.World.NewEntity()
+	menu := t.NewEntity()
 	t.Hierarchy.SetParent(menu, camera)
 	t.Transform.Parent().Set(menu, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
 	t.Transform.ParentPivotPoint().Set(menu, transform.NewParentPivotPoint(1, 1, .5))
@@ -84,16 +73,16 @@ func (t *service) Init() error {
 	t.Transform.PivotPoint().Set(menu, transform.NewPivotPoint(0, 1, .5))
 
 	t.Render.Color().Set(menu, render.NewColor(mgl32.Vec4{1, 1, 1, .5}))
-	t.Render.Mesh().Set(menu, render.NewMesh(t.gameAssets.SquareMesh))
-	t.Render.Texture().Set(menu, render.NewTexture(t.gameAssets.Tiles.Water))
+	t.Render.Mesh().Set(menu, render.NewMesh(t.GameAssets.SquareMesh))
+	t.Render.Texture().Set(menu, render.NewTexture(t.GameAssets.Tiles.Water))
 	t.GenericRenderer.Pipeline().Set(menu, genericrenderer.PipelineComponent{})
 
 	t.Groups.Inherit().Set(menu, groups.InheritGroupsComponent{})
-	t.Collider.Component().Set(menu, collider.NewCollider(t.gameAssets.SquareCollider))
+	t.Collider.Component().Set(menu, collider.NewCollider(t.GameAssets.SquareCollider))
 	t.Inputs.KeepSelected().Set(menu, inputs.KeepSelectedComponent{})
 
 	// quit btn
-	quit := t.World.NewEntity()
+	quit := t.NewEntity()
 
 	t.Hierarchy.SetParent(quit, menu)
 	t.Groups.Inherit().Set(quit, groups.InheritGroupsComponent{})
@@ -108,16 +97,16 @@ func (t *service) Init() error {
 	t.Text.Align().Set(quit, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
 
 	t.Render.Color().Set(quit, render.NewColor(mgl32.Vec4{1, 0, 0, 1}))
-	t.Render.Mesh().Set(quit, render.NewMesh(t.gameAssets.SquareMesh))
-	t.Render.Texture().Set(quit, render.NewTexture(t.gameAssets.Tiles.Water))
+	t.Render.Mesh().Set(quit, render.NewMesh(t.GameAssets.SquareMesh))
+	t.Render.Texture().Set(quit, render.NewTexture(t.GameAssets.Tiles.Water))
 	t.GenericRenderer.Pipeline().Set(quit, genericrenderer.PipelineComponent{})
 
 	t.Inputs.LeftClick().Set(quit, inputs.NewLeftClick(ui.HideUiEvent{}))
 	t.Inputs.KeepSelected().Set(quit, inputs.KeepSelectedComponent{})
-	t.Collider.Component().Set(quit, collider.NewCollider(t.gameAssets.SquareCollider))
+	t.Collider.Component().Set(quit, collider.NewCollider(t.GameAssets.SquareCollider))
 
 	// child wrapper
-	childWrapper := t.World.NewEntity()
+	childWrapper := t.NewEntity()
 	t.Hierarchy.SetParent(childWrapper, menu)
 	t.Groups.Inherit().Set(childWrapper, groups.InheritGroupsComponent{})
 	t.Transform.Parent().Set(childWrapper, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
@@ -145,7 +134,7 @@ func (t *service) ResetChildWrapper() error {
 	}
 
 	for _, child := range t.Hierarchy.Children(t.childWrapper).GetIndices() {
-		t.World.RemoveEntity(child)
+		t.RemoveEntity(child)
 	}
 	return nil
 }

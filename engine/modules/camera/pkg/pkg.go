@@ -7,11 +7,9 @@ import (
 	"engine/modules/camera/internal/projectionsys"
 	"engine/modules/camera/internal/service"
 	"engine/modules/collider"
-	"engine/modules/groups"
 	"engine/modules/transform"
 	"engine/services/codec"
 	"engine/services/ecs"
-	"engine/services/logger"
 	"engine/services/media/window"
 	"errors"
 	"reflect"
@@ -51,12 +49,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			Register(camera.ChangedResolutionEvent{})
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) service.Service {
-		return service.NewSerivce(
-			ioc.Get[ecs.World](c),
-			ioc.Get[transform.Service](c),
-			ioc.Get[groups.Service](c),
-			ioc.Get[window.Api](c),
-		)
+		return service.NewSerivce(c)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) camera.Service {
 		return ioc.Get[service.Service](c)
@@ -149,7 +142,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) camera.System {
 		return ecs.NewSystemRegister(func() error {
-			logger := ioc.Get[logger.Logger](c)
 			w := ioc.Get[ecs.World](c)
 			eventsBuilder := ioc.Get[events.Builder](c)
 			errs := ecs.RegisterSystems(
@@ -189,48 +181,17 @@ func (pkg pkg) Register(b ioc.Builder) {
 					return nil
 				}),
 				// todo change this to change ortho and size according to viewport
-				projectionsys.NewUpdateProjectionsSystem(
-					ioc.Get[events.Builder](c),
-					ioc.Get[ecs.World](c),
-					ioc.Get[transform.Service](c),
-					ioc.Get[camera.Service](c),
-					ioc.Get[window.Api](c),
-					logger,
-				),
-				mobilecamerasys.NewScrollSystem(
-					logger,
-					ioc.Get[window.Api](c),
-					ioc.Get[events.Builder](c),
-
-					ioc.Get[ecs.World](c),
-					ioc.Get[transform.Service](c),
-					ioc.Get[camera.Service](c),
+				projectionsys.NewUpdateProjectionsSystem(c),
+				mobilecamerasys.NewScrollSystem(c,
 					pkg.minZoom, pkg.maxZoom, // min and max zoom
 				),
-				mobilecamerasys.NewDragSystem(
+				mobilecamerasys.NewDragSystem(c,
 					sdl.BUTTON_LEFT,
-					ioc.Get[ecs.World](c),
-					ioc.Get[transform.Service](c),
-					ioc.Get[camera.Service](c),
-
-					ioc.Get[events.Builder](c),
-					ioc.Get[window.Api](c),
-					logger,
 				),
-				mobilecamerasys.NewWasdSystem(
-					logger,
-					ioc.Get[events.Builder](c),
-					ioc.Get[ecs.World](c),
-					ioc.Get[transform.Service](c),
-					ioc.Get[camera.Service](c),
+				mobilecamerasys.NewWasdSystem(c,
 					1.0, // speed
 				),
-				cameralimitsys.NewOrthoSys(
-					ioc.Get[ecs.World](c),
-					ioc.Get[transform.Service](c),
-					ioc.Get[camera.Service](c),
-					logger,
-				),
+				cameralimitsys.NewOrthoSys(c),
 			)
 			if len(errs) != 0 {
 				return errors.Join(errs...)

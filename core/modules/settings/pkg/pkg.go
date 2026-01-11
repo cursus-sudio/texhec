@@ -1,12 +1,8 @@
 package settingspkg
 
 import (
-	gameassets "core/assets"
 	"core/modules/settings"
 	"core/modules/settings/internal"
-	"core/modules/ui"
-	"engine"
-	"engine/services/assets"
 	"engine/services/codec"
 
 	"github.com/ogiusek/ioc/v2"
@@ -26,12 +22,6 @@ func (pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) settings.System {
-		system := internal.NewSystem(
-			ioc.Get[assets.Assets](c),
-			ioc.Get[gameassets.GameAssets](c),
-			ioc.GetServices[engine.World](c),
-			ioc.Get[ui.Service](c),
-		)
-		return system
+		return internal.NewSystem(c)
 	})
 }

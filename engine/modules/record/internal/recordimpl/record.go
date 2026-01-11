@@ -8,6 +8,8 @@ import (
 	"engine/services/logger"
 	"reflect"
 	"sync"
+
+	"github.com/ogiusek/ioc/v2"
 )
 
 type entityArray struct {
@@ -21,37 +23,30 @@ type entityArray struct {
 }
 
 type service struct {
-	world       ecs.World
-	worldUUID   uuid.Service
+	World       ecs.World    `inject:"1"`
+	WorldUUID   uuid.Service `inject:"1"`
 	worldArrays map[string]entityArray
 
 	worldCopy       ecs.World
 	worldCopyUUID   ecs.ComponentsArray[uuid.Component]
 	worldCopyArrays map[string]ecs.AnyComponentArray
 
-	logger logger.Logger
+	Logger logger.Logger `inject:"1"`
 	mutex  *sync.Mutex
 	entity *entityKeyedRecorder
 	uuid   *uuidKeyedRecorder
 }
 
-func NewService(
-	uuidService uuid.Service,
-	logger logger.Logger,
-	world ecs.World,
-) record.Service {
-	t := &service{
-		world:       world,
-		worldUUID:   uuidService,
-		worldArrays: make(map[string]entityArray),
+func NewService(c ioc.Dic) record.Service {
+	t := ioc.GetServices[*service](c)
+	t.worldArrays = make(map[string]entityArray)
 
-		worldCopy:       ecs.NewWorld(),
-		worldCopyUUID:   ecs.GetComponentsArray[uuid.Component](world),
-		worldCopyArrays: make(map[string]ecs.AnyComponentArray),
+	t.worldCopy = ecs.NewWorld()
+	t.worldCopyUUID = ecs.GetComponentsArray[uuid.Component](t.worldCopy)
+	t.worldCopyArrays = make(map[string]ecs.AnyComponentArray)
 
-		logger: logger,
-		mutex:  &sync.Mutex{},
-	}
+	t.mutex = &sync.Mutex{}
+
 	t.entity = newEntityKeyedRecorder(t)
 	t.uuid = newUUIDKeyedRecorder(t)
 
@@ -115,10 +110,10 @@ func (t *service) synchronizeArrayState(
 		for _, entity := range entities {
 			uuid, ok := t.worldCopyUUID.Get(entity)
 			if !ok {
-				uuid, ok = t.worldUUID.Component().Get(entity)
+				uuid, ok = t.WorldUUID.Component().Get(entity)
 				if !ok {
-					uuid.ID = t.worldUUID.NewUUID()
-					t.worldUUID.Component().Set(entity, uuid)
+					uuid.ID = t.WorldUUID.NewUUID()
+					t.WorldUUID.Component().Set(entity, uuid)
 				}
 				t.worldCopyUUID.Set(entity, uuid)
 			}
@@ -146,10 +141,10 @@ func (t *service) synchronizeArrayState(
 	for _, entity := range entities {
 		if component, ok := worldArray.GetAny(entity); ok {
 			err := worldCopyArray.SetAny(entity, component)
-			t.logger.Warn(err)
+			t.Logger.Warn(err)
 			continue
 		}
-		if t.world.EntityExists(entity) {
+		if t.World.EntityExists(entity) {
 			worldCopyArray.Remove(entity)
 			continue
 		}
@@ -167,7 +162,7 @@ func (t *service) GetWorldArray(arrayType reflect.Type, config record.Config) en
 		dirtySet:          ecs.NewDirtySet(),
 		dependencies:      datastructures.NewSet[*BackwardRecording](),
 		uuidDependencies:  datastructures.NewSet[*UUIDBackwardRecording](),
-		AnyComponentArray: arrayCtor(t.world),
+		AnyComponentArray: arrayCtor(t.World),
 	}
 	entityArray.AddDirtySet(entityArray.dirtySet)
 	t.worldArrays[arrayKey] = entityArray
@@ -194,7 +189,7 @@ func (t *service) GetWorldCopyArray(arrayType reflect.Type, config record.Config
 		dirtySet:          ecs.NewDirtySet(),
 		dependencies:      datastructures.NewSet[*BackwardRecording](),
 		uuidDependencies:  datastructures.NewSet[*UUIDBackwardRecording](),
-		AnyComponentArray: arrayCtor(t.world),
+		AnyComponentArray: arrayCtor(t.World),
 	}
 	entityArray.AddDirtySet(entityArray.dirtySet)
 	t.worldArrays[arrayKey] = entityArray

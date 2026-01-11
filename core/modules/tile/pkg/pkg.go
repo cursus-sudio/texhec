@@ -7,8 +7,6 @@ import (
 	"core/modules/tile/internal/tilerenderer"
 	"core/modules/tile/internal/tileservice"
 	"core/modules/tile/internal/tileui"
-	"core/modules/ui"
-	"engine"
 	"engine/modules/collider"
 	"engine/modules/groups"
 	"engine/services/codec"
@@ -68,14 +66,8 @@ func (pkg pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.System {
 		systems := []tile.System{
-			tileui.NewSystem(
-				ioc.GetServices[engine.World](c),
-				ioc.Get[ui.Service](c),
-				ioc.Get[tile.Service](c),
-			),
-			tilecollider.TileColliderSystem(
-				ioc.GetServices[engine.World](c),
-				ioc.Get[tile.Service](c),
+			tileui.NewSystem(c),
+			tilecollider.TileColliderSystem(c,
 				pkg.tileSize,
 				pkg.gridDepth,
 				pkg.tileGroups,

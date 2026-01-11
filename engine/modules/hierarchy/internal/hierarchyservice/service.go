@@ -5,14 +5,16 @@ import (
 	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/logger"
+
+	"github.com/ogiusek/ioc/v2"
 )
 
 type parentComponent struct{}
 
 type service struct {
-	logger logger.Logger
+	Logger logger.Logger `inject:"1"`
 
-	world          ecs.World
+	World          ecs.World `inject:"1"`
 	hierarchyArray ecs.ComponentsArray[hierarchy.Component]
 	parentArray    ecs.ComponentsArray[parentComponent]
 
@@ -21,19 +23,15 @@ type service struct {
 	flatChildren datastructures.SparseArray[ecs.EntityID, datastructures.SparseSet[ecs.EntityID]]
 }
 
-func NewService(
-	world ecs.World,
-	logger logger.Logger,
-) hierarchy.Service {
-	t := &service{
-		logger,
-		world,
-		ecs.GetComponentsArray[hierarchy.Component](world),
-		ecs.GetComponentsArray[parentComponent](world),
-		datastructures.NewSparseArray[ecs.EntityID, ecs.EntityID](),
-		datastructures.NewSparseArray[ecs.EntityID, datastructures.SparseSet[ecs.EntityID]](),
-		datastructures.NewSparseArray[ecs.EntityID, datastructures.SparseSet[ecs.EntityID]](),
-	}
+func NewService(c ioc.Dic) hierarchy.Service {
+	t := ioc.GetServices[*service](c)
+
+	t.hierarchyArray = ecs.GetComponentsArray[hierarchy.Component](t.World)
+	t.parentArray = ecs.GetComponentsArray[parentComponent](t.World)
+	t.parents = datastructures.NewSparseArray[ecs.EntityID, ecs.EntityID]()
+	t.children = datastructures.NewSparseArray[ecs.EntityID, datastructures.SparseSet[ecs.EntityID]]()
+	t.flatChildren = datastructures.NewSparseArray[ecs.EntityID, datastructures.SparseSet[ecs.EntityID]]()
+
 	t.hierarchyArray.OnUpsert(t.handleHierarchyChange)
 	t.hierarchyArray.OnRemove(t.handleHierarchyChange)
 	t.parentArray.OnRemove(t.handleParentChange)
@@ -233,6 +231,6 @@ func (t *service) handleParentChange(parent ecs.EntityID) {
 		t.flatChildren.Remove(child)
 		t.children.Remove(child)
 		t.parents.Remove(child)
-		t.world.RemoveEntity(child)
+		t.World.RemoveEntity(child)
 	}
 }

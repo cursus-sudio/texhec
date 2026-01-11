@@ -20,6 +20,7 @@ import (
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
 //go:embed s.vert
@@ -42,7 +43,23 @@ type textureKey struct {
 	Frame   int
 }
 
-type releasable struct {
+//
+
+type system struct {
+	EventsBuilder   events.Builder          `inject:"1"`
+	World           ecs.World               `inject:"1"`
+	GenericRenderer genericrenderer.Service `inject:"1"`
+	Render          render.Service          `inject:"1"`
+	Camera          camera.Service          `inject:"1"`
+	Groups          groups.Service          `inject:"1"`
+	Transform       transform.Service       `inject:"1"`
+
+	Window         window.Api                             `inject:"1"`
+	AssetsStorage  assets.AssetsStorage                   `inject:"1"`
+	Logger         logger.Logger                          `inject:"1"`
+	VboFactory     vbo.VBOFactory[genericrenderer.Vertex] `inject:"1"`
+	TextureFactory texture.Factory                        `inject:"1"`
+
 	texturesImagesCount map[render.TextureComponent]int
 	textures            map[textureKey]texture.Texture
 	meshes              map[assets.AssetID]vao.VAO
@@ -50,39 +67,7 @@ type releasable struct {
 	locations           locations
 }
 
-//
-
-type system struct {
-	World           ecs.World
-	GenericRenderer genericrenderer.Service
-	Render          render.Service
-	Camera          camera.Service
-	Groups          groups.Service
-	Transform       transform.Service
-
-	window         window.Api
-	assetsStorage  assets.AssetsStorage
-	logger         logger.Logger
-	vboFactory     vbo.VBOFactory[genericrenderer.Vertex]
-	textureFactory texture.Factory
-
-	*releasable
-}
-
-func NewSystem(
-	eventsBuilder events.Builder,
-	w ecs.World,
-	genericRenderer genericrenderer.Service,
-	renderService render.Service,
-	camera camera.Service,
-	groups groups.Service,
-	transform transform.Service,
-	window window.Api,
-	assetsStorage assets.AssetsStorage,
-	logger logger.Logger,
-	vboFactory vbo.VBOFactory[genericrenderer.Vertex],
-	textureFactory texture.Factory,
-) genericrenderer.System {
+func NewSystem(c ioc.Dic) genericrenderer.System {
 	return ecs.NewSystemRegister(func() error {
 		vert, err := shader.NewShader(vertSource, shader.VertexShader)
 		if err != nil {
@@ -110,32 +95,15 @@ func NewSystem(
 			return err
 		}
 
-		releasable := &releasable{
-			texturesImagesCount: make(map[render.TextureComponent]int),
-			textures:            make(map[textureKey]texture.Texture),
-			meshes:              make(map[assets.AssetID]vao.VAO),
-			program:             p,
-			locations:           locations,
-		}
+		s := ioc.GetServices[*system](c)
 
-		system := &system{
-			World:           w,
-			GenericRenderer: genericRenderer,
-			Render:          renderService,
-			Camera:          camera,
-			Groups:          groups,
-			Transform:       transform,
+		s.texturesImagesCount = make(map[render.TextureComponent]int)
+		s.textures = make(map[textureKey]texture.Texture)
+		s.meshes = make(map[assets.AssetID]vao.VAO)
+		s.program = p
+		s.locations = locations
 
-			window:         window,
-			assetsStorage:  assetsStorage,
-			logger:         logger,
-			vboFactory:     vboFactory,
-			textureFactory: textureFactory,
-
-			releasable: releasable,
-		}
-
-		events.ListenE(eventsBuilder, system.Listen)
+		events.ListenE(s.EventsBuilder, s.Listen)
 		return nil
 	})
 }
@@ -161,7 +129,7 @@ func (m *system) getTexture(entity ecs.EntityID) (texture.Texture, error) {
 		return texture, nil
 	}
 
-	textureAsset, err := assets.StorageGet[render.TextureAsset](m.assetsStorage, textureComponent.Asset)
+	textureAsset, err := assets.StorageGet[render.TextureAsset](m.AssetsStorage, textureComponent.Asset)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +140,7 @@ func (m *system) getTexture(entity ecs.EntityID) (texture.Texture, error) {
 	}
 
 	image := textureAsset.Images()[frame]
-	texture, err := m.textureFactory.New(image)
+	texture, err := m.TextureFactory.New(image)
 	if err != nil {
 		return nil, err
 	}
@@ -185,12 +153,12 @@ func (m *system) getMesh(asset assets.AssetID) (vao.VAO, error) {
 	if mesh, ok := m.meshes[asset]; ok {
 		return mesh, nil
 	}
-	meshAsset, err := assets.StorageGet[render.MeshAsset[genericrenderer.Vertex]](m.assetsStorage, asset)
+	meshAsset, err := assets.StorageGet[render.MeshAsset[genericrenderer.Vertex]](m.AssetsStorage, asset)
 	if err != nil {
 		return nil, err
 	}
 
-	VBO := m.vboFactory()
+	VBO := m.VboFactory()
 	VBO.SetVertices(meshAsset.Vertices())
 	EBO := ebo.NewEBO()
 	EBO.SetIndices(meshAsset.Indices())
@@ -221,7 +189,7 @@ func (m *system) Listen(render.RenderEvent) error {
 
 			textureAsset, err := m.getTexture(entity)
 			if textureAsset == nil || err != nil {
-				m.logger.Warn(err)
+				m.Logger.Warn(err)
 				continue
 			}
 

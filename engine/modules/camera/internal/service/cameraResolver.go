@@ -11,6 +11,7 @@ import (
 	"reflect"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/ogiusek/ioc/v2"
 )
 
 // extra data
@@ -38,14 +39,14 @@ type projectionComponent struct {
 }
 
 type service struct {
-	world     ecs.World
-	transform transform.Service
-	groups    groups.Service
+	World     ecs.World         `inject:"1"`
+	Transform transform.Service `inject:"1"`
+	Groups    groups.Service    `inject:"1"`
+	Window    window.Api        `inject:"1"`
 
 	cameraArray      ecs.ComponentsArray[camera.Component]
 	projectionsArray ecs.ComponentsArray[projectionComponent]
 
-	window        window.Api
 	projectionIDs map[reflect.Type]projectionID
 	projections   datastructures.SparseArray[projectionID, ProjectionData]
 
@@ -62,35 +63,24 @@ type service struct {
 	dynamicPerspective ecs.ComponentsArray[camera.DynamicPerspectiveComponent]
 }
 
-func NewSerivce(
-	world ecs.World,
-	transform transform.Service,
-	groups groups.Service,
-	window window.Api,
-) Service {
-	s := &service{
-		world,
-		transform,
-		groups,
+func NewSerivce(c ioc.Dic) Service {
+	s := ioc.GetServices[*service](c)
+	s.cameraArray = ecs.GetComponentsArray[camera.Component](s.World)
+	s.projectionsArray = ecs.GetComponentsArray[projectionComponent](s.World)
 
-		ecs.GetComponentsArray[camera.Component](world),
-		ecs.GetComponentsArray[projectionComponent](world),
+	s.projectionIDs = make(map[reflect.Type]projectionID)
+	s.projections = datastructures.NewSparseArray[projectionID, ProjectionData]()
+	s.dirtySet = ecs.NewDirtySet()
 
-		window,
-		make(map[reflect.Type]projectionID),
-		datastructures.NewSparseArray[projectionID, ProjectionData](),
-		ecs.NewDirtySet(),
+	s.mobileCamera = ecs.GetComponentsArray[camera.MobileCameraComponent](s.World)
+	s.cameraLimits = ecs.GetComponentsArray[camera.CameraLimitsComponent](s.World)
+	s.viewport = ecs.GetComponentsArray[camera.ViewportComponent](s.World)
+	s.normalizedViewport = ecs.GetComponentsArray[camera.NormalizedViewportComponent](s.World)
 
-		ecs.GetComponentsArray[camera.MobileCameraComponent](world),
-		ecs.GetComponentsArray[camera.CameraLimitsComponent](world),
-		ecs.GetComponentsArray[camera.ViewportComponent](world),
-		ecs.GetComponentsArray[camera.NormalizedViewportComponent](world),
-
-		ecs.GetComponentsArray[camera.OrthoComponent](world),
-		ecs.GetComponentsArray[camera.OrthoResolutionComponent](world),
-		ecs.GetComponentsArray[camera.PerspectiveComponent](world),
-		ecs.GetComponentsArray[camera.DynamicPerspectiveComponent](world),
-	}
+	s.ortho = ecs.GetComponentsArray[camera.OrthoComponent](s.World)
+	s.orthoResolution = ecs.GetComponentsArray[camera.OrthoResolutionComponent](s.World)
+	s.perspective = ecs.GetComponentsArray[camera.PerspectiveComponent](s.World)
+	s.dynamicPerspective = ecs.GetComponentsArray[camera.DynamicPerspectiveComponent](s.World)
 
 	s.projectionsArray.BeforeGet(s.BeforeGet)
 	s.cameraArray.AddDirtySet(s.dirtySet)
@@ -136,10 +126,10 @@ func (t *service) GetViewport(entity ecs.EntityID) (x, y, w, h int32) {
 	}
 	normalizedViewportComponent, ok := t.normalizedViewport.Get(entity)
 	if ok {
-		return normalizedViewportComponent.Viewport(t.window.Window().GetSize())
+		return normalizedViewportComponent.Viewport(t.Window.Window().GetSize())
 	}
 
-	w, h = t.window.Window().GetSize()
+	w, h = t.Window.Window().GetSize()
 	return 0, 0, w, h
 }
 func (t *service) Mat4(entity ecs.EntityID) mgl32.Mat4 {
@@ -164,7 +154,7 @@ func (t *service) ShootRay(camera ecs.EntityID, mousePos window.MousePos) collid
 	}
 
 	ray := data.ShootRay(camera, mousePos)
-	groups, _ := t.groups.Component().Get(camera)
+	groups, _ := t.Groups.Component().Get(camera)
 	ray.Groups = groups
 	return ray
 }

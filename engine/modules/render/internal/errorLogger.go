@@ -9,27 +9,25 @@ import (
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type errorLogger struct {
-	logger logger.Logger
-	render render.Service
+	Logger        logger.Logger  `inject:"1"`
+	Render        render.Service `inject:"1"`
+	EventsBuilder events.Builder `inject:"1"`
 }
 
-func NewErrorLogger(
-	logger logger.Logger,
-	renderService render.Service,
-	eventsBuilder events.Builder,
-) render.System {
+func NewErrorLogger(c ioc.Dic) render.System {
 	return ecs.NewSystemRegister(func() error {
-		s := &errorLogger{logger, renderService}
-		events.Listen(eventsBuilder, s.Listen)
+		s := ioc.GetServices[*errorLogger](c)
+		events.Listen(s.EventsBuilder, s.Listen)
 		return nil
 	})
 }
 
 func (logger *errorLogger) Listen(args frames.FrameEvent) {
 	if glErr := gl.GetError(); glErr != gl.NO_ERROR {
-		logger.logger.Warn(fmt.Errorf("opengl error: %x %s", glErr, glErrorStrings[glErr]))
+		logger.Logger.Warn(fmt.Errorf("opengl error: %x %s", glErr, glErrorStrings[glErr]))
 	}
 }

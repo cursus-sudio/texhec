@@ -132,7 +132,7 @@ func (t *entityKeyedRecorder) Apply(config record.Config, recordings ...record.R
 				continue
 			}
 			if components == nil {
-				t.world.RemoveEntity(entity)
+				t.World.RemoveEntity(entity)
 				continue
 			}
 			for i, component := range components {

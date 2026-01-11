@@ -1,11 +1,9 @@
 package uipkg
 
 import (
-	gameassets "core/assets"
 	"core/modules/tile"
 	"core/modules/ui"
 	"core/modules/ui/internal/uiservice"
-	"engine"
 	"engine/services/codec"
 	"engine/services/ecs"
 	"time"
@@ -40,11 +38,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ui.Service {
-		return uiservice.NewService(
-			ioc.GetServices[engine.World](c),
-			pkg.animationDuration,
-			ioc.Get[gameassets.GameAssets](c),
-		)
+		return uiservice.NewService(c, pkg.animationDuration)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ui.System {
 		eventsBuilder := ioc.Get[events.Builder](c)

@@ -28,7 +28,6 @@ func SpatialRelationPackage[IndexType any](
 
 func (pkg spatialRelationPkg[IndexType]) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) relation.Service[IndexType] {
-
 		w := ioc.Get[ecs.World](c)
 		return onetokey.NewSpatialIndex(
 			w,

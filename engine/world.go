@@ -16,6 +16,7 @@ import (
 	"engine/modules/transform"
 	"engine/modules/transition"
 	"engine/modules/uuid"
+	"engine/services/assets"
 	"engine/services/ecs"
 	"engine/services/logger"
 
@@ -23,10 +24,6 @@ import (
 )
 
 type World struct {
-	Logger        logger.Logger  `inject:"1"`
-	EventsBuilder events.Builder `inject:"1"`
-	Events        events.Events  `inject:"1"`
-
 	ecs.World       `inject:"1"`
 	Camera          camera.Service          `inject:"1"`
 	Collider        collider.Service        `inject:"1"`
@@ -43,4 +40,13 @@ type World struct {
 	Transform       transform.Service       `inject:"1"`
 	Transition      transition.Service      `inject:"1"`
 	UUID            uuid.Service            `inject:"1"`
+
+	Logger logger.Logger `inject:"1"`
+
+	EventsBuilder events.Builder `inject:"1"`
+	Events        events.Events  `inject:"1"`
+
+	Assets        assets.Assets        `inject:"1"`
+	AssetsStorage assets.AssetsStorage `inject:"1"`
+	AssetsCache   assets.AssetsCache   `inject:"1"`
 }

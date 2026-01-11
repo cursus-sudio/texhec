@@ -1,17 +1,13 @@
 package textrenderer
 
 import (
-	"engine/modules/camera"
 	"engine/modules/groups"
 	rendersys "engine/modules/render"
 	"engine/modules/text"
-	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/graphics/program"
-	"engine/services/graphics/texturearray"
-	"engine/services/logger"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
@@ -26,23 +22,11 @@ type locations struct {
 type textRenderer struct {
 	*textRendererRegister
 
-	world     ecs.World
-	groups    groups.Service
-	camera    camera.Service
-	transform transform.Service
-	text      text.Service
-
-	logger      logger.Logger
-	fontService FontService
-
 	program   program.Program
 	locations locations
 
 	defaultColor text.TextColorComponent
 
-	textureFactory texturearray.Factory
-
-	fontKeys     FontKeys
 	fontsBatches datastructures.SparseArray[FontKey, fontBatch]
 
 	dirtyEntities  ecs.DirtySet
@@ -50,17 +34,17 @@ type textRenderer struct {
 }
 
 func (s *textRenderer) ensureFontExists(asset assets.AssetID) error {
-	key := s.fontKeys.GetKey(asset)
+	key := s.FontsKeys.GetKey(asset)
 	if batch, ok := s.fontsBatches.Get(key); ok {
 		batch.Release()
 		s.fontsBatches.Remove(key)
 	}
 
-	font, err := s.fontService.AssetFont(asset)
+	font, err := s.FontService.AssetFont(asset)
 	if err != nil {
 		return err
 	}
-	batch, err := NewFontBatch(s.textureFactory, font)
+	batch, err := NewFontBatch(s.TextureArrayFactory, font)
 	if err != nil {
 		return err
 	}
@@ -77,13 +61,13 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 	if len(dirtyEntities) != 0 {
 		// get used fonts
 		fonts := datastructures.NewSparseArray[FontKey, assets.AssetID]()
-		fonts.Set(s.fontKeys.GetKey(s.defaultTextAsset), s.defaultTextAsset)
-		for _, font := range s.text.FontFamily().GetEntities() {
-			family, ok := s.text.FontFamily().Get(font)
+		fonts.Set(s.FontsKeys.GetKey(s.defaultTextAsset), s.defaultTextAsset)
+		for _, font := range s.Text.FontFamily().GetEntities() {
+			family, ok := s.Text.FontFamily().Get(font)
 			if !ok {
 				continue
 			}
-			fonts.Set(s.fontKeys.GetKey(family.FontFamily), family.FontFamily)
+			fonts.Set(s.FontsKeys.GetKey(family.FontFamily), family.FontFamily)
 		}
 
 		// we don't remove unused fonts so i'll leave this commented
@@ -103,7 +87,7 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 
 		// add freshly added fonts
 		for _, value := range fonts.GetValues() {
-			s.logger.Warn(s.ensureFontExists(value))
+			s.Logger.Warn(s.ensureFontExists(value))
 		}
 	}
 
@@ -115,12 +99,12 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 			s.layoutsBatches.Remove(entity)
 		}
 
-		layout, err := s.layoutService.EntityLayout(entity)
+		layout, err := s.LayoutService.EntityLayout(entity)
 		if err != nil {
 			continue
 		}
 
-		batch := NewLayoutBatch(s.vboFactory, layout)
+		batch := NewLayoutBatch(s.VboFactory, layout)
 		s.layoutsBatches.Set(entity, batch)
 	}
 
@@ -136,15 +120,15 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 			continue
 		}
 
-		pos, _ := s.transform.AbsolutePos().Get(entity)
-		rot, _ := s.transform.AbsoluteRotation().Get(entity)
-		size, _ := s.transform.AbsoluteSize().Get(entity)
-		entityColor, ok := s.text.Color().Get(entity)
+		pos, _ := s.Transform.AbsolutePos().Get(entity)
+		rot, _ := s.Transform.AbsoluteRotation().Get(entity)
+		size, _ := s.Transform.AbsoluteSize().Get(entity)
+		entityColor, ok := s.Text.Color().Get(entity)
 		if !ok {
 			entityColor = s.defaultColor
 		}
 
-		entityGroups, ok := s.groups.Component().Get(entity)
+		entityGroups, ok := s.Groups.Component().Get(entity)
 		if !ok {
 			entityGroups = groups.DefaultGroups()
 		}
@@ -171,8 +155,8 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 		)
 		entityMvp := translation.Mul4(rotation).Mul4(scale)
 
-		for _, cameraEntity := range s.camera.Component().GetEntities() {
-			cameraGroups, ok := s.groups.Component().Get(cameraEntity)
+		for _, cameraEntity := range s.Camera.Component().GetEntities() {
+			cameraGroups, ok := s.Groups.Component().Get(cameraEntity)
 			if !ok {
 				cameraGroups = groups.DefaultGroups()
 			}
@@ -181,10 +165,10 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 				continue
 			}
 
-			mvp := s.camera.Mat4(cameraEntity).Mul4(entityMvp)
+			mvp := s.Camera.Mat4(cameraEntity).Mul4(entityMvp)
 			gl.UniformMatrix4fv(s.locations.Mvp, 1, false, &mvp[0])
 			gl.Uniform4fv(s.locations.Color, 1, &entityColor.Color[0])
-			gl.Viewport(s.camera.GetViewport(cameraEntity))
+			gl.Viewport(s.Camera.GetViewport(cameraEntity))
 
 			gl.DrawArrays(gl.POINTS, 0, layout.verticesCount)
 		}

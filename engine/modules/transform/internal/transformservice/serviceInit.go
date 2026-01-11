@@ -16,46 +16,46 @@ type save struct {
 
 func (t *service) Init() {
 	arrays := []ecs.AnyComponentArray{
-		t.absolutePosArray,
-		t.absoluteRotationArray,
-		t.absoluteSizeArray,
+		t.AbsolutePosArray,
+		t.AbsoluteRotationArray,
+		t.AbsoluteSizeArray,
 	}
 
-	t.posArray.SetEmpty(transform.PosComponent{Pos: mgl32.Vec3{0, 0, 0}})
-	t.rotationArray.SetEmpty(t.defaultRot)
-	t.sizeArray.SetEmpty(t.defaultSize)
+	t.PosArray.SetEmpty(transform.PosComponent{Pos: mgl32.Vec3{0, 0, 0}})
+	t.RotationArray.SetEmpty(t.defaultRot)
+	t.SizeArray.SetEmpty(t.defaultSize)
 
-	t.maxSizeArray.SetEmpty(transform.NewMaxSize(0, 0, 0)) // 0 means not set
-	t.minSizeArray.SetEmpty(transform.NewMinSize(0, 0, 0)) // 0 means not set
+	t.MaxSizeArray.SetEmpty(transform.NewMaxSize(0, 0, 0)) // 0 means not set
+	t.MinSizeArray.SetEmpty(transform.NewMinSize(0, 0, 0)) // 0 means not set
 
-	t.aspectRatioArray.SetEmpty(transform.NewAspectRatio(0, 0, 0, 0)) // 0 means not set
-	t.pivotPointArray.SetEmpty(t.defaultPivot)
+	t.AspectRatioArray.SetEmpty(transform.NewAspectRatio(0, 0, 0, 0)) // 0 means not set
+	t.PivotPointArray.SetEmpty(t.defaultPivot)
 
-	t.parentMaskArray.SetEmpty(transform.NewParent(transform.RelativePos))
-	t.parentPivotPointArray.SetEmpty(t.defaultParentPivot)
+	t.ParentMaskArray.SetEmpty(transform.NewParent(transform.RelativePos))
+	t.ParentPivotPointArray.SetEmpty(t.defaultParentPivot)
 
-	t.absolutePosArray.SetEmpty(transform.AbsolutePosComponent{Pos: mgl32.Vec3{0, 0, 0}})
-	t.absoluteRotationArray.SetEmpty(transform.AbsoluteRotationComponent(t.defaultRot))
-	t.absoluteSizeArray.SetEmpty(transform.AbsoluteSizeComponent(t.defaultSize))
+	t.AbsolutePosArray.SetEmpty(transform.AbsolutePosComponent{Pos: mgl32.Vec3{0, 0, 0}})
+	t.AbsoluteRotationArray.SetEmpty(transform.AbsoluteRotationComponent(t.defaultRot))
+	t.AbsoluteSizeArray.SetEmpty(transform.AbsoluteSizeComponent(t.defaultSize))
 
 	for _, arr := range arrays {
-		arr.AddDependency(t.posArray)
-		arr.AddDependency(t.rotationArray)
-		arr.AddDependency(t.sizeArray)
+		arr.AddDependency(t.PosArray)
+		arr.AddDependency(t.RotationArray)
+		arr.AddDependency(t.SizeArray)
 
-		arr.AddDependency(t.maxSizeArray)
-		arr.AddDependency(t.minSizeArray)
+		arr.AddDependency(t.MaxSizeArray)
+		arr.AddDependency(t.MinSizeArray)
 
-		arr.AddDependency(t.aspectRatioArray)
-		arr.AddDependency(t.pivotPointArray)
+		arr.AddDependency(t.AspectRatioArray)
+		arr.AddDependency(t.PivotPointArray)
 
-		arr.AddDependency(t.hierarchy.Component())
-		arr.AddDependency(t.parentMaskArray)
-		arr.AddDependency(t.parentPivotPointArray)
+		arr.AddDependency(t.Hierarchy.Component())
+		arr.AddDependency(t.ParentMaskArray)
+		arr.AddDependency(t.ParentPivotPointArray)
 	}
 
 	for _, array := range arrays {
-		array.AddDirtySet(t.dirtySet)
+		array.AddDirtySet(t.DirtySet)
 		array.BeforeGet(t.BeforeGet)
 	}
 }

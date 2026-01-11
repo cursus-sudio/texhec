@@ -3,20 +3,20 @@ package service
 import (
 	"engine/modules/netsync"
 	"engine/services/ecs"
+
+	"github.com/ogiusek/ioc/v2"
 )
 
 type service struct {
+	World  ecs.World `inject:"1"`
 	server ecs.ComponentsArray[netsync.ServerComponent]
 	client ecs.ComponentsArray[netsync.ClientComponent]
 }
 
-func NewService(
-	world ecs.World,
-) netsync.Service {
-	t := &service{
-		server: ecs.GetComponentsArray[netsync.ServerComponent](world),
-		client: ecs.GetComponentsArray[netsync.ClientComponent](world),
-	}
+func NewService(c ioc.Dic) netsync.Service {
+	t := ioc.GetServices[*service](c)
+	t.server = ecs.GetComponentsArray[netsync.ServerComponent](t.World)
+	t.client = ecs.GetComponentsArray[netsync.ClientComponent](t.World)
 	return t
 }
 

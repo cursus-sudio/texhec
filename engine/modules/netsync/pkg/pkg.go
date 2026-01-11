@@ -1,18 +1,14 @@
 package netsyncpkg
 
 import (
-	"engine/modules/connection"
 	"engine/modules/netsync"
 	"engine/modules/netsync/internal/client"
 	"engine/modules/netsync/internal/clienttypes"
 	"engine/modules/netsync/internal/server"
 	"engine/modules/netsync/internal/servertypes"
 	"engine/modules/netsync/internal/service"
-	"engine/modules/record"
-	"engine/modules/uuid"
 	"engine/services/codec"
 	"engine/services/ecs"
-	"engine/services/logger"
 
 	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
@@ -43,34 +39,14 @@ func (pkg pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) netsync.Service {
-		return service.NewService(
-			ioc.Get[ecs.World](c),
-		)
+		return service.NewService(c)
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) *server.Service {
-		return server.NewService(
-			*pkg.config.config,
-			ioc.Get[logger.Logger](c),
-			ioc.Get[events.Builder](c),
-			ioc.Get[ecs.World](c),
-			ioc.Get[netsync.Service](c),
-			ioc.Get[connection.Service](c),
-			ioc.Get[record.Service](c),
-			ioc.Get[uuid.Service](c),
-		)
+		return server.NewService(c, *pkg.config.config)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) *client.Service {
-		return client.NewService(
-			*pkg.config.config,
-			ioc.Get[logger.Logger](c),
-			ioc.Get[events.Builder](c),
-			ioc.Get[ecs.World](c),
-			ioc.Get[netsync.Service](c),
-			ioc.Get[connection.Service](c),
-			ioc.Get[record.Service](c),
-			ioc.Get[uuid.Service](c),
-		)
+		return client.NewService(c, *pkg.config.config)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) netsync.StartSystem {
 		clientService := ioc.Get[*client.Service](c)

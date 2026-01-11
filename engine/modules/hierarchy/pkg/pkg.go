@@ -4,8 +4,6 @@ import (
 	"engine/modules/hierarchy"
 	"engine/modules/hierarchy/internal/hierarchyservice"
 	"engine/services/codec"
-	"engine/services/ecs"
-	"engine/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -24,9 +22,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) hierarchy.Service {
-		return hierarchyservice.NewService(
-			ioc.Get[ecs.World](c),
-			ioc.Get[logger.Logger](c),
-		)
+		return hierarchyservice.NewService(c)
 	})
 }

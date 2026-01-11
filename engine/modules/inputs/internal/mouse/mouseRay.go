@@ -11,6 +11,7 @@ import (
 	"slices"
 
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -21,40 +22,26 @@ func NewShootRayEvent() ShootRayEvent {
 }
 
 type cameraRaySystem struct {
-	world    ecs.World
-	camera   camera.Service
-	collider collider.Service
+	World    ecs.World        `inject:"1"`
+	Camera   camera.Service   `inject:"1"`
+	Collider collider.Service `inject:"1"`
 
-	events events.Events
-	logger logger.Logger
-	window window.Api
+	EventsBuilder events.Builder `inject:"1"`
+	Events        events.Events  `inject:"1"`
+	Logger        logger.Logger  `inject:"1"`
+	Window        window.Api     `inject:"1"`
 
 	targets []inputs.Target
 }
 
-func NewCameraRaySystem(
-	eventsBuilder events.Builder,
-	world ecs.World,
-	camera camera.Service,
-	collider collider.Service,
-	logger logger.Logger,
-	window window.Api,
-) inputs.System {
+func NewCameraRaySystem(c ioc.Dic) inputs.System {
 	return ecs.NewSystemRegister(func() error {
-		s := &cameraRaySystem{
-			world:    world,
-			camera:   camera,
-			collider: collider,
+		s := ioc.GetServices[*cameraRaySystem](c)
+		s.targets = nil
 
-			events: eventsBuilder.Events(),
-			logger: logger,
-			window: window,
-
-			targets: nil,
-		}
-		events.ListenE(eventsBuilder, s.Listen)
-		events.Listen(eventsBuilder, func(sdl.MouseButtonEvent) {
-			events.Emit(eventsBuilder.Events(), ShootRayEvent{})
+		events.ListenE(s.EventsBuilder, s.Listen)
+		events.Listen(s.EventsBuilder, func(sdl.MouseButtonEvent) {
+			events.Emit(s.EventsBuilder.Events(), ShootRayEvent{})
 		})
 
 		return nil
@@ -62,13 +49,13 @@ func NewCameraRaySystem(
 }
 
 func (s *cameraRaySystem) Listen(args ShootRayEvent) error {
-	mousePos := s.window.GetMousePos()
+	mousePos := s.Window.GetMousePos()
 
 	targets := []inputs.Target{}
-	for _, cameraEntity := range s.camera.Component().GetEntities() {
-		ray := s.camera.ShootRay(cameraEntity, mousePos)
+	for _, cameraEntity := range s.Camera.Component().GetEntities() {
+		ray := s.Camera.ShootRay(cameraEntity, mousePos)
 
-		cameraCollisions := s.collider.RaycastAll(ray)
+		cameraCollisions := s.Collider.RaycastAll(ray)
 		for _, collision := range cameraCollisions {
 			target := inputs.Target{
 				ObjectRayCollision: collision,
@@ -96,7 +83,7 @@ func (s *cameraRaySystem) Listen(args ShootRayEvent) error {
 
 	targetsCopy := make([]inputs.Target, len(s.targets))
 	copy(targetsCopy, s.targets)
-	events.Emit(s.events, service.RayChangedTargetEvent{
+	events.Emit(s.Events, service.RayChangedTargetEvent{
 		Targets: targetsCopy,
 	})
 

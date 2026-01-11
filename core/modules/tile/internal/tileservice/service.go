@@ -7,11 +7,10 @@ import (
 )
 
 type service struct {
-	tilePos relation.Service[tile.PosComponent]
-
-	posArray ecs.ComponentsArray[tile.PosComponent]
+	TilePos  relation.Service[tile.PosComponent]
+	PosArray ecs.ComponentsArray[tile.PosComponent]
 }
 
-func (t *service) PosKey() relation.Service[tile.PosComponent] { return t.tilePos }
+func (t *service) PosKey() relation.Service[tile.PosComponent] { return t.TilePos }
 
-func (t *service) Pos() ecs.ComponentsArray[tile.PosComponent] { return t.posArray }
+func (t *service) Pos() ecs.ComponentsArray[tile.PosComponent] { return t.PosArray }

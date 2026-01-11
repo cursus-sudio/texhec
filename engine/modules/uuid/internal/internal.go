@@ -9,17 +9,16 @@ import (
 )
 
 type service struct {
+	World                       ecs.World `inject:"1"`
+	relation.Service[uuid.UUID] `inject:"1"`
+	uuid.Factory                `inject:"1"`
+
 	uuidArray ecs.ComponentsArray[uuid.Component]
-	relation.Service[uuid.UUID]
-	uuid.Factory
 }
 
 func NewService(c ioc.Dic) uuid.Service {
-	t := &service{
-		ecs.GetComponentsArray[uuid.Component](ioc.Get[ecs.World](c)),
-		ioc.Get[relation.Service[uuid.UUID]](c),
-		ioc.Get[uuid.Factory](c),
-	}
+	t := ioc.GetServices[*service](c)
+	t.uuidArray = ecs.GetComponentsArray[uuid.Component](t.World)
 	return t
 }
 

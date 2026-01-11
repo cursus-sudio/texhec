@@ -15,12 +15,12 @@ import (
 	"engine/services/graphics/vao"
 	"engine/services/graphics/vao/ebo"
 	"engine/services/graphics/vao/vbo"
-	"engine/services/logger"
 	"engine/services/media/window"
 	"image"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type TileData struct {
@@ -31,14 +31,14 @@ type TileData struct {
 //
 
 type TileRenderSystemRegister struct {
-	window              window.Api
-	textures            datastructures.SparseArray[uint32, image.Image]
-	textureArrayFactory texturearray.Factory
-	vboFactory          vbo.VBOFactory[TileData]
-	assets              assets.Assets
+	Window              window.Api               `inject:"1"`
+	TextureArrayFactory texturearray.Factory     `inject:"1"`
+	VboFactory          vbo.VBOFactory[TileData] `inject:"1"`
 
-	engine.World
-	Definition definition.Service
+	engine.World `inject:"1"`
+	Definition   definition.Service `inject:"1"`
+
+	textures datastructures.SparseArray[uint32, image.Image]
 
 	tileSize  int32
 	gridDepth float32
@@ -47,41 +47,25 @@ type TileRenderSystemRegister struct {
 	groups groups.GroupsComponent
 }
 
-func NewTileRenderSystemRegister(
-	world engine.World,
-	definition definition.Service,
-	textureArrayFactory texturearray.Factory,
-	logger logger.Logger,
-	window window.Api,
-	vboFactory vbo.VBOFactory[TileData],
-	assets assets.Assets,
+func NewTileRenderSystemRegister(c ioc.Dic,
 	tileSize int32,
 	gridDepth float32,
 	layers int32,
 	groups groups.GroupsComponent,
 ) *TileRenderSystemRegister {
-	return &TileRenderSystemRegister{
-		window:              window,
-		textures:            datastructures.NewSparseArray[uint32, image.Image](),
-		textureArrayFactory: textureArrayFactory,
-		vboFactory:          vboFactory,
-		assets:              assets,
-
-		World:      world,
-		Definition: definition,
-
-		tileSize:  tileSize,
-		gridDepth: gridDepth,
-		layers:    layers,
-
-		groups: groups,
-	}
+	s := ioc.GetServices[*TileRenderSystemRegister](c)
+	s.textures = datastructures.NewSparseArray[uint32, image.Image]()
+	s.tileSize = tileSize
+	s.gridDepth = gridDepth
+	s.layers = layers
+	s.groups = groups
+	return s
 }
 
 func (service *TileRenderSystemRegister) AddType(addedAssets datastructures.SparseArray[definition.DefinitionID, assets.AssetID]) {
 	for _, assetIndex := range addedAssets.GetIndices() {
 		asset, _ := addedAssets.Get(assetIndex)
-		texture, err := assets.GetAsset[render.TextureAsset](service.assets, asset)
+		texture, err := assets.GetAsset[render.TextureAsset](service.Assets, asset)
 		if err != nil {
 			continue
 		}
@@ -124,14 +108,14 @@ func (factory *TileRenderSystemRegister) Register() error {
 		return err
 	}
 
-	textureArray, err := factory.textureArrayFactory.New(factory.textures)
+	textureArray, err := factory.TextureArrayFactory.New(factory.textures)
 	if err != nil {
 		return err
 	}
 
 	layers := []*layer{}
 	for i := 0; i < int(factory.layers); i++ {
-		VBO := factory.vboFactory()
+		VBO := factory.VboFactory()
 		var EBO ebo.EBO = nil
 		VAO := vao.NewVAO(VBO, EBO)
 		layer := &layer{
@@ -152,7 +136,7 @@ func (factory *TileRenderSystemRegister) Register() error {
 	s := system{
 		program:   p,
 		locations: locations,
-		window:    factory.window,
+		window:    factory.Window,
 
 		textureArray: textureArray,
 		rendered:     datastructures.NewSparseArray[ecs.EntityID, tile.PosComponent](),

@@ -7,77 +7,78 @@ import (
 	"engine/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type service struct {
-	logger logger.Logger
+	Logger logger.Logger `inject:"1"`
 
-	world     ecs.World
-	hierarchy hierarchy.Service
-	dirtySet  ecs.DirtySet
+	World     ecs.World         `inject:"1"`
+	Hierarchy hierarchy.Service `inject:"1"`
+
+	DirtySet ecs.DirtySet
+
+	AbsolutePosArray      ecs.ComponentsArray[transform.AbsolutePosComponent]
+	AbsoluteSizeArray     ecs.ComponentsArray[transform.AbsoluteSizeComponent]
+	AbsoluteRotationArray ecs.ComponentsArray[transform.AbsoluteRotationComponent]
+
+	AbsolutePosWrapper      ecs.ComponentsArray[transform.AbsolutePosComponent]
+	AbsoluteSizeWrapper     ecs.ComponentsArray[transform.AbsoluteSizeComponent]
+	AbsoluteRotationWrapper ecs.ComponentsArray[transform.AbsoluteRotationComponent]
+
+	PosArray      ecs.ComponentsArray[transform.PosComponent]
+	RotationArray ecs.ComponentsArray[transform.RotationComponent]
+	SizeArray     ecs.ComponentsArray[transform.SizeComponent]
+
+	MaxSizeArray     ecs.ComponentsArray[transform.MaxSizeComponent]
+	MinSizeArray     ecs.ComponentsArray[transform.MinSizeComponent]
+	AspectRatioArray ecs.ComponentsArray[transform.AspectRatioComponent]
+
+	PivotPointArray       ecs.ComponentsArray[transform.PivotPointComponent]
+	ParentMaskArray       ecs.ComponentsArray[transform.ParentComponent]
+	ParentPivotPointArray ecs.ComponentsArray[transform.ParentPivotPointComponent]
 
 	defaultRot         transform.RotationComponent
 	defaultSize        transform.SizeComponent
 	defaultPivot       transform.PivotPointComponent
 	defaultParentPivot transform.ParentPivotPointComponent
-
-	absolutePosArray      ecs.ComponentsArray[transform.AbsolutePosComponent]
-	absoluteSizeArray     ecs.ComponentsArray[transform.AbsoluteSizeComponent]
-	absoluteRotationArray ecs.ComponentsArray[transform.AbsoluteRotationComponent]
-
-	absolutePosWrapper      ecs.ComponentsArray[transform.AbsolutePosComponent]
-	absoluteSizeWrapper     ecs.ComponentsArray[transform.AbsoluteSizeComponent]
-	absoluteRotationWrapper ecs.ComponentsArray[transform.AbsoluteRotationComponent]
-
-	posArray              ecs.ComponentsArray[transform.PosComponent]
-	rotationArray         ecs.ComponentsArray[transform.RotationComponent]
-	sizeArray             ecs.ComponentsArray[transform.SizeComponent]
-	maxSizeArray          ecs.ComponentsArray[transform.MaxSizeComponent]
-	minSizeArray          ecs.ComponentsArray[transform.MinSizeComponent]
-	aspectRatioArray      ecs.ComponentsArray[transform.AspectRatioComponent]
-	pivotPointArray       ecs.ComponentsArray[transform.PivotPointComponent]
-	parentMaskArray       ecs.ComponentsArray[transform.ParentComponent]
-	parentPivotPointArray ecs.ComponentsArray[transform.ParentPivotPointComponent]
 }
 
 func NewService(
-	w ecs.World,
-	hierarchy hierarchy.Service,
-	logger logger.Logger,
+	c ioc.Dic,
 	defaultRot transform.RotationComponent,
 	defaultSize transform.SizeComponent,
 	defaultPivot transform.PivotPointComponent,
 	defaultParentPivot transform.ParentPivotPointComponent,
 ) transform.Service {
-	s := &service{
-		logger,
-		w,
-		hierarchy,
-		ecs.NewDirtySet(),
-		defaultRot,
-		defaultSize,
-		defaultPivot,
-		defaultParentPivot,
-		ecs.GetComponentsArray[transform.AbsolutePosComponent](w),
-		ecs.GetComponentsArray[transform.AbsoluteSizeComponent](w),
-		ecs.GetComponentsArray[transform.AbsoluteRotationComponent](w),
-		nil,
-		nil,
-		nil,
-		ecs.GetComponentsArray[transform.PosComponent](w),
-		ecs.GetComponentsArray[transform.RotationComponent](w),
-		ecs.GetComponentsArray[transform.SizeComponent](w),
-		ecs.GetComponentsArray[transform.MaxSizeComponent](w),
-		ecs.GetComponentsArray[transform.MinSizeComponent](w),
-		ecs.GetComponentsArray[transform.AspectRatioComponent](w),
-		ecs.GetComponentsArray[transform.PivotPointComponent](w),
-		ecs.GetComponentsArray[transform.ParentComponent](w),
-		ecs.GetComponentsArray[transform.ParentPivotPointComponent](w),
-	}
+	s := ioc.GetServices[*service](c)
 
-	s.absolutePosWrapper = &absolutePosArray{s, s.absolutePosArray}
-	s.absoluteSizeWrapper = &absoluteSizeArray{s, s.absoluteSizeArray}
-	s.absoluteRotationWrapper = &absoluteRotationArray{s, s.absoluteRotationArray}
+	s.DirtySet = ecs.NewDirtySet()
+
+	s.AbsolutePosArray = ecs.GetComponentsArray[transform.AbsolutePosComponent](s.World)
+	s.AbsoluteSizeArray = ecs.GetComponentsArray[transform.AbsoluteSizeComponent](s.World)
+	s.AbsoluteRotationArray = ecs.GetComponentsArray[transform.AbsoluteRotationComponent](s.World)
+
+	s.AbsolutePosWrapper = &absolutePosArray{s, s.AbsolutePosArray}
+	s.AbsoluteSizeWrapper = &absoluteSizeArray{s, s.AbsoluteSizeArray}
+	s.AbsoluteRotationWrapper = &absoluteRotationArray{s, s.AbsoluteRotationArray}
+
+	s.PosArray = ecs.GetComponentsArray[transform.PosComponent](s.World)
+	s.SizeArray = ecs.GetComponentsArray[transform.SizeComponent](s.World)
+	s.RotationArray = ecs.GetComponentsArray[transform.RotationComponent](s.World)
+
+	s.MaxSizeArray = ecs.GetComponentsArray[transform.MaxSizeComponent](s.World)
+	s.MinSizeArray = ecs.GetComponentsArray[transform.MinSizeComponent](s.World)
+	s.AspectRatioArray = ecs.GetComponentsArray[transform.AspectRatioComponent](s.World)
+
+	s.PivotPointArray = ecs.GetComponentsArray[transform.PivotPointComponent](s.World)
+	s.ParentMaskArray = ecs.GetComponentsArray[transform.ParentComponent](s.World)
+	s.ParentPivotPointArray = ecs.GetComponentsArray[transform.ParentPivotPointComponent](s.World)
+
+	s.defaultRot = defaultRot
+	s.defaultSize = defaultSize
+	s.defaultPivot = defaultPivot
+	s.defaultParentPivot = defaultParentPivot
 
 	s.Init()
 	return s
@@ -85,7 +86,7 @@ func NewService(
 }
 
 func (t *service) BeforeGet() {
-	entities := t.dirtySet.Get()
+	entities := t.DirtySet.Get()
 	if len(entities) == 0 {
 		return
 	}
@@ -96,11 +97,11 @@ func (t *service) BeforeGet() {
 	for len(entities) != 0 || len(children) != 0 {
 		if len(entities) == 0 {
 			for _, save := range saves {
-				t.absolutePosArray.Set(save.entity, save.pos)
-				t.absoluteRotationArray.Set(save.entity, save.rot)
-				t.absoluteSizeArray.Set(save.entity, save.size)
+				t.AbsolutePosArray.Set(save.entity, save.pos)
+				t.AbsoluteRotationArray.Set(save.entity, save.rot)
+				t.AbsoluteSizeArray.Set(save.entity, save.size)
 			}
-			t.dirtySet.Clear()
+			t.DirtySet.Clear()
 
 			entities = children
 			children = nil
@@ -117,9 +118,9 @@ func (t *service) BeforeGet() {
 
 		saves = append(saves, save)
 
-		for _, child := range t.hierarchy.Children(entity).GetIndices() {
+		for _, child := range t.Hierarchy.Children(entity).GetIndices() {
 			comparedMask := transform.RelativePos | transform.RelativeRotation | transform.RelativeSizeXYZ
-			mask, _ := t.parentMaskArray.Get(child)
+			mask, _ := t.ParentMaskArray.Get(child)
 			if mask.RelativeMask&comparedMask == 0 {
 				continue
 			}
@@ -128,60 +129,60 @@ func (t *service) BeforeGet() {
 	}
 
 	for _, save := range saves {
-		t.absolutePosArray.Set(save.entity, save.pos)
-		t.absoluteRotationArray.Set(save.entity, save.rot)
-		t.absoluteSizeArray.Set(save.entity, save.size)
+		t.AbsolutePosArray.Set(save.entity, save.pos)
+		t.AbsoluteRotationArray.Set(save.entity, save.rot)
+		t.AbsoluteSizeArray.Set(save.entity, save.size)
 	}
-	t.dirtySet.Clear()
+	t.DirtySet.Clear()
 }
 
 func (t *service) AbsolutePos() ecs.ComponentsArray[transform.AbsolutePosComponent] {
-	return t.absolutePosWrapper
+	return t.AbsolutePosWrapper
 }
 func (t *service) AbsoluteRotation() ecs.ComponentsArray[transform.AbsoluteRotationComponent] {
-	return t.absoluteRotationWrapper
+	return t.AbsoluteRotationWrapper
 }
 func (t *service) AbsoluteSize() ecs.ComponentsArray[transform.AbsoluteSizeComponent] {
-	return t.absoluteSizeWrapper
+	return t.AbsoluteSizeWrapper
 }
 func (t *service) Pos() ecs.ComponentsArray[transform.PosComponent] {
-	return t.posArray
+	return t.PosArray
 }
 func (t *service) Rotation() ecs.ComponentsArray[transform.RotationComponent] {
-	return t.rotationArray
+	return t.RotationArray
 }
 func (t *service) Size() ecs.ComponentsArray[transform.SizeComponent] {
-	return t.sizeArray
+	return t.SizeArray
 }
 func (t *service) MaxSize() ecs.ComponentsArray[transform.MaxSizeComponent] {
-	return t.maxSizeArray
+	return t.MaxSizeArray
 }
 func (t *service) MinSize() ecs.ComponentsArray[transform.MinSizeComponent] {
-	return t.minSizeArray
+	return t.MinSizeArray
 }
 func (t *service) AspectRatio() ecs.ComponentsArray[transform.AspectRatioComponent] {
-	return t.aspectRatioArray
+	return t.AspectRatioArray
 }
 func (t *service) PivotPoint() ecs.ComponentsArray[transform.PivotPointComponent] {
-	return t.pivotPointArray
+	return t.PivotPointArray
 }
 func (t *service) Parent() ecs.ComponentsArray[transform.ParentComponent] {
-	return t.parentMaskArray
+	return t.ParentMaskArray
 }
 func (t *service) ParentPivotPoint() ecs.ComponentsArray[transform.ParentPivotPointComponent] {
-	return t.parentPivotPointArray
+	return t.ParentPivotPointArray
 }
 
 func (t *service) Mat4(entity ecs.EntityID) mgl32.Mat4 {
-	pos, ok := t.absolutePosArray.Get(entity)
+	pos, ok := t.AbsolutePosArray.Get(entity)
 	if !ok {
 		pos.Pos = mgl32.Vec3{0, 0, 0}
 	}
-	rot, ok := t.absoluteRotationArray.Get(entity)
+	rot, ok := t.AbsoluteRotationArray.Get(entity)
 	if !ok {
 		rot.Rotation = mgl32.QuatIdent()
 	}
-	size, ok := t.absoluteSizeArray.Get(entity)
+	size, ok := t.AbsoluteSizeArray.Get(entity)
 	if !ok {
 		size.Size = mgl32.Vec3{1, 1, 1}
 	}
@@ -193,7 +194,7 @@ func (t *service) Mat4(entity ecs.EntityID) mgl32.Mat4 {
 }
 
 func (t *service) AddDirtySet(set ecs.DirtySet) {
-	t.absolutePosArray.AddDirtySet(set)
-	t.absoluteRotationArray.AddDirtySet(set)
-	t.absoluteSizeArray.AddDirtySet(set)
+	t.AbsolutePosArray.AddDirtySet(set)
+	t.AbsoluteRotationArray.AddDirtySet(set)
+	t.AbsoluteSizeArray.AddDirtySet(set)
 }

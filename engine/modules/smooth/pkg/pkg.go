@@ -1,14 +1,12 @@
 package smoothpkg
 
 import (
-	"engine/modules/record"
 	"engine/modules/smooth"
 	"engine/modules/smooth/internal"
 	"engine/modules/transition"
 	"engine/services/ecs"
 	"reflect"
 
-	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -43,25 +41,13 @@ func SmoothComponent[Component transition.Lerp[Component]](config Config) {
 	config.components[componentType] = struct{}{}
 	config.services = append(config.services, func(b ioc.Builder) {
 		ioc.RegisterSingleton(b, func(c ioc.Dic) *internal.Service[Component] {
-			return internal.NewService[Component](
-				ioc.Get[ecs.World](c),
-			)
+			return internal.NewService[Component](c)
 		})
 		ioc.RegisterSingleton(b, func(c ioc.Dic) startSystem[Component] {
-			return internal.NewFirstSystem(
-				ioc.Get[events.Builder](c),
-				ioc.Get[ecs.World](c),
-				ioc.Get[record.Service](c),
-				ioc.Get[*internal.Service[Component]](c),
-			)
+			return internal.NewFirstSystem[Component](c)
 		})
 		ioc.RegisterSingleton(b, func(c ioc.Dic) stopSystem[Component] {
-			return internal.NewLastSystem(
-				ioc.Get[events.Builder](c),
-				ioc.Get[ecs.World](c),
-				ioc.Get[record.Service](c),
-				ioc.Get[*internal.Service[Component]](c),
-			)
+			return internal.NewLastSystem[Component](c)
 		})
 	})
 	config.firstSystems = append(config.firstSystems, func(c ioc.Dic) smooth.StartSystem {

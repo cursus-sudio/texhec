@@ -7,7 +7,6 @@ import (
 	"engine/services/codec"
 	"engine/services/datastructures"
 	"engine/services/ecs"
-	"engine/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -35,10 +34,6 @@ func (pkg) Register(b ioc.Builder) {
 			Register(map[uuid.UUID][]any{})
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) record.Service {
-		return recordimpl.NewService(
-			ioc.Get[uuid.Service](c),
-			ioc.Get[logger.Logger](c),
-			ioc.Get[ecs.World](c),
-		)
+		return recordimpl.NewService(c)
 	})
 }

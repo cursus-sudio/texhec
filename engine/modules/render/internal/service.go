@@ -6,26 +6,24 @@ import (
 	"fmt"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type service struct {
-	world             ecs.World
+	World             ecs.World `inject:"1"`
 	colorArray        ecs.ComponentsArray[render.ColorComponent]
 	meshArray         ecs.ComponentsArray[render.MeshComponent]
 	textureArray      ecs.ComponentsArray[render.TextureComponent]
 	textureFrameArray ecs.ComponentsArray[render.TextureFrameComponent]
 }
 
-func NewService(
-	world ecs.World,
-) render.Service {
-	return &service{
-		world,
-		ecs.GetComponentsArray[render.ColorComponent](world),
-		ecs.GetComponentsArray[render.MeshComponent](world),
-		ecs.GetComponentsArray[render.TextureComponent](world),
-		ecs.GetComponentsArray[render.TextureFrameComponent](world),
-	}
+func NewService(c ioc.Dic) render.Service {
+	s := ioc.GetServices[*service](c)
+	s.colorArray = ecs.GetComponentsArray[render.ColorComponent](s.World)
+	s.meshArray = ecs.GetComponentsArray[render.MeshComponent](s.World)
+	s.textureArray = ecs.GetComponentsArray[render.TextureComponent](s.World)
+	s.textureFrameArray = ecs.GetComponentsArray[render.TextureFrameComponent](s.World)
+	return s
 }
 
 //

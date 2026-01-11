@@ -1,19 +1,26 @@
 package internal
 
 import (
+	"encoding/binary"
 	"engine/modules/connection"
 	"engine/services/codec"
 	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/frames"
 	"engine/services/logger"
+	"io"
 	"net"
 
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type service struct {
-	*factory
+	EventsBuilder events.Builder `inject:"1"`
+
+	World  ecs.World     `inject:"1"`
+	Codec  codec.Codec   `inject:"1"`
+	Logger logger.Logger `inject:"1"`
 
 	listenersDirtySet ecs.DirtySet
 	listeners         datastructures.Set[net.Listener]
@@ -24,24 +31,17 @@ type service struct {
 	connectionArray    ecs.ComponentsArray[connection.ConnectionComponent]
 }
 
-func NewService(
-	codec codec.Codec,
-	logger logger.Logger,
-	world ecs.World,
-	eventsBuilder events.Builder,
-) connection.Service {
-	t := &service{
-		NewFactory(codec, logger),
+func NewService(c ioc.Dic) connection.Service {
+	t := ioc.GetServices[*service](c)
+	t.listenersDirtySet = ecs.NewDirtySet()
+	t.listeners = datastructures.NewSet[net.Listener]()
+	t.listenersArray = ecs.GetComponentsArray[connection.ListenerComponent](t.World)
 
-		ecs.NewDirtySet(),
-		datastructures.NewSet[net.Listener](),
-		ecs.GetComponentsArray[connection.ListenerComponent](world),
+	t.connectionDirtySet = ecs.NewDirtySet()
+	t.connections = datastructures.NewSet[connection.Conn]()
+	t.connectionArray = ecs.GetComponentsArray[connection.ConnectionComponent](t.World)
 
-		ecs.NewDirtySet(),
-		datastructures.NewSet[connection.Conn](),
-		ecs.GetComponentsArray[connection.ConnectionComponent](world),
-	}
-	events.Listen(eventsBuilder, func(frames.FrameEvent) {
+	events.Listen(t.EventsBuilder, func(frames.FrameEvent) {
 		t.BeforeConnectionGet()
 	})
 
@@ -165,4 +165,39 @@ func (t *service) TransferConnection(entityFrom, entityTo ecs.EntityID) error {
 	t.connectionArray.Remove(entityFrom)
 	t.connectionArray.Set(entityTo, comp)
 	return nil
+}
+
+func (s *service) NewConnection(rawConn net.Conn) connection.Conn {
+	messages := make(chan any)
+	go func() {
+		defer close(messages)
+
+		for {
+			messageLengthInBytes := make([]byte, 4)
+			if _, err := io.ReadFull(rawConn, messageLengthInBytes); err != nil {
+				break
+			}
+			messageLength := binary.BigEndian.Uint32(messageLengthInBytes)
+			messageBytes := make([]byte, messageLength)
+			if _, err := io.ReadFull(rawConn, messageBytes); err != nil {
+				break
+			}
+
+			message, err := s.Codec.Decode(messageBytes)
+			if err != nil {
+				s.Logger.Warn(err)
+				continue
+			}
+			// f.logger.Info(fmt.Sprintf("received '***' type '%v'", reflect.TypeOf(message).String()))
+
+			messages <- message
+		}
+
+		_ = rawConn.Close()
+	}()
+	return &conn{
+		service:  s,
+		conn:     rawConn,
+		messages: messages,
+	}
 }

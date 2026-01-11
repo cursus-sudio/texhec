@@ -155,7 +155,7 @@ func addScene(
 }
 
 func (pkg) LoadObjects(b ioc.Builder) {
-	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.GameBuilder) gamescenes.GameBuilder {
+	ioc.WrapServiceInOrder(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.GameBuilder) {
 		b.OnLoad(func(rawWorld ecs.World) {
 			world := ioc.Get[gamescenes.WorldResolver](c)(rawWorld)
 			addScene(
@@ -165,10 +165,8 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				true, // is server
 			)
 		})
-
-		return b
 	})
-	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.GameClientBuilder) gamescenes.GameClientBuilder {
+	ioc.WrapServiceInOrder(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.GameClientBuilder) {
 		b.OnLoad(func(rawWorld ecs.World) {
 			world := ioc.Get[gamescenes.WorldResolver](c)(rawWorld)
 			addScene(
@@ -178,8 +176,6 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				false, // is server
 			)
 		})
-
-		return b
 	})
 }
 

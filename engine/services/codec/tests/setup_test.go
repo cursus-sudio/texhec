@@ -28,8 +28,8 @@ func NewSetup() setup {
 		pkg.Register(b)
 	}
 
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
-		return b.Register(Type{})
+	ioc.WrapService(b, func(c ioc.Dic, b codec.Builder) {
+		b.Register(Type{})
 	})
 
 	c := b.Build()

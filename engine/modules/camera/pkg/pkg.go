@@ -31,8 +31,8 @@ func Package(minZoom, maxZoom float32) ioc.Pkg {
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
-		return b.
+	ioc.WrapService(b, func(c ioc.Dic, b codec.Builder) {
+		b.
 			// camera components
 			Register(camera.Component{}).
 			Register(camera.MobileCameraComponent{}).
@@ -57,7 +57,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) camera.CameraUp { return camera.CameraUp(mgl32.Vec3{0, 1, 0}) })
 	ioc.RegisterSingleton(b, func(c ioc.Dic) camera.CameraForward { return camera.CameraForward(mgl32.Vec3{0, 0, -1}) })
 
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s cameratool.ToolFactory) cameratool.ToolFactory {
+	ioc.WrapService(b, func(c ioc.Dic, s cameratool.ToolFactory) {
 		s.Register(reflect.TypeFor[camera.OrthoComponent](), func(world camera.World, tool camera.CameraTool) cameratool.ProjectionData {
 			getCameraTransformMatrix := func(entity ecs.EntityID) mgl32.Mat4 {
 				pos, _ := world.Transform().AbsolutePos().Get(entity)
@@ -134,8 +134,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 				},
 			}
 		})
-
-		return s
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) camera.System {

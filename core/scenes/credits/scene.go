@@ -29,7 +29,7 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) LoadObjects(b ioc.Builder) {
-	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.CreditsBuilder) gamescenes.CreditsBuilder {
+	ioc.WrapServiceInOrder(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.CreditsBuilder) {
 		gameAssets := ioc.Get[gameassets.GameAssets](c)
 		logger := ioc.Get[logger.Logger](c)
 		assetsService := ioc.Get[assets.Assets](c)
@@ -105,8 +105,6 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			world.Text().Align().Set(btn, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
 			world.Text().FontSize().Set(btn, text.FontSizeComponent{FontSize: 32})
 		})
-
-		return b
 	})
 }
 

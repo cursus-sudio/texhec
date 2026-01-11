@@ -269,7 +269,7 @@ func getDic() ioc.Dic {
 		pkg.Register(b)
 	}
 
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, f texture.Factory) texture.Factory {
+	ioc.WrapService(b, func(c ioc.Dic, f texture.Factory) {
 		f.Wrap(func(t texture.Texture) {
 			t.Use()
 			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
@@ -278,10 +278,9 @@ func getDic() ioc.Dic {
 			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 			gl.BindTexture(gl.TEXTURE_2D, 0)
 		})
-		return f
 	})
 
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, f texturearray.Factory) texturearray.Factory {
+	ioc.WrapService(b, func(c ioc.Dic, f texturearray.Factory) {
 		f.Wrap(func(ta texturearray.TextureArray) {
 			ta.Use()
 			gl.TexParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
@@ -290,7 +289,6 @@ func getDic() ioc.Dic {
 			gl.TexParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 			gl.BindTexture(gl.TEXTURE_2D_ARRAY, 0)
 		})
-		return f
 	})
 
 	return b.Build()

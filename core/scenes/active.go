@@ -100,30 +100,27 @@ func Package() ioc.Pkg {
 }
 
 func AddDefaults[SceneBuilder scenes.SceneBuilder](b ioc.Builder) {
-	ioc.WrapService(b, scenes.LoadConfig, func(c ioc.Dic, b SceneBuilder) SceneBuilder {
+	ioc.WrapServiceInOrder(b, scenes.LoadConfig, func(c ioc.Dic, b SceneBuilder) {
 		logger := ioc.Get[logger.Logger](c)
 		b.OnLoad(func(world ecs.World) {
 			events.GlobalErrHandler(world.EventsBuilder(), func(err error) {
 				logger.Warn(err)
 			})
 		})
-		return b
 	})
-	ioc.WrapService(b, scenes.LoadSystems, func(c ioc.Dic, s SceneBuilder) SceneBuilder {
+	ioc.WrapServiceInOrder(b, scenes.LoadSystems, func(c ioc.Dic, s SceneBuilder) {
 		s.OnLoad(ioc.Get[CoreSystems](c))
-		return s
 	})
 }
 
 func (pkg) Register(b ioc.Builder) {
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b scenes.SceneManagerBuilder) scenes.SceneManagerBuilder {
+	ioc.WrapService(b, func(c ioc.Dic, b scenes.SceneManagerBuilder) {
 		b.AddScene(ioc.Get[MenuBuilder](c).Build(MenuID))
 		b.AddScene(ioc.Get[GameBuilder](c).Build(GameID))
 		b.AddScene(ioc.Get[GameClientBuilder](c).Build(GameClientID))
 		b.AddScene(ioc.Get[SettingsBuilder](c).Build(SettingsID))
 		b.AddScene(ioc.Get[CreditsBuilder](c).Build(CreditsID))
 		b.MakeActive(MenuID)
-		return b
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) WorldResolver {

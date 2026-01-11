@@ -25,8 +25,8 @@ func Package(config Config) ioc.Pkg {
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
-		return b.
+	ioc.WrapService(b, func(c ioc.Dic, b codec.Builder) {
+		b.
 			// client
 			Register(clienttypes.PredictedEvent{}).
 			Register(clienttypes.FetchStateDTO{}).

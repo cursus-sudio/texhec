@@ -22,16 +22,13 @@ func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) SceneManager {
 		return ioc.Get[SceneManagerBuilder](c).Build()
 	})
-	ioc.RegisterDependency[SceneManager, SceneManagerBuilder](b)
 
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b events.Builder) events.Builder {
+	ioc.WrapService(b, func(c ioc.Dic, b events.Builder) {
 		events.ListenToAll(b, func(a any) {
 			m := ioc.Get[SceneManager](c)
 			events.EmitAny(m.CurrentSceneWorld().Events(), a)
 		})
-		return b
 	})
-	ioc.RegisterDependency[events.Builder, SceneManager](b)
 
 	ioc.RegisterTransient(b, func(c ioc.Dic) ecs.World {
 		return ioc.Get[SceneManager](c).CurrentSceneWorld()

@@ -32,7 +32,7 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) LoadObjects(b ioc.Builder) {
-	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.MenuBuilder) gamescenes.MenuBuilder {
+	ioc.WrapServiceInOrder(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.MenuBuilder) {
 		gameAssets := ioc.Get[gameassets.GameAssets](c)
 		assetsService := ioc.Get[assets.Assets](c)
 		logger := ioc.Get[logger.Logger](c)
@@ -119,8 +119,6 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				world.Text().FontSize().Set(btn, text.FontSizeComponent{FontSize: 24})
 			}
 		})
-
-		return b
 	})
 }
 

@@ -29,11 +29,8 @@ func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) Frames {
 		return ioc.Get[Builder](c).Build(ioc.Get[events.Events](c), ioc.Get[clock.Clock](c))
 	})
-	ioc.RegisterDependency[Frames, events.Events](b)
-	ioc.RegisterDependency[Frames, clock.Clock](b)
-	ioc.RegisterDependency[Frames, Builder](b)
 
-	ioc.WrapService(b, runtimeservice.OrderStop, func(c ioc.Dic, r runtimeservice.Builder) runtimeservice.Builder {
+	ioc.WrapServiceInOrder(b, runtimeservice.OrderStop, func(c ioc.Dic, r runtimeservice.Builder) {
 		err := r.OnStartOnMainThread(func(r runtimeservice.Runtime) {
 			_ = ioc.Get[Frames](c).Run()
 			go r.Stop()
@@ -42,7 +39,5 @@ func (pkg pkg) Register(b ioc.Builder) {
 		r.OnStop(func(r runtimeservice.Runtime) {
 			ioc.Get[Frames](c).Stop()
 		})
-		return r
 	})
-	ioc.RegisterDependency[runtimeservice.Builder, Frames](b)
 }

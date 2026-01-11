@@ -19,8 +19,8 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) Register(b ioc.Builder) {
-	ioc.WrapService(b, ioc.DefaultOrder, func(_ ioc.Dic, b codec.Builder) codec.Builder {
-		return b.
+	ioc.WrapService(b, func(_ ioc.Dic, b codec.Builder) {
+		b.
 			Register(uuid.UUID{}).
 			Register(uuid.Component{})
 	})

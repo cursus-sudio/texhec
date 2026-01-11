@@ -24,7 +24,7 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) LoadObjects(b ioc.Builder) {
-	ioc.WrapService(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.SettingsBuilder) gamescenes.SettingsBuilder {
+	ioc.WrapServiceInOrder(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.SettingsBuilder) {
 		gameassets := ioc.Get[gameassets.GameAssets](c)
 		worldResolver := ioc.Get[gamescenes.WorldResolver](c)
 		b.OnLoad(func(rawWorld ecs.World) {
@@ -62,8 +62,6 @@ func (pkg) LoadObjects(b ioc.Builder) {
 
 			events.Emit(world.Events(), settings.EnterSettingsForParentEvent{Parent: buttonArea})
 		})
-
-		return b
 	})
 }
 

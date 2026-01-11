@@ -15,10 +15,11 @@ import (
 // }
 
 type Service struct {
-	scenes map[scene.ID]scene.Scene
-	scene  ecs.EntityID
-	Logger logger.Logger `inject:"1"`
-	World  ecs.World     `inject:"1"`
+	scenes        map[scene.ID]scene.Scene
+	scene         ecs.EntityID
+	Logger        logger.Logger  `inject:"1"`
+	World         ecs.World      `inject:"1"`
+	EventsBuilder events.Builder `inject:"1"`
 }
 
 func NewService(c ioc.Dic) scene.Service {
@@ -27,7 +28,7 @@ func NewService(c ioc.Dic) scene.Service {
 	service.scenes = make(map[scene.ID]scene.Scene)
 	service.scene = service.World.NewEntity()
 
-	events.Listen(service.World.EventsBuilder(), service.ChangeScene)
+	events.Listen(service.EventsBuilder, service.ChangeScene)
 	return service
 }
 

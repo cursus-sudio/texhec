@@ -1,11 +1,10 @@
 package ui
 
 import (
-	"engine"
 	"engine/services/ecs"
 )
 
-type System ecs.SystemRegister[World]
+type System ecs.SystemRegister
 
 // marker which says module relative to which element to position
 type UiCameraComponent struct{}
@@ -21,14 +20,7 @@ func NewButton(text string, event any) Button {
 	return Button{text, event}
 }
 
-type ToolFactory ecs.ToolFactory[World, UiTool]
-type UiTool interface {
-	Ui() Interface
-}
-type World interface {
-	engine.World
-}
-type Interface interface {
+type Service interface {
 	UiCamera() ecs.ComponentsArray[UiCameraComponent]
 	// returns parent to attach ui elements
 	// potentially with enter animation

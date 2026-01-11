@@ -8,12 +8,11 @@ import (
 	"engine/services/frames"
 	"engine/services/logger"
 	"net"
-	"sync"
 
 	"github.com/ogiusek/events"
 )
 
-type tool struct {
+type service struct {
 	*factory
 
 	listenersDirtySet ecs.DirtySet
@@ -28,41 +27,34 @@ type tool struct {
 func NewToolFactory(
 	codec codec.Codec,
 	logger logger.Logger,
-) connection.ToolFactory {
-	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(w connection.World) connection.ConnectionTool {
-		mutex.Lock()
-		defer mutex.Unlock()
-		if t, ok := ecs.GetGlobal[tool](w); ok {
-			return t
-		}
-		t := &tool{
-			NewFactory(codec, logger),
+	world ecs.World,
+	eventsBuilder events.Builder,
+) connection.Service {
+	t := &service{
+		NewFactory(codec, logger),
 
-			ecs.NewDirtySet(),
-			datastructures.NewSet[net.Listener](),
-			ecs.GetComponentsArray[connection.ListenerComponent](w),
+		ecs.NewDirtySet(),
+		datastructures.NewSet[net.Listener](),
+		ecs.GetComponentsArray[connection.ListenerComponent](world),
 
-			ecs.NewDirtySet(),
-			datastructures.NewSet[connection.Conn](),
-			ecs.GetComponentsArray[connection.ConnectionComponent](w),
-		}
-		w.SaveGlobal(t)
-		events.Listen(w.EventsBuilder(), func(frames.FrameEvent) {
-			t.BeforeConnectionGet()
-		})
-
-		t.listenersArray.AddDirtySet(t.listenersDirtySet)
-		t.listenersArray.BeforeGet(t.BeforeListenerGet)
-
-		t.connectionArray.AddDirtySet(t.connectionDirtySet)
-		t.connectionArray.BeforeGet(t.BeforeConnectionGet)
-
-		return t
+		ecs.NewDirtySet(),
+		datastructures.NewSet[connection.Conn](),
+		ecs.GetComponentsArray[connection.ConnectionComponent](world),
+	}
+	events.Listen(eventsBuilder, func(frames.FrameEvent) {
+		t.BeforeConnectionGet()
 	})
+
+	t.listenersArray.AddDirtySet(t.listenersDirtySet)
+	t.listenersArray.BeforeGet(t.BeforeListenerGet)
+
+	t.connectionArray.AddDirtySet(t.connectionDirtySet)
+	t.connectionArray.BeforeGet(t.BeforeConnectionGet)
+
+	return t
 }
 
-func (t *tool) BeforeListenerGet() {
+func (t *service) BeforeListenerGet() {
 	if entities := t.connectionDirtySet.Get(); len(entities) == 0 {
 		return
 	}
@@ -89,7 +81,7 @@ func (t *tool) BeforeListenerGet() {
 	}
 }
 
-func (t *tool) BeforeConnectionGet() {
+func (t *service) BeforeConnectionGet() {
 	if entities := t.connectionDirtySet.Get(); len(entities) == 0 {
 		return
 	}
@@ -116,16 +108,14 @@ func (t *tool) BeforeConnectionGet() {
 	}
 }
 
-func (t *tool) Connection() connection.Interface { return t }
-
-func (t *tool) Component() ecs.ComponentsArray[connection.ConnectionComponent] {
+func (t *service) Component() ecs.ComponentsArray[connection.ConnectionComponent] {
 	return t.connectionArray
 }
-func (t *tool) Listener() ecs.ComponentsArray[connection.ListenerComponent] {
+func (t *service) Listener() ecs.ComponentsArray[connection.ListenerComponent] {
 	return t.listenersArray
 }
 
-func (t *tool) Host(addr string, onConn func(connection.ConnectionComponent)) (connection.ListenerComponent, error) {
+func (t *service) Host(addr string, onConn func(connection.ConnectionComponent)) (connection.ListenerComponent, error) {
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		return connection.ListenerComponent{}, err
@@ -147,7 +137,7 @@ func (t *tool) Host(addr string, onConn func(connection.ConnectionComponent)) (c
 	return connection.NewListener(listener), nil
 }
 
-func (t *tool) Connect(addr string) (connection.ConnectionComponent, error) {
+func (t *service) Connect(addr string) (connection.ConnectionComponent, error) {
 	rawConn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return connection.ConnectionComponent{}, err
@@ -158,7 +148,7 @@ func (t *tool) Connect(addr string) (connection.ConnectionComponent, error) {
 	return connComp, nil
 }
 
-func (t *tool) MockConnectionPair() (connection.ConnectionComponent, connection.ConnectionComponent) {
+func (t *service) MockConnectionPair() (connection.ConnectionComponent, connection.ConnectionComponent) {
 	rawC1, rawC2 := net.Pipe()
 	c1, c2 := t.NewConnection(rawC1), t.NewConnection(rawC2)
 	t.connections.Add(c1)
@@ -167,7 +157,7 @@ func (t *tool) MockConnectionPair() (connection.ConnectionComponent, connection.
 	return comp1, comp2
 }
 
-func (t *tool) TransferConnection(entityFrom, entityTo ecs.EntityID) error {
+func (t *service) TransferConnection(entityFrom, entityTo ecs.EntityID) error {
 	comp, ok := t.connectionArray.Get(entityFrom)
 	if !ok {
 		return nil
@@ -175,17 +165,4 @@ func (t *tool) TransferConnection(entityFrom, entityTo ecs.EntityID) error {
 	t.connectionArray.Remove(entityFrom)
 	t.connectionArray.Set(entityTo, comp)
 	return nil
-}
-
-//
-
-func (t *tool) Release() {
-	for _, connection := range t.connections.Get() {
-		_ = connection.Close()
-		t.connections.RemoveElements(connection)
-	}
-	for _, listener := range t.listeners.Get() {
-		_ = listener.Close()
-		t.listeners.RemoveElements(listener)
-	}
 }

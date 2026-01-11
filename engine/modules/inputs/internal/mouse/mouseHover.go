@@ -2,7 +2,7 @@ package mouse
 
 import (
 	"engine/modules/inputs"
-	"engine/modules/inputs/internal/tool"
+	"engine/modules/inputs/internal/service"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"slices"
@@ -11,40 +11,44 @@ import (
 )
 
 type hoverSystem struct {
-	inputs.World
-	inputs.InputsTool
+	events  events.Events
+	world   ecs.World
+	inputs  inputs.Service
 	logger  logger.Logger
 	targets []inputs.Target
 }
 
 func NewHoverSystem(
-	inputsToolFactory inputs.ToolFactory,
+	eventsBuilder events.Builder,
+	world ecs.World,
+	inputs inputs.Service,
 	logger logger.Logger,
 ) inputs.System {
-	return ecs.NewSystemRegister(func(w inputs.World) error {
+	return ecs.NewSystemRegister(func() error {
 		s := &hoverSystem{
-			World:      w,
-			InputsTool: inputsToolFactory.Build(w),
-			logger:     logger,
-			targets:    nil,
+			events:  eventsBuilder.Events(),
+			world:   world,
+			inputs:  inputs,
+			logger:  logger,
+			targets: nil,
 		}
 
-		events.Listen(w.EventsBuilder(), s.Listen)
+		events.Listen(eventsBuilder, s.Listen)
 		return nil
 	})
 }
 
 func (s *hoverSystem) handleMouseLeave(entity ecs.EntityID) {
-	s.Inputs().Hovered().Remove(entity)
+	s.inputs.Hovered().Remove(entity)
 
-	mouseLeave, ok := s.Inputs().MouseLeave().Get(entity)
+	mouseLeave, ok := s.inputs.MouseLeave().Get(entity)
 	if !ok {
 		return
 	}
-	events.EmitAny(s.Events(), mouseLeave.Event)
+	events.EmitAny(s.events, mouseLeave.Event)
 }
 
-func (s *hoverSystem) Listen(event tool.RayChangedTargetEvent) {
+func (s *hoverSystem) Listen(event service.RayChangedTargetEvent) {
 	left := []inputs.Target{}
 	entered := []inputs.Target{}
 
@@ -66,10 +70,10 @@ func (s *hoverSystem) Listen(event tool.RayChangedTargetEvent) {
 	}
 
 	for _, target := range entered {
-		s.Inputs().Hovered().Set(target.Entity, inputs.HoveredComponent{Camera: target.Camera})
+		s.inputs.Hovered().Set(target.Entity, inputs.HoveredComponent{Camera: target.Camera})
 
-		if mouseEnter, ok := s.Inputs().MouseEnter().Get(target.Entity); ok {
-			events.EmitAny(s.Events(), mouseEnter.Event)
+		if mouseEnter, ok := s.inputs.MouseEnter().Get(target.Entity); ok {
+			events.EmitAny(s.events, mouseEnter.Event)
 		}
 	}
 	s.targets = event.Targets

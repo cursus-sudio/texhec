@@ -34,10 +34,11 @@ func (pkg) Register(b ioc.Builder) {
 			Register(record.UUIDRecording{}).
 			Register(map[uuid.UUID][]any{})
 	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) record.ToolFactory {
-		return recordimpl.NewToolFactory(
-			ioc.Get[uuid.ToolFactory](c),
+	ioc.RegisterSingleton(b, func(c ioc.Dic) record.Service {
+		return recordimpl.NewService(
+			ioc.Get[uuid.Service](c),
 			ioc.Get[logger.Logger](c),
+			ioc.Get[ecs.World](c),
 		)
 	})
 }

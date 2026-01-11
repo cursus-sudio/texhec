@@ -1,11 +1,13 @@
 package dragpkg
 
 import (
+	"engine/modules/camera"
 	"engine/modules/drag"
 	"engine/modules/drag/internal"
+	"engine/modules/transform"
 	"engine/services/codec"
-	"engine/services/logger"
 
+	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -24,7 +26,9 @@ func (pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) drag.System {
 		return internal.NewSystem(
-			ioc.Get[logger.Logger](c),
+			ioc.Get[events.Builder](c),
+			ioc.Get[transform.Service](c),
+			ioc.Get[camera.Service](c),
 		)
 	})
 }

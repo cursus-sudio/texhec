@@ -20,6 +20,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 		return ioc.Get[events.Builder](c).Build()
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) World {
-		return newConnectedWorld(ioc.Get[events.Builder](c))
+		return NewWorld()
 	})
 }

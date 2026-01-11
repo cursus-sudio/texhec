@@ -15,14 +15,18 @@ type renderSystem struct {
 	window window.Api
 }
 
-func NewRenderSystem(window window.Api) render.System {
-	return ecs.NewSystemRegister(func(w render.World) error {
+func NewRenderSystem(
+	world ecs.World,
+	window window.Api,
+	eventsBuilder events.Builder,
+) render.System {
+	return ecs.NewSystemRegister(func() error {
 		s := &renderSystem{
-			world:  w,
-			events: w.Events(),
+			world:  world,
+			events: eventsBuilder.Events(),
 			window: window,
 		}
-		events.ListenE(w.EventsBuilder(), s.Listen)
+		events.ListenE(eventsBuilder, s.Listen)
 		return nil
 	})
 }

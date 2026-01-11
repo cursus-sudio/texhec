@@ -2,9 +2,11 @@ package renderer
 
 import (
 	_ "embed"
+	"engine/modules/camera"
 	"engine/modules/genericrenderer"
 	"engine/modules/groups"
 	"engine/modules/render"
+	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/ecs"
 	"engine/services/graphics/program"
@@ -48,21 +50,15 @@ type releasable struct {
 	locations           locations
 }
 
-func (r *releasable) Release() {
-	r.program.Release()
-	for _, texture := range r.textures {
-		texture.Release()
-	}
-	for _, mesh := range r.meshes {
-		mesh.Release()
-	}
-}
-
 //
 
 type system struct {
-	genericrenderer.World
-	genericrenderer.GenericRendererTool
+	World           ecs.World
+	GenericRenderer genericrenderer.Service
+	Render          render.Service
+	Camera          camera.Service
+	Groups          groups.Service
+	Transform       transform.Service
 
 	window         window.Api
 	assetsStorage  assets.AssetsStorage
@@ -74,14 +70,20 @@ type system struct {
 }
 
 func NewSystem(
-	genericRendererToolFactory genericrenderer.ToolFactory,
+	eventsBuilder events.Builder,
+	w ecs.World,
+	genericRenderer genericrenderer.Service,
+	renderService render.Service,
+	camera camera.Service,
+	groups groups.Service,
+	transform transform.Service,
 	window window.Api,
 	assetsStorage assets.AssetsStorage,
 	logger logger.Logger,
 	vboFactory vbo.VBOFactory[genericrenderer.Vertex],
 	textureFactory texture.Factory,
 ) genericrenderer.System {
-	return ecs.NewSystemRegister(func(w genericrenderer.World) error {
+	return ecs.NewSystemRegister(func() error {
 		vert, err := shader.NewShader(vertSource, shader.VertexShader)
 		if err != nil {
 			return err
@@ -116,11 +118,13 @@ func NewSystem(
 			locations:           locations,
 		}
 
-		w.SaveGlobal(releasable)
-
 		system := &system{
-			World:               w,
-			GenericRendererTool: genericRendererToolFactory.Build(w),
+			World:           w,
+			GenericRenderer: genericRenderer,
+			Render:          renderService,
+			Camera:          camera,
+			Groups:          groups,
+			Transform:       transform,
 
 			window:         window,
 			assetsStorage:  assetsStorage,
@@ -131,21 +135,20 @@ func NewSystem(
 			releasable: releasable,
 		}
 
-		events.ListenE(w.EventsBuilder(), system.Listen)
+		events.ListenE(eventsBuilder, system.Listen)
 		return nil
 	})
-
 }
 
 //
 
 func (m *system) getTexture(entity ecs.EntityID) (texture.Texture, error) {
-	textureComponent, ok := m.Render().Texture().Get(entity)
+	textureComponent, ok := m.Render.Texture().Get(entity)
 	if !ok {
 		return nil, nil
 	}
 	imagesCount, okImagesCount := m.texturesImagesCount[textureComponent]
-	textureFrameComponent, ok := m.Render().TextureFrame().Get(entity)
+	textureFrameComponent, ok := m.Render.TextureFrame().Get(entity)
 	if !ok {
 		textureFrameComponent = render.DefaultTextureFrameComponent()
 	}
@@ -199,14 +202,14 @@ func (m *system) getMesh(asset assets.AssetID) (vao.VAO, error) {
 func (m *system) Listen(render.RenderEvent) error {
 	m.program.Use()
 
-	for _, cameraEntity := range m.Camera().Component().GetEntities() {
-		cameraGroups, ok := m.Groups().Component().Get(cameraEntity)
+	for _, cameraEntity := range m.Camera.Component().GetEntities() {
+		cameraGroups, ok := m.Groups.Component().Get(cameraEntity)
 		if !ok {
 			cameraGroups = groups.DefaultGroups()
 		}
 
-		for _, entity := range m.GenericRenderer().Pipeline().GetEntities() {
-			entityGroups, ok := m.Groups().Component().Get(entity)
+		for _, entity := range m.GenericRenderer.Pipeline().GetEntities() {
+			entityGroups, ok := m.Groups.Component().Get(entity)
 			if !ok {
 				entityGroups = groups.DefaultGroups()
 			}
@@ -214,7 +217,7 @@ func (m *system) Listen(render.RenderEvent) error {
 				continue
 			}
 
-			model := m.Transform().Mat4(entity)
+			model := m.Transform.Mat4(entity)
 
 			textureAsset, err := m.getTexture(entity)
 			if textureAsset == nil || err != nil {
@@ -222,12 +225,12 @@ func (m *system) Listen(render.RenderEvent) error {
 				continue
 			}
 
-			colorComponent, ok := m.Render().Color().Get(entity)
+			colorComponent, ok := m.Render.Color().Get(entity)
 			if !ok {
 				colorComponent = render.DefaultColor()
 			}
 
-			meshComponent, ok := m.Render().Mesh().Get(entity)
+			meshComponent, ok := m.Render.Mesh().Get(entity)
 			if !ok {
 				continue
 			}
@@ -240,8 +243,8 @@ func (m *system) Listen(render.RenderEvent) error {
 			meshAsset.Use()
 			gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, meshAsset.EBO().ID())
 
-			mvp := m.Camera().Mat4(cameraEntity).Mul4(model)
-			gl.Viewport(m.Camera().GetViewport(cameraEntity))
+			mvp := m.Camera.Mat4(cameraEntity).Mul4(model)
+			gl.Viewport(m.Camera.GetViewport(cameraEntity))
 			gl.UniformMatrix4fv(m.locations.Mvp, 1, false, &mvp[0])
 			gl.Uniform4fv(m.locations.Color, 1, &colorComponent.Color[0])
 

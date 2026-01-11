@@ -1,4 +1,4 @@
-package transformtool
+package transformservice
 
 import (
 	"engine/modules/transform"
@@ -14,7 +14,7 @@ type save struct {
 	size   transform.AbsoluteSizeComponent
 }
 
-func (t *tool) Init() {
+func (t *service) Init() {
 	arrays := []ecs.AnyComponentArray{
 		t.absolutePosArray,
 		t.absoluteRotationArray,
@@ -49,7 +49,7 @@ func (t *tool) Init() {
 		arr.AddDependency(t.aspectRatioArray)
 		arr.AddDependency(t.pivotPointArray)
 
-		arr.AddDependency(t.world.Hierarchy().Component())
+		arr.AddDependency(t.hierarchy.Component())
 		arr.AddDependency(t.parentMaskArray)
 		arr.AddDependency(t.parentPivotPointArray)
 	}

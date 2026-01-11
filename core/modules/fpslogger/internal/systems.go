@@ -18,16 +18,18 @@ type logsSystem struct {
 }
 
 func NewFpsLoggerSystem(
+	eventsBuilder events.Builder,
+	w ecs.World,
 	console console.Console,
-) ecs.SystemRegister[ecs.World] {
-	return ecs.NewSystemRegister(func(w ecs.World) error {
+) ecs.SystemRegister {
+	return ecs.NewSystemRegister(func() error {
 		s := &logsSystem{
 			World:   w,
 			Console: console,
 
 			frames: make([]time.Time, 60),
 		}
-		events.Listen(w.EventsBuilder(), s.Listen)
+		events.Listen(eventsBuilder, s.Listen)
 		return nil
 	})
 }

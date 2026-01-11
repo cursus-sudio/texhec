@@ -1,4 +1,4 @@
-package tiletool
+package tileservice
 
 import (
 	"core/modules/tile"
@@ -7,13 +7,11 @@ import (
 )
 
 type tool struct {
-	tilePos relation.EntityToKeyTool[tile.PosComponent]
+	tilePos relation.Service[tile.PosComponent]
 
 	posArray ecs.ComponentsArray[tile.PosComponent]
 }
 
-func (t *tool) Tile() tile.Interface { return t }
-
-func (t *tool) PosKey() relation.EntityToKeyTool[tile.PosComponent] { return t.tilePos }
+func (t *tool) PosKey() relation.Service[tile.PosComponent] { return t.tilePos }
 
 func (t *tool) Pos() ecs.ComponentsArray[tile.PosComponent] { return t.posArray }

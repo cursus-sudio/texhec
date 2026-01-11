@@ -7,6 +7,7 @@ import (
 	"engine/modules/netsync/internal/config"
 	"engine/modules/netsync/internal/servertypes"
 	"engine/modules/record"
+	"engine/modules/uuid"
 	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/frames"
@@ -43,26 +44,35 @@ type toolState struct {
 	toRemove           []ecs.EntityID
 	listeners          datastructures.SparseSet[ecs.EntityID]
 
-	netsync.World
-	netsync.NetSyncTool
+	events     events.Events
+	world      ecs.World
+	netSync    netsync.Service
+	connection connection.Service
+	record     record.Service
+	uuid       uuid.Service
+
 	logger logger.Logger
 }
 
 // can:
 // - apply server event
 // - apply predicted event (starts and ends prediction)
-type Tool struct {
+type Service struct {
 	config.Config
 	*toolState
 }
 
-func NewTool(
+func NewService(
 	config config.Config,
-	netSyncToolFactory netsync.ToolFactory,
 	logger logger.Logger,
-	world netsync.World,
-) *Tool {
-	t := &Tool{
+	eventsBuilder events.Builder,
+	world ecs.World,
+	netSync netsync.Service,
+	connection connection.Service,
+	record record.Service,
+	uuid uuid.Service,
+) *Service {
+	t := &Service{
 		config,
 		&toolState{
 			true,
@@ -79,8 +89,12 @@ func NewTool(
 			nil,
 			datastructures.NewSparseSet[ecs.EntityID](),
 
+			eventsBuilder.Events(),
 			world,
-			netSyncToolFactory.Build(world),
+			netSync,
+			connection,
+			record,
+			uuid,
 			logger,
 		},
 	}
@@ -96,7 +110,7 @@ func NewTool(
 			t.ListenTransparentEvent(a.(servertypes.TransparentEventDTO))
 		},
 	}
-	events.Listen(t.EventsBuilder(), func(frames.FrameEvent) {
+	events.Listen(eventsBuilder, func(frames.FrameEvent) {
 		t.loadConnections()
 		conn := t.getConnection()
 		if conn == nil {
@@ -108,7 +122,7 @@ func NewTool(
 		for len(t.toRemove) != 0 {
 			entity := t.toRemove[0]
 			t.toRemove = t.toRemove[1:]
-			t.RemoveEntity(entity)
+			t.world.RemoveEntity(entity)
 			t.listeners.Remove(entity)
 		}
 		for len(t.messagesFromServer) != 0 {
@@ -126,8 +140,8 @@ func NewTool(
 		}
 	})
 
-	t.NetSync().Server().AddDirtySet(t.dirtySet)
-	t.Connection().Component().AddDirtySet(t.dirtySet)
+	t.netSync.Server().AddDirtySet(t.dirtySet)
+	t.connection.Component().AddDirtySet(t.dirtySet)
 
 	return t
 }
@@ -135,7 +149,7 @@ func NewTool(
 // public methods
 
 // doesn't send event to server
-func (t *Tool) BeforeEventRecord(event any) {
+func (t *Service) BeforeEventRecord(event any) {
 	t.loadConnections()
 	clientConn := t.getConnection()
 	if clientConn == nil {
@@ -157,16 +171,16 @@ func (t *Tool) BeforeEventRecord(event any) {
 		return
 	}
 
-	t.recordingID = t.Record().UUID().StartBackwardsRecording(t.RecordConfig)
+	t.recordingID = t.record.UUID().StartBackwardsRecording(t.RecordConfig)
 	t.recordedPrediction = &recordedPrediction{
 		PredictedEvent: clienttypes.PredictedEvent{
-			ID:    t.UUID().NewUUID(),
+			ID:    t.uuid.NewUUID(),
 			Event: event,
 		},
 	}
 }
 
-func (t *Tool) BeforeEvent(event any) {
+func (t *Service) BeforeEvent(event any) {
 	t.loadConnections()
 	clientConn := t.getConnection()
 	if clientConn == nil {
@@ -183,7 +197,7 @@ func (t *Tool) BeforeEvent(event any) {
 	}
 }
 
-func (t *Tool) AfterEvent(event any) {
+func (t *Service) AfterEvent(event any) {
 	conn := t.getConnection()
 	if conn == nil {
 		return
@@ -193,7 +207,7 @@ func (t *Tool) AfterEvent(event any) {
 		return
 	}
 
-	recording, ok := t.Record().UUID().Stop(t.recordingID)
+	recording, ok := t.record.UUID().Stop(t.recordingID)
 	t.recordingID = 0
 	if !ok {
 		return
@@ -207,7 +221,7 @@ func (t *Tool) AfterEvent(event any) {
 	t.predictions = append(t.predictions, newPrediction)
 }
 
-func (t *Tool) OnTransparentEvent(event any) {
+func (t *Service) OnTransparentEvent(event any) {
 	if t.receivedTransparentEvent {
 		t.receivedTransparentEvent = false
 		return
@@ -222,7 +236,7 @@ func (t *Tool) OnTransparentEvent(event any) {
 	t.logger.Warn(err)
 }
 
-func (t *Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
+func (t *Service) ListenSendChange(dto servertypes.SendChangeDTO) {
 	conn := t.getConnection()
 	if conn == nil {
 		return
@@ -243,7 +257,7 @@ func (t *Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
 	// check is event predicted. if is then remove first event from queue
 	// if isn't then undo predictions, emit server event(as not recordable), emit all predicted events again
 	if len(t.predictions) == 0 {
-		t.Record().UUID().Apply(t.RecordConfig, dto.Changes)
+		t.record.UUID().Apply(t.RecordConfig, dto.Changes)
 		return
 	}
 	if t.predictions[0].PredictedEvent.ID == dto.EventID {
@@ -262,7 +276,7 @@ func (t *Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
 		// }
 	}
 	predictedEvents := t.undoPredictions()
-	t.Record().UUID().Apply(t.RecordConfig, dto.Changes)
+	t.record.UUID().Apply(t.RecordConfig, dto.Changes)
 	// reApplied events are events without applied event
 	reEmitedEvents := make([]clienttypes.PredictedEvent, 0, len(predictedEvents))
 	for _, predictedEvent := range predictedEvents {
@@ -274,7 +288,7 @@ func (t *Tool) ListenSendChange(dto servertypes.SendChangeDTO) {
 }
 
 // reconciliate
-func (t *Tool) ListenSendState(dto servertypes.SendStateDTO) {
+func (t *Service) ListenSendState(dto servertypes.SendStateDTO) {
 	conn := t.getConnection()
 	if conn == nil {
 		return
@@ -286,10 +300,10 @@ func (t *Tool) ListenSendState(dto servertypes.SendStateDTO) {
 		return
 	}
 	t.predictions = nil
-	t.Record().UUID().Apply(t.RecordConfig, dto.State)
+	t.record.UUID().Apply(t.RecordConfig, dto.State)
 }
 
-func (t *Tool) ListenTransparentEvent(dto servertypes.TransparentEventDTO) {
+func (t *Service) ListenTransparentEvent(dto servertypes.TransparentEventDTO) {
 	if t.sentTransparentEvent {
 		t.sentTransparentEvent = false
 		return
@@ -299,12 +313,12 @@ func (t *Tool) ListenTransparentEvent(dto servertypes.TransparentEventDTO) {
 		return
 	}
 	t.receivedTransparentEvent = true
-	events.EmitAny(t.Events(), dto.Event)
+	events.EmitAny(t.events, dto.Event)
 }
 
 // private methods
 
-func (t *Tool) loadConnections() {
+func (t *Service) loadConnections() {
 	ei := t.dirtySet.Get()
 	if len(ei) == 0 {
 		return
@@ -317,11 +331,11 @@ func (t *Tool) loadConnections() {
 	if ok := t.listeners.Get(entity); ok {
 		return
 	}
-	if _, ok := t.NetSync().Server().Get(entity); !ok {
+	if _, ok := t.netSync.Server().Get(entity); !ok {
 		return
 	}
 	t.listeners.Add(entity)
-	comp, ok := t.Connection().Component().Get(entity)
+	comp, ok := t.connection.Component().Get(entity)
 	if !ok {
 		return
 	}
@@ -347,7 +361,7 @@ func (t *Tool) loadConnections() {
 	}(entity)
 }
 
-func (t *Tool) undoPredictions() []clienttypes.PredictedEvent {
+func (t *Service) undoPredictions() []clienttypes.PredictedEvent {
 	// add events to the list
 	var unDoneEvents []clienttypes.PredictedEvent
 	snapshots := make([]record.UUIDRecording, len(t.predictions))
@@ -356,23 +370,23 @@ func (t *Tool) undoPredictions() []clienttypes.PredictedEvent {
 		// snapshots = append([]record.UUIDRecording{prediction.Snapshot}, snapshots...)
 		snapshots = append(snapshots, prediction.Snapshot)
 	}
-	t.Record().UUID().Apply(t.RecordConfig, snapshots...)
+	t.record.UUID().Apply(t.RecordConfig, snapshots...)
 	t.predictions = nil
 	return unDoneEvents
 }
 
-func (t *Tool) applyPredictedEvents(predictedEvents []clienttypes.PredictedEvent) {
+func (t *Service) applyPredictedEvents(predictedEvents []clienttypes.PredictedEvent) {
 	for _, predictedEvent := range predictedEvents[1:] {
 		t.recordNextEvent = false
-		events.EmitAny(t.Events(), predictedEvent.Event)
+		events.EmitAny(t.events, predictedEvent.Event)
 	}
 }
 
-func (t *Tool) getConnection() connection.Conn {
+func (t *Service) getConnection() connection.Conn {
 	var conn connection.Conn
-	if entities := t.NetSync().Server().GetEntities(); len(entities) == 1 {
+	if entities := t.netSync.Server().GetEntities(); len(entities) == 1 {
 		server := entities[0]
-		comp, ok := t.Connection().Component().Get(server)
+		comp, ok := t.connection.Component().Get(server)
 		if ok {
 			conn = comp.Conn()
 		}

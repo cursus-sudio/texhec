@@ -16,8 +16,9 @@ import (
 // system
 
 type updateProjetionsSystem struct {
-	camera.World
-	camera.CameraTool
+	world     ecs.World
+	transform transform.Service
+	camera    camera.Service
 
 	window window.Api
 	logger logger.Logger
@@ -27,14 +28,18 @@ type updateProjetionsSystem struct {
 }
 
 func NewUpdateProjectionsSystem(
+	eventsBuilder events.Builder,
+	world ecs.World,
+	transform transform.Service,
+	cameraService camera.Service,
 	window window.Api,
 	logger logger.Logger,
-	cameraToolFactory camera.ToolFactory,
 ) camera.System {
-	return ecs.NewSystemRegister(func(w camera.World) error {
+	return ecs.NewSystemRegister(func() error {
 		s := &updateProjetionsSystem{
-			World:      w,
-			CameraTool: cameraToolFactory.Build(w),
+			world:     world,
+			transform: transform,
+			camera:    cameraService,
 
 			window: window,
 			logger: logger,
@@ -43,18 +48,18 @@ func NewUpdateProjectionsSystem(
 			orthoDirtySet:        ecs.NewDirtySet(),
 		}
 
-		s.Camera().Perspective().BeforeGet(s.UpsertPerspective)
-		s.Camera().DynamicPerspective().AddDirtySet(s.perspectivesDirtySet)
+		s.camera.Perspective().BeforeGet(s.UpsertPerspective)
+		s.camera.DynamicPerspective().AddDirtySet(s.perspectivesDirtySet)
 
-		ecs.GetComponentsArray[camera.OrthoComponent](w).AddDirtySet(s.orthoDirtySet)
-		ecs.GetComponentsArray[camera.OrthoResolutionComponent](w).AddDirtySet(s.orthoDirtySet)
-		ecs.GetComponentsArray[camera.ViewportComponent](w).AddDirtySet(s.orthoDirtySet)
-		ecs.GetComponentsArray[camera.NormalizedViewportComponent](w).AddDirtySet(s.orthoDirtySet)
+		ecs.GetComponentsArray[camera.OrthoComponent](world).AddDirtySet(s.orthoDirtySet)
+		ecs.GetComponentsArray[camera.OrthoResolutionComponent](world).AddDirtySet(s.orthoDirtySet)
+		ecs.GetComponentsArray[camera.ViewportComponent](world).AddDirtySet(s.orthoDirtySet)
+		ecs.GetComponentsArray[camera.NormalizedViewportComponent](world).AddDirtySet(s.orthoDirtySet)
 
-		s.Camera().Ortho().AddDirtySet(s.orthoDirtySet)
-		s.Camera().Ortho().BeforeGet(s.UpsertOrtho)
+		s.camera.Ortho().AddDirtySet(s.orthoDirtySet)
+		s.camera.Ortho().BeforeGet(s.UpsertOrtho)
 
-		events.Listen(w.EventsBuilder(), s.Listen)
+		events.Listen(eventsBuilder, s.Listen)
 		return nil
 	})
 }
@@ -72,19 +77,19 @@ func (s *updateProjetionsSystem) AspectRatio() float32 {
 func (s *updateProjetionsSystem) UpsertOrtho() {
 	ei := s.orthoDirtySet.Get()
 	for _, entity := range ei {
-		resizeOrtho, ok := s.Camera().Ortho().Get(entity)
+		resizeOrtho, ok := s.camera.Ortho().Get(entity)
 		if !ok {
 			continue
 		}
 
-		x, y, w, h := s.Camera().GetViewport(entity)
+		x, y, w, h := s.camera.GetViewport(entity)
 
 		size := transform.NewSize(
 			float32(w-x)/resizeOrtho.Zoom,
 			float32(h-y)/resizeOrtho.Zoom,
 			mgl32.Abs(resizeOrtho.Far-resizeOrtho.Near),
 		)
-		s.Transform().AbsoluteSize().Set(entity, transform.AbsoluteSizeComponent(size))
+		s.transform.AbsoluteSize().Set(entity, transform.AbsoluteSizeComponent(size))
 	}
 }
 
@@ -92,7 +97,7 @@ func (s *updateProjetionsSystem) UpsertPerspective() {
 	ei := s.perspectivesDirtySet.Get()
 	aspectRatio := s.AspectRatio()
 	for _, entity := range ei {
-		resizePerspective, ok := s.Camera().DynamicPerspective().Get(entity)
+		resizePerspective, ok := s.camera.DynamicPerspective().Get(entity)
 		if !ok {
 			continue
 		}
@@ -100,17 +105,17 @@ func (s *updateProjetionsSystem) UpsertPerspective() {
 			resizePerspective.FovY, aspectRatio,
 			resizePerspective.Near, resizePerspective.Far,
 		)
-		s.Camera().Perspective().Set(entity, perspective)
+		s.camera.Perspective().Set(entity, perspective)
 	}
 }
 
 func (s *updateProjetionsSystem) Listen(e camera.ChangedResolutionEvent) {
-	for _, entity := range s.Camera().Ortho().GetEntities() {
+	for _, entity := range s.camera.Ortho().GetEntities() {
 		s.orthoDirtySet.Dirty(entity)
 	}
 	s.UpsertOrtho()
 
-	for _, entity := range s.Camera().DynamicPerspective().GetEntities() {
+	for _, entity := range s.camera.DynamicPerspective().GetEntities() {
 		s.perspectivesDirtySet.Dirty(entity)
 	}
 	s.UpsertPerspective()

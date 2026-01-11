@@ -22,9 +22,10 @@ var (
 type clickSystem struct {
 	logger logger.Logger
 
-	inputs.World
-	inputs.InputsTool
+	world  ecs.World
+	inputs inputs.Service
 
+	events events.Events
 	window window.Api
 
 	maxMoved,
@@ -42,21 +43,24 @@ type clickSystem struct {
 func NewClickSystem(
 	logger logger.Logger,
 	window window.Api,
-	inputsToolFactory inputs.ToolFactory,
+	eventsBuilder events.Builder,
+	world ecs.World,
+	inputs inputs.Service,
 ) inputs.System {
-	return ecs.NewSystemRegister(func(w inputs.World) error {
+	return ecs.NewSystemRegister(func() error {
 		s := &clickSystem{
-			logger:     logger,
-			World:      w,
-			InputsTool: inputsToolFactory.Build(w),
+			logger: logger,
+			world:  world,
+			inputs: inputs,
 
+			events: eventsBuilder.Events(),
 			window: window,
 
 			maxMoved: 3,
 		}
 
-		events.Listen(w.EventsBuilder(), s.ListenClick)
-		events.Listen(w.EventsBuilder(), s.ListenMove)
+		events.Listen(eventsBuilder, s.ListenClick)
+		events.Listen(eventsBuilder, s.ListenMove)
 		return nil
 	})
 }
@@ -76,12 +80,12 @@ func (s *clickSystem) ListenMove(event sdl.MouseMotionEvent) {
 	}
 
 	if s.emitDrag {
-		events.Emit(s.Events(), dragEvent)
+		events.Emit(s.events, dragEvent)
 	}
 
 	if s.movedEntity != nil {
 		entity := *s.movedEntity
-		dragComponent, ok := s.Inputs().Drag().Get(entity)
+		dragComponent, ok := s.inputs.Drag().Get(entity)
 		if !ok {
 			goto cleanUp
 		}
@@ -89,7 +93,7 @@ func (s *clickSystem) ListenMove(event sdl.MouseMotionEvent) {
 		if i, ok := dragComponent.Event.(inputs.ApplyDragEvent); ok {
 			dragComponent.Event = i.Apply(dragEvent)
 		}
-		events.EmitAny(s.Events(), dragComponent.Event)
+		events.EmitAny(s.events, dragComponent.Event)
 	}
 
 cleanUp:
@@ -107,7 +111,7 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) {
 
 	stacked := []ecs.EntityID{}
 	{
-		for _, collision := range s.Inputs().StackedData() {
+		for _, collision := range s.inputs.StackedData() {
 			stacked = append(stacked, collision.Entity)
 		}
 	}
@@ -147,12 +151,12 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) {
 			break
 		}
 
-		if _, ok := s.Inputs().KeepSelected().Get(*entity); ok {
+		if _, ok := s.inputs.KeepSelected().Get(*entity); ok {
 			s.emitDrag = false
 			break
 		}
 		s.movedFrom = &pos
-		hover, _ := s.Inputs().Hovered().Get(*entity)
+		hover, _ := s.inputs.Hovered().Get(*entity)
 		s.movingCamera = hover.Camera
 
 	case sdl.RELEASED:
@@ -163,7 +167,7 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) {
 			break
 		}
 
-		if _, ok := s.Inputs().KeepSelected().Get(*entity); !ok && s.moved > s.maxMoved {
+		if _, ok := s.inputs.KeepSelected().Get(*entity); !ok && s.moved > s.maxMoved {
 			break
 		}
 
@@ -171,28 +175,28 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) {
 
 		switch event.Button {
 		case sdl.BUTTON_LEFT:
-			if comp, ok := s.Inputs().LeftClick().Get(*entity); ok {
+			if comp, ok := s.inputs.LeftClick().Get(*entity); ok {
 				eventToEmit = comp.Event
 			}
 			switch event.Clicks {
 			case 2:
-				if comp, ok := s.Inputs().DoubleLeftClick().Get(*entity); ok {
+				if comp, ok := s.inputs.DoubleLeftClick().Get(*entity); ok {
 					eventToEmit = comp.Event
 				}
 			}
 		case sdl.BUTTON_RIGHT:
-			if comp, ok := s.Inputs().RightClick().Get(*entity); ok {
+			if comp, ok := s.inputs.RightClick().Get(*entity); ok {
 				eventToEmit = comp.Event
 			}
 			switch event.Clicks {
 			case 2:
-				if comp, ok := s.Inputs().DoubleRightClick().Get(*entity); ok {
+				if comp, ok := s.inputs.DoubleRightClick().Get(*entity); ok {
 					eventToEmit = comp.Event
 				}
 			}
 		}
 
-		if _, ok := s.Inputs().Stack().Get(*entity); !ok {
+		if _, ok := s.inputs.Stack().Get(*entity); !ok {
 			s.stacked = nil
 		} else if len(s.stacked) != 0 && s.stacked[0] == *entity {
 			s.stacked = s.stacked[:1]
@@ -201,7 +205,7 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) {
 		}
 
 		if eventToEmit != nil {
-			events.EmitAny(s.Events(), eventToEmit)
+			events.EmitAny(s.events, eventToEmit)
 		}
 	}
 
@@ -222,10 +226,10 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) {
 	}
 
 	for _, added := range added {
-		s.Inputs().Stacked().Set(added, inputs.StackedComponent{})
+		s.inputs.Stacked().Set(added, inputs.StackedComponent{})
 	}
 
 	for _, removed := range removed {
-		s.Inputs().Stacked().Remove(removed)
+		s.inputs.Stacked().Remove(removed)
 	}
 }

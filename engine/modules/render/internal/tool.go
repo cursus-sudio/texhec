@@ -8,7 +8,7 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
-type tool struct {
+type service struct {
 	world             ecs.World
 	colorArray        ecs.ComponentsArray[render.ColorComponent]
 	meshArray         ecs.ComponentsArray[render.MeshComponent]
@@ -16,16 +16,16 @@ type tool struct {
 	textureFrameArray ecs.ComponentsArray[render.TextureFrameComponent]
 }
 
-func NewTool() render.ToolFactory {
-	return ecs.NewToolFactory(func(w render.World) render.RenderTool {
-		return &tool{
-			w,
-			ecs.GetComponentsArray[render.ColorComponent](w),
-			ecs.GetComponentsArray[render.MeshComponent](w),
-			ecs.GetComponentsArray[render.TextureComponent](w),
-			ecs.GetComponentsArray[render.TextureFrameComponent](w),
-		}
-	})
+func NewTool(
+	world ecs.World,
+) render.Service {
+	return &service{
+		world,
+		ecs.GetComponentsArray[render.ColorComponent](world),
+		ecs.GetComponentsArray[render.MeshComponent](world),
+		ecs.GetComponentsArray[render.TextureComponent](world),
+		ecs.GetComponentsArray[render.TextureFrameComponent](world),
+	}
 }
 
 //
@@ -43,24 +43,20 @@ var glErrorStrings = map[uint32]string{
 	// gl.TABLE_TOO_LARGE:               "GL_TABLE_TOO_LARGE", // Less common in modern GL
 }
 
-func (t *tool) Render() render.Interface {
-	return t
-}
-
-func (t *tool) Color() ecs.ComponentsArray[render.ColorComponent] {
+func (t *service) Color() ecs.ComponentsArray[render.ColorComponent] {
 	return t.colorArray
 }
-func (t *tool) Mesh() ecs.ComponentsArray[render.MeshComponent] {
+func (t *service) Mesh() ecs.ComponentsArray[render.MeshComponent] {
 	return t.meshArray
 }
-func (t *tool) Texture() ecs.ComponentsArray[render.TextureComponent] {
+func (t *service) Texture() ecs.ComponentsArray[render.TextureComponent] {
 	return t.textureArray
 }
-func (t *tool) TextureFrame() ecs.ComponentsArray[render.TextureFrameComponent] {
+func (t *service) TextureFrame() ecs.ComponentsArray[render.TextureFrameComponent] {
 	return t.textureFrameArray
 }
 
-func (*tool) Error() error {
+func (*service) Error() error {
 	if glErr := gl.GetError(); glErr != gl.NO_ERROR {
 		return fmt.Errorf("opengl error: %x %s", glErr, glErrorStrings[glErr])
 	}

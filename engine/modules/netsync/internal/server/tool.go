@@ -1,6 +1,7 @@
 package server
 
 import (
+	"engine/modules/connection"
 	"engine/modules/netsync"
 	"engine/modules/netsync/internal/clienttypes"
 	"engine/modules/netsync/internal/config"
@@ -34,23 +35,32 @@ type toolState struct {
 	toRemove               []ecs.EntityID
 	listeners              datastructures.SparseSet[ecs.EntityID]
 
-	netsync.World
-	netsync.NetSyncTool
+	events     events.Events
+	world      ecs.World
+	netSync    netsync.Service
+	connection connection.Service
+	record     record.Service
+	uuid       uuid.Service
+
 	logger logger.Logger
 }
 
-type Tool struct {
+type Service struct {
 	config.Config
 	*toolState
 }
 
-func NewTool(
+func NewService(
 	config config.Config,
-	netSyncToolFactory netsync.ToolFactory,
 	logger logger.Logger,
-	world netsync.World,
-) *Tool {
-	t := &Tool{
+	eventsBuilder events.Builder,
+	world ecs.World,
+	netSync netsync.Service,
+	connection connection.Service,
+	record record.Service,
+	uuid uuid.Service,
+) *Service {
+	t := &Service{
 		config,
 		&toolState{
 			nil,
@@ -63,8 +73,13 @@ func NewTool(
 			nil,
 			datastructures.NewSparseSet[ecs.EntityID](),
 
+			eventsBuilder.Events(),
 			world,
-			netSyncToolFactory.Build(world),
+			netSync,
+			connection,
+			record,
+			uuid,
+
 			logger,
 		},
 	}
@@ -81,7 +96,7 @@ func NewTool(
 			t.ListenTransparentEvent(entity, a.(clienttypes.TransparentEventDTO))
 		},
 	}
-	events.Listen(t.EventsBuilder(), func(frames.FrameEvent) {
+	events.Listen(eventsBuilder, func(frames.FrameEvent) {
 		t.loadConnections()
 		for len(t.toRemove) != 0 {
 			entity := t.toRemove[0]
@@ -90,7 +105,7 @@ func NewTool(
 			t.mutex.Unlock()
 
 			t.listeners.Remove(entity)
-			t.RemoveEntity(entity)
+			t.world.RemoveEntity(entity)
 		}
 
 		for len(t.messagesSentFromClient) != 0 {
@@ -108,46 +123,46 @@ func NewTool(
 			listener(message.Client, message.Message)
 		}
 	})
-	t.NetSync().Client().AddDirtySet(t.dirtySet)
-	t.Connection().Component().AddDirtySet(t.dirtySet)
+	t.netSync.Client().AddDirtySet(t.dirtySet)
+	t.connection.Component().AddDirtySet(t.dirtySet)
 
 	return t
 }
 
 // public methods
 
-func (t *Tool) BeforeEvent(event any) {
+func (t *Service) BeforeEvent(event any) {
 	t.loadConnections()
-	if len(t.NetSync().Client().GetEntities()) == 0 {
+	if len(t.netSync.Client().GetEntities()) == 0 {
 		return
 	}
 
 	if t.recordedEventUUID == nil {
-		uuid := t.UUID().NewUUID()
+		uuid := t.uuid.NewUUID()
 		t.recordedEventUUID = &uuid
 	}
-	t.recordingID = t.Record().UUID().StartRecording(t.RecordConfig)
+	t.recordingID = t.record.UUID().StartRecording(t.RecordConfig)
 }
 
-func (t *Tool) AfterEvent(event any) {
+func (t *Service) AfterEvent(event any) {
 	t.loadConnections()
-	if len(t.NetSync().Client().GetEntities()) == 0 {
+	if len(t.netSync.Client().GetEntities()) == 0 {
 		return
 	}
 
-	if recording, ok := t.Record().UUID().Stop(t.recordingID); ok && t.recordedEventUUID != nil {
+	if recording, ok := t.record.UUID().Stop(t.recordingID); ok && t.recordedEventUUID != nil {
 		t.emitChanges(*t.recordedEventUUID, recording)
 	}
 	t.recordingID = 0
 }
 
-func (t *Tool) OnTransparentEvent(event any) {
-	if len(t.NetSync().Client().GetEntities()) == 0 {
+func (t *Service) OnTransparentEvent(event any) {
+	if len(t.netSync.Client().GetEntities()) == 0 {
 		return
 	}
 
-	for _, client := range t.NetSync().Client().GetEntities() {
-		connComp, ok := t.Connection().Component().Get(client)
+	for _, client := range t.netSync.Client().GetEntities() {
+		connComp, ok := t.connection.Component().Get(client)
 		if !ok {
 			return
 		}
@@ -155,13 +170,13 @@ func (t *Tool) OnTransparentEvent(event any) {
 	}
 }
 
-func (t *Tool) ListenFetchState(entity ecs.EntityID, dto clienttypes.FetchStateDTO) {
-	state := t.Record().UUID().GetState(t.RecordConfig)
+func (t *Service) ListenFetchState(entity ecs.EntityID, dto clienttypes.FetchStateDTO) {
+	state := t.record.UUID().GetState(t.RecordConfig)
 	t.sendVisible(entity, nil, state)
 }
 
-func (t *Tool) ListenEmitEvent(entity ecs.EntityID, dto clienttypes.EmitEventDTO) {
-	conn, ok := t.Connection().Component().Get(entity)
+func (t *Service) ListenEmitEvent(entity ecs.EntityID, dto clienttypes.EmitEventDTO) {
+	conn, ok := t.connection.Component().Get(entity)
 	if !ok {
 		return
 	}
@@ -172,11 +187,11 @@ func (t *Tool) ListenEmitEvent(entity ecs.EntityID, dto clienttypes.EmitEventDTO
 		return
 	}
 	t.recordedEventUUID = &dto.ID
-	events.EmitAny(t.Events(), event)
+	events.EmitAny(t.events, event)
 }
 
-func (t *Tool) ListenTransparentEvent(entity ecs.EntityID, dto clienttypes.TransparentEventDTO) {
-	conn, ok := t.Connection().Component().Get(entity)
+func (t *Service) ListenTransparentEvent(entity ecs.EntityID, dto clienttypes.TransparentEventDTO) {
+	conn, ok := t.connection.Component().Get(entity)
 	if !ok {
 		return
 	}
@@ -186,22 +201,22 @@ func (t *Tool) ListenTransparentEvent(entity ecs.EntityID, dto clienttypes.Trans
 		t.logger.Warn(err)
 		return
 	}
-	events.EmitAny(t.Events(), event)
+	events.EmitAny(t.events, event)
 }
 
 // private methods
 
-func (t *Tool) loadConnections() {
+func (t *Service) loadConnections() {
 	for _, entity := range t.dirtySet.Get() {
 		if ok := t.listeners.Get(entity); ok {
 			continue
 		}
 		t.listeners.Add(entity)
-		if _, ok := t.NetSync().Client().Get(entity); !ok {
+		if _, ok := t.netSync.Client().Get(entity); !ok {
 			continue
 		}
 
-		comp, ok := t.Connection().Component().Get(entity)
+		comp, ok := t.connection.Component().Get(entity)
 		if !ok {
 			continue
 		}
@@ -226,8 +241,8 @@ func (t *Tool) loadConnections() {
 	}
 }
 
-func (t *Tool) sendVisible(client ecs.EntityID, eventUUID *uuid.UUID, changes record.UUIDRecording) {
-	connComp, ok := t.Connection().Component().Get(client)
+func (t *Service) sendVisible(client ecs.EntityID, eventUUID *uuid.UUID, changes record.UUIDRecording) {
+	connComp, ok := t.connection.Component().Get(client)
 	if !ok {
 		return
 	}
@@ -269,8 +284,8 @@ func (t *Tool) sendVisible(client ecs.EntityID, eventUUID *uuid.UUID, changes re
 	}()
 }
 
-func (t *Tool) emitChanges(eventUUID uuid.UUID, changes record.UUIDRecording) {
-	for _, client := range t.NetSync().Client().GetEntities() {
+func (t *Service) emitChanges(eventUUID uuid.UUID, changes record.UUIDRecording) {
+	for _, client := range t.netSync.Client().GetEntities() {
 		t.sendVisible(client, &eventUUID, changes)
 	}
 }

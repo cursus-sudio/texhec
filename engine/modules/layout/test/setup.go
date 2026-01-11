@@ -18,11 +18,11 @@ import (
 )
 
 type Setup struct {
-	ecs.World
-	hierarchy.HierarchyTool
-	transform.TransformTool
-	layout.LayoutTool
-	T *testing.T
+	World     ecs.World         `inject:"1"`
+	Hierarchy hierarchy.Service `inject:"1"`
+	Transform transform.Service `inject:"1"`
+	Layout    layout.Service    `inject:"1"`
+	T         *testing.T
 }
 
 func NewSetup(t *testing.T) Setup {
@@ -30,6 +30,7 @@ func NewSetup(t *testing.T) Setup {
 	for _, pkg := range []ioc.Pkg{
 		logger.Package(true, func(c ioc.Dic, message string) { print(message) }),
 		clock.Package(time.RFC3339Nano),
+		ecs.Package(),
 		hierarchypkg.Package(),
 		transformpkg.Package(),
 		layoutpkg.Package(),
@@ -37,27 +38,22 @@ func NewSetup(t *testing.T) Setup {
 		pkg.Register(b)
 	}
 	c := b.Build()
-	setup := Setup{
-		World: ecs.NewWorld(),
-		T:     t,
-	}
-	setup.HierarchyTool = ioc.Get[hierarchy.ToolFactory](c).Build(setup)
-	setup.TransformTool = ioc.Get[transform.ToolFactory](c).Build(setup)
-	setup.LayoutTool = ioc.Get[layout.ToolFactory](c).Build(setup)
+	setup := ioc.GetServices[Setup](c)
+	setup.T = t
 	return setup
 }
 
 func (s Setup) Expect(entity ecs.EntityID, x, y float32) {
 	s.T.Helper()
 	expected := mgl32.Vec3{x, y, 1}
-	pos, _ := s.Transform().AbsolutePos().Get(entity)
+	pos, _ := s.Transform.AbsolutePos().Get(entity)
 	if pos.Pos != expected {
-		pivot, _ := s.Transform().PivotPoint().Get(entity)
-		parentPivot, _ := s.Transform().ParentPivotPoint().Get(entity)
-		size, _ := s.Transform().AbsoluteSize().Get(entity)
+		pivot, _ := s.Transform.PivotPoint().Get(entity)
+		parentPivot, _ := s.Transform.ParentPivotPoint().Get(entity)
+		size, _ := s.Transform.AbsoluteSize().Get(entity)
 
-		parent, _ := s.Hierarchy().Parent(entity)
-		pSize, _ := s.Transform().AbsoluteSize().Get(parent)
+		parent, _ := s.Hierarchy.Parent(entity)
+		pSize, _ := s.Transform.AbsoluteSize().Get(parent)
 		s.T.Errorf(
 			"expected %v and got %v (pivot %v, parent %v, size %v, pSize %v)",
 			expected,

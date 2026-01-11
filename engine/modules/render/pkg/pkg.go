@@ -8,6 +8,7 @@ import (
 	"engine/services/logger"
 	"engine/services/media/window"
 
+	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -25,19 +26,26 @@ func (pkg) Register(b ioc.Builder) {
 		pkg.Register(b)
 	}
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) render.ToolFactory {
-		return internal.NewTool()
+	ioc.RegisterSingleton(b, func(c ioc.Dic) render.Service {
+		return internal.NewTool(
+			ioc.Get[ecs.World](c),
+		)
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) render.System {
-		return ecs.NewSystemRegister(func(w render.World) error {
-			ecs.RegisterSystems(w,
-				internal.NewClearSystem(),
+		return ecs.NewSystemRegister(func() error {
+			ecs.RegisterSystems(
+				internal.NewClearSystem(ioc.Get[events.Builder](c)),
 				internal.NewErrorLogger(
 					ioc.Get[logger.Logger](c),
-					ioc.Get[render.ToolFactory](c).Build(w),
+					ioc.Get[render.Service](c),
+					ioc.Get[events.Builder](c),
 				),
-				internal.NewRenderSystem(ioc.Get[window.Api](c)),
+				internal.NewRenderSystem(
+					ioc.Get[ecs.World](c),
+					ioc.Get[window.Api](c),
+					ioc.Get[events.Builder](c),
+				),
 			)
 			return nil
 		})

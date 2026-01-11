@@ -1,21 +1,11 @@
 package inputs
 
 import (
-	"engine/modules/camera"
 	"engine/modules/collider"
 	"engine/services/ecs"
 )
 
-type ToolFactory ecs.ToolFactory[World, InputsTool]
-type InputsTool interface {
-	Inputs() Interface
-}
-type World interface {
-	ecs.World
-	collider.ColliderTool
-	camera.CameraTool
-}
-type Interface interface {
+type Service interface {
 	Hovered() ecs.ComponentsArray[HoveredComponent]
 	Dragged() ecs.ComponentsArray[DraggedComponent]
 	Stacked() ecs.ComponentsArray[StackedComponent]

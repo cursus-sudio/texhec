@@ -16,16 +16,9 @@ func New(id UUID) Component {
 	return Component{id}
 }
 
-type ToolFactory ecs.ToolFactory[World, UUIDTool]
-type UUIDTool interface {
-	UUID() Interface
-}
-type World interface {
-	ecs.World
-}
-type Interface interface {
+type Service interface {
 	Factory
-	Component() ecs.ComponentsArray[Component]
+	UUID() ecs.ComponentsArray[Component]
 	Entity(UUID) (ecs.EntityID, bool)
 }
 

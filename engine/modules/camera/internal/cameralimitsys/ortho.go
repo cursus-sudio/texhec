@@ -10,8 +10,9 @@ import (
 )
 
 type orthoSys struct {
-	camera.World
-	camera.CameraTool
+	world     ecs.World
+	transform transform.Service
+	camera    camera.Service
 
 	dirtySet ecs.DirtySet
 
@@ -19,27 +20,27 @@ type orthoSys struct {
 }
 
 func NewOrthoSys(
-	cameraToolFactory camera.ToolFactory,
+	world ecs.World,
+	transform transform.Service,
+	camera camera.Service,
 	logger logger.Logger,
 ) camera.System {
-	return ecs.NewSystemRegister(func(w camera.World) error {
-		cameraTool := cameraToolFactory.Build(w)
+	s := &orthoSys{
+		world:     world,
+		transform: transform,
+		camera:    camera,
 
-		s := &orthoSys{
-			World:      w,
-			dirtySet:   ecs.NewDirtySet(),
-			CameraTool: cameraTool,
-			logger:     logger,
-		}
-		s.Transform().AddDirtySet(s.dirtySet)
-		s.Camera().Limits().AddDirtySet(s.dirtySet)
-		s.Camera().Ortho().AddDirtySet(s.dirtySet)
-		s.Camera().Viewport().AddDirtySet(s.dirtySet)
-		s.Camera().NormalizedViewport().AddDirtySet(s.dirtySet)
-		w.Transform().AbsolutePos().BeforeGet(s.BeforeGet)
+		dirtySet: ecs.NewDirtySet(),
+		logger:   logger,
+	}
+	s.transform.AddDirtySet(s.dirtySet)
+	s.camera.Limits().AddDirtySet(s.dirtySet)
+	s.camera.Ortho().AddDirtySet(s.dirtySet)
+	s.camera.Viewport().AddDirtySet(s.dirtySet)
+	s.camera.NormalizedViewport().AddDirtySet(s.dirtySet)
+	s.transform.AbsolutePos().BeforeGet(s.BeforeGet)
 
-		return nil
-	})
+	return nil
 }
 
 func (s *orthoSys) BeforeGet() {
@@ -54,20 +55,20 @@ func (s *orthoSys) BeforeGet() {
 	saves := []save{}
 
 	for _, entity := range ei {
-		limits, ok := s.Camera().Limits().Get(entity)
+		limits, ok := s.camera.Limits().Get(entity)
 		if !ok {
 			continue
 		}
-		ortho, ok := s.Camera().Ortho().Get(entity)
+		ortho, ok := s.camera.Ortho().Get(entity)
 		if !ok {
 			continue
 		}
 
-		pos, ok := s.Transform().AbsolutePos().Get(entity)
+		pos, ok := s.transform.AbsolutePos().Get(entity)
 		if !ok {
 			continue
 		}
-		x, y, w, h := s.Camera().GetViewport(entity)
+		x, y, w, h := s.camera.GetViewport(entity)
 		halfWidth := float32(w-x) / 2 / ortho.Zoom
 		halfHeight := float32(h-y) / 2 / ortho.Zoom
 
@@ -105,6 +106,6 @@ func (s *orthoSys) BeforeGet() {
 		saves = append(saves, save{entity, pos})
 	}
 	for _, save := range saves {
-		s.Transform().AbsolutePos().Set(save.entity, save.pos)
+		s.transform.AbsolutePos().Set(save.entity, save.pos)
 	}
 }

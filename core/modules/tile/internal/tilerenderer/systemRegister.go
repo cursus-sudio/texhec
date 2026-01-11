@@ -3,6 +3,7 @@ package tilerenderer
 import (
 	"core/modules/definition"
 	"core/modules/tile"
+	"engine"
 	"engine/modules/groups"
 	"engine/modules/render"
 	"engine/services/assets"
@@ -27,29 +28,17 @@ type TileData struct {
 	Type       definition.DefinitionID
 }
 
-type global struct {
-	program      program.Program
-	textureArray texturearray.TextureArray
-	layers       []*layer
-}
-
-func (g *global) Release() {
-	g.program.Release()
-	g.textureArray.Release()
-	for _, layer := range g.layers {
-		layer.vao.Release()
-	}
-}
-
 //
 
 type TileRenderSystemRegister struct {
-	logger              logger.Logger
 	window              window.Api
 	textures            datastructures.SparseArray[uint32, image.Image]
 	textureArrayFactory texturearray.Factory
 	vboFactory          vbo.VBOFactory[TileData]
 	assets              assets.Assets
+
+	engine.World
+	Definition definition.Service
 
 	tileSize  int32
 	gridDepth float32
@@ -59,6 +48,8 @@ type TileRenderSystemRegister struct {
 }
 
 func NewTileRenderSystemRegister(
+	world engine.World,
+	definition definition.Service,
 	textureArrayFactory texturearray.Factory,
 	logger logger.Logger,
 	window window.Api,
@@ -70,12 +61,14 @@ func NewTileRenderSystemRegister(
 	groups groups.GroupsComponent,
 ) *TileRenderSystemRegister {
 	return &TileRenderSystemRegister{
-		logger:              logger,
 		window:              window,
 		textures:            datastructures.NewSparseArray[uint32, image.Image](),
 		textureArrayFactory: textureArrayFactory,
 		vboFactory:          vboFactory,
 		assets:              assets,
+
+		World:      world,
+		Definition: definition,
 
 		tileSize:  tileSize,
 		gridDepth: gridDepth,
@@ -97,7 +90,7 @@ func (service *TileRenderSystemRegister) AddType(addedAssets datastructures.Spar
 	}
 }
 
-func (factory *TileRenderSystemRegister) Register(w tile.World) error {
+func (factory *TileRenderSystemRegister) Register() error {
 	vert, err := shader.NewShader(vertSource, shader.VertexShader)
 	if err != nil {
 		return err
@@ -151,20 +144,15 @@ func (factory *TileRenderSystemRegister) Register(w tile.World) error {
 		layers = append(layers, layer)
 	}
 
-	g := &global{p, textureArray, layers}
-	w.SaveGlobal(g)
-
 	dirtySet := ecs.NewDirtySet()
-	tilePosArray := ecs.GetComponentsArray[tile.PosComponent](w)
-	w.Definition().Link().AddDirtySet(dirtySet)
+	tilePosArray := ecs.GetComponentsArray[tile.PosComponent](factory.World)
+	factory.Definition.Link().AddDirtySet(dirtySet)
 	tilePosArray.AddDirtySet(dirtySet)
 
 	s := system{
 		program:   p,
 		locations: locations,
 		window:    factory.window,
-
-		logger: factory.logger,
 
 		textureArray: textureArray,
 		rendered:     datastructures.NewSparseArray[ecs.EntityID, tile.PosComponent](),
@@ -174,11 +162,12 @@ func (factory *TileRenderSystemRegister) Register(w tile.World) error {
 		gridDepth: factory.gridDepth,
 
 		dirtySet:     dirtySet,
-		world:        w,
+		World:        factory.World,
+		Definition:   factory.Definition,
 		gridGroups:   factory.groups,
 		tilePosArray: tilePosArray,
 	}
 
-	events.Listen(w.EventsBuilder(), s.Listen)
+	events.Listen(factory.EventsBuilder, s.Listen)
 	return nil
 }

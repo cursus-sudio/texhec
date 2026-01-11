@@ -5,7 +5,7 @@ import (
 	"engine/services/ecs"
 )
 
-type System ecs.SystemRegister[ecs.World]
+type System ecs.SystemRegister
 
 type StopEvent struct {
 	Channel Channel

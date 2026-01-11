@@ -18,7 +18,7 @@ type BackwardRecording struct {
 }
 
 type entityKeyedRecorder struct {
-	*tool
+	*service
 
 	i     record.RecordingID
 	holes datastructures.SparseSet[record.RecordingID]
@@ -28,7 +28,7 @@ type entityKeyedRecorder struct {
 }
 
 func newEntityKeyedRecorder(
-	t *tool,
+	t *service,
 ) *entityKeyedRecorder {
 	entityKeyedRecorder := &entityKeyedRecorder{
 		t,

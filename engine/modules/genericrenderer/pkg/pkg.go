@@ -1,9 +1,14 @@
 package genericrendererpkg
 
 import (
+	"engine/modules/camera"
 	"engine/modules/genericrenderer"
 	"engine/modules/genericrenderer/internal/renderer"
+	"engine/modules/groups"
+	"engine/modules/render"
+	"engine/modules/transform"
 	"engine/services/assets"
+	"engine/services/ecs"
 	"engine/services/graphics/texture"
 	"engine/services/graphics/vao/vbo"
 	"engine/services/logger"
@@ -11,6 +16,7 @@ import (
 	"unsafe"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -38,7 +44,13 @@ func (pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) genericrenderer.System {
 		return renderer.NewSystem(
-			ioc.Get[genericrenderer.ToolFactory](c),
+			ioc.Get[events.Builder](c),
+			ioc.Get[ecs.World](c),
+			ioc.Get[genericrenderer.Service](c),
+			ioc.Get[render.Service](c),
+			ioc.Get[camera.Service](c),
+			ioc.Get[groups.Service](c),
+			ioc.Get[transform.Service](c),
 			ioc.Get[window.Api](c),
 			ioc.Get[assets.AssetsStorage](c),
 			ioc.Get[logger.Logger](c),
@@ -47,7 +59,7 @@ func (pkg) Register(b ioc.Builder) {
 		)
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) genericrenderer.ToolFactory {
-		return renderer.NewToolFactory()
+	ioc.RegisterSingleton(b, func(c ioc.Dic) genericrenderer.Service {
+		return renderer.NewService(ioc.Get[ecs.World](c))
 	})
 }

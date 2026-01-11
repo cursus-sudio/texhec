@@ -14,17 +14,17 @@ func TestHierarchy(t *testing.T) {
 	setup := NewSetup(t)
 	defaultGroups := groups.EmptyGroups().Ptr().Enable(G1).Val()
 
-	parent := setup.NewEntity()
-	setup.Groups().Component().Set(parent, defaultGroups)
+	parent := setup.world.NewEntity()
+	setup.groups.Component().Set(parent, defaultGroups)
 
-	child := setup.NewEntity()
-	setup.Hierarchy().SetParent(child, parent)
+	child := setup.world.NewEntity()
+	setup.hierarchy.SetParent(child, parent)
 
-	grandChild := setup.NewEntity()
-	setup.Hierarchy().SetParent(grandChild, child)
+	grandChild := setup.world.NewEntity()
+	setup.hierarchy.SetParent(grandChild, child)
 
-	setup.Groups().Inherit().Set(grandChild, groups.InheritGroupsComponent{})
-	setup.Groups().Inherit().Set(child, groups.InheritGroupsComponent{})
+	setup.groups.Inherit().Set(grandChild, groups.InheritGroupsComponent{})
+	setup.groups.Inherit().Set(child, groups.InheritGroupsComponent{})
 
 	setup.expectGroups(child, defaultGroups)
 	setup.expectGroups(grandChild, defaultGroups)

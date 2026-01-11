@@ -14,15 +14,15 @@ type state[Component transition.Lerp[Component]] struct {
 	lerpArray      ecs.ComponentsArray[transition.TransitionComponent[Component]]
 }
 
-type tool[Component transition.Lerp[Component]] struct {
+type Service[Component transition.Lerp[Component]] struct {
 	*state[Component]
 }
 
-func NewTool[Component transition.Lerp[Component]](w ecs.World) *tool[Component] {
+func NewService[Component transition.Lerp[Component]](w ecs.World) *Service[Component] {
 	config := record.NewConfig()
 	record.AddToConfig[Component](config)
 
-	return &tool[Component]{
+	return &Service[Component]{
 		state: &state[Component]{
 			recordingID: 0,
 			config:      config,

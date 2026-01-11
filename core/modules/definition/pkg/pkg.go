@@ -4,6 +4,7 @@ import (
 	"core/modules/definition"
 	"core/modules/definition/internal"
 	"engine/services/codec"
+	"engine/services/ecs"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -21,7 +22,7 @@ func (pkg) Register(b ioc.Builder) {
 			Register(definition.DefinitionLinkComponent{})
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) definition.ToolFactory {
-		return internal.NewToolFactory()
+	ioc.RegisterSingleton(b, func(c ioc.Dic) definition.Service {
+		return internal.NewToolFactory(ioc.Get[ecs.World](c))
 	})
 }

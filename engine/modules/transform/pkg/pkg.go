@@ -1,10 +1,12 @@
 package transformpkg
 
 import (
+	"engine/modules/hierarchy"
 	"engine/modules/transform"
-	"engine/modules/transform/internal/transformtool"
+	"engine/modules/transform/internal/transformservice"
 	transitionpkg "engine/modules/transition/pkg"
 	"engine/services/codec"
+	"engine/services/ecs"
 	"engine/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -51,8 +53,10 @@ func (pkg pkg) Register(b ioc.Builder) {
 		pkg.Register(b)
 	}
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) transform.ToolFactory {
-		return transformtool.NewTransformTool(
+	ioc.RegisterSingleton(b, func(c ioc.Dic) transform.Service {
+		return transformservice.NewService(
+			ioc.Get[ecs.World](c),
+			ioc.Get[hierarchy.Service](c),
 			ioc.Get[logger.Logger](c),
 			pkg.defaultRot,
 			pkg.defaultSize,

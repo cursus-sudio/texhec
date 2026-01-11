@@ -14,12 +14,13 @@ type sys struct {
 
 func NewQuitSystem(
 	runtime runtime.Runtime,
+	eventsBuilder events.Builder,
 ) inputs.System {
-	return ecs.NewSystemRegister(func(w inputs.World) error {
+	return ecs.NewSystemRegister(func() error {
 		s := &sys{
 			runtime: runtime,
 		}
-		events.Listen(w.EventsBuilder(), s.Listen)
+		events.Listen(eventsBuilder, s.Listen)
 		return nil
 	})
 }

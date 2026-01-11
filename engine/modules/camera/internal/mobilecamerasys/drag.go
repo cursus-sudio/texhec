@@ -3,6 +3,7 @@ package mobilecamerasys
 import (
 	"engine/modules/camera"
 	"engine/modules/inputs"
+	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"engine/services/media/window"
@@ -15,8 +16,9 @@ type dragSystem struct {
 	isHeld bool
 	button uint8
 
-	camera.World
-	camera.CameraTool
+	world     ecs.World
+	transform transform.Service
+	camera    camera.Service
 
 	window window.Api
 	logger logger.Logger
@@ -24,33 +26,39 @@ type dragSystem struct {
 
 func NewDragSystem(
 	dragButton uint8,
-	cameraCtors camera.ToolFactory,
+
+	world ecs.World,
+	transform transform.Service,
+	camera camera.Service,
+
+	eventsBuilder events.Builder,
 	window window.Api,
 	logger logger.Logger,
 ) camera.System {
-	return ecs.NewSystemRegister(func(w camera.World) error {
+	return ecs.NewSystemRegister(func() error {
 		s := &dragSystem{
 			isHeld: false,
 			button: dragButton,
 
-			World:      w,
-			CameraTool: cameraCtors.Build(w),
+			world:     world,
+			transform: transform,
+			camera:    camera,
 
 			window: window,
 			logger: logger,
 		}
-		events.Listen(w.EventsBuilder(), s.Listen)
+		events.Listen(eventsBuilder, s.Listen)
 		return nil
 	})
 }
 
 func (s *dragSystem) Listen(e inputs.DragEvent) {
-	for _, cameraEntity := range s.Camera().Mobile().GetEntities() {
-		pos, _ := s.Transform().AbsolutePos().Get(cameraEntity)
-		rot, _ := s.Transform().AbsoluteRotation().Get(cameraEntity)
+	for _, cameraEntity := range s.camera.Mobile().GetEntities() {
+		pos, _ := s.transform.AbsolutePos().Get(cameraEntity)
+		rot, _ := s.transform.AbsoluteRotation().Get(cameraEntity)
 
-		rayBefore := s.Camera().ShootRay(cameraEntity, e.From)
-		rayAfter := s.Camera().ShootRay(cameraEntity, e.To)
+		rayBefore := s.camera.ShootRay(cameraEntity, e.From)
+		rayAfter := s.camera.ShootRay(cameraEntity, e.To)
 
 		// apply difference
 		pos.Pos = pos.Pos.Add(rayBefore.Pos.Sub(rayAfter.Pos))
@@ -58,7 +66,7 @@ func (s *dragSystem) Listen(e inputs.DragEvent) {
 		rotationDifference := mgl32.QuatBetweenVectors(rayBefore.Direction, rayAfter.Direction)
 		rot.Rotation = rotationDifference.Mul(rot.Rotation)
 
-		s.Transform().AbsolutePos().Set(cameraEntity, pos)
-		s.Transform().AbsoluteRotation().Set(cameraEntity, rot)
+		s.transform.AbsolutePos().Set(cameraEntity, pos)
+		s.transform.AbsoluteRotation().Set(cameraEntity, rot)
 	}
 }

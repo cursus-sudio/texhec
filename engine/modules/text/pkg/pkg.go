@@ -1,17 +1,22 @@
 package textpkg
 
 import (
+	"engine/modules/camera"
+	"engine/modules/groups"
 	"engine/modules/text"
 	"engine/modules/text/internal/textrenderer"
-	"engine/modules/text/internal/texttool"
+	"engine/modules/text/internal/textservice"
+	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/datastructures"
+	"engine/services/ecs"
 	"engine/services/graphics/texturearray"
 	"engine/services/graphics/vao/vbo"
 	"engine/services/logger"
 	"unsafe"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 	"golang.org/x/image/font/opentype"
 )
@@ -60,8 +65,11 @@ func Package(
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) text.ToolFactory {
-		return texttool.NewTool(ioc.Get[logger.Logger](c))
+	ioc.RegisterSingleton(b, func(c ioc.Dic) text.Service {
+		return textservice.NewService(
+			ioc.Get[ecs.World](c),
+			ioc.Get[logger.Logger](c),
+		)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) textrenderer.FontService {
 		return textrenderer.NewFontService(
@@ -75,9 +83,11 @@ func (pkg pkg) Register(b ioc.Builder) {
 		)
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) textrenderer.LayoutServiceFactory {
-		return textrenderer.NewLayoutServiceFactory(
-			ioc.Get[text.ToolFactory](c),
+	ioc.RegisterSingleton(b, func(c ioc.Dic) textrenderer.LayoutService {
+		return textrenderer.NewLayoutService(
+			ioc.Get[ecs.World](c),
+			ioc.Get[transform.Service](c),
+			ioc.Get[text.Service](c),
 			ioc.Get[logger.Logger](c),
 			ioc.Get[textrenderer.FontService](c),
 			ioc.Get[textrenderer.FontKeys](c),
@@ -94,11 +104,16 @@ func (pkg pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) text.System {
-		return textrenderer.NewTextRendererRegister(
-			ioc.Get[text.ToolFactory](c),
+		return textrenderer.NewTextRenderer(
+			ioc.Get[events.Builder](c),
+			ioc.Get[ecs.World](c),
+			ioc.Get[camera.Service](c),
+			ioc.Get[groups.Service](c),
+			ioc.Get[transform.Service](c),
+			ioc.Get[text.Service](c),
 			ioc.Get[textrenderer.FontService](c),
 			ioc.Get[vbo.VBOFactory[textrenderer.Glyph]](c),
-			ioc.Get[textrenderer.LayoutServiceFactory](c),
+			ioc.Get[textrenderer.LayoutService](c),
 			ioc.Get[logger.Logger](c),
 			pkg.defaultFontFamily(c).FontFamily,
 			pkg.defaultColor,

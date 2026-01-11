@@ -14,14 +14,10 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
-type world struct {
-	ecs.World
-	hierarchy.HierarchyTool
-	transform.TransformTool
-}
-
 type Setup struct {
-	world
+	ecs.World
+	hierarchy hierarchy.Service
+	transform transform.Service
 }
 
 func NewSetup() Setup {
@@ -29,23 +25,23 @@ func NewSetup() Setup {
 	for _, pkg := range []ioc.Pkg{
 		logger.Package(true, func(c ioc.Dic, message string) { print(message) }),
 		clock.Package(time.RFC3339Nano),
+		ecs.Package(),
 		hierarchypkg.Package(),
 		transformpkg.Package(),
 	} {
 		pkg.Register(b)
 	}
 	c := b.Build()
-	world := world{
-		World: ecs.NewWorld(),
+	return Setup{
+		ioc.Get[ecs.World](c),
+		ioc.Get[hierarchy.Service](c),
+		ioc.Get[transform.Service](c),
 	}
-	world.HierarchyTool = ioc.Get[hierarchy.ToolFactory](c).Build(world)
-	world.TransformTool = ioc.Get[transform.ToolFactory](c).Build(world)
-	return Setup{world}
 }
 
 func (setup Setup) expectAbsolutePos(t *testing.T, entity ecs.EntityID, expectedPos transform.PosComponent) {
 	t.Helper()
-	pos, _ := setup.Transform().AbsolutePos().Get(entity)
+	pos, _ := setup.transform.AbsolutePos().Get(entity)
 	if pos.Pos != expectedPos.Pos {
 		t.Errorf("expected pos %v but has %v", expectedPos, pos)
 	}
@@ -53,7 +49,7 @@ func (setup Setup) expectAbsolutePos(t *testing.T, entity ecs.EntityID, expected
 
 func (setup Setup) expectAbsoluteSize(t *testing.T, entity ecs.EntityID, expectedSize transform.SizeComponent) {
 	t.Helper()
-	size, _ := setup.Transform().AbsoluteSize().Get(entity)
+	size, _ := setup.transform.AbsoluteSize().Get(entity)
 	if size.Size != expectedSize.Size {
 		t.Errorf("expected size %v but has %v", expectedSize, size)
 	}

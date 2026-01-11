@@ -20,11 +20,13 @@ type entityArray struct {
 	ecs.AnyComponentArray
 }
 
-type tool struct {
-	world       record.World
+type service struct {
+	world       ecs.World
+	worldUUID   uuid.Service
 	worldArrays map[string]entityArray
 
-	worldCopy       record.World
+	worldCopy       ecs.World
+	worldCopyUUID   ecs.ComponentsArray[uuid.Component]
 	worldCopyArrays map[string]ecs.AnyComponentArray
 
 	logger logger.Logger
@@ -33,51 +35,41 @@ type tool struct {
 	uuid   *uuidKeyedRecorder
 }
 
-func NewToolFactory(
-	uuidToolFactory uuid.ToolFactory,
+func NewService(
+	uuidService uuid.Service,
 	logger logger.Logger,
-) record.ToolFactory {
-	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(w record.World) record.RecordTool {
-		mutex.Lock()
-		defer mutex.Unlock()
-		if t, ok := ecs.GetGlobal[tool](w); ok {
-			return t
-		}
-		t := &tool{
-			world:       w,
-			worldArrays: make(map[string]entityArray),
+	world ecs.World,
+) record.Service {
+	t := &service{
+		world:       world,
+		worldUUID:   uuidService,
+		worldArrays: make(map[string]entityArray),
 
-			worldCopy:       newWorld(uuidToolFactory),
-			worldCopyArrays: make(map[string]ecs.AnyComponentArray),
+		worldCopy:       ecs.NewWorld(),
+		worldCopyUUID:   ecs.GetComponentsArray[uuid.Component](world),
+		worldCopyArrays: make(map[string]ecs.AnyComponentArray),
 
-			logger: logger,
-			mutex:  &sync.Mutex{},
-		}
-		t.entity = newEntityKeyedRecorder(t)
-		t.uuid = newUUIDKeyedRecorder(t)
-		w.SaveGlobal(t)
+		logger: logger,
+		mutex:  &sync.Mutex{},
+	}
+	t.entity = newEntityKeyedRecorder(t)
+	t.uuid = newUUIDKeyedRecorder(t)
 
-		return t
-	})
-}
-
-func (t *tool) Record() record.Interface {
 	return t
 }
 
 //
 
-func (t *tool) Entity() record.EntityKeyedRecorder {
+func (t *service) Entity() record.EntityKeyedRecorder {
 	return t.entity
 }
-func (t *tool) UUID() record.UUIDKeyedRecorder {
+func (t *service) UUID() record.UUIDKeyedRecorder {
 	return t.uuid
 }
 
 //
 
-func (t *tool) SyncBackwardsRecordingState() {
+func (t *service) SyncBackwardsRecordingState() {
 	for arrayType, array := range t.worldArrays {
 		t.synchronizeArrayState(
 			array,
@@ -86,7 +78,7 @@ func (t *tool) SyncBackwardsRecordingState() {
 	}
 }
 
-func (t *tool) synchronizeArrayState(
+func (t *service) synchronizeArrayState(
 	worldArray entityArray,
 	worldCopyArray ecs.AnyComponentArray,
 ) {
@@ -121,14 +113,14 @@ func (t *tool) synchronizeArrayState(
 	// apply in UUID arrays
 	for _, recording := range t.uuid.backwardsRecordings.GetValues() {
 		for _, entity := range entities {
-			uuid, ok := t.worldCopy.UUID().Component().Get(entity)
+			uuid, ok := t.worldCopyUUID.Get(entity)
 			if !ok {
-				uuid, ok = t.world.UUID().Component().Get(entity)
+				uuid, ok = t.worldUUID.UUID().Get(entity)
 				if !ok {
-					uuid.ID = t.world.UUID().NewUUID()
-					t.world.UUID().Component().Set(entity, uuid)
+					uuid.ID = t.worldUUID.NewUUID()
+					t.worldUUID.UUID().Set(entity, uuid)
 				}
-				t.worldCopy.UUID().Component().Set(entity, uuid)
+				t.worldCopyUUID.Set(entity, uuid)
 			}
 			if _, ok := recording.Entities[uuid.ID]; ok {
 				continue
@@ -165,7 +157,7 @@ func (t *tool) synchronizeArrayState(
 	}
 }
 
-func (t *tool) GetWorldArray(arrayType reflect.Type, config record.Config) entityArray {
+func (t *service) GetWorldArray(arrayType reflect.Type, config record.Config) entityArray {
 	arrayKey := arrayType.String()
 	if array, ok := t.worldArrays[arrayKey]; ok {
 		return array
@@ -192,7 +184,7 @@ func (t *tool) GetWorldArray(arrayType reflect.Type, config record.Config) entit
 	return entityArray
 }
 
-func (t *tool) GetWorldCopyArray(arrayType reflect.Type, config record.Config) ecs.AnyComponentArray {
+func (t *service) GetWorldCopyArray(arrayType reflect.Type, config record.Config) ecs.AnyComponentArray {
 	arrayKey := arrayType.String()
 	if array, ok := t.worldCopyArrays[arrayKey]; ok {
 		return array

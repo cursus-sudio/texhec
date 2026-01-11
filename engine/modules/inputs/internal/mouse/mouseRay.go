@@ -1,8 +1,10 @@
 package mouse
 
 import (
+	"engine/modules/camera"
+	"engine/modules/collider"
 	"engine/modules/inputs"
-	"engine/modules/inputs/internal/tool"
+	"engine/modules/inputs/internal/service"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"engine/services/media/window"
@@ -19,7 +21,11 @@ func NewShootRayEvent() ShootRayEvent {
 }
 
 type cameraRaySystem struct {
-	inputs.World
+	world    ecs.World
+	camera   camera.Service
+	collider collider.Service
+
+	events events.Events
 	logger logger.Logger
 	window window.Api
 
@@ -27,20 +33,28 @@ type cameraRaySystem struct {
 }
 
 func NewCameraRaySystem(
+	eventsBuilder events.Builder,
+	world ecs.World,
+	camera camera.Service,
+	collider collider.Service,
 	logger logger.Logger,
 	window window.Api,
 ) inputs.System {
-	return ecs.NewSystemRegister(func(w inputs.World) error {
+	return ecs.NewSystemRegister(func() error {
 		s := &cameraRaySystem{
-			World:  w,
+			world:    world,
+			camera:   camera,
+			collider: collider,
+
+			events: eventsBuilder.Events(),
 			logger: logger,
 			window: window,
 
 			targets: nil,
 		}
-		events.ListenE(w.EventsBuilder(), s.Listen)
-		events.Listen(w.EventsBuilder(), func(sdl.MouseButtonEvent) {
-			events.Emit(s.Events(), ShootRayEvent{})
+		events.ListenE(eventsBuilder, s.Listen)
+		events.Listen(eventsBuilder, func(sdl.MouseButtonEvent) {
+			events.Emit(eventsBuilder.Events(), ShootRayEvent{})
 		})
 
 		return nil
@@ -51,10 +65,10 @@ func (s *cameraRaySystem) Listen(args ShootRayEvent) error {
 	mousePos := s.window.GetMousePos()
 
 	targets := []inputs.Target{}
-	for _, cameraEntity := range s.Camera().Component().GetEntities() {
-		ray := s.Camera().ShootRay(cameraEntity, mousePos)
+	for _, cameraEntity := range s.camera.Component().GetEntities() {
+		ray := s.camera.ShootRay(cameraEntity, mousePos)
 
-		cameraCollisions := s.Collider().RaycastAll(ray)
+		cameraCollisions := s.collider.RaycastAll(ray)
 		for _, collision := range cameraCollisions {
 			target := inputs.Target{
 				ObjectRayCollision: collision,
@@ -82,7 +96,7 @@ func (s *cameraRaySystem) Listen(args ShootRayEvent) error {
 
 	targetsCopy := make([]inputs.Target, len(s.targets))
 	copy(targetsCopy, s.targets)
-	events.Emit(s.Events(), tool.RayChangedTargetEvent{
+	events.Emit(s.events, service.RayChangedTargetEvent{
 		Targets: targetsCopy,
 	})
 

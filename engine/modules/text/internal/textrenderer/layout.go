@@ -2,6 +2,7 @@ package textrenderer
 
 import (
 	"engine/modules/text"
+	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"unicode/utf8"
@@ -27,8 +28,9 @@ type LayoutService interface {
 }
 
 type layoutService struct {
-	text.World
-	text.TextTool
+	world     ecs.World
+	transform transform.Service
+	text      text.Service
 
 	logger      logger.Logger
 	fontService FontService
@@ -42,8 +44,9 @@ type layoutService struct {
 }
 
 func NewLayoutService(
-	world text.World,
-	textToolFactory text.ToolFactory,
+	world ecs.World,
+	transform transform.Service,
+	textService text.Service,
 
 	logger logger.Logger,
 	fontService FontService,
@@ -56,8 +59,9 @@ func NewLayoutService(
 	defaultTextAlign text.TextAlignComponent,
 ) LayoutService {
 	return &layoutService{
-		World:    world,
-		TextTool: textToolFactory.Build(world),
+		world:     world,
+		transform: transform,
+		text:      textService,
 
 		logger:      logger,
 		fontService: fontService,
@@ -90,16 +94,16 @@ type line struct {
 func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	// TODO add overflow read, text align read and transform modification
 
-	size, _ := s.Transform().AbsoluteSize().Get(entity)
-	textComponent, ok := s.Text().Content().Get(entity)
+	size, _ := s.transform.AbsoluteSize().Get(entity)
+	textComponent, ok := s.text.Content().Get(entity)
 	if !ok {
 		return Layout{}, nil
 	}
-	fontFamily, ok := s.Text().FontFamily().Get(entity)
+	fontFamily, ok := s.text.FontFamily().Get(entity)
 	if !ok {
 		fontFamily = s.defaultFontFamily
 	}
-	fontSize, ok := s.Text().FontSize().Get(entity)
+	fontSize, ok := s.text.FontSize().Get(entity)
 	if !ok {
 		fontSize = s.defaultFontSize
 	}
@@ -107,11 +111,11 @@ func (s *layoutService) EntityLayout(entity ecs.EntityID) (Layout, error) {
 	// if err != nil {
 	// 	overflow = s.defaultOverflow
 	// }
-	breakComponent, ok := s.Text().Break().Get(entity)
+	breakComponent, ok := s.text.Break().Get(entity)
 	if !ok {
 		breakComponent = s.defaultBreak
 	}
-	textAlign, ok := s.Text().Align().Get(entity)
+	textAlign, ok := s.text.Align().Get(entity)
 	if !ok {
 		textAlign = s.defaultTextAlign
 	}

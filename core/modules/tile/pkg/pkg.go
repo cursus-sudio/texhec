@@ -5,14 +5,14 @@ import (
 	"core/modules/tile"
 	"core/modules/tile/internal/tilecollider"
 	"core/modules/tile/internal/tilerenderer"
-	"core/modules/tile/internal/tiletool"
+	"core/modules/tile/internal/tileservice"
 	"core/modules/tile/internal/tileui"
+	"core/modules/ui"
+	"engine"
 	"engine/modules/collider"
 	"engine/modules/groups"
-	"engine/modules/uuid"
 	"engine/services/codec"
 	"engine/services/ecs"
-	"engine/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -35,7 +35,7 @@ func Package(
 ) ioc.Pkg {
 	return pkg{
 		[]ioc.Pkg{
-			tiletool.Package(
+			tileservice.Package(
 				tileSize,
 				gridDepth,
 				mainLayer,
@@ -67,26 +67,24 @@ func (pkg pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.System {
-		tileToolFactory := ioc.Get[tile.ToolFactory](c)
-		logger := ioc.Get[logger.Logger](c)
 		systems := []tile.System{
 			tileui.NewSystem(
-				logger,
-				ioc.Get[tile.ToolFactory](c),
+				ioc.GetServices[engine.World](c),
+				ioc.Get[ui.Service](c),
+				ioc.Get[tile.Service](c),
 			),
 			tilecollider.TileColliderSystem(
-				tileToolFactory,
-				logger,
+				ioc.GetServices[engine.World](c),
+				ioc.Get[tile.Service](c),
 				pkg.tileSize,
 				pkg.gridDepth,
 				pkg.tileGroups,
 				collider.NewCollider(ioc.Get[gameassets.GameAssets](c).SquareCollider),
-				ioc.Get[uuid.Factory](c),
 			),
 		}
-		return ecs.NewSystemRegister(func(world tile.World) error {
+		return ecs.NewSystemRegister(func() error {
 			for _, system := range systems {
-				if err := system.Register(world); err != nil {
+				if err := system.Register(); err != nil {
 					return err
 				}
 			}

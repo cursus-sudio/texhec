@@ -2,7 +2,10 @@ package textrenderer
 
 import (
 	_ "embed"
+	"engine/modules/camera"
+	"engine/modules/groups"
 	"engine/modules/text"
+	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
@@ -26,12 +29,17 @@ var geomSource string
 var fragSource string
 
 type textRendererRegister struct {
-	textToolFactory      text.ToolFactory
-	fontService          FontService
-	vboFactory           vbo.VBOFactory[Glyph]
-	layoutServiceFactory LayoutServiceFactory
-	logger               logger.Logger
-	textureArrayFactory  texturearray.Factory
+	eventsBuilder       events.Builder
+	world               ecs.World
+	camera              camera.Service
+	groups              groups.Service
+	transform           transform.Service
+	text                text.Service
+	fontService         FontService
+	vboFactory          vbo.VBOFactory[Glyph]
+	layoutService       LayoutService
+	logger              logger.Logger
+	textureArrayFactory texturearray.Factory
 
 	defaultTextAsset assets.AssetID
 	defaultColor     text.TextColorComponent
@@ -41,11 +49,16 @@ type textRendererRegister struct {
 	removeOncePerNCalls uint16
 }
 
-func NewTextRendererRegister(
-	textToolFactory text.ToolFactory,
+func NewTextRenderer(
+	eventsBuilder events.Builder,
+	world ecs.World,
+	camera camera.Service,
+	groups groups.Service,
+	transform transform.Service,
+	text text.Service,
 	fontService FontService,
 	vboFactory vbo.VBOFactory[Glyph],
-	layoutServiceFactory LayoutServiceFactory,
+	layoutService LayoutService,
 	logger logger.Logger,
 	defaultTextAsset assets.AssetID,
 	defaultColor text.TextColorComponent,
@@ -54,12 +67,17 @@ func NewTextRendererRegister(
 	removeOncePerNCalls uint16,
 ) text.System {
 	return &textRendererRegister{
-		textToolFactory:      textToolFactory,
-		fontService:          fontService,
-		vboFactory:           vboFactory,
-		layoutServiceFactory: layoutServiceFactory,
-		logger:               logger,
-		textureArrayFactory:  textureArrayFactory,
+		eventsBuilder:       eventsBuilder,
+		world:               world,
+		camera:              camera,
+		groups:              groups,
+		transform:           transform,
+		text:                text,
+		fontService:         fontService,
+		vboFactory:          vboFactory,
+		layoutService:       layoutService,
+		logger:              logger,
+		textureArrayFactory: textureArrayFactory,
 
 		defaultTextAsset: defaultTextAsset,
 		defaultColor:     defaultColor,
@@ -69,7 +87,7 @@ func NewTextRendererRegister(
 	}
 }
 
-func (f *textRendererRegister) Register(w text.World) error {
+func (f *textRendererRegister) Register() error {
 	vert, err := shader.NewShader(vertSource, shader.VertexShader)
 	if err != nil {
 		return err
@@ -107,8 +125,11 @@ func (f *textRendererRegister) Register(w text.World) error {
 	renderer := &textRenderer{
 		textRendererRegister: f,
 
-		World: w,
-		text:  f.textToolFactory.Build(w).Text(),
+		world:     f.world,
+		groups:    f.groups,
+		camera:    f.camera,
+		transform: f.transform,
+		text:      f.text,
 
 		logger:      f.logger,
 		fontService: f.fontService,
@@ -127,24 +148,22 @@ func (f *textRendererRegister) Register(w text.World) error {
 		layoutsBatches: datastructures.NewSparseArray[ecs.EntityID, layoutBatch](),
 	}
 
-	renderer.Transform().AddDirtySet(renderer.dirtyEntities)
+	renderer.transform.AddDirtySet(renderer.dirtyEntities)
 
 	arrays := []ecs.AnyComponentArray{
-		ecs.GetComponentsArray[text.TextComponent](w),
-		ecs.GetComponentsArray[text.BreakComponent](w),
-		ecs.GetComponentsArray[text.FontFamilyComponent](w),
+		ecs.GetComponentsArray[text.TextComponent](f.world),
+		ecs.GetComponentsArray[text.BreakComponent](f.world),
+		ecs.GetComponentsArray[text.FontFamilyComponent](f.world),
 		// ecs.GetComponentsArray[text.Overflow](w),
-		ecs.GetComponentsArray[text.FontSizeComponent](w),
-		ecs.GetComponentsArray[text.TextAlignComponent](w),
+		ecs.GetComponentsArray[text.FontSizeComponent](f.world),
+		ecs.GetComponentsArray[text.TextAlignComponent](f.world),
 	}
 
 	for _, array := range arrays {
 		array.AddDirtySet(renderer.dirtyEntities)
 	}
 
-	w.SaveGlobal(renderer)
-
-	events.Listen(w.EventsBuilder(), renderer.Listen)
+	events.Listen(f.eventsBuilder, renderer.Listen)
 
 	return nil
 }

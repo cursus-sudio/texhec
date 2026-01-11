@@ -14,11 +14,12 @@ type inputsSystem struct {
 }
 
 func NewInputsSystem(
+	eventsBuilder events.Builder,
 	mediainputs mediainputs.Api,
 ) inputs.System {
-	return ecs.NewSystemRegister(func(w inputs.World) error {
+	return ecs.NewSystemRegister(func() error {
 		s := &inputsSystem{inputs: mediainputs}
-		events.Listen(w.EventsBuilder(), s.Listen)
+		events.Listen(eventsBuilder, s.Listen)
 		return nil
 	})
 }

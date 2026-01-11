@@ -1,19 +1,11 @@
 package drag
 
 import (
-	"engine/modules/camera"
 	"engine/modules/inputs"
-	"engine/modules/transform"
 	"engine/services/ecs"
 )
 
-type World interface {
-	ecs.World
-	transform.TransformTool
-	camera.CameraTool
-}
-
-type System ecs.SystemRegister[World]
+type System ecs.SystemRegister
 
 //
 

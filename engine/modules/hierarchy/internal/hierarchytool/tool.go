@@ -5,7 +5,6 @@ import (
 	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/logger"
-	"sync"
 )
 
 type parentComponent struct{}
@@ -22,36 +21,26 @@ type tool struct {
 	flatChildren datastructures.SparseArray[ecs.EntityID, datastructures.SparseSet[ecs.EntityID]]
 }
 
-func NewTool(logger logger.Logger) hierarchy.ToolFactory {
-	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(w hierarchy.World) hierarchy.HierarchyTool {
-		mutex.Lock()
-		defer mutex.Unlock()
-		if tool, ok := ecs.GetGlobal[tool](w); ok {
-			return tool
-		}
+func NewService(
+	world ecs.World,
+	logger logger.Logger,
+) hierarchy.Service {
+	t := &tool{
+		logger,
+		world,
+		ecs.GetComponentsArray[hierarchy.Component](world),
+		ecs.GetComponentsArray[parentComponent](world),
+		datastructures.NewSparseArray[ecs.EntityID, ecs.EntityID](),
+		datastructures.NewSparseArray[ecs.EntityID, datastructures.SparseSet[ecs.EntityID]](),
+		datastructures.NewSparseArray[ecs.EntityID, datastructures.SparseSet[ecs.EntityID]](),
+	}
+	t.hierarchyArray.OnUpsert(t.handleHierarchyChange)
+	t.hierarchyArray.OnRemove(t.handleHierarchyChange)
+	t.parentArray.OnRemove(t.handleParentChange)
 
-		t := &tool{
-			logger,
-			w,
-			ecs.GetComponentsArray[hierarchy.Component](w),
-			ecs.GetComponentsArray[parentComponent](w),
-			datastructures.NewSparseArray[ecs.EntityID, ecs.EntityID](),
-			datastructures.NewSparseArray[ecs.EntityID, datastructures.SparseSet[ecs.EntityID]](),
-			datastructures.NewSparseArray[ecs.EntityID, datastructures.SparseSet[ecs.EntityID]](),
-		}
-		w.SaveGlobal(t)
-		t.hierarchyArray.OnUpsert(t.handleHierarchyChange)
-		t.hierarchyArray.OnRemove(t.handleHierarchyChange)
-		t.parentArray.OnRemove(t.handleParentChange)
-
-		return t
-	})
-}
-
-func (t *tool) Hierarchy() hierarchy.Interface {
 	return t
 }
+
 func (t *tool) Component() ecs.ComponentsArray[hierarchy.Component] {
 	return t.hierarchyArray
 }

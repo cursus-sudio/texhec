@@ -1,21 +1,10 @@
 package collider
 
 import (
-	"engine/modules/groups"
-	"engine/modules/transform"
 	"engine/services/ecs"
 )
 
-type ToolFactory ecs.ToolFactory[World, ColliderTool]
-type ColliderTool interface {
-	Collider() Interface
-}
-type World interface {
-	ecs.World
-	transform.TransformTool
-	groups.GroupsTool
-}
-type Interface interface {
+type Service interface {
 	Component() ecs.ComponentsArray[Component]
 
 	// todo add collision groups

@@ -5,9 +5,9 @@ import (
 	"engine/services/ecs"
 )
 
-func (t *tool) calculateGroup(entity ecs.EntityID) (groups.GroupsComponent, bool) {
+func (t *service) calculateGroup(entity ecs.EntityID) (groups.GroupsComponent, bool) {
 	def := groups.GroupsComponent{}
-	parent, ok := t.world.Hierarchy().Parent(entity)
+	parent, ok := t.hierarchy.Parent(entity)
 	if !ok {
 		return def, false
 	}
@@ -23,12 +23,12 @@ type save struct {
 	groups groups.GroupsComponent
 }
 
-func (s *tool) Init() {
+func (s *service) Init() {
 	s.groupsArray.SetEmpty(groups.DefaultGroups())
 
 	dirtySet := ecs.NewDirtySet()
 	s.groupsArray.AddDependency(s.inheritArray)
-	s.groupsArray.AddDependency(s.world.Hierarchy().Component())
+	s.groupsArray.AddDependency(s.hierarchy.Component())
 
 	s.groupsArray.AddDirtySet(dirtySet)
 
@@ -67,7 +67,7 @@ func (s *tool) Init() {
 				groups: groups,
 			})
 
-			for _, child := range s.world.Hierarchy().Children(entity).GetIndices() {
+			for _, child := range s.hierarchy.Children(entity).GetIndices() {
 				if _, ok := s.inheritArray.Get(child); ok {
 					children = append(children, child)
 				}

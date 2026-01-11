@@ -1,16 +1,19 @@
 package tool
 
 import (
+	"engine/modules/hierarchy"
 	"engine/modules/layout"
 	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/logger"
-	"sync"
 )
 
 type tool struct {
-	logger logger.Logger
-	layout.World
+	logger    logger.Logger
+	world     ecs.World
+	hierarchy hierarchy.Service
+	transform transform.Service
+
 	align         ecs.ComponentsArray[layout.AlignComponent]
 	order         ecs.ComponentsArray[layout.OrderComponent]
 	gap           ecs.ComponentsArray[layout.GapComponent]
@@ -20,32 +23,22 @@ type tool struct {
 
 func NewLayoutToolFactory(
 	logger logger.Logger,
-) ecs.ToolFactory[layout.World, layout.LayoutTool] {
-	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(w layout.World) layout.LayoutTool {
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		if t, ok := ecs.GetGlobal[tool](w); ok {
-			return t
-		}
-
-		t := &tool{
-			logger,
-			w,
-			ecs.GetComponentsArray[layout.AlignComponent](w),
-			ecs.GetComponentsArray[layout.OrderComponent](w),
-			ecs.GetComponentsArray[layout.GapComponent](w),
-			ecs.NewDirtySet(),
-			ecs.NewDirtySet(),
-		}
-		w.SaveGlobal(t)
-		t.Init()
-		return t
-	})
-}
-
-func (t *tool) Layout() layout.Interface {
+	world ecs.World,
+	hierarchy hierarchy.Service,
+	transform transform.Service,
+) layout.Service {
+	t := &tool{
+		logger,
+		world,
+		hierarchy,
+		transform,
+		ecs.GetComponentsArray[layout.AlignComponent](world),
+		ecs.GetComponentsArray[layout.OrderComponent](world),
+		ecs.GetComponentsArray[layout.GapComponent](world),
+		ecs.NewDirtySet(),
+		ecs.NewDirtySet(),
+	}
+	t.Init()
 	return t
 }
 
@@ -60,21 +53,21 @@ func (t *tool) Init() {
 	t.align.SetEmpty(layout.NewAlign(.5, .5))
 	t.gap.SetEmpty(layout.NewGap(0))
 
-	t.Transform().AbsolutePos().AddDependency(t.align)
-	t.Transform().AbsolutePos().AddDependency(t.order)
-	t.Transform().AbsolutePos().AddDependency(t.gap)
+	t.transform.AbsolutePos().AddDependency(t.align)
+	t.transform.AbsolutePos().AddDependency(t.order)
+	t.transform.AbsolutePos().AddDependency(t.gap)
 
 	t.align.AddDirtySet(t.dirtyParents)
 	t.order.AddDirtySet(t.dirtyParents)
 	t.gap.AddDirtySet(t.dirtyParents)
-	t.Transform().AddDirtySet(t.dirtyParents)
+	t.transform.AddDirtySet(t.dirtyParents)
 
-	t.Transform().AddDirtySet(t.dirtyChildren)
-	t.Hierarchy().Component().AddDirtySet(t.dirtyChildren)
+	t.transform.AddDirtySet(t.dirtyChildren)
+	t.hierarchy.Component().AddDirtySet(t.dirtyChildren)
 
 	// before get trigger
-	t.Transform().AbsolutePos().BeforeGet(t.BeforeGet)
-	t.Transform().AbsoluteSize().BeforeGet(t.BeforeGet)
+	t.transform.AbsolutePos().BeforeGet(t.BeforeGet)
+	t.transform.AbsoluteSize().BeforeGet(t.BeforeGet)
 }
 
 type save struct {
@@ -86,7 +79,7 @@ type save struct {
 
 func (t *tool) BeforeGet() {
 	for _, child := range t.dirtyChildren.Get() {
-		if parent, ok := t.Hierarchy().Parent(child); ok {
+		if parent, ok := t.hierarchy.Parent(child); ok {
 			t.dirtyParents.Dirty(parent)
 		}
 	}
@@ -105,14 +98,14 @@ func (t *tool) BeforeGet() {
 	}
 
 	for _, save := range saves {
-		t.Transform().Pos().Set(save.entity, save.pos)
-		t.Transform().PivotPoint().Set(save.entity, save.pivot)
-		t.Transform().ParentPivotPoint().Set(save.entity, save.parentPivot)
+		t.transform.Pos().Set(save.entity, save.pos)
+		t.transform.PivotPoint().Set(save.entity, save.pivot)
+		t.transform.ParentPivotPoint().Set(save.entity, save.parentPivot)
 	}
 }
 
 func (t *tool) handleParentChildren(parent ecs.EntityID) []save {
-	children := t.Hierarchy().Children(parent).GetIndices()
+	children := t.hierarchy.Children(parent).GetIndices()
 	if len(children) == 0 {
 		return nil
 	}
@@ -127,12 +120,12 @@ func (t *tool) handleParentChildren(parent ecs.EntityID) []save {
 	// including gaps
 	var totalSize float32 = 0
 	for _, child := range children {
-		size, _ := t.Transform().AbsoluteSize().Get(child)
+		size, _ := t.transform.AbsoluteSize().Get(child)
 		totalSize += size.Size[order.Order] + gap.Gap
 	}
 	totalSize -= gap.Gap
 
-	size, _ := t.Transform().AbsoluteSize().Get(parent)
+	size, _ := t.transform.AbsoluteSize().Get(parent)
 	progress := totalSize - size.Size[order.Primary()]
 	progress *= align.Primary
 
@@ -160,7 +153,7 @@ func (t *tool) handleParentChildren(parent ecs.EntityID) []save {
 		saves = append(saves, save)
 
 		// update progress
-		size, _ := t.Transform().AbsoluteSize().Get(child)
+		size, _ := t.transform.AbsoluteSize().Get(child)
 		progress -= size.Size[order.Primary()] + gap.Gap
 
 		// t.logger.Info("child %v is %v", child, size)

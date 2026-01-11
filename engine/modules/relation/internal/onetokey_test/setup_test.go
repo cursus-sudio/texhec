@@ -15,12 +15,13 @@ type Component struct {
 type Setup struct {
 	W     ecs.World
 	Array ecs.ComponentsArray[Component]
-	Tool  func() relation.EntityToKeyTool[uint32]
+	Tool  relation.Service[uint32]
 }
 
 func NewSetup() Setup {
 	b := ioc.NewBuilder()
 	pkgs := []ioc.Pkg{
+		ecs.Package(),
 		relationpkg.SpatialRelationPackage(
 			func(w ecs.World) ecs.DirtySet {
 				dirtySet := ecs.NewDirtySet()
@@ -42,12 +43,11 @@ func NewSetup() Setup {
 	}
 
 	c := b.Build()
-	toolFactory := ioc.Get[relation.ToolFactory[uint32]](c)
 
-	w := ecs.NewWorld()
+	w := ioc.Get[ecs.World](c)
 	return Setup{
 		W:     w,
 		Array: ecs.GetComponentsArray[Component](w),
-		Tool:  func() relation.EntityToKeyTool[uint32] { return toolFactory.Build(w) },
+		Tool:  ioc.Get[relation.Service[uint32]](c),
 	}
 }

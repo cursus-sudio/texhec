@@ -14,15 +14,11 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
-type world struct {
-	ecs.World
-	hierarchy.HierarchyTool
-	groups.GroupsTool
-}
-
 type Setup struct {
-	world
-	T *testing.T
+	world     ecs.World
+	hierarchy hierarchy.Service
+	groups    groups.Service
+	T         *testing.T
 }
 
 func NewSetup(t *testing.T) Setup {
@@ -30,6 +26,7 @@ func NewSetup(t *testing.T) Setup {
 	for _, pkg := range []ioc.Pkg{
 		logger.Package(true, func(c ioc.Dic, message string) { print(message) }),
 		clock.Package(time.RFC3339Nano),
+		ecs.Package(),
 		hierarchypkg.Package(),
 		groupspkg.Package(),
 	} {
@@ -37,20 +34,16 @@ func NewSetup(t *testing.T) Setup {
 	}
 	c := b.Build()
 
-	w := world{
-		World: ecs.NewWorld(),
-	}
-	w.HierarchyTool = ioc.Get[hierarchy.ToolFactory](c).Build(w)
-	w.GroupsTool = ioc.Get[groups.ToolFactory](c).Build(w)
-
 	return Setup{
-		w,
+		ioc.Get[ecs.World](c),
+		ioc.Get[hierarchy.Service](c),
+		ioc.Get[groups.Service](c),
 		t,
 	}
 }
 
 func (setup *Setup) expectGroups(entity ecs.EntityID, expectedGroups groups.GroupsComponent) {
-	groups, _ := setup.Groups().Component().Get(entity)
+	groups, _ := setup.groups.Component().Get(entity)
 	if groups != expectedGroups {
 		setup.T.Errorf("expected pos %v but has %v", expectedGroups, groups)
 	}

@@ -1,23 +1,10 @@
 package layout
 
 import (
-	"engine/modules/hierarchy"
-	"engine/modules/transform"
 	"engine/services/ecs"
 )
 
-type ToolFactory ecs.ToolFactory[World, LayoutTool]
-type LayoutTool interface {
-	// doesn't work for nested layout
-	Layout() Interface
-}
-type World interface {
-	ecs.World
-	transform.TransformTool
-	hierarchy.HierarchyTool
-}
-
-type Interface interface {
+type Service interface {
 	Align() ecs.ComponentsArray[AlignComponent]
 	Order() ecs.ComponentsArray[OrderComponent]
 	// Wrap() ecs.ComponentsArray[WrapComponent]

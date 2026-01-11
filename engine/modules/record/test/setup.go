@@ -22,20 +22,10 @@ type Setup struct {
 	Config record.Config
 	Codec  codec.Codec
 
-	World
+	World          ecs.World
+	UUID           uuid.Service
+	Record         record.Service
 	ComponentArray ecs.ComponentsArray[Component]
-}
-
-type World interface {
-	ecs.World
-	uuid.UUIDTool
-	record.RecordTool
-}
-
-type world struct {
-	ecs.World
-	uuid.UUIDTool
-	record.RecordTool
 }
 
 func NewSetup() Setup {
@@ -44,6 +34,7 @@ func NewSetup() Setup {
 	for _, pkg := range []ioc.Pkg{
 		logger.Package(true, func(c ioc.Dic, message string) { print(message) }),
 		clock.Package(time.RFC3339Nano),
+		ecs.Package(),
 		codec.Package(),
 		uuidpkg.Package(),
 		recordpkg.Package(),
@@ -58,17 +49,16 @@ func NewSetup() Setup {
 
 	c := b.Build()
 
-	w := world{World: ecs.NewWorld()}
-	w.UUIDTool = ioc.Get[uuid.ToolFactory](c).Build(w)
-	w.RecordTool = ioc.Get[record.ToolFactory](c).Build(w)
-
 	s := Setup{
 		Codec:  ioc.Get[codec.Codec](c),
 		Config: record.NewConfig(),
 
-		World:          w,
-		ComponentArray: ecs.GetComponentsArray[Component](w),
+		World:  ioc.Get[ecs.World](c),
+		UUID:   ioc.Get[uuid.Service](c),
+		Record: ioc.Get[record.Service](c),
 	}
+
+	s.ComponentArray = ecs.GetComponentsArray[Component](s.World)
 
 	record.AddToConfig[Component](s.Config)
 

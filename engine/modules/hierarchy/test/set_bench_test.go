@@ -12,14 +12,14 @@ func BenchmarkAddNChildrenWithParent(b *testing.B) {
 	parentCount := 0
 	for i := 0; i < parentCount; i++ {
 		child := setup.World.NewEntity()
-		setup.Tool.SetParent(child, parent)
+		setup.Service.SetParent(child, parent)
 		parent = child
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		child := setup.World.NewEntity()
-		setup.Tool.SetParent(child, parent)
+		setup.Service.SetParent(child, parent)
 	}
 }
 
@@ -30,14 +30,14 @@ func BenchmarkAddNChildrenWith5Parents(b *testing.B) {
 	parentCount := 5
 	for i := 0; i < parentCount; i++ {
 		child := setup.World.NewEntity()
-		setup.Tool.SetParent(child, parent)
+		setup.Service.SetParent(child, parent)
 		parent = child
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		child := setup.World.NewEntity()
-		setup.Tool.SetParent(child, parent)
+		setup.Service.SetParent(child, parent)
 	}
 }
 
@@ -48,7 +48,7 @@ func BenchmarkRemoveNChildren(b *testing.B) {
 	children := make([]ecs.EntityID, b.N)
 	for i := 0; i < b.N; i++ {
 		children[i] = setup.World.NewEntity()
-		setup.Tool.SetParent(children[i], parent)
+		setup.Service.SetParent(children[i], parent)
 	}
 
 	b.ResetTimer()
@@ -63,7 +63,7 @@ func BenchmarkRemoveParentWithNChildren(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		child := setup.World.NewEntity()
-		setup.Tool.SetParent(child, parent)
+		setup.Service.SetParent(child, parent)
 	}
 
 	b.ResetTimer()

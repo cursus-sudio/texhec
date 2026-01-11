@@ -12,8 +12,8 @@ import (
 )
 
 type Setup struct {
-	World ecs.World
-	Tool  hierarchy.Interface
+	World   ecs.World
+	Service hierarchy.Service
 }
 
 func NewSetup() Setup {
@@ -21,16 +21,14 @@ func NewSetup() Setup {
 	for _, pkg := range []ioc.Pkg{
 		logger.Package(true, func(c ioc.Dic, message string) { print(message) }),
 		clock.Package(time.RFC3339Nano),
+		ecs.Package(),
 		hierarchypkg.Package(),
 	} {
 		pkg.Register(b)
 	}
 	c := b.Build()
-	world := ecs.NewWorld()
-	toolFactory := ioc.Get[hierarchy.ToolFactory](c)
-	tool := toolFactory.Build(world)
 	return Setup{
-		world,
-		tool.Hierarchy(),
+		ioc.Get[ecs.World](c),
+		ioc.Get[hierarchy.Service](c),
 	}
 }

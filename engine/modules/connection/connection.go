@@ -1,14 +1,13 @@
 package connection
 
 import (
-	"engine/modules/uuid"
 	"engine/services/ecs"
 	"net"
 )
 
 // system
 
-type System ecs.SystemRegister[World]
+type System ecs.SystemRegister
 
 // types
 
@@ -52,15 +51,7 @@ func (comp *ConnectionComponent) Conn() Conn {
 
 // tool
 
-type ToolFactory ecs.ToolFactory[World, ConnectionTool]
-type ConnectionTool interface {
-	Connection() Interface
-}
-type World interface {
-	ecs.World
-	uuid.UUIDTool
-}
-type Interface interface {
+type Service interface {
 	Component() ecs.ComponentsArray[ConnectionComponent]
 	Listener() ecs.ComponentsArray[ListenerComponent]
 

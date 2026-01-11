@@ -6,6 +6,7 @@ import (
 	"engine/services/assets"
 	"engine/services/codec"
 
+	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -33,6 +34,9 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) audio.VolumeService { return ioc.Get[internal.Service](c) })
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) audio.System {
-		return internal.NewSystem(ioc.Get[internal.Service](c))
+		return internal.NewSystem(
+			ioc.Get[internal.Service](c),
+			ioc.Get[events.Builder](c),
+		)
 	})
 }

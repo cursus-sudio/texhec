@@ -1,8 +1,11 @@
 package layoutpkg
 
 import (
+	"engine/modules/hierarchy"
 	"engine/modules/layout"
 	"engine/modules/layout/internal/tool"
+	"engine/modules/transform"
+	"engine/services/ecs"
 	"engine/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
@@ -15,7 +18,12 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) layout.ToolFactory {
-		return tool.NewLayoutToolFactory(ioc.Get[logger.Logger](c))
+	ioc.RegisterSingleton(b, func(c ioc.Dic) layout.Service {
+		return tool.NewLayoutToolFactory(
+			ioc.Get[logger.Logger](c),
+			ioc.Get[ecs.World](c),
+			ioc.Get[hierarchy.Service](c),
+			ioc.Get[transform.Service](c),
+		)
 	})
 }

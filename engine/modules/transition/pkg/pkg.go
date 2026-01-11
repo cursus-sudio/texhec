@@ -3,9 +3,10 @@ package transitionpkg
 import (
 	"engine/modules/transition"
 	"engine/modules/transition/internal/easing"
-	"engine/modules/transition/internal/tool"
+	"engine/modules/transition/internal/service"
 	"engine/modules/transition/internal/transitionimpl"
 	"engine/services/codec"
+	"engine/services/ecs"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -30,8 +31,8 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) transition.System {
 		return ioc.Get[transitionimpl.Builder](c).Build()
 	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) transition.ToolFactory {
-		return tool.NewToolFactory()
+	ioc.RegisterSingleton(b, func(c ioc.Dic) transition.Service {
+		return service.NewService(ioc.Get[ecs.World](c))
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) transition.EasingService {
 		return easing.NewEasingService()

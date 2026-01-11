@@ -10,7 +10,7 @@ import (
 )
 
 type sysT[Component transition.Lerp[Component]] struct {
-	world    transition.World
+	world    ecs.World
 	dirtySet ecs.DirtySet
 
 	transitionArray ecs.ComponentsArray[transition.TransitionComponent[Component]]
@@ -22,10 +22,12 @@ type sysT[Component transition.Lerp[Component]] struct {
 }
 
 func NewSysT[Component transition.Lerp[Component]](
+	world ecs.World,
+	eventsBuilder events.Builder,
 	logger logger.Logger,
 	easingService transition.EasingService,
 ) transition.System {
-	return ecs.NewSystemRegister(func(world transition.World) error {
+	return ecs.NewSystemRegister(func() error {
 		s := &sysT[Component]{
 			world,
 			ecs.NewDirtySet(),
@@ -38,10 +40,10 @@ func NewSysT[Component transition.Lerp[Component]](
 			easingService,
 		}
 
-		events.Listen(world.EventsBuilder(), s.ListenTransition)
+		events.Listen(eventsBuilder, s.ListenTransition)
 
 		s.transitionArray.AddDirtySet(s.dirtySet)
-		events.Listen(world.EventsBuilder(), s.ListenFrame)
+		events.Listen(eventsBuilder, s.ListenFrame)
 
 		return nil
 	})

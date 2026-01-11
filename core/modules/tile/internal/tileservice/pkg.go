@@ -1,7 +1,8 @@
-package tiletool
+package tileservice
 
 import (
 	"core/modules/tile"
+	"engine"
 	"engine/modules/relation"
 	relationpkg "engine/modules/relation/pkg"
 	"engine/services/ecs"
@@ -63,12 +64,10 @@ func (pkg pkg) Register(b ioc.Builder) {
 	for _, pkg := range pkg.relationPkgs {
 		pkg.Register(b)
 	}
-	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.ToolFactory {
-		return ecs.NewToolFactory(func(w tile.World) tile.TileTool {
-			return &tool{
-				ioc.Get[relation.ToolFactory[tile.PosComponent]](c).Build(w),
-				ecs.GetComponentsArray[tile.PosComponent](w),
-			}
-		})
+	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.Service {
+		return &tool{
+			ioc.Get[relation.Service[tile.PosComponent]](c),
+			ecs.GetComponentsArray[tile.PosComponent](ioc.GetServices[engine.World](c)),
+		}
 	})
 }

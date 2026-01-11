@@ -3,21 +3,23 @@ package collisions
 import (
 	"engine/modules/collider"
 	"engine/modules/groups"
+	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"errors"
 	"slices"
-	"sync"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-type tool struct {
+type service struct {
 	// shared
 	logger        logger.Logger
-	world         collider.World
+	world         ecs.World
+	groups        groups.Service
+	transform     transform.Service
 	colliderArray ecs.ComponentsArray[collider.Component]
 
 	// detection
@@ -30,37 +32,33 @@ type tool struct {
 	entitiesPositions map[ecs.EntityID][]mgl32.Vec2
 }
 
-func NewToolFactory(
+func NewService(
+	world ecs.World,
+	transform transform.Service,
+	groups groups.Service,
 	logger logger.Logger,
 	assets assets.Assets,
 	chunkSize float32,
-) collider.ToolFactory {
-	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(world collider.World) collider.ColliderTool {
-		mutex.Lock()
-		defer mutex.Unlock()
-		if t, ok := ecs.GetGlobal[tool](world); ok {
-			return t
-		}
-		dirtySet := ecs.NewDirtySet()
-		world.Transform().AddDirtySet(dirtySet)
-		colliderArray := ecs.GetComponentsArray[collider.Component](world)
-		colliderArray.AddDirtySet(dirtySet)
-		t := &tool{
-			logger:        logger,
-			world:         world,
-			colliderArray: colliderArray,
+) collider.Service {
+	dirtySet := ecs.NewDirtySet()
+	transform.AddDirtySet(dirtySet)
+	colliderArray := ecs.GetComponentsArray[collider.Component](world)
+	colliderArray.AddDirtySet(dirtySet)
+	t := &service{
+		logger:        logger,
+		world:         world,
+		groups:        groups,
+		transform:     transform,
+		colliderArray: colliderArray,
 
-			assets: assets,
+		assets: assets,
 
-			dirtySet:          dirtySet,
-			chunkSize:         chunkSize,
-			chunks:            make(map[mgl32.Vec2]datastructures.Set[ecs.EntityID]),
-			entitiesPositions: make(map[ecs.EntityID][]mgl32.Vec2),
-		}
-		world.SaveGlobal(t)
-		return t
-	})
+		dirtySet:          dirtySet,
+		chunkSize:         chunkSize,
+		chunks:            make(map[mgl32.Vec2]datastructures.Set[ecs.EntityID]),
+		entitiesPositions: make(map[ecs.EntityID][]mgl32.Vec2),
+	}
+	return t
 }
 
 func floorF32ToInt(num float32) int {
@@ -68,7 +66,7 @@ func floorF32ToInt(num float32) int {
 	return int(num)
 }
 
-func (c *tool) getPositions(aabb collider.AABB) []mgl32.Vec2 {
+func (c *service) getPositions(aabb collider.AABB) []mgl32.Vec2 {
 	minPos, maxPos := aabb.Min.Vec2(), aabb.Max.Vec2()
 	minGridX := floorF32ToInt(minPos.X() / c.chunkSize)
 	minGridY := floorF32ToInt(minPos.Y() / c.chunkSize)
@@ -89,19 +87,19 @@ func (c *tool) getPositions(aabb collider.AABB) []mgl32.Vec2 {
 	return positions
 }
 
-func (t *tool) ChunkSize() float32                                      { return t.chunkSize }
-func (t *tool) Chunks() map[mgl32.Vec2]datastructures.Set[ecs.EntityID] { return t.chunks }
+func (t *service) ChunkSize() float32                                      { return t.chunkSize }
+func (t *service) Chunks() map[mgl32.Vec2]datastructures.Set[ecs.EntityID] { return t.chunks }
 
 // tracking
 
-func (t *tool) ApplyChanges() {
+func (t *service) ApplyChanges() {
 	entities := t.dirtySet.Get()
 	t.Remove(entities...)
 	for _, entity := range entities {
 		if _, ok := t.colliderArray.Get(entity); !ok {
 			continue
 		}
-		aabb := TransformAABB(t.world.Transform(), entity)
+		aabb := TransformAABB(t.transform, entity)
 		positions := t.getPositions(aabb)
 		t.entitiesPositions[entity] = positions
 		for _, position := range positions {
@@ -115,7 +113,7 @@ func (t *tool) ApplyChanges() {
 	}
 }
 
-func (t *tool) Remove(entities ...ecs.EntityID) {
+func (t *service) Remove(entities ...ecs.EntityID) {
 	for _, entity := range entities {
 		positions, ok := t.entitiesPositions[entity]
 		if !ok {
@@ -138,13 +136,11 @@ func (t *tool) Remove(entities ...ecs.EntityID) {
 
 //
 
-func (t *tool) Collider() collider.Interface { return t }
+func (t *service) Component() ecs.ComponentsArray[collider.Component] { return t.colliderArray }
 
-func (t *tool) Component() ecs.ComponentsArray[collider.Component] { return t.colliderArray }
-
-func (t *tool) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) *collider.ObjectRayCollision {
+func (t *service) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) *collider.ObjectRayCollision {
 	t.ApplyChanges()
-	entityGroups, ok := t.world.Groups().Component().Get(entity)
+	entityGroups, ok := t.groups.Component().Get(entity)
 	if !ok {
 		entityGroups = groups.DefaultGroups()
 	}
@@ -152,7 +148,7 @@ func (t *tool) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) *collider.
 		return nil
 	}
 
-	aabb := TransformAABB(t.world.Transform(), entity)
+	aabb := TransformAABB(t.transform, entity)
 	if ok, _ := RayAABBIntersect(ray, aabb); !ok {
 		return nil
 	}
@@ -170,7 +166,7 @@ func (t *tool) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) *collider.
 
 	//
 
-	ray.Apply(t.world.Transform().Mat4(entity).Inv())
+	ray.Apply(t.transform.Mat4(entity).Inv())
 
 	aabbs := colliderAsset.AABBs()
 	ranges := colliderAsset.Ranges()
@@ -225,13 +221,13 @@ func (t *tool) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) *collider.
 	return &collision
 }
 
-func (t *tool) CollidesWithObject(entityA ecs.EntityID, entityB ecs.EntityID) *collider.ObjectObjectCollision {
+func (t *service) CollidesWithObject(entityA ecs.EntityID, entityB ecs.EntityID) *collider.ObjectObjectCollision {
 	t.ApplyChanges()
 	t.logger.Warn(errors.New("501"))
 	return nil
 }
 
-func (t *tool) Raycast(ray collider.Ray) *collider.ObjectRayCollision {
+func (t *service) Raycast(ray collider.Ray) *collider.ObjectRayCollision {
 	t.ApplyChanges()
 	chunkSize := t.ChunkSize()
 	gridX := floorF32ToInt(ray.Pos[0] / chunkSize)
@@ -272,7 +268,7 @@ func (t *tool) Raycast(ray collider.Ray) *collider.ObjectRayCollision {
 	return &collision
 }
 
-func (t *tool) RaycastAll(ray collider.Ray) []collider.ObjectRayCollision {
+func (t *service) RaycastAll(ray collider.Ray) []collider.ObjectRayCollision {
 	t.ApplyChanges()
 	chunkSize := t.ChunkSize()
 	gridX := floorF32ToInt(ray.Pos[0] / chunkSize)
@@ -311,7 +307,7 @@ func (t *tool) RaycastAll(ray collider.Ray) []collider.ObjectRayCollision {
 	return collisions
 }
 
-func (t *tool) NarrowCollisions(entity ecs.EntityID) []ecs.EntityID {
+func (t *service) NarrowCollisions(entity ecs.EntityID) []ecs.EntityID {
 	t.ApplyChanges()
 	t.logger.Warn(errors.New("501"))
 	return nil

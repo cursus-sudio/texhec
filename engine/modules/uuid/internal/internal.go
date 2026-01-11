@@ -4,41 +4,27 @@ import (
 	"engine/modules/relation"
 	"engine/modules/uuid"
 	"engine/services/ecs"
-	"sync"
+
+	"github.com/ogiusek/ioc/v2"
 )
 
-type tool struct {
+type service struct {
 	uuidArray ecs.ComponentsArray[uuid.Component]
-	relation.EntityToKeyTool[uuid.UUID]
+	relation.Service[uuid.UUID]
 	uuid.Factory
 }
 
-func NewToolFactory(
-	toolFactory relation.ToolFactory[uuid.UUID],
-	uuidFactory uuid.Factory,
-) uuid.ToolFactory {
-	mutex := &sync.Mutex{}
-	return ecs.NewToolFactory(func(w uuid.World) uuid.UUIDTool {
-		mutex.Lock()
-		defer mutex.Unlock()
-		if t, ok := ecs.GetGlobal[tool](w); ok {
-			return t
-		}
-		t := &tool{
-			ecs.GetComponentsArray[uuid.Component](w),
-			toolFactory.Build(w),
-			uuidFactory,
-		}
-		w.SaveGlobal(t)
-		return t
-
-	})
+func NewService(c ioc.Dic) uuid.Service {
+	t := &service{
+		ecs.GetComponentsArray[uuid.Component](ioc.Get[ecs.World](c)),
+		ioc.Get[relation.Service[uuid.UUID]](c),
+		ioc.Get[uuid.Factory](c),
+	}
+	return t
 }
 
-func (t *tool) UUID() uuid.Interface { return t }
+func (t *service) UUID() ecs.ComponentsArray[uuid.Component] { return t.uuidArray }
 
-func (t *tool) Component() ecs.ComponentsArray[uuid.Component] { return t.uuidArray }
-
-func (t *tool) Entity(uuid uuid.UUID) (ecs.EntityID, bool) {
+func (t *service) Entity(uuid uuid.UUID) (ecs.EntityID, bool) {
 	return t.Get(uuid)
 }

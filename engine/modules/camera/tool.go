@@ -2,8 +2,6 @@ package camera
 
 import (
 	"engine/modules/collider"
-	"engine/modules/groups"
-	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/media/window"
 	"errors"
@@ -15,16 +13,7 @@ var (
 	ErrNotCamera error = errors.New("this isn't a camera")
 )
 
-type ToolFactory ecs.ToolFactory[World, CameraTool]
-type CameraTool interface {
-	Camera() Interface
-}
-type World interface {
-	ecs.World
-	groups.GroupsTool
-	transform.TransformTool
-}
-type Interface interface {
+type Service interface {
 	Component() ecs.ComponentsArray[Component]
 
 	Mobile() ecs.ComponentsArray[MobileCameraComponent]

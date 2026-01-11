@@ -1,7 +1,9 @@
 package tilerenderer
 
 import (
+	"core/modules/definition"
 	"core/modules/tile"
+	"engine"
 	"engine/modules/groups"
 	"engine/services/assets"
 	"engine/services/graphics/texturearray"
@@ -36,6 +38,8 @@ func Package(
 func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) *TileRenderSystemRegister {
 		return NewTileRenderSystemRegister(
+			ioc.GetServices[engine.World](c),
+			ioc.Get[definition.Service](c),
 			ioc.Get[texturearray.Factory](c),
 			ioc.Get[logger.Logger](c),
 			ioc.Get[window.Api](c),

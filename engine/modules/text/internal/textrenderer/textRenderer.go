@@ -1,9 +1,11 @@
 package textrenderer
 
 import (
+	"engine/modules/camera"
 	"engine/modules/groups"
 	rendersys "engine/modules/render"
 	"engine/modules/text"
+	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
@@ -24,8 +26,11 @@ type locations struct {
 type textRenderer struct {
 	*textRendererRegister
 
-	text.World
-	text text.Interface
+	world     ecs.World
+	groups    groups.Service
+	camera    camera.Service
+	transform transform.Service
+	text      text.Service
 
 	logger      logger.Logger
 	fontService FontService
@@ -110,7 +115,7 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 			s.layoutsBatches.Remove(entity)
 		}
 
-		layout, err := s.layoutServiceFactory.New(s).EntityLayout(entity)
+		layout, err := s.layoutService.EntityLayout(entity)
 		if err != nil {
 			continue
 		}
@@ -131,15 +136,15 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 			continue
 		}
 
-		pos, _ := s.Transform().AbsolutePos().Get(entity)
-		rot, _ := s.Transform().AbsoluteRotation().Get(entity)
-		size, _ := s.Transform().AbsoluteSize().Get(entity)
+		pos, _ := s.transform.AbsolutePos().Get(entity)
+		rot, _ := s.transform.AbsoluteRotation().Get(entity)
+		size, _ := s.transform.AbsoluteSize().Get(entity)
 		entityColor, ok := s.text.Color().Get(entity)
 		if !ok {
 			entityColor = s.defaultColor
 		}
 
-		entityGroups, ok := s.Groups().Component().Get(entity)
+		entityGroups, ok := s.groups.Component().Get(entity)
 		if !ok {
 			entityGroups = groups.DefaultGroups()
 		}
@@ -166,8 +171,8 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 		)
 		entityMvp := translation.Mul4(rotation).Mul4(scale)
 
-		for _, cameraEntity := range s.Camera().Component().GetEntities() {
-			cameraGroups, ok := s.Groups().Component().Get(cameraEntity)
+		for _, cameraEntity := range s.camera.Component().GetEntities() {
+			cameraGroups, ok := s.groups.Component().Get(cameraEntity)
 			if !ok {
 				cameraGroups = groups.DefaultGroups()
 			}
@@ -176,22 +181,12 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 				continue
 			}
 
-			mvp := s.Camera().Mat4(cameraEntity).Mul4(entityMvp)
+			mvp := s.camera.Mat4(cameraEntity).Mul4(entityMvp)
 			gl.UniformMatrix4fv(s.locations.Mvp, 1, false, &mvp[0])
 			gl.Uniform4fv(s.locations.Color, 1, &entityColor.Color[0])
-			gl.Viewport(s.Camera().GetViewport(cameraEntity))
+			gl.Viewport(s.camera.GetViewport(cameraEntity))
 
 			gl.DrawArrays(gl.POINTS, 0, layout.verticesCount)
 		}
-	}
-}
-
-func (s *textRenderer) Release() {
-	for _, batch := range s.fontsBatches.GetValues() {
-		batch.Release()
-	}
-
-	for _, batch := range s.layoutsBatches.GetValues() {
-		batch.Release()
 	}
 }

@@ -18,7 +18,7 @@ func New(id UUID) Component {
 
 type Service interface {
 	Factory
-	UUID() ecs.ComponentsArray[Component]
+	Component() ecs.ComponentsArray[Component]
 	Entity(UUID) (ecs.EntityID, bool)
 }
 

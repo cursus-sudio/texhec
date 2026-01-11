@@ -27,7 +27,7 @@ func (pkg) Register(b ioc.Builder) {
 	}
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) render.Service {
-		return internal.NewTool(
+		return internal.NewService(
 			ioc.Get[ecs.World](c),
 		)
 	})

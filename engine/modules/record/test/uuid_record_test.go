@@ -15,7 +15,7 @@ func TestUUIDForwardRecording(t *testing.T) {
 	uuidComponent := uuid.New(s.UUID.NewUUID())
 
 	entity := s.World.NewEntity()
-	s.UUID.UUID().Set(entity, uuidComponent)
+	s.UUID.Component().Set(entity, uuidComponent)
 	s.ComponentArray.Set(entity, initialState)
 
 	recordingID := s.Record.UUID().StartRecording(s.Config)
@@ -49,7 +49,7 @@ func TestUUIDBackwardsRecording(t *testing.T) {
 	uuidComponent := uuid.New(s.UUID.NewUUID())
 
 	entity := s.World.NewEntity()
-	s.UUID.UUID().Set(entity, uuidComponent)
+	s.UUID.Component().Set(entity, uuidComponent)
 	s.ComponentArray.Set(entity, initialState)
 
 	recordingID := s.Record.UUID().StartBackwardsRecording(s.Config)
@@ -92,7 +92,7 @@ func TestUUIDGetState(t *testing.T) {
 
 	recording := s.Record.UUID().GetState(s.Config)
 
-	uuidComponent, ok := s.UUID.UUID().Get(entity)
+	uuidComponent, ok := s.UUID.Component().Get(entity)
 	if !ok {
 		t.Errorf("expected entity to get uuid component when recorded by uuid recorder")
 		return

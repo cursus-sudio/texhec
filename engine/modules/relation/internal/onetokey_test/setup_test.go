@@ -13,9 +13,9 @@ type Component struct {
 }
 
 type Setup struct {
-	W     ecs.World
-	Array ecs.ComponentsArray[Component]
-	Tool  relation.Service[uint32]
+	W       ecs.World
+	Array   ecs.ComponentsArray[Component]
+	Service relation.Service[uint32]
 }
 
 func NewSetup() Setup {
@@ -46,8 +46,8 @@ func NewSetup() Setup {
 
 	w := ioc.Get[ecs.World](c)
 	return Setup{
-		W:     w,
-		Array: ecs.GetComponentsArray[Component](w),
-		Tool:  ioc.Get[relation.Service[uint32]](c),
+		W:       w,
+		Array:   ecs.GetComponentsArray[Component](w),
+		Service: ioc.Get[relation.Service[uint32]](c),
 	}
 }

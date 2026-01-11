@@ -23,7 +23,7 @@ func NewService(c ioc.Dic) uuid.Service {
 	return t
 }
 
-func (t *service) UUID() ecs.ComponentsArray[uuid.Component] { return t.uuidArray }
+func (t *service) Component() ecs.ComponentsArray[uuid.Component] { return t.uuidArray }
 
 func (t *service) Entity(uuid uuid.UUID) (ecs.EntityID, bool) {
 	return t.Get(uuid)

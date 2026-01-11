@@ -3,9 +3,9 @@ package camerapkg
 import (
 	"engine/modules/camera"
 	"engine/modules/camera/internal/cameralimitsys"
-	"engine/modules/camera/internal/cameratool"
 	"engine/modules/camera/internal/mobilecamerasys"
 	"engine/modules/camera/internal/projectionsys"
+	"engine/modules/camera/internal/service"
 	"engine/modules/collider"
 	"engine/modules/groups"
 	"engine/modules/transform"
@@ -50,8 +50,8 @@ func (pkg pkg) Register(b ioc.Builder) {
 			// events
 			Register(camera.ChangedResolutionEvent{})
 	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) cameratool.Service {
-		return cameratool.NewSerivce(
+	ioc.RegisterSingleton(b, func(c ioc.Dic) service.Service {
+		return service.NewSerivce(
 			ioc.Get[ecs.World](c),
 			ioc.Get[transform.Service](c),
 			ioc.Get[groups.Service](c),
@@ -59,17 +59,17 @@ func (pkg pkg) Register(b ioc.Builder) {
 		)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) camera.Service {
-		return ioc.Get[cameratool.Service](c)
+		return ioc.Get[service.Service](c)
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) camera.CameraUp { return camera.CameraUp(mgl32.Vec3{0, 1, 0}) })
 	ioc.RegisterSingleton(b, func(c ioc.Dic) camera.CameraForward { return camera.CameraForward(mgl32.Vec3{0, 0, -1}) })
 
-	ioc.WrapService(b, func(c ioc.Dic, s cameratool.Service) {
+	ioc.WrapService(b, func(c ioc.Dic, s service.Service) {
 		transform := ioc.Get[transform.Service](c)
 		cameraService := s
 		// transform := ioc.Get[transform.Service](c)
-		s.Register(reflect.TypeFor[camera.OrthoComponent](), func() cameratool.ProjectionData {
+		s.Register(reflect.TypeFor[camera.OrthoComponent](), func() service.ProjectionData {
 			getCameraTransformMatrix := func(entity ecs.EntityID) mgl32.Mat4 {
 				pos, _ := transform.AbsolutePos().Get(entity)
 				rot, _ := transform.AbsoluteRotation().Get(entity)
@@ -86,7 +86,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 				}
 				return p.GetMatrix(orthoResolution.Elem())
 			}
-			return cameratool.ProjectionData{
+			return service.ProjectionData{
 				Mat4: func(entity ecs.EntityID) mgl32.Mat4 {
 					projMatrix := getProjectionMatrix(entity)
 					cameraTransformMatrix := getCameraTransformMatrix(entity)
@@ -108,7 +108,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 
 		//
 
-		s.Register(reflect.TypeFor[camera.PerspectiveComponent](), func() cameratool.ProjectionData {
+		s.Register(reflect.TypeFor[camera.PerspectiveComponent](), func() service.ProjectionData {
 			getCameraTransformMatrix := func(entity ecs.EntityID) mgl32.Mat4 {
 				pos, _ := transform.AbsolutePos().Get(entity)
 				rot, _ := transform.AbsoluteRotation().Get(entity)
@@ -125,7 +125,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 				return mgl32.Perspective(p.FovY, p.AspectRatio, p.Near, p.Far)
 			}
 
-			return cameratool.ProjectionData{
+			return service.ProjectionData{
 				Mat4: func(entity ecs.EntityID) mgl32.Mat4 {
 					projMatrix := getProjectionMatrix(entity)
 					cameraTransformMatrix := getCameraTransformMatrix(entity)

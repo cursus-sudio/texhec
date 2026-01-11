@@ -49,7 +49,7 @@ func NewService(
 	defaultPivot transform.PivotPointComponent,
 	defaultParentPivot transform.ParentPivotPointComponent,
 ) transform.Service {
-	tool := &service{
+	s := &service{
 		logger,
 		w,
 		hierarchy,
@@ -74,14 +74,13 @@ func NewService(
 		ecs.GetComponentsArray[transform.ParentComponent](w),
 		ecs.GetComponentsArray[transform.ParentPivotPointComponent](w),
 	}
-	// tool.Interface = tool
 
-	tool.absolutePosWrapper = &absolutePosArray{tool, tool.absolutePosArray}
-	tool.absoluteSizeWrapper = &absoluteSizeArray{tool, tool.absoluteSizeArray}
-	tool.absoluteRotationWrapper = &absoluteRotationArray{tool, tool.absoluteRotationArray}
+	s.absolutePosWrapper = &absolutePosArray{s, s.absolutePosArray}
+	s.absoluteSizeWrapper = &absoluteSizeArray{s, s.absoluteSizeArray}
+	s.absoluteRotationWrapper = &absoluteRotationArray{s, s.absoluteRotationArray}
 
-	tool.Init()
-	return tool
+	s.Init()
+	return s
 
 }
 

@@ -48,7 +48,7 @@ func (pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) inputs.Service {
-		return service.NewToolFactory(
+		return service.NewService(
 			ioc.Get[logger.Logger](c),
 			ioc.Get[events.Builder](c),
 			ioc.Get[ecs.World](c),

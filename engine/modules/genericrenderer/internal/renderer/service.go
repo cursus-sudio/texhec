@@ -5,7 +5,7 @@ import (
 	"engine/services/ecs"
 )
 
-type tool struct {
+type service struct {
 	World ecs.World
 
 	pipelineArray ecs.ComponentsArray[genericrenderer.PipelineComponent]
@@ -14,13 +14,13 @@ type tool struct {
 func NewService(
 	world ecs.World,
 ) genericrenderer.Service {
-	t := &tool{
+	t := &service{
 		world,
 		ecs.GetComponentsArray[genericrenderer.PipelineComponent](world),
 	}
 	return t
 }
 
-func (t *tool) Pipeline() ecs.ComponentsArray[genericrenderer.PipelineComponent] {
+func (t *service) Pipeline() ecs.ComponentsArray[genericrenderer.PipelineComponent] {
 	return t.pipelineArray
 }

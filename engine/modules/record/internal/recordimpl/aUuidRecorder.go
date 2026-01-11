@@ -133,7 +133,7 @@ func (t *uuidKeyedRecorder) Apply(config record.Config, recordings ...record.UUI
 			entity, ok := t.worldUUID.Entity(uuidValue)
 			if !ok && components != nil {
 				entity = t.world.NewEntity()
-				t.worldUUID.UUID().Set(entity, uuid.New(uuidValue))
+				t.worldUUID.Component().Set(entity, uuid.New(uuidValue))
 			}
 			if components == nil {
 				t.world.RemoveEntity(entity)
@@ -164,10 +164,10 @@ func (t *uuidKeyedRecorder) getStateFor(config record.Config, entities []ecs.Ent
 	}
 
 	for _, entity := range entities {
-		uuidComponent, ok := t.worldUUID.UUID().Get(entity)
+		uuidComponent, ok := t.worldUUID.Component().Get(entity)
 		if !ok {
 			uuidComponent.ID = t.worldUUID.NewUUID()
-			t.worldUUID.UUID().Set(entity, uuidComponent)
+			t.worldUUID.Component().Set(entity, uuidComponent)
 		}
 		components := make([]any, 0, len(arrays))
 		for _, array := range arrays {

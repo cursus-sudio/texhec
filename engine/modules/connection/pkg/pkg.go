@@ -25,7 +25,7 @@ func (pkg) Register(b ioc.Builder) {
 		})
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) connection.Service {
-		return internal.NewToolFactory(
+		return internal.NewService(
 			ioc.Get[codec.Codec](c),
 			ioc.Get[logger.Logger](c),
 			ioc.Get[ecs.World](c),

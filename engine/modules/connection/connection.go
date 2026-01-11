@@ -49,8 +49,6 @@ func (comp *ConnectionComponent) Conn() Conn {
 	return comp.conn
 }
 
-// tool
-
 type Service interface {
 	Component() ecs.ComponentsArray[ConnectionComponent]
 	Listener() ecs.ComponentsArray[ListenerComponent]

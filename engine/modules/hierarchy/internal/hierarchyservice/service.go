@@ -1,4 +1,4 @@
-package hierarchytool
+package hierarchyservice
 
 import (
 	"engine/modules/hierarchy"
@@ -9,7 +9,7 @@ import (
 
 type parentComponent struct{}
 
-type tool struct {
+type service struct {
 	logger logger.Logger
 
 	world          ecs.World
@@ -25,7 +25,7 @@ func NewService(
 	world ecs.World,
 	logger logger.Logger,
 ) hierarchy.Service {
-	t := &tool{
+	t := &service{
 		logger,
 		world,
 		ecs.GetComponentsArray[hierarchy.Component](world),
@@ -41,11 +41,11 @@ func NewService(
 	return t
 }
 
-func (t *tool) Component() ecs.ComponentsArray[hierarchy.Component] {
+func (t *service) Component() ecs.ComponentsArray[hierarchy.Component] {
 	return t.hierarchyArray
 }
 
-func (t *tool) IsChildOf(child ecs.EntityID, wantedParent ecs.EntityID) bool {
+func (t *service) IsChildOf(child ecs.EntityID, wantedParent ecs.EntityID) bool {
 	for {
 		parent, ok := t.Parent(child)
 		if !ok {
@@ -58,18 +58,18 @@ func (t *tool) IsChildOf(child ecs.EntityID, wantedParent ecs.EntityID) bool {
 	}
 }
 
-func (t *tool) SetParent(child ecs.EntityID, parent ecs.EntityID) {
+func (t *service) SetParent(child ecs.EntityID, parent ecs.EntityID) {
 	t.hierarchyArray.Set(child, hierarchy.NewParent(parent))
 }
 
-func (t *tool) Parent(child ecs.EntityID) (ecs.EntityID, bool) {
+func (t *service) Parent(child ecs.EntityID) (ecs.EntityID, bool) {
 	comp, ok := t.hierarchyArray.Get(child)
 	return comp.Parent, ok
 }
 
 //
 
-func (t *tool) GetParents(child ecs.EntityID) datastructures.SparseSet[ecs.EntityID] {
+func (t *service) GetParents(child ecs.EntityID) datastructures.SparseSet[ecs.EntityID] {
 	orderedParents := t.GetOrderedParents(child)
 
 	parents := datastructures.NewSparseSet[ecs.EntityID]()
@@ -79,7 +79,7 @@ func (t *tool) GetParents(child ecs.EntityID) datastructures.SparseSet[ecs.Entit
 	return parents
 }
 
-func (t *tool) GetOrderedParents(child ecs.EntityID) []ecs.EntityID {
+func (t *service) GetOrderedParents(child ecs.EntityID) []ecs.EntityID {
 	parents := []ecs.EntityID{child}
 	for {
 		parent, ok := t.hierarchyArray.Get(child)
@@ -94,7 +94,7 @@ func (t *tool) GetOrderedParents(child ecs.EntityID) []ecs.EntityID {
 	}
 }
 
-func (t *tool) GetOrderedPreviousParents(child ecs.EntityID) []ecs.EntityID {
+func (t *service) GetOrderedPreviousParents(child ecs.EntityID) []ecs.EntityID {
 	parents := []ecs.EntityID{child}
 	for {
 		parent, ok := t.parents.Get(child)
@@ -111,7 +111,7 @@ func (t *tool) GetOrderedPreviousParents(child ecs.EntityID) []ecs.EntityID {
 
 //
 
-func (t *tool) SetChildren(parent ecs.EntityID, children ...ecs.EntityID) {
+func (t *service) SetChildren(parent ecs.EntityID, children ...ecs.EntityID) {
 	previousChildren := t.Children(parent).GetIndices()
 	for _, child := range previousChildren {
 		t.hierarchyArray.Remove(child)
@@ -124,7 +124,7 @@ func (t *tool) SetChildren(parent ecs.EntityID, children ...ecs.EntityID) {
 
 //
 
-func (t *tool) Children(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID] {
+func (t *service) Children(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID] {
 	children, ok := t.children.Get(parent)
 	if !ok {
 		return datastructures.NewSparseSet[ecs.EntityID]()
@@ -132,7 +132,7 @@ func (t *tool) Children(parent ecs.EntityID) datastructures.SparseSetReader[ecs.
 	return children
 }
 
-func (t *tool) GetFlatChildren(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID] {
+func (t *service) GetFlatChildren(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID] {
 	if flatChildren, ok := t.flatChildren.Get(parent); ok {
 		return flatChildren
 	}
@@ -165,13 +165,13 @@ func (t *tool) GetFlatChildren(parent ecs.EntityID) datastructures.SparseSetRead
 	return flatChildren
 }
 
-func (t *tool) FlatChildren(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID] {
+func (t *service) FlatChildren(parent ecs.EntityID) datastructures.SparseSetReader[ecs.EntityID] {
 	return t.GetFlatChildren(parent)
 }
 
 //
 
-func (t *tool) handleHierarchyChange(child ecs.EntityID) {
+func (t *service) handleHierarchyChange(child ecs.EntityID) {
 	previousParent, previousParentOk := t.parents.Get(child)
 	hierarchy, nextParentOk := t.hierarchyArray.Get(child)
 	if previousParentOk == nextParentOk && hierarchy.Parent == previousParent {
@@ -216,7 +216,7 @@ addCurrentParent:
 	}
 }
 
-func (t *tool) handleParentChange(parent ecs.EntityID) {
+func (t *service) handleParentChange(parent ecs.EntityID) {
 	if _, isParent := t.parentArray.Get(parent); isParent {
 		return
 	}

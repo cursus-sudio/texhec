@@ -23,8 +23,6 @@ func NewRay(pos mgl32.Vec3, direction mgl32.Vec3, maxDistance float32, groups gr
 	}
 }
 
-// TODO think about moving to tool
-
 func (r *Ray) Apply(transform mgl32.Mat4) {
 	newPos := transform.Mul4x1(r.Pos.Vec4(1.0)).Vec3()
 	r.Pos = newPos

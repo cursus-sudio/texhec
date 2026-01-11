@@ -1,4 +1,4 @@
-package tool
+package service
 
 import (
 	"engine/modules/hierarchy"
@@ -8,7 +8,7 @@ import (
 	"engine/services/logger"
 )
 
-type tool struct {
+type service struct {
 	logger    logger.Logger
 	world     ecs.World
 	hierarchy hierarchy.Service
@@ -21,13 +21,13 @@ type tool struct {
 	dirtyChildren ecs.DirtySet
 }
 
-func NewLayoutToolFactory(
+func NewLayoutService(
 	logger logger.Logger,
 	world ecs.World,
 	hierarchy hierarchy.Service,
 	transform transform.Service,
 ) layout.Service {
-	t := &tool{
+	t := &service{
 		logger,
 		world,
 		hierarchy,
@@ -42,13 +42,13 @@ func NewLayoutToolFactory(
 	return t
 }
 
-func (t *tool) Align() ecs.ComponentsArray[layout.AlignComponent] { return t.align }
-func (t *tool) Order() ecs.ComponentsArray[layout.OrderComponent] { return t.order }
-func (t *tool) Gap() ecs.ComponentsArray[layout.GapComponent]     { return t.gap }
+func (t *service) Align() ecs.ComponentsArray[layout.AlignComponent] { return t.align }
+func (t *service) Order() ecs.ComponentsArray[layout.OrderComponent] { return t.order }
+func (t *service) Gap() ecs.ComponentsArray[layout.GapComponent]     { return t.gap }
 
 //
 
-func (t *tool) Init() {
+func (t *service) Init() {
 	// t.order.SetEmpty(layout.NewOrder(layout.OrderHorizontal))
 	t.align.SetEmpty(layout.NewAlign(.5, .5))
 	t.gap.SetEmpty(layout.NewGap(0))
@@ -77,7 +77,7 @@ type save struct {
 	parentPivot transform.ParentPivotPointComponent
 }
 
-func (t *tool) BeforeGet() {
+func (t *service) BeforeGet() {
 	for _, child := range t.dirtyChildren.Get() {
 		if parent, ok := t.hierarchy.Parent(child); ok {
 			t.dirtyParents.Dirty(parent)
@@ -104,7 +104,7 @@ func (t *tool) BeforeGet() {
 	}
 }
 
-func (t *tool) handleParentChildren(parent ecs.EntityID) []save {
+func (t *service) handleParentChildren(parent ecs.EntityID) []save {
 	children := t.hierarchy.Children(parent).GetIndices()
 	if len(children) == 0 {
 		return nil

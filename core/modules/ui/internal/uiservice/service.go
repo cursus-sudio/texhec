@@ -1,4 +1,4 @@
-package uitool
+package uiservice
 
 import (
 	gameassets "core/assets"
@@ -28,7 +28,7 @@ type changing struct {
 	childWrapper  ecs.EntityID
 }
 
-type tool struct {
+type service struct {
 	*changing
 
 	animationDuration time.Duration
@@ -43,8 +43,8 @@ func NewService(
 	world engine.World,
 	animationDuration time.Duration,
 	gameAssets gameassets.GameAssets,
-) *tool {
-	t := &tool{
+) *service {
+	t := &service{
 		changing: &changing{},
 
 		animationDuration: animationDuration,
@@ -61,7 +61,7 @@ func NewService(
 	return t
 }
 
-func (t *tool) Init() error {
+func (t *service) Init() error {
 	cameras := t.uiCameraArray.GetEntities()
 	if len(cameras) == 0 {
 		return nil
@@ -136,7 +136,7 @@ func (t *tool) Init() error {
 	return nil
 }
 
-func (t *tool) ResetChildWrapper() error {
+func (t *service) ResetChildWrapper() error {
 	if !t.isInitialized {
 		err := t.Init()
 		if err != nil {
@@ -150,9 +150,9 @@ func (t *tool) ResetChildWrapper() error {
 	return nil
 }
 
-func (t *tool) UiCamera() ecs.ComponentsArray[ui.UiCameraComponent] { return t.uiCameraArray }
+func (t *service) UiCamera() ecs.ComponentsArray[ui.UiCameraComponent] { return t.uiCameraArray }
 
-func (t *tool) Show() ecs.EntityID {
+func (t *service) Show() ecs.EntityID {
 	t.Logger.Warn(t.ResetChildWrapper())
 	if !t.active {
 		t.active = true
@@ -166,7 +166,7 @@ func (t *tool) Show() ecs.EntityID {
 	return t.childWrapper
 }
 
-func (t *tool) Hide() {
+func (t *service) Hide() {
 	if t.active {
 		t.active = false
 		events.Emit(t.Events, transition.NewTransitionEvent(
@@ -178,7 +178,7 @@ func (t *tool) Hide() {
 	}
 }
 
-// func (t* tool) Buttons(buttons ...ui.Button) []ecs.EntityID {
+// func (t* service) Buttons(buttons ...ui.Button) []ecs.EntityID {
 // 	entities := []ecs.EntityID{}
 //
 // 	btnAsset, err := assets.GetAsset[render.TextureAsset](assetsService, gameAssets.Hud.Btn)

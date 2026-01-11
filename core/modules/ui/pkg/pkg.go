@@ -4,7 +4,7 @@ import (
 	gameassets "core/assets"
 	"core/modules/tile"
 	"core/modules/ui"
-	"core/modules/ui/internal/uitool"
+	"core/modules/ui/internal/uiservice"
 	"engine"
 	"engine/services/codec"
 	"engine/services/ecs"
@@ -40,7 +40,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ui.Service {
-		return uitool.NewService(
+		return uiservice.NewService(
 			ioc.GetServices[engine.World](c),
 			pkg.animationDuration,
 			ioc.Get[gameassets.GameAssets](c),

@@ -1,4 +1,4 @@
-package cameratool
+package service
 
 import (
 	"engine/modules/camera"

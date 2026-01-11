@@ -16,7 +16,7 @@ type service struct {
 	textureFrameArray ecs.ComponentsArray[render.TextureFrameComponent]
 }
 
-func NewTool(
+func NewService(
 	world ecs.World,
 ) render.Service {
 	return &service{

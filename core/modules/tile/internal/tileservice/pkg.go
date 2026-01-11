@@ -65,7 +65,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 		pkg.Register(b)
 	}
 	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.Service {
-		return &tool{
+		return &service{
 			ioc.Get[relation.Service[tile.PosComponent]](c),
 			ecs.GetComponentsArray[tile.PosComponent](ioc.GetServices[engine.World](c)),
 		}

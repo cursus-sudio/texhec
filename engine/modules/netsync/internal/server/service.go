@@ -24,7 +24,9 @@ type clientMessage struct {
 	Message any
 }
 
-type toolState struct {
+type Service struct {
+	config.Config
+
 	recordedEventUUID *uuid.UUID
 	recordingID       record.UUIDRecordingID
 
@@ -45,11 +47,6 @@ type toolState struct {
 	logger logger.Logger
 }
 
-type Service struct {
-	config.Config
-	*toolState
-}
-
 func NewService(
 	config config.Config,
 	logger logger.Logger,
@@ -62,26 +59,25 @@ func NewService(
 ) *Service {
 	t := &Service{
 		config,
-		&toolState{
-			nil,
-			0,
 
-			&sync.Mutex{},
+		nil,
+		0,
 
-			ecs.NewDirtySet(),
-			nil,
-			nil,
-			datastructures.NewSparseSet[ecs.EntityID](),
+		&sync.Mutex{},
 
-			eventsBuilder.Events(),
-			world,
-			netSync,
-			connection,
-			record,
-			uuid,
+		ecs.NewDirtySet(),
+		nil,
+		nil,
+		datastructures.NewSparseSet[ecs.EntityID](),
 
-			logger,
-		},
+		eventsBuilder.Events(),
+		world,
+		netSync,
+		connection,
+		record,
+		uuid,
+
+		logger,
 	}
 
 	// listen to server messages

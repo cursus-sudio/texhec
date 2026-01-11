@@ -38,7 +38,7 @@ type service struct {
 	stackData *[]inputs.Target
 }
 
-func NewToolFactory(
+func NewService(
 	logger logger.Logger,
 	eventsBuilder events.Builder,
 	w ecs.World,

@@ -6,7 +6,7 @@ TODO before:
 - allow to use ANDs and ORs
 
 TODO:
-- split camera definition and tools from smaller subsystems
+- split camera definition and services from smaller subsystems
 - clear up package and move things to internal instead
 - redo whole camera interface
 - freestyle what i didn't wrote here down

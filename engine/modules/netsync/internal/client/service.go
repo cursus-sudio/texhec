@@ -29,7 +29,12 @@ type recordedPrediction struct {
 	PredictedEvent clienttypes.PredictedEvent
 }
 
-type toolState struct {
+// can:
+// - apply server event
+// - apply predicted event (starts and ends prediction)
+type Service struct {
+	config.Config
+
 	recordNextEvent    bool
 	predictions        []savedPrediction
 	recordedPrediction *recordedPrediction
@@ -54,14 +59,6 @@ type toolState struct {
 	logger logger.Logger
 }
 
-// can:
-// - apply server event
-// - apply predicted event (starts and ends prediction)
-type Service struct {
-	config.Config
-	*toolState
-}
-
 func NewService(
 	config config.Config,
 	logger logger.Logger,
@@ -74,29 +71,28 @@ func NewService(
 ) *Service {
 	t := &Service{
 		config,
-		&toolState{
-			true,
-			make([]savedPrediction, 0),
-			nil,
-			false,
-			false,
-			0,
 
-			&sync.Mutex{},
+		true,
+		make([]savedPrediction, 0),
+		nil,
+		false,
+		false,
+		0,
 
-			ecs.NewDirtySet(),
-			nil,
-			nil,
-			datastructures.NewSparseSet[ecs.EntityID](),
+		&sync.Mutex{},
 
-			eventsBuilder.Events(),
-			world,
-			netSync,
-			connection,
-			record,
-			uuid,
-			logger,
-		},
+		ecs.NewDirtySet(),
+		nil,
+		nil,
+		datastructures.NewSparseSet[ecs.EntityID](),
+
+		eventsBuilder.Events(),
+		world,
+		netSync,
+		connection,
+		record,
+		uuid,
+		logger,
 	}
 
 	listeners := map[reflect.Type]func(any){

@@ -115,10 +115,10 @@ func (t *service) synchronizeArrayState(
 		for _, entity := range entities {
 			uuid, ok := t.worldCopyUUID.Get(entity)
 			if !ok {
-				uuid, ok = t.worldUUID.UUID().Get(entity)
+				uuid, ok = t.worldUUID.Component().Get(entity)
 				if !ok {
 					uuid.ID = t.worldUUID.NewUUID()
-					t.worldUUID.UUID().Set(entity, uuid)
+					t.worldUUID.Component().Set(entity, uuid)
 				}
 				t.worldCopyUUID.Set(entity, uuid)
 			}

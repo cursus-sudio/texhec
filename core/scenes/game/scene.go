@@ -54,7 +54,7 @@ func addScene(
 
 	gameCamera := world.NewEntity()
 	world.Hierarchy.SetParent(gameCamera, sceneParent)
-	world.UUID.UUID().Set(gameCamera, uuid.New([16]byte{48}))
+	world.UUID.Component().Set(gameCamera, uuid.New([16]byte{48}))
 	world.Camera.Ortho().Set(gameCamera, camera.NewOrtho(-1000, +1000))
 	world.Groups.Component().Set(gameCamera, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 	world.Camera.Mobile().Set(gameCamera, camera.NewMobileCamera())

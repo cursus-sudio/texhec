@@ -43,7 +43,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) netsync.Service {
-		return service.NewToolFactory(
+		return service.NewService(
 			ioc.Get[ecs.World](c),
 		)
 	})

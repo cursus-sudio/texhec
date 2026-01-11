@@ -23,6 +23,6 @@ func (pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) definition.Service {
-		return internal.NewToolFactory(ioc.Get[ecs.World](c))
+		return internal.NewService(ioc.Get[ecs.World](c))
 	})
 }

@@ -10,7 +10,7 @@ type service struct {
 	definitionLinkArray ecs.ComponentsArray[definition.DefinitionLinkComponent]
 }
 
-func NewToolFactory(
+func NewService(
 	w ecs.World,
 ) definition.Service {
 	t := &service{

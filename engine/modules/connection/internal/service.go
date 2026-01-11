@@ -24,7 +24,7 @@ type service struct {
 	connectionArray    ecs.ComponentsArray[connection.ConnectionComponent]
 }
 
-func NewToolFactory(
+func NewService(
 	codec codec.Codec,
 	logger logger.Logger,
 	world ecs.World,

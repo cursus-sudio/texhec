@@ -8,7 +8,7 @@ func BenchmarkSpatialIndexingGetEmpty(b *testing.B) {
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		setup.Tool.Get(component.Index)
+		setup.Service.Get(component.Index)
 	}
 }
 
@@ -20,7 +20,7 @@ func BenchmarkSpatialIndexingGet(b *testing.B) {
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		setup.Tool.Get(component.Index)
+		setup.Service.Get(component.Index)
 	}
 }
 
@@ -34,5 +34,5 @@ func BenchmarkSpatialIndexingSave(b *testing.B) {
 		setup.Array.Remove(entity)
 		setup.Array.Set(entity, component)
 	}
-	setup.Tool.Get(0)
+	setup.Service.Get(0)
 }

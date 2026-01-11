@@ -22,17 +22,17 @@ func TileColliderSystem(
 	return ecs.NewSystemRegister(func() error {
 		tilePosDirtySet := ecs.NewDirtySet()
 		tileService.Pos().AddDirtySet(tilePosDirtySet)
-		w.UUID.UUID().BeforeGet(func() {
+		w.UUID.Component().BeforeGet(func() {
 			ei := tilePosDirtySet.Get()
 			if len(ei) == 0 {
 				return
 			}
 			for _, entity := range ei {
-				if _, ok := w.UUID.UUID().Get(entity); ok {
+				if _, ok := w.UUID.Component().Get(entity); ok {
 					continue
 				}
 				comp := uuid.New(w.UUID.NewUUID())
-				w.UUID.UUID().Set(entity, comp)
+				w.UUID.Component().Set(entity, comp)
 			}
 		})
 

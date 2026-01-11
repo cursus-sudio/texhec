@@ -28,6 +28,7 @@ func (pkg) Register(b ioc.Builder) {
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) audio.PlayerService { return ioc.Get[internal.Service](c) })
 	ioc.RegisterSingleton(b, func(c ioc.Dic) audio.VolumeService { return ioc.Get[internal.Service](c) })
+	ioc.RegisterSingleton(b, func(c ioc.Dic) audio.Service { return ioc.Get[internal.Service](c) })
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) audio.System {
 		return internal.NewSystem(c)

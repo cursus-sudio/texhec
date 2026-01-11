@@ -18,7 +18,7 @@ type BackwardRecording struct {
 }
 
 type entityKeyedRecorder struct {
-	*tool
+	*service
 
 	i     record.RecordingID
 	holes datastructures.SparseSet[record.RecordingID]
@@ -28,7 +28,7 @@ type entityKeyedRecorder struct {
 }
 
 func newEntityKeyedRecorder(
-	t *tool,
+	t *service,
 ) *entityKeyedRecorder {
 	entityKeyedRecorder := &entityKeyedRecorder{
 		t,
@@ -132,7 +132,7 @@ func (t *entityKeyedRecorder) Apply(config record.Config, recordings ...record.R
 				continue
 			}
 			if components == nil {
-				t.world.RemoveEntity(entity)
+				t.World.RemoveEntity(entity)
 				continue
 			}
 			for i, component := range components {

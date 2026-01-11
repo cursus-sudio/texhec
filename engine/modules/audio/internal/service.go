@@ -6,6 +6,7 @@ import (
 	"engine/services/datastructures"
 	"sync"
 
+	"github.com/ogiusek/ioc/v2"
 	"github.com/veandco/go-sdl2/mix"
 )
 
@@ -23,9 +24,9 @@ type audioService struct {
 	channelsVolumes datastructures.SparseArray[audio.Channel, audio.Volume]
 }
 
-func NewService(assets assets.Assets) Service {
+func NewService(c ioc.Dic) Service {
 	return &audioService{
-		assets: assets,
+		assets: ioc.Get[assets.Assets](c),
 
 		mutex:           &sync.Mutex{},
 		masterVolume:    1,

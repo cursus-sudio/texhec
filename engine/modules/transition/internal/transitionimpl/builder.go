@@ -34,9 +34,9 @@ func (b *builder) RegisterEasingFunction(id transition.EasingID, fn transition.E
 
 func (b *builder) Build() transition.System {
 	systems := b.systems
-	return ecs.NewSystemRegister(func(w transition.World) error {
+	return ecs.NewSystemRegister(func() error {
 		for _, system := range systems {
-			if err := system.Register(w); err != nil {
+			if err := system.Register(); err != nil {
 				return err
 			}
 		}

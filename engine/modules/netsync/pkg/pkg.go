@@ -6,11 +6,11 @@ import (
 	"engine/modules/netsync/internal/clienttypes"
 	"engine/modules/netsync/internal/server"
 	"engine/modules/netsync/internal/servertypes"
-	"engine/modules/netsync/internal/tool"
+	"engine/modules/netsync/internal/service"
 	"engine/services/codec"
 	"engine/services/ecs"
-	"engine/services/logger"
 
+	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -25,8 +25,8 @@ func Package(config Config) ioc.Pkg {
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
-		return b.
+	ioc.WrapService(b, func(c ioc.Dic, b codec.Builder) {
+		b.
 			// client
 			Register(clienttypes.PredictedEvent{}).
 			Register(clienttypes.FetchStateDTO{}).
@@ -38,70 +38,60 @@ func (pkg pkg) Register(b ioc.Builder) {
 			Register(servertypes.TransparentEventDTO{})
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) netsync.ToolFactory {
-		return tool.NewToolFactory()
+	ioc.RegisterSingleton(b, func(c ioc.Dic) netsync.Service {
+		return service.NewService(c)
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[netsync.World, *server.Tool] {
-		return server.NewToolFactory(
-			*pkg.config.config,
-			ioc.Get[netsync.ToolFactory](c),
-			ioc.Get[logger.Logger](c),
-		)
+	ioc.RegisterSingleton(b, func(c ioc.Dic) *server.Service {
+		return server.NewService(c, *pkg.config.config)
 	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ecs.ToolFactory[netsync.World, *client.Tool] {
-		return client.NewToolFactory(
-			*pkg.config.config,
-			ioc.Get[netsync.ToolFactory](c),
-			ioc.Get[logger.Logger](c),
-		)
+	ioc.RegisterSingleton(b, func(c ioc.Dic) *client.Service {
+		return client.NewService(c, *pkg.config.config)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) netsync.StartSystem {
-		clientToolFactory := ioc.Get[ecs.ToolFactory[netsync.World, *client.Tool]](c)
-		serverToolFactory := ioc.Get[ecs.ToolFactory[netsync.World, *server.Tool]](c)
-		return ecs.NewSystemRegister(func(w netsync.World) error {
-			clientTool := clientToolFactory.Build(w)
-			for _, listen := range clientTool.ListenToEvents {
-				listen(w.EventsBuilder(), clientTool.BeforeEvent)
+		clientService := ioc.Get[*client.Service](c)
+		serverService := ioc.Get[*server.Service](c)
+		eventsBuilder := ioc.Get[events.Builder](c)
+		return ecs.NewSystemRegister(func() error {
+			for _, listen := range clientService.ListenToEvents {
+				listen(eventsBuilder, clientService.BeforeEvent)
 			}
-			for _, listen := range clientTool.ListenToSimulatedEvents {
-				listen(w.EventsBuilder(), clientTool.BeforeEventRecord)
+			for _, listen := range clientService.ListenToSimulatedEvents {
+				listen(eventsBuilder, clientService.BeforeEventRecord)
 			}
-			for _, listen := range clientTool.ListenToTransparentEvents {
-				listen(w.EventsBuilder(), clientTool.OnTransparentEvent)
+			for _, listen := range clientService.ListenToTransparentEvents {
+				listen(eventsBuilder, clientService.OnTransparentEvent)
 			}
 
-			serverTool := serverToolFactory.Build(w)
-			for _, listen := range serverTool.ListenToEvents {
-				listen(w.EventsBuilder(), serverTool.BeforeEvent)
+			for _, listen := range serverService.ListenToEvents {
+				listen(eventsBuilder, serverService.BeforeEvent)
 			}
-			for _, listen := range clientTool.ListenToSimulatedEvents {
-				listen(w.EventsBuilder(), serverTool.BeforeEvent)
+			for _, listen := range clientService.ListenToSimulatedEvents {
+				listen(eventsBuilder, serverService.BeforeEvent)
 			}
-			for _, listen := range serverTool.ListenToTransparentEvents {
-				listen(w.EventsBuilder(), serverTool.OnTransparentEvent)
+			for _, listen := range serverService.ListenToTransparentEvents {
+				listen(eventsBuilder, serverService.OnTransparentEvent)
 			}
 			return nil
 		})
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) netsync.StopSystem {
-		clientToolFactory := ioc.Get[ecs.ToolFactory[netsync.World, *client.Tool]](c)
-		serverToolFactory := ioc.Get[ecs.ToolFactory[netsync.World, *server.Tool]](c)
-		return ecs.NewSystemRegister(func(w netsync.World) error {
-			clientTool := clientToolFactory.Build(w)
-			for _, listen := range clientTool.ListenToEvents {
-				listen(w.EventsBuilder(), clientTool.AfterEvent)
+		clientService := ioc.Get[*client.Service](c)
+		serverService := ioc.Get[*server.Service](c)
+		eventsBuilder := ioc.Get[events.Builder](c)
+		return ecs.NewSystemRegister(func() error {
+			for _, listen := range clientService.ListenToEvents {
+				listen(eventsBuilder, clientService.AfterEvent)
 			}
-			for _, listen := range clientTool.ListenToSimulatedEvents {
-				listen(w.EventsBuilder(), clientTool.AfterEvent)
+			for _, listen := range clientService.ListenToSimulatedEvents {
+				listen(eventsBuilder, clientService.AfterEvent)
 			}
 
-			serverTool := serverToolFactory.Build(w)
-			for _, listen := range serverTool.ListenToEvents {
-				listen(w.EventsBuilder(), serverTool.AfterEvent)
+			for _, listen := range serverService.ListenToEvents {
+				listen(eventsBuilder, serverService.AfterEvent)
 			}
-			for _, listen := range serverTool.ListenToSimulatedEvents {
-				listen(w.EventsBuilder(), serverTool.AfterEvent)
+			for _, listen := range serverService.ListenToSimulatedEvents {
+				listen(eventsBuilder, serverService.AfterEvent)
 			}
 			return nil
 		})

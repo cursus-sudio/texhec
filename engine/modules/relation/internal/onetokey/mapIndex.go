@@ -16,21 +16,20 @@ type mapRelation[IndexType comparable] struct {
 	componentIndex func(ecs.EntityID) (IndexType, bool)
 }
 
-func newMapIndex[IndexType comparable](
+func NewMapIndex[IndexType comparable](
 	w ecs.World,
-	dirtySet ecs.DirtySet,
+	dirtySet func(ecs.World) ecs.DirtySet,
 	componentIndex func(ecs.EntityID) (IndexType, bool),
-) relation.EntityToKeyTool[IndexType] {
+) relation.Service[IndexType] {
 	indexGlobal := &mapRelation[IndexType]{
 		world:    w,
-		dirtySet: dirtySet,
+		dirtySet: dirtySet(w),
 
 		entities: datastructures.NewSparseArray[ecs.EntityID, IndexType](),
 		indices:  make(map[IndexType]ecs.EntityID),
 
 		componentIndex: componentIndex,
 	}
-	w.SaveGlobal(indexGlobal)
 
 	return indexGlobal
 }

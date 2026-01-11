@@ -15,8 +15,6 @@ import (
 	gtexture "engine/services/graphics/texture"
 	"engine/services/graphics/vao/ebo"
 	"engine/services/logger"
-	appruntime "engine/services/runtime"
-	"engine/services/scenes"
 	"image"
 	_ "image/png"
 	"math"
@@ -62,7 +60,7 @@ func Package() ioc.Pkg {
 
 func (pkg) Assets(b ioc.Builder) {
 	// register specific files
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b assets.AssetsStorageBuilder) assets.AssetsStorageBuilder {
+	ioc.WrapService(b, func(c ioc.Dic, b assets.AssetsStorageBuilder) {
 		b.RegisterExtension("wav", func(id assets.AssetID) (any, error) {
 			source, err := os.ReadFile(string(id))
 			if err != nil {
@@ -134,8 +132,6 @@ func (pkg) Assets(b ioc.Builder) {
 				})
 			return asset, nil
 		})
-
-		return b
 	})
 
 	// register assets
@@ -148,17 +144,7 @@ func (pkg) Assets(b ioc.Builder) {
 		return gameAssets
 	})
 
-	ioc.WrapService(b, appruntime.OrderCleanUp, func(c ioc.Dic, b appruntime.Builder) appruntime.Builder {
-		assets := ioc.Get[assets.Assets](c)
-		b.OnStop(func(r appruntime.Runtime) {
-			scene := ioc.Get[scenes.SceneManager](c).CurrentSceneWorld()
-			scene.ReleaseGlobals()
-
-			assets.ReleaseAll()
-		})
-		return b
-	})
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, s tile.TileAssets) tile.TileAssets {
+	ioc.WrapService(b, func(c ioc.Dic, s tile.TileAssets) {
 		gameAssets := ioc.Get[GameAssets](c)
 		assets := datastructures.NewSparseArray[definition.DefinitionID, assets.AssetID]()
 		assets.Set(definition.TileMountain, gameAssets.Tiles.Mountain)
@@ -167,7 +153,6 @@ func (pkg) Assets(b ioc.Builder) {
 		assets.Set(definition.TileWater, gameAssets.Tiles.Water)
 		assets.Set(definition.TileU1, gameAssets.Tiles.Unit)
 		s.AddType(assets)
-		return s
 	})
 }
 
@@ -183,7 +168,7 @@ const (
 )
 
 func (pkg) Animations(b ioc.Builder) {
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b transition.EasingService) transition.EasingService {
+	ioc.WrapService(b, func(c ioc.Dic, b transition.EasingService) {
 		b.Set(LinearEasingFunction, func(t transition.Progress) transition.Progress {
 			return t
 		})
@@ -220,7 +205,6 @@ func (pkg) Animations(b ioc.Builder) {
 				1
 			return transition.Progress(x)
 		})
-		return b
 	})
 }
 

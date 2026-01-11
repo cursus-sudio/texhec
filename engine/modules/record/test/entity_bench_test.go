@@ -6,55 +6,55 @@ import (
 )
 
 func BenchmarkEntityRecording(b *testing.B) {
-	world := NewSetup()
+	s := NewSetup()
 
-	entity := world.NewEntity()
-	world.ComponentArray.Set(entity, Component{Counter: 6})
+	entity := s.World.NewEntity()
+	s.ComponentArray.Set(entity, Component{Counter: 6})
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		recordingID := world.Record().Entity().StartRecording(world.Config)
-		world.Record().Entity().Stop(recordingID)
+		recordingID := s.Record.Entity().StartRecording(s.Config)
+		s.Record.Entity().Stop(recordingID)
 	}
 }
 
 func BenchmarkCreateNEntitiesEntityRecording(b *testing.B) {
-	world := NewSetup()
+	s := NewSetup()
 
-	entity := world.NewEntity()
-	world.ComponentArray.Set(entity, Component{Counter: 6})
+	entity := s.World.NewEntity()
+	s.ComponentArray.Set(entity, Component{Counter: 6})
 
-	recordingID := world.Record().Entity().StartRecording(world.Config)
+	recordingID := s.Record.Entity().StartRecording(s.Config)
 	for i := 0; i < b.N; i++ {
-		world.ComponentArray.Set(ecs.EntityID(i), Component{Counter: i})
+		s.ComponentArray.Set(ecs.EntityID(i), Component{Counter: i})
 	}
 	b.ResetTimer()
-	world.Record().Entity().Stop(recordingID)
+	s.Record.Entity().Stop(recordingID)
 }
 
 func BenchmarkEntityApply1Entities(b *testing.B) {
-	world := NewSetup()
+	s := NewSetup()
 
-	entity := world.NewEntity()
-	world.ComponentArray.Set(entity, Component{Counter: 6})
+	entity := s.World.NewEntity()
+	s.ComponentArray.Set(entity, Component{Counter: 6})
 
-	recording := world.Record().Entity().GetState(world.Config)
+	recording := s.Record.Entity().GetState(s.Config)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		world.Record().Entity().Apply(world.Config, recording)
+		s.Record.Entity().Apply(s.Config, recording)
 	}
 }
 func BenchmarkEntityApply10Entities(b *testing.B) {
-	world := NewSetup()
+	s := NewSetup()
 
 	for i := 0; i < 10; i++ {
-		entity := world.NewEntity()
-		world.ComponentArray.Set(entity, Component{Counter: 6})
+		entity := s.World.NewEntity()
+		s.ComponentArray.Set(entity, Component{Counter: 6})
 	}
 
-	recording := world.Record().Entity().GetState(world.Config)
+	recording := s.Record.Entity().GetState(s.Config)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		world.Record().Entity().Apply(world.Config, recording)
+		s.Record.Entity().Apply(s.Config, recording)
 	}
 }

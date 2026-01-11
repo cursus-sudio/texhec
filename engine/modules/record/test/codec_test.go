@@ -8,21 +8,21 @@ import (
 )
 
 func TestCodec(t *testing.T) {
-	world := NewSetup()
+	s := NewSetup()
 	initialState := Component{Counter: 6}
 
-	entity := world.NewEntity()
-	world.ComponentArray.Set(entity, initialState)
+	entity := s.World.NewEntity()
+	s.ComponentArray.Set(entity, initialState)
 
-	originalRecording := world.Record().UUID().GetState(world.Config)
+	originalRecording := s.Record.UUID().GetState(s.Config)
 
-	encodedRecording, err := world.Codec.Encode(originalRecording)
+	encodedRecording, err := s.Codec.Encode(originalRecording)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	decodedRecording, err := world.Codec.Decode(encodedRecording)
+	decodedRecording, err := s.Codec.Decode(encodedRecording)
 	if err != nil {
 		t.Error(err)
 		return

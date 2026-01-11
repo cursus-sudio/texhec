@@ -4,7 +4,6 @@ import (
 	"engine/modules/groups"
 	"engine/modules/groups/internal"
 	"engine/services/codec"
-	"engine/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -17,12 +16,12 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) Register(b ioc.Builder) {
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
-		return b.
+	ioc.WrapService(b, func(c ioc.Dic, b codec.Builder) {
+		b.
 			// components
 			Register(groups.GroupsComponent{})
 	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) groups.ToolFactory {
-		return internal.NewToolFactory(ioc.Get[logger.Logger](c))
+	ioc.RegisterSingleton(b, func(c ioc.Dic) groups.Service {
+		return internal.NewService(c)
 	})
 }

@@ -5,25 +5,16 @@ import (
 	"engine/modules/transition"
 	"engine/services/ecs"
 	"engine/services/frames"
-	"sync"
 
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
-func NewLastSystem[Component transition.Lerp[Component]]() smooth.StopSystem {
-	mutex := &sync.Mutex{}
-	return ecs.NewSystemRegister(func(w smooth.World) error {
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		t, ok := ecs.GetGlobal[tool[Component]](w)
-		if !ok {
-			t = NewTool[Component](w)
-			w.SaveGlobal(t)
-		}
-
-		events.Listen(w.EventsBuilder(), func(tick frames.TickEvent) {
-			r, ok := w.Record().Entity().Stop(t.recordingID)
+func NewLastSystem[Component transition.Lerp[Component]](c ioc.Dic) smooth.StopSystem {
+	return ecs.NewSystemRegister(func() error {
+		s := ioc.GetServices[*system[Component]](c)
+		events.Listen(s.EventsBuilder, func(tick frames.TickEvent) {
+			r, ok := s.Record.Entity().Stop(s.Service.recordingID)
 			if !ok {
 				return
 			}
@@ -36,12 +27,12 @@ func NewLastSystem[Component transition.Lerp[Component]]() smooth.StopSystem {
 				if !ok {
 					continue
 				}
-				after, ok := t.componentArray.Get(entity)
+				after, ok := s.Service.componentArray.Get(entity)
 				if !ok {
 					continue
 				}
 				lerpComponent := transition.NewTransition(before, after, tick.Delta)
-				t.lerpArray.Set(entity, lerpComponent)
+				s.Service.lerpArray.Set(entity, lerpComponent)
 			}
 		})
 

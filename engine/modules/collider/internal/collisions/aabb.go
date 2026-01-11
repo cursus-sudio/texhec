@@ -8,7 +8,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-func TransformAABB(t transform.Interface, entity ecs.EntityID) collider.AABB {
+func TransformAABB(t transform.Service, entity ecs.EntityID) collider.AABB {
 	pos, _ := t.AbsolutePos().Get(entity)
 	rot, _ := t.AbsoluteRotation().Get(entity)
 	size, _ := t.AbsoluteSize().Get(entity)

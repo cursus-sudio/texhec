@@ -3,11 +3,7 @@ package genericrendererpkg
 import (
 	"engine/modules/genericrenderer"
 	"engine/modules/genericrenderer/internal/renderer"
-	"engine/services/assets"
-	"engine/services/graphics/texture"
 	"engine/services/graphics/vao/vbo"
-	"engine/services/logger"
-	"engine/services/media/window"
 	"unsafe"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -37,17 +33,10 @@ func (pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) genericrenderer.System {
-		return renderer.NewSystem(
-			ioc.Get[genericrenderer.ToolFactory](c),
-			ioc.Get[window.Api](c),
-			ioc.Get[assets.AssetsStorage](c),
-			ioc.Get[logger.Logger](c),
-			ioc.Get[vbo.VBOFactory[genericrenderer.Vertex]](c),
-			ioc.Get[texture.Factory](c),
-		)
+		return renderer.NewSystem(c)
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) genericrenderer.ToolFactory {
-		return renderer.NewToolFactory()
+	ioc.RegisterSingleton(b, func(c ioc.Dic) genericrenderer.Service {
+		return renderer.NewService(c)
 	})
 }

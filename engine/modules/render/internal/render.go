@@ -7,30 +7,28 @@ import (
 	"engine/services/media/window"
 
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type renderSystem struct {
-	world  ecs.World
-	events events.Events
-	window window.Api
+	World         ecs.World      `inject:"1"`
+	Events        events.Events  `inject:"1"`
+	Window        window.Api     `inject:"1"`
+	EventsBuilder events.Builder `inject:"1"`
 }
 
-func NewRenderSystem(window window.Api) render.System {
-	return ecs.NewSystemRegister(func(w render.World) error {
-		s := &renderSystem{
-			world:  w,
-			events: w.Events(),
-			window: window,
-		}
-		events.ListenE(w.EventsBuilder(), s.Listen)
+func NewRenderSystem(c ioc.Dic) render.System {
+	return ecs.NewSystemRegister(func() error {
+		s := ioc.GetServices[*renderSystem](c)
+		events.ListenE(s.EventsBuilder, s.Listen)
 		return nil
 	})
 }
 
 func (s *renderSystem) Listen(args frames.FrameEvent) error {
-	events.Emit(s.events, render.RenderEvent{})
+	events.Emit(s.Events, render.RenderEvent{})
 
-	s.window.Window().GLSwap()
+	s.Window.Window().GLSwap()
 
 	return nil
 }

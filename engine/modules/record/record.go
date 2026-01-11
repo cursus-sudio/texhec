@@ -7,15 +7,7 @@ import (
 	"reflect"
 )
 
-type ToolFactory ecs.ToolFactory[World, RecordTool]
-type RecordTool interface {
-	Record() Interface
-}
-type World interface {
-	ecs.World
-	uuid.UUIDTool
-}
-type Interface interface {
+type Service interface {
 	Entity() EntityKeyedRecorder
 	UUID() UUIDKeyedRecorder
 }

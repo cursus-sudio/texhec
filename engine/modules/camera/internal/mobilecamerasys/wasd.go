@@ -2,37 +2,32 @@ package mobilecamerasys
 
 import (
 	"engine/modules/camera"
+	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/frames"
 	"engine/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
 type wasdMoveSystem struct {
-	logger logger.Logger
-	camera.World
-	camera.CameraTool
+	Logger        logger.Logger     `inject:"1"`
+	EventsBuilder events.Builder    `inject:"1"`
+	World         ecs.World         `inject:"1"`
+	Transform     transform.Service `inject:"1"`
+	Camera        camera.Service    `inject:"1"`
 
 	cameraSpeed float32
 }
 
-func NewWasdSystem(
-	logger logger.Logger,
-	cameraCtors camera.ToolFactory,
-	cameraSpeed float32,
-) camera.System {
-	return ecs.NewSystemRegister(func(w camera.World) error {
-		s := &wasdMoveSystem{
-			logger:     logger,
-			World:      w,
-			CameraTool: cameraCtors.Build(w),
-
-			cameraSpeed: cameraSpeed,
-		}
-		events.Listen(w.EventsBuilder(), s.Listen)
+func NewWasdSystem(c ioc.Dic, cameraSpeed float32) camera.System {
+	return ecs.NewSystemRegister(func() error {
+		s := ioc.GetServices[*wasdMoveSystem](c)
+		s.cameraSpeed = cameraSpeed
+		events.Listen(s.EventsBuilder, s.Listen)
 		return nil
 	})
 }
@@ -62,9 +57,9 @@ func (s *wasdMoveSystem) Listen(event frames.FrameEvent) {
 		moveVerticaly *= float32(event.Delta.Milliseconds()) * s.cameraSpeed
 	}
 
-	for _, camera := range s.Camera().Mobile().GetEntities() {
-		pos, _ := s.Transform().AbsolutePos().Get(camera)
-		ortho, ok := s.Camera().Ortho().Get(camera)
+	for _, camera := range s.Camera.Mobile().GetEntities() {
+		pos, _ := s.Transform.AbsolutePos().Get(camera)
+		ortho, ok := s.Camera.Ortho().Get(camera)
 		if !ok {
 			continue
 		}
@@ -74,6 +69,6 @@ func (s *wasdMoveSystem) Listen(event frames.FrameEvent) {
 			pos.Pos.Y() + moveVerticaly/ortho.Zoom,
 			pos.Pos.Z(),
 		}
-		s.Transform().AbsolutePos().Set(camera, pos)
+		s.Transform.AbsolutePos().Set(camera, pos)
 	}
 }

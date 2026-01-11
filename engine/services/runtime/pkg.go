@@ -17,5 +17,4 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) Runtime {
 		return ioc.Get[Builder](c).Build()
 	})
-	ioc.RegisterDependency[Runtime, Builder](b)
 }

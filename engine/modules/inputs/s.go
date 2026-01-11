@@ -5,7 +5,7 @@ import (
 	"engine/services/media/window"
 )
 
-type System ecs.SystemRegister[World]
+type System ecs.SystemRegister
 
 type QuitEvent struct{}
 

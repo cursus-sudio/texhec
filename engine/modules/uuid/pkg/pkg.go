@@ -1,7 +1,6 @@
 package uuidpkg
 
 import (
-	"engine/modules/relation"
 	relationpkg "engine/modules/relation/pkg"
 	uuid "engine/modules/uuid"
 	"engine/modules/uuid/internal"
@@ -19,8 +18,8 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) Register(b ioc.Builder) {
-	ioc.WrapService(b, ioc.DefaultOrder, func(_ ioc.Dic, b codec.Builder) codec.Builder {
-		return b.
+	ioc.WrapService(b, func(_ ioc.Dic, b codec.Builder) {
+		b.
 			Register(uuid.UUID{}).
 			Register(uuid.Component{})
 	})
@@ -43,10 +42,7 @@ func (pkg) Register(b ioc.Builder) {
 		},
 	).Register(b)
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) uuid.ToolFactory {
-		return internal.NewToolFactory(
-			ioc.Get[relation.ToolFactory[uuid.UUID]](c),
-			ioc.Get[uuid.Factory](c),
-		)
+	ioc.RegisterSingleton(b, func(c ioc.Dic) uuid.Service {
+		return internal.NewService(c)
 	})
 }

@@ -3,9 +3,7 @@ package connectionpkg
 import (
 	"engine/modules/connection"
 	"engine/modules/connection/internal"
-	"engine/services/codec"
 	"engine/services/ecs"
-	"engine/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -18,16 +16,12 @@ func Package() ioc.Pkg {
 
 func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) connection.System {
-		return ecs.NewSystemRegister(func(w connection.World) error {
-			ioc.Get[connection.ToolFactory](c).
-				Build(w)
+		return ecs.NewSystemRegister(func() error {
+			ioc.Get[connection.Service](c)
 			return nil
 		})
 	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) connection.ToolFactory {
-		return internal.NewToolFactory(
-			ioc.Get[codec.Codec](c),
-			ioc.Get[logger.Logger](c),
-		)
+	ioc.RegisterSingleton(b, func(c ioc.Dic) connection.Service {
+		return internal.NewService(c)
 	})
 }

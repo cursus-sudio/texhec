@@ -1,8 +1,9 @@
 package main
 
 import (
+	gamescenes "core/scenes"
 	_ "embed"
-	"engine/services/ecs"
+	"engine/modules/scene"
 	appruntime "engine/services/runtime"
 	"fmt"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"runtime/pprof"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -38,7 +40,8 @@ func main() {
 
 	gl.ClearColor(0.2, 0.3, 0.3, 1.0)
 	// load world before starting timer
-	ioc.Get[ecs.World](c)
+
+	events.Emit(ioc.Get[events.Events](c), scene.NewChangeSceneEvent(gamescenes.MenuID))
 	frontendRuntime := ioc.Get[appruntime.Runtime](c)
 	frontendRuntime.Run()
 }

@@ -6,7 +6,7 @@ import (
 )
 
 type conn struct {
-	*factory
+	*service
 	conn     net.Conn
 	messages chan any
 }
@@ -15,7 +15,7 @@ func (conn *conn) Close() error       { return conn.conn.Close() }
 func (conn *conn) Messages() chan any { return conn.messages }
 
 func (conn *conn) Send(message any) error {
-	bytes, err := conn.codec.Encode(message)
+	bytes, err := conn.Codec.Encode(message)
 	if err != nil {
 		return err
 	}

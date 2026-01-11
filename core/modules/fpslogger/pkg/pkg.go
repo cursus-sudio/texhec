@@ -3,8 +3,6 @@ package fpsloggerpkg
 import (
 	"core/modules/fpslogger"
 	"core/modules/fpslogger/internal"
-	"engine/services/console"
-	"engine/services/scenes"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -17,9 +15,6 @@ func Package() ioc.Pkg {
 
 func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) fpslogger.System {
-		return internal.NewFpsLoggerSystem(
-			ioc.Get[scenes.SceneManager](c),
-			ioc.Get[console.Console](c),
-		)
+		return internal.NewFpsLoggerSystem(c)
 	})
 }

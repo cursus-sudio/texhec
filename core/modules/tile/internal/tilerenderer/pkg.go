@@ -3,11 +3,7 @@ package tilerenderer
 import (
 	"core/modules/tile"
 	"engine/modules/groups"
-	"engine/services/assets"
-	"engine/services/graphics/texturearray"
 	"engine/services/graphics/vao/vbo"
-	"engine/services/logger"
-	"engine/services/media/window"
 	"unsafe"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -35,12 +31,7 @@ func Package(
 
 func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) *TileRenderSystemRegister {
-		return NewTileRenderSystemRegister(
-			ioc.Get[texturearray.Factory](c),
-			ioc.Get[logger.Logger](c),
-			ioc.Get[window.Api](c),
-			ioc.Get[vbo.VBOFactory[TileData]](c),
-			ioc.Get[assets.Assets](c),
+		return NewTileRenderSystemRegister(c,
 			pkg.tileSize,
 			pkg.gridDepth,
 			pkg.layers,

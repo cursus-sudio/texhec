@@ -19,5 +19,4 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) Codec {
 		return ioc.Get[Builder](c).Build()
 	})
-	ioc.RegisterDependency[Codec, Builder](b)
 }

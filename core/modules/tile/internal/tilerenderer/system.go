@@ -1,8 +1,10 @@
 package tilerenderer
 
 import (
+	"core/modules/definition"
 	"core/modules/tile"
 	_ "embed"
+	"engine"
 	"engine/modules/groups"
 	"engine/modules/render"
 	"engine/services/datastructures"
@@ -11,7 +13,6 @@ import (
 	"engine/services/graphics/texturearray"
 	"engine/services/graphics/vao"
 	"engine/services/graphics/vao/vbo"
-	"engine/services/logger"
 	"engine/services/media/window"
 	"image"
 
@@ -44,8 +45,6 @@ type system struct {
 	locations locations
 	window    window.Api
 
-	logger logger.Logger
-
 	textureArray texturearray.TextureArray
 	rendered     datastructures.SparseArray[ecs.EntityID, tile.PosComponent]
 	layers       []*layer
@@ -53,8 +52,9 @@ type system struct {
 	tileSize  int32
 	gridDepth float32
 
-	dirtySet     ecs.DirtySet
-	world        tile.World
+	dirtySet ecs.DirtySet
+	engine.World
+	Definition   definition.Service
 	tilePosArray ecs.ComponentsArray[tile.PosComponent]
 	gridGroups   groups.GroupsComponent
 }
@@ -74,7 +74,7 @@ func (s *system) Listen(render.RenderEvent) {
 			layer.tiles.Remove(entity)
 			s.rendered.Remove(entity)
 		}
-		tileType, ok := s.world.Definition().Link().Get(entity)
+		tileType, ok := s.Definition.Link().Get(entity)
 		if !ok {
 			continue
 		}
@@ -107,8 +107,8 @@ func (s *system) Listen(render.RenderEvent) {
 		gl.Uniform1i(s.locations.TileSize, s.tileSize)
 		gl.Uniform1f(s.locations.GridDepth, s.gridDepth)
 
-		for _, cameraEntity := range s.world.Camera().Component().GetEntities() {
-			cameraGroups, ok := s.world.Groups().Component().Get(cameraEntity)
+		for _, cameraEntity := range s.Camera.Component().GetEntities() {
+			cameraGroups, ok := s.Groups.Component().Get(cameraEntity)
 			if !ok {
 				cameraGroups = groups.DefaultGroups()
 			}
@@ -117,10 +117,10 @@ func (s *system) Listen(render.RenderEvent) {
 				continue
 			}
 
-			cameraMatrix := s.world.Camera().Mat4(cameraEntity)
+			cameraMatrix := s.Camera.Mat4(cameraEntity)
 			gl.UniformMatrix4fv(s.locations.Camera, 1, false, &cameraMatrix[0])
 
-			gl.Viewport(s.world.Camera().GetViewport(cameraEntity))
+			gl.Viewport(s.Camera.GetViewport(cameraEntity))
 			gl.DrawArrays(gl.POINTS, 0, layer.verticesCount)
 		}
 	}

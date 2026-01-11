@@ -1,21 +1,12 @@
 package transform
 
 import (
-	"engine/modules/hierarchy"
 	"engine/services/ecs"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-type ToolFactory ecs.ToolFactory[World, TransformTool]
-type TransformTool interface {
-	Transform() Interface
-}
-type World interface { // these are dependencies of transform package
-	ecs.World
-	hierarchy.HierarchyTool
-}
-type Interface interface {
+type Service interface {
 	AbsolutePos() ecs.ComponentsArray[AbsolutePosComponent]
 	AbsoluteRotation() ecs.ComponentsArray[AbsoluteRotationComponent]
 	AbsoluteSize() ecs.ComponentsArray[AbsoluteSizeComponent]

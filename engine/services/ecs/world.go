@@ -1,14 +1,10 @@
 package ecs
 
-import "github.com/ogiusek/events"
-
 // interface
 
 type World interface {
 	entitiesInterface
 	componentsInterface
-	globalsInterface
-	eventsInterface
 }
 
 //
@@ -16,21 +12,15 @@ type World interface {
 type world struct {
 	entitiesInterface
 	*componentsImpl
-	globalsInterface
-	eventsInterface
 }
 
 func NewWorld() World {
 	entitiesImpl := newEntities()
 	componentsImpl := newComponents(entitiesImpl.entities)
-	globalsImpl := newGlobals()
-	eventsImpl := newEvents(events.NewBuilder())
 
 	return &world{
 		entitiesInterface: entitiesImpl,
 		componentsImpl:    componentsImpl,
-		globalsInterface:  globalsImpl,
-		eventsInterface:   eventsImpl,
 	}
 }
 
@@ -40,8 +30,11 @@ func (world world) NewEntity() EntityID {
 }
 
 func (world world) RemoveEntity(entity EntityID) {
-	world.componentsImpl.RemoveEntity(entity)
 	world.entitiesInterface.RemoveEntity(entity)
+
+	for _, arr := range world.storage.arrays {
+		arr.Remove(entity)
+	}
 }
 
 func (world world) GetEntities() []EntityID {

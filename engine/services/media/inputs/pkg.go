@@ -24,14 +24,10 @@ func (pkg) Register(b ioc.Builder) {
 			ioc.Get[events.Events](c),
 		)
 	})
-	ioc.RegisterDependency[Api, logger.Logger](b)
-	ioc.RegisterDependency[Api, clock.Clock](b)
-	ioc.RegisterDependency[Api, events.Events](b)
 
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b events.Builder) events.Builder {
+	ioc.WrapService(b, func(c ioc.Dic, b events.Builder) {
 		events.Listen(b, func(qe sdl.QuitEvent) {
 			ioc.Get[runtime.Runtime](c).Stop()
 		})
-		return b
 	})
 }

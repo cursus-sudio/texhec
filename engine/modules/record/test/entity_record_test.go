@@ -5,23 +5,23 @@ import (
 )
 
 func TestEntityForwardRecording(t *testing.T) {
-	world := NewSetup()
+	s := NewSetup()
 	initialState := Component{Counter: 6}
 	middleState := Component{Counter: 7}
 	finalState := Component{Counter: 8}
 
-	world.ComponentArray.Set(world.NewEntity(), initialState)
+	s.ComponentArray.Set(s.World.NewEntity(), initialState)
 
-	entity := world.NewEntity()
-	world.ComponentArray.Set(entity, initialState)
+	entity := s.World.NewEntity()
+	s.ComponentArray.Set(entity, initialState)
 
-	recordingID := world.Record().Entity().StartRecording(world.Config)
+	recordingID := s.Record.Entity().StartRecording(s.Config)
 
-	world.ComponentArray.Set(entity, middleState)
-	world.Record().Entity().Stop(world.Record().Entity().StartRecording(world.Config))
-	world.ComponentArray.Set(entity, finalState)
+	s.ComponentArray.Set(entity, middleState)
+	s.Record.Entity().Stop(s.Record.Entity().StartRecording(s.Config))
+	s.ComponentArray.Set(entity, finalState)
 
-	recording, ok := world.Record().Entity().Stop(recordingID)
+	recording, ok := s.Record.Entity().Stop(recordingID)
 	if !ok {
 		t.Error("expected recording to exist")
 		return
@@ -40,23 +40,23 @@ func TestEntityForwardRecording(t *testing.T) {
 }
 
 func TestEntityBackwardsRecording(t *testing.T) {
-	world := NewSetup()
+	s := NewSetup()
 	initialState := Component{Counter: 6}
 	middleState := Component{Counter: 7}
 	finalState := Component{Counter: 9}
 
-	world.ComponentArray.Set(world.NewEntity(), initialState)
+	s.ComponentArray.Set(s.World.NewEntity(), initialState)
 
-	entity := world.NewEntity()
-	world.ComponentArray.Set(entity, initialState)
+	entity := s.World.NewEntity()
+	s.ComponentArray.Set(entity, initialState)
 
-	recordingID := world.Record().Entity().StartBackwardsRecording(world.Config)
+	recordingID := s.Record.Entity().StartBackwardsRecording(s.Config)
 
-	world.ComponentArray.Set(entity, middleState)
-	world.Record().Entity().Stop(world.Record().Entity().StartRecording(world.Config))
-	world.ComponentArray.Set(entity, finalState)
+	s.ComponentArray.Set(entity, middleState)
+	s.Record.Entity().Stop(s.Record.Entity().StartRecording(s.Config))
+	s.ComponentArray.Set(entity, finalState)
 
-	recording, ok := world.Record().Entity().Stop(recordingID)
+	recording, ok := s.Record.Entity().Stop(recordingID)
 	if !ok {
 		t.Error("expected recording to exist")
 		return
@@ -73,22 +73,22 @@ func TestEntityBackwardsRecording(t *testing.T) {
 		return
 	}
 
-	world.Record().Entity().Apply(world.Config, recording)
+	s.Record.Entity().Apply(s.Config, recording)
 
-	if c, ok := world.ComponentArray.Get(entity); !ok || c != initialState {
+	if c, ok := s.ComponentArray.Get(entity); !ok || c != initialState {
 		t.Errorf("unexpected component on apply. expected %v %t got %v %t", initialState, true, c, ok)
 		return
 	}
 }
 
 func TestEntityGetState(t *testing.T) {
-	world := NewSetup()
+	s := NewSetup()
 	initialState := Component{Counter: 6}
 
-	entity := world.NewEntity()
-	world.ComponentArray.Set(entity, initialState)
+	entity := s.World.NewEntity()
+	s.ComponentArray.Set(entity, initialState)
 
-	recording := world.Record().Entity().GetState(world.Config)
+	recording := s.Record.Entity().GetState(s.Config)
 
 	if len(recording.Entities.GetIndices()) != 1 || recording.Entities.GetIndices()[0] != entity {
 		t.Errorf("expected array entities to be only entity [%v] not %v", entity, recording.Entities.GetIndices())
@@ -101,13 +101,13 @@ func TestEntityGetState(t *testing.T) {
 		return
 	}
 
-	world.ComponentArray.Remove(entity)
-	world.Record().Entity().Apply(world.Config, recording)
-	if ei := world.ComponentArray.GetEntities(); len(ei) != 1 {
+	s.ComponentArray.Remove(entity)
+	s.Record.Entity().Apply(s.Config, recording)
+	if ei := s.ComponentArray.GetEntities(); len(ei) != 1 {
 		t.Errorf("unexpected entities on apply. expected one entity got %v", ei)
 		return
 	}
-	if c, ok := world.ComponentArray.Get(world.ComponentArray.GetEntities()[0]); !ok || c != initialState {
+	if c, ok := s.ComponentArray.Get(s.ComponentArray.GetEntities()[0]); !ok || c != initialState {
 		t.Errorf("unexpected component on apply. expected %v %t got %v %t", initialState, true, c, ok)
 		return
 	}

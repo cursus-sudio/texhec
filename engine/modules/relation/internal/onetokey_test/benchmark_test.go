@@ -5,11 +5,10 @@ import "testing"
 func BenchmarkSpatialIndexingGetEmpty(b *testing.B) {
 	setup := NewSetup()
 	component := Component{Index: 69}
-	tool := setup.Tool()
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		tool.Get(component.Index)
+		setup.Service.Get(component.Index)
 	}
 }
 
@@ -19,17 +18,14 @@ func BenchmarkSpatialIndexingGet(b *testing.B) {
 	entity := setup.W.NewEntity()
 	setup.Array.Set(entity, component)
 
-	tool := setup.Tool()
-
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		tool.Get(component.Index)
+		setup.Service.Get(component.Index)
 	}
 }
 
 func BenchmarkSpatialIndexingSave(b *testing.B) {
 	setup := NewSetup()
-	setup.Tool()
 	component := Component{Index: 69}
 	entity := setup.W.NewEntity()
 
@@ -38,16 +34,5 @@ func BenchmarkSpatialIndexingSave(b *testing.B) {
 		setup.Array.Remove(entity)
 		setup.Array.Set(entity, component)
 	}
-}
-
-func BenchmarkSpatialIndexingSaveWithoutTool(b *testing.B) {
-	setup := NewSetup()
-	component := Component{Index: 69}
-	entity := setup.W.NewEntity()
-
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		setup.Array.Remove(entity)
-		setup.Array.Set(entity, component)
-	}
+	setup.Service.Get(0)
 }

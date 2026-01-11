@@ -7,7 +7,7 @@ import (
 func TestIndexing(t *testing.T) {
 	setup := NewSetup()
 	component := Component{Index: 69}
-	if _, ok := setup.Tool().Get(component.Index); ok {
+	if _, ok := setup.Service.Get(component.Index); ok {
 		t.Errorf("expected !ok when retriving entity by not existing index")
 		return
 	}
@@ -15,7 +15,7 @@ func TestIndexing(t *testing.T) {
 	entity := setup.W.NewEntity()
 	setup.Array.Set(entity, component)
 
-	returnedEntity, ok := setup.Tool().Get(component.Index)
+	returnedEntity, ok := setup.Service.Get(component.Index)
 	if !ok {
 		t.Errorf("expected ok when retriving entity by existing index")
 		return

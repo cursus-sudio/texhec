@@ -17,15 +17,15 @@ type spatialRelation[IndexType any] struct {
 	indexNumber    func(IndexType) uint32
 }
 
-func newSpatialIndex[IndexType any](
+func NewSpatialIndex[IndexType any](
 	w ecs.World,
-	dirtySet ecs.DirtySet,
+	dirtySet func(ecs.World) ecs.DirtySet,
 	componentIndex func(ecs.EntityID) (IndexType, bool),
 	indexNumber func(IndexType) uint32,
-) relation.EntityToKeyTool[IndexType] {
+) relation.Service[IndexType] {
 	indexGlobal := &spatialRelation[IndexType]{
 		world:    w,
-		dirtySet: dirtySet,
+		dirtySet: dirtySet(w),
 
 		entities: datastructures.NewSparseArray[ecs.EntityID, uint32](),
 		indices:  datastructures.NewSparseArray[uint32, ecs.EntityID](),
@@ -33,7 +33,6 @@ func newSpatialIndex[IndexType any](
 		componentIndex: componentIndex,
 		indexNumber:    indexNumber,
 	}
-	w.SaveGlobal(indexGlobal)
 
 	return indexGlobal
 }

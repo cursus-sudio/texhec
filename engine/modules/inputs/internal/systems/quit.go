@@ -6,24 +6,22 @@ import (
 	"engine/services/runtime"
 
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
 type sys struct {
-	runtime runtime.Runtime
+	Runtime       runtime.Runtime `inject:"1"`
+	EventsBuilder events.Builder  `inject:"1"`
 }
 
-func NewQuitSystem(
-	runtime runtime.Runtime,
-) inputs.System {
-	return ecs.NewSystemRegister(func(w inputs.World) error {
-		s := &sys{
-			runtime: runtime,
-		}
-		events.Listen(w.EventsBuilder(), s.Listen)
+func NewQuitSystem(c ioc.Dic) inputs.System {
+	return ecs.NewSystemRegister(func() error {
+		s := ioc.GetServices[*sys](c)
+		events.Listen(s.EventsBuilder, s.Listen)
 		return nil
 	})
 }
 
 func (s *sys) Listen(inputs.QuitEvent) {
-	s.runtime.Stop()
+	s.Runtime.Stop()
 }

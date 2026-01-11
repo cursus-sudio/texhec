@@ -3,15 +3,11 @@ package inputspkg
 import (
 	"engine/modules/inputs"
 	"engine/modules/inputs/internal/mouse"
+	"engine/modules/inputs/internal/service"
 	"engine/modules/inputs/internal/systems"
-	"engine/modules/inputs/internal/tool"
 	"engine/services/codec"
 	"engine/services/ecs"
 	"engine/services/frames"
-	"engine/services/logger"
-	inputsapi "engine/services/media/inputs"
-	"engine/services/media/window"
-	"engine/services/runtime"
 
 	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
@@ -25,8 +21,8 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) Register(b ioc.Builder) {
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
-		return b.
+	ioc.WrapService(b, func(c ioc.Dic, b codec.Builder) {
+		b.
 			// components
 			Register(inputs.HoveredComponent{}).
 			Register(inputs.DraggedComponent{}).
@@ -45,45 +41,33 @@ func (pkg) Register(b ioc.Builder) {
 			Register(inputs.SynchronizePositionEvent{})
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) inputs.ToolFactory {
-		return tool.NewToolFactory(
-			ioc.Get[logger.Logger](c),
-		)
+	ioc.RegisterSingleton(b, func(c ioc.Dic) inputs.Service {
+		return service.NewService(c)
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) inputs.System {
-		return ecs.NewSystemRegister(func(w inputs.World) error {
-			ecs.RegisterSystems(w,
-				systems.NewInputsSystem(ioc.Get[inputsapi.Api](c)),
-				systems.NewResizeSystem(),
-				systems.NewQuitSystem(ioc.Get[runtime.Runtime](c)),
+		return ecs.NewSystemRegister(func() error {
+			ecs.RegisterSystems(
+				systems.NewInputsSystem(c),
+				systems.NewResizeSystem(c),
+				systems.NewQuitSystem(c),
 
-				ecs.NewSystemRegister(func(w ecs.World) error {
-					events.Listen(w.EventsBuilder(), func(sdl.QuitEvent) {
-						events.Emit(w.Events(), inputs.NewQuitEvent())
+				ecs.NewSystemRegister(func() error {
+					eventsBuilder := ioc.Get[events.Builder](c)
+					events.Listen(eventsBuilder, func(sdl.QuitEvent) {
+						events.Emit(eventsBuilder.Events(), inputs.NewQuitEvent())
 					})
 					return nil
 				}),
 
-				mouse.NewCameraRaySystem(
-					ioc.Get[logger.Logger](c),
-					ioc.Get[window.Api](c),
-				),
-				mouse.NewHoverSystem(
-					ioc.Get[inputs.ToolFactory](c),
-					ioc.Get[logger.Logger](c),
-				),
-				mouse.NewHoverEventsSystem(
-					ioc.Get[inputs.ToolFactory](c),
-				),
-				mouse.NewClickSystem(
-					ioc.Get[logger.Logger](c),
-					ioc.Get[window.Api](c),
-					ioc.Get[inputs.ToolFactory](c),
-				),
-				ecs.NewSystemRegister(func(w ecs.World) error {
-					events.Listen(w.EventsBuilder(), func(frames.FrameEvent) {
-						events.Emit(w.Events(), mouse.NewShootRayEvent())
+				mouse.NewCameraRaySystem(c),
+				mouse.NewHoverSystem(c),
+				mouse.NewHoverEventsSystem(c),
+				mouse.NewClickSystem(c),
+				ecs.NewSystemRegister(func() error {
+					eventsBuilder := ioc.Get[events.Builder](c)
+					events.Listen(eventsBuilder, func(frames.FrameEvent) {
+						events.Emit(eventsBuilder.Events(), mouse.NewShootRayEvent())
 					})
 					return nil
 				}),

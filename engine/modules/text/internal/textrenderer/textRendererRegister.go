@@ -2,7 +2,10 @@ package textrenderer
 
 import (
 	_ "embed"
+	"engine/modules/camera"
+	"engine/modules/groups"
 	"engine/modules/text"
+	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
@@ -14,6 +17,7 @@ import (
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
 //go:embed shader.vert
@@ -26,50 +30,37 @@ var geomSource string
 var fragSource string
 
 type textRendererRegister struct {
-	textToolFactory      text.ToolFactory
-	fontService          FontService
-	vboFactory           vbo.VBOFactory[Glyph]
-	layoutServiceFactory LayoutServiceFactory
-	logger               logger.Logger
-	textureArrayFactory  texturearray.Factory
+	EventsBuilder       events.Builder        `inject:"1"`
+	World               ecs.World             `inject:"1"`
+	Camera              camera.Service        `inject:"1"`
+	Groups              groups.Service        `inject:"1"`
+	Transform           transform.Service     `inject:"1"`
+	Text                text.Service          `inject:"1"`
+	FontService         FontService           `inject:"1"`
+	VboFactory          vbo.VBOFactory[Glyph] `inject:"1"`
+	LayoutService       LayoutService         `inject:"1"`
+	Logger              logger.Logger         `inject:"1"`
+	TextureArrayFactory texturearray.Factory  `inject:"1"`
+	FontsKeys           FontKeys              `inject:"1"`
 
-	defaultTextAsset assets.AssetID
-	defaultColor     text.TextColorComponent
-
-	fontsKeys FontKeys
-
+	defaultTextAsset    assets.AssetID
+	defaultColor        text.TextColorComponent
 	removeOncePerNCalls uint16
 }
 
-func NewTextRendererRegister(
-	textToolFactory text.ToolFactory,
-	fontService FontService,
-	vboFactory vbo.VBOFactory[Glyph],
-	layoutServiceFactory LayoutServiceFactory,
-	logger logger.Logger,
+func NewTextRenderer(c ioc.Dic,
 	defaultTextAsset assets.AssetID,
 	defaultColor text.TextColorComponent,
-	textureArrayFactory texturearray.Factory,
-	fontsKeys FontKeys,
 	removeOncePerNCalls uint16,
 ) text.System {
-	return &textRendererRegister{
-		textToolFactory:      textToolFactory,
-		fontService:          fontService,
-		vboFactory:           vboFactory,
-		layoutServiceFactory: layoutServiceFactory,
-		logger:               logger,
-		textureArrayFactory:  textureArrayFactory,
-
-		defaultTextAsset: defaultTextAsset,
-		defaultColor:     defaultColor,
-
-		fontsKeys:           fontsKeys,
-		removeOncePerNCalls: removeOncePerNCalls,
-	}
+	s := ioc.GetServices[*textRendererRegister](c)
+	s.defaultTextAsset = defaultTextAsset
+	s.defaultColor = defaultColor
+	s.removeOncePerNCalls = removeOncePerNCalls
+	return s
 }
 
-func (f *textRendererRegister) Register(w text.World) error {
+func (f *textRendererRegister) Register() error {
 	vert, err := shader.NewShader(vertSource, shader.VertexShader)
 	if err != nil {
 		return err
@@ -107,44 +98,33 @@ func (f *textRendererRegister) Register(w text.World) error {
 	renderer := &textRenderer{
 		textRendererRegister: f,
 
-		World: w,
-		text:  f.textToolFactory.Build(w).Text(),
-
-		logger:      f.logger,
-		fontService: f.fontService,
-
 		program:   p,
 		locations: locations,
 
 		defaultColor: f.defaultColor,
 
-		textureFactory: f.textureArrayFactory,
-
-		fontKeys:     f.fontsKeys,
 		fontsBatches: datastructures.NewSparseArray[FontKey, fontBatch](),
 
 		dirtyEntities:  ecs.NewDirtySet(),
 		layoutsBatches: datastructures.NewSparseArray[ecs.EntityID, layoutBatch](),
 	}
 
-	renderer.Transform().AddDirtySet(renderer.dirtyEntities)
+	renderer.Transform.AddDirtySet(renderer.dirtyEntities)
 
 	arrays := []ecs.AnyComponentArray{
-		ecs.GetComponentsArray[text.TextComponent](w),
-		ecs.GetComponentsArray[text.BreakComponent](w),
-		ecs.GetComponentsArray[text.FontFamilyComponent](w),
+		ecs.GetComponentsArray[text.TextComponent](f.World),
+		ecs.GetComponentsArray[text.BreakComponent](f.World),
+		ecs.GetComponentsArray[text.FontFamilyComponent](f.World),
 		// ecs.GetComponentsArray[text.Overflow](w),
-		ecs.GetComponentsArray[text.FontSizeComponent](w),
-		ecs.GetComponentsArray[text.TextAlignComponent](w),
+		ecs.GetComponentsArray[text.FontSizeComponent](f.World),
+		ecs.GetComponentsArray[text.TextAlignComponent](f.World),
 	}
 
 	for _, array := range arrays {
 		array.AddDirtySet(renderer.dirtyEntities)
 	}
 
-	w.SaveGlobal(renderer)
-
-	events.Listen(w.EventsBuilder(), renderer.Listen)
+	events.Listen(f.EventsBuilder, renderer.Listen)
 
 	return nil
 }

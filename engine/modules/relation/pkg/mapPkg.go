@@ -24,10 +24,12 @@ func MapRelationPackage[IndexType comparable](
 }
 
 func (pkg mapRelationPkg[IndexType]) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) relation.ToolFactory[IndexType] {
-		return onetokey.NewMapRelationFactory(
+	ioc.RegisterSingleton(b, func(c ioc.Dic) relation.Service[IndexType] {
+		w := ioc.Get[ecs.World](c)
+		return onetokey.NewMapIndex(
+			w,
 			pkg.queryFactory,
-			pkg.componentIndex,
+			pkg.componentIndex(w),
 		)
 	})
 }

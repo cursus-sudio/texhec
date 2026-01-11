@@ -3,7 +3,7 @@ package transitionpkg
 import (
 	"engine/modules/transition"
 	"engine/modules/transition/internal/easing"
-	"engine/modules/transition/internal/tool"
+	"engine/modules/transition/internal/service"
 	"engine/modules/transition/internal/transitionimpl"
 	"engine/services/codec"
 
@@ -17,8 +17,8 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) Register(b ioc.Builder) {
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
-		return b.
+	ioc.WrapService(b, func(c ioc.Dic, b codec.Builder) {
+		b.
 			// components
 			Register(transition.EasingComponent{}).
 			Register(transition.Progress(0))
@@ -30,8 +30,8 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) transition.System {
 		return ioc.Get[transitionimpl.Builder](c).Build()
 	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) transition.ToolFactory {
-		return tool.NewToolFactory()
+	ioc.RegisterSingleton(b, func(c ioc.Dic) transition.Service {
+		return service.NewService(c)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) transition.EasingService {
 		return easing.NewEasingService()

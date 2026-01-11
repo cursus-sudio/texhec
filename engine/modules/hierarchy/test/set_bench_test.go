@@ -1,65 +1,71 @@
 package test
 
 import (
+	"engine/services/ecs"
 	"testing"
 )
 
-func BenchmarkSetChildrenWithParent(b *testing.B) {
+func BenchmarkAddNChildrenWithParent(b *testing.B) {
 	setup := NewSetup()
 	grandParent := setup.World.NewEntity()
 	parent := grandParent
 	parentCount := 0
 	for i := 0; i < parentCount; i++ {
 		child := setup.World.NewEntity()
-		setup.Tool.SetParent(child, parent)
+		setup.Service.SetParent(child, parent)
 		parent = child
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		child := setup.World.NewEntity()
-		setup.Tool.SetParent(child, parent)
-	}
-
-	parentChildren := setup.Tool.FlatChildren(parent)
-	grandParentChildren := setup.Tool.FlatChildren(grandParent)
-	parentLen := len(parentChildren.GetIndices())
-	grandParentLen := len(grandParentChildren.GetIndices())
-	if parentLen+parentCount != grandParentLen {
-		b.Errorf(
-			"flat children count of parent and grand parent doesn't match. expected %v and got %v",
-			parentLen+parentCount,
-			grandParentLen,
-		)
+		setup.Service.SetParent(child, parent)
 	}
 }
 
-func BenchmarkSetChildrenWith5Parents(b *testing.B) {
+func BenchmarkAddNChildrenWith5Parents(b *testing.B) {
 	setup := NewSetup()
 	grandParent := setup.World.NewEntity()
 	parent := grandParent
 	parentCount := 5
 	for i := 0; i < parentCount; i++ {
 		child := setup.World.NewEntity()
-		setup.Tool.SetParent(child, parent)
+		setup.Service.SetParent(child, parent)
 		parent = child
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		child := setup.World.NewEntity()
-		setup.Tool.SetParent(child, parent)
+		setup.Service.SetParent(child, parent)
+	}
+}
+
+func BenchmarkRemoveNChildren(b *testing.B) {
+	setup := NewSetup()
+	parent := setup.World.NewEntity()
+
+	children := make([]ecs.EntityID, b.N)
+	for i := 0; i < b.N; i++ {
+		children[i] = setup.World.NewEntity()
+		setup.Service.SetParent(children[i], parent)
 	}
 
-	parentChildren := setup.Tool.FlatChildren(parent)
-	grandParentChildren := setup.Tool.FlatChildren(grandParent)
-	parentLen := len(parentChildren.GetIndices())
-	grandParentLen := len(grandParentChildren.GetIndices())
-	if parentLen+parentCount != grandParentLen {
-		b.Errorf(
-			"flat children count of parent and grand parent doesn't match. expected %v and got %v",
-			parentLen+parentCount,
-			grandParentLen,
-		)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		setup.World.RemoveEntity(children[i])
 	}
+}
+
+func BenchmarkRemoveParentWithNChildren(b *testing.B) {
+	setup := NewSetup()
+	parent := setup.World.NewEntity()
+
+	for i := 0; i < b.N; i++ {
+		child := setup.World.NewEntity()
+		setup.Service.SetParent(child, parent)
+	}
+
+	b.ResetTimer()
+	setup.World.RemoveEntity(parent)
 }

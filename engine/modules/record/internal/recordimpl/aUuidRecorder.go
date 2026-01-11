@@ -18,7 +18,7 @@ type UUIDBackwardRecording struct {
 }
 
 type uuidKeyedRecorder struct {
-	*tool
+	*service
 
 	i     record.UUIDRecordingID
 	holes datastructures.SparseSet[record.UUIDRecordingID]
@@ -28,7 +28,7 @@ type uuidKeyedRecorder struct {
 }
 
 func newUUIDKeyedRecorder(
-	t *tool,
+	t *service,
 ) *uuidKeyedRecorder {
 	uuidKeyedRecorder := &uuidKeyedRecorder{
 		t,
@@ -130,13 +130,13 @@ func (t *uuidKeyedRecorder) Apply(config record.Config, recordings ...record.UUI
 
 	for _, recording := range recordings {
 		for uuidValue, components := range recording.Entities {
-			entity, ok := t.world.UUID().Entity(uuidValue)
+			entity, ok := t.WorldUUID.Entity(uuidValue)
 			if !ok && components != nil {
-				entity = t.world.NewEntity()
-				t.world.UUID().Component().Set(entity, uuid.New(uuidValue))
+				entity = t.World.NewEntity()
+				t.WorldUUID.Component().Set(entity, uuid.New(uuidValue))
 			}
 			if components == nil {
-				t.world.RemoveEntity(entity)
+				t.World.RemoveEntity(entity)
 				continue
 			}
 
@@ -164,10 +164,10 @@ func (t *uuidKeyedRecorder) getStateFor(config record.Config, entities []ecs.Ent
 	}
 
 	for _, entity := range entities {
-		uuidComponent, ok := t.world.UUID().Component().Get(entity)
+		uuidComponent, ok := t.WorldUUID.Component().Get(entity)
 		if !ok {
-			uuidComponent.ID = t.world.UUID().NewUUID()
-			t.world.UUID().Component().Set(entity, uuidComponent)
+			uuidComponent.ID = t.WorldUUID.NewUUID()
+			t.WorldUUID.Component().Set(entity, uuidComponent)
 		}
 		components := make([]any, 0, len(arrays))
 		for _, array := range arrays {

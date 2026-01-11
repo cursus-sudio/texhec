@@ -5,8 +5,6 @@ import (
 	"engine/modules/render/internal"
 	transitionpkg "engine/modules/transition/pkg"
 	"engine/services/ecs"
-	"engine/services/logger"
-	"engine/services/media/window"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -25,19 +23,16 @@ func (pkg) Register(b ioc.Builder) {
 		pkg.Register(b)
 	}
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) render.ToolFactory {
-		return internal.NewTool()
+	ioc.RegisterSingleton(b, func(c ioc.Dic) render.Service {
+		return internal.NewService(c)
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) render.System {
-		return ecs.NewSystemRegister(func(w render.World) error {
-			ecs.RegisterSystems(w,
-				internal.NewClearSystem(),
-				internal.NewErrorLogger(
-					ioc.Get[logger.Logger](c),
-					ioc.Get[render.ToolFactory](c).Build(w),
-				),
-				internal.NewRenderSystem(ioc.Get[window.Api](c)),
+		return ecs.NewSystemRegister(func() error {
+			ecs.RegisterSystems(
+				internal.NewClearSystem(c),
+				internal.NewErrorLogger(c),
+				internal.NewRenderSystem(c),
 			)
 			return nil
 		})

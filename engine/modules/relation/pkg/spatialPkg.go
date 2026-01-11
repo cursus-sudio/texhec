@@ -27,10 +27,12 @@ func SpatialRelationPackage[IndexType any](
 }
 
 func (pkg spatialRelationPkg[IndexType]) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) relation.ToolFactory[IndexType] {
-		return onetokey.NewSpatialRelationFactory(
+	ioc.RegisterSingleton(b, func(c ioc.Dic) relation.Service[IndexType] {
+		w := ioc.Get[ecs.World](c)
+		return onetokey.NewSpatialIndex(
+			w,
 			pkg.queryFactory,
-			pkg.componentIndex,
+			pkg.componentIndex(w),
 			pkg.indexNumber,
 		)
 	})

@@ -2,9 +2,8 @@ package hierarchypkg
 
 import (
 	"engine/modules/hierarchy"
-	"engine/modules/hierarchy/internal/hierarchytool"
+	"engine/modules/hierarchy/internal/hierarchyservice"
 	"engine/services/codec"
-	"engine/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -16,15 +15,13 @@ func Package() ioc.Pkg {
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
-		return b.
+	ioc.WrapService(b, func(c ioc.Dic, b codec.Builder) {
+		b.
 			// components
 			Register(hierarchy.Component{})
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) hierarchy.ToolFactory {
-		return hierarchytool.NewTool(
-			ioc.Get[logger.Logger](c),
-		)
+	ioc.RegisterSingleton(b, func(c ioc.Dic) hierarchy.Service {
+		return hierarchyservice.NewService(c)
 	})
 }

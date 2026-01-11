@@ -2,10 +2,9 @@ package transformpkg
 
 import (
 	"engine/modules/transform"
-	"engine/modules/transform/internal/transformtool"
+	"engine/modules/transform/internal/transformservice"
 	transitionpkg "engine/modules/transition/pkg"
 	"engine/services/codec"
-	"engine/services/logger"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
@@ -30,8 +29,8 @@ func Package() ioc.Pkg {
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
-		return b.
+	ioc.WrapService(b, func(c ioc.Dic, b codec.Builder) {
+		b.
 			// components
 			Register(transform.PosComponent{}).
 			Register(transform.RotationComponent{}).
@@ -51,9 +50,8 @@ func (pkg pkg) Register(b ioc.Builder) {
 		pkg.Register(b)
 	}
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) transform.ToolFactory {
-		return transformtool.NewTransformTool(
-			ioc.Get[logger.Logger](c),
+	ioc.RegisterSingleton(b, func(c ioc.Dic) transform.Service {
+		return transformservice.NewService(c,
 			pkg.defaultRot,
 			pkg.defaultSize,
 			pkg.defaultPivot,

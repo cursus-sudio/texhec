@@ -3,10 +3,10 @@ package textpkg
 import (
 	"engine/modules/text"
 	"engine/modules/text/internal/textrenderer"
-	"engine/modules/text/internal/texttool"
+	"engine/modules/text/internal/textservice"
 	"engine/services/assets"
 	"engine/services/datastructures"
-	"engine/services/graphics/texturearray"
+	"engine/services/ecs"
 	"engine/services/graphics/vao/vbo"
 	"engine/services/logger"
 	"unsafe"
@@ -60,8 +60,11 @@ func Package(
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) text.ToolFactory {
-		return texttool.NewTool(ioc.Get[logger.Logger](c))
+	ioc.RegisterSingleton(b, func(c ioc.Dic) text.Service {
+		return textservice.NewService(
+			ioc.Get[ecs.World](c),
+			ioc.Get[logger.Logger](c),
+		)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) textrenderer.FontService {
 		return textrenderer.NewFontService(
@@ -75,12 +78,9 @@ func (pkg pkg) Register(b ioc.Builder) {
 		)
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) textrenderer.LayoutServiceFactory {
-		return textrenderer.NewLayoutServiceFactory(
-			ioc.Get[text.ToolFactory](c),
-			ioc.Get[logger.Logger](c),
-			ioc.Get[textrenderer.FontService](c),
-			ioc.Get[textrenderer.FontKeys](c),
+	ioc.RegisterSingleton(b, func(c ioc.Dic) textrenderer.LayoutService {
+		return textrenderer.NewLayoutService(
+			c,
 			pkg.defaultFontFamily(c),
 			pkg.defaultFontSize,
 			// pkg.defaultOverflow,
@@ -94,16 +94,10 @@ func (pkg pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) text.System {
-		return textrenderer.NewTextRendererRegister(
-			ioc.Get[text.ToolFactory](c),
-			ioc.Get[textrenderer.FontService](c),
-			ioc.Get[vbo.VBOFactory[textrenderer.Glyph]](c),
-			ioc.Get[textrenderer.LayoutServiceFactory](c),
-			ioc.Get[logger.Logger](c),
+		return textrenderer.NewTextRenderer(
+			c,
 			pkg.defaultFontFamily(c).FontFamily,
 			pkg.defaultColor,
-			ioc.Get[texturearray.Factory](c),
-			ioc.Get[textrenderer.FontKeys](c),
 			1,
 		)
 	})

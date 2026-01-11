@@ -2,9 +2,11 @@ package renderer
 
 import (
 	_ "embed"
+	"engine/modules/camera"
 	"engine/modules/genericrenderer"
 	"engine/modules/groups"
 	"engine/modules/render"
+	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/ecs"
 	"engine/services/graphics/program"
@@ -18,6 +20,7 @@ import (
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
 //go:embed s.vert
@@ -40,7 +43,23 @@ type textureKey struct {
 	Frame   int
 }
 
-type releasable struct {
+//
+
+type system struct {
+	EventsBuilder   events.Builder          `inject:"1"`
+	World           ecs.World               `inject:"1"`
+	GenericRenderer genericrenderer.Service `inject:"1"`
+	Render          render.Service          `inject:"1"`
+	Camera          camera.Service          `inject:"1"`
+	Groups          groups.Service          `inject:"1"`
+	Transform       transform.Service       `inject:"1"`
+
+	Window         window.Api                             `inject:"1"`
+	AssetsStorage  assets.AssetsStorage                   `inject:"1"`
+	Logger         logger.Logger                          `inject:"1"`
+	VboFactory     vbo.VBOFactory[genericrenderer.Vertex] `inject:"1"`
+	TextureFactory texture.Factory                        `inject:"1"`
+
 	texturesImagesCount map[render.TextureComponent]int
 	textures            map[textureKey]texture.Texture
 	meshes              map[assets.AssetID]vao.VAO
@@ -48,40 +67,8 @@ type releasable struct {
 	locations           locations
 }
 
-func (r *releasable) Release() {
-	r.program.Release()
-	for _, texture := range r.textures {
-		texture.Release()
-	}
-	for _, mesh := range r.meshes {
-		mesh.Release()
-	}
-}
-
-//
-
-type system struct {
-	genericrenderer.World
-	genericrenderer.GenericRendererTool
-
-	window         window.Api
-	assetsStorage  assets.AssetsStorage
-	logger         logger.Logger
-	vboFactory     vbo.VBOFactory[genericrenderer.Vertex]
-	textureFactory texture.Factory
-
-	*releasable
-}
-
-func NewSystem(
-	genericRendererToolFactory genericrenderer.ToolFactory,
-	window window.Api,
-	assetsStorage assets.AssetsStorage,
-	logger logger.Logger,
-	vboFactory vbo.VBOFactory[genericrenderer.Vertex],
-	textureFactory texture.Factory,
-) genericrenderer.System {
-	return ecs.NewSystemRegister(func(w genericrenderer.World) error {
+func NewSystem(c ioc.Dic) genericrenderer.System {
+	return ecs.NewSystemRegister(func() error {
 		vert, err := shader.NewShader(vertSource, shader.VertexShader)
 		if err != nil {
 			return err
@@ -108,44 +95,28 @@ func NewSystem(
 			return err
 		}
 
-		releasable := &releasable{
-			texturesImagesCount: make(map[render.TextureComponent]int),
-			textures:            make(map[textureKey]texture.Texture),
-			meshes:              make(map[assets.AssetID]vao.VAO),
-			program:             p,
-			locations:           locations,
-		}
+		s := ioc.GetServices[*system](c)
 
-		w.SaveGlobal(releasable)
+		s.texturesImagesCount = make(map[render.TextureComponent]int)
+		s.textures = make(map[textureKey]texture.Texture)
+		s.meshes = make(map[assets.AssetID]vao.VAO)
+		s.program = p
+		s.locations = locations
 
-		system := &system{
-			World:               w,
-			GenericRendererTool: genericRendererToolFactory.Build(w),
-
-			window:         window,
-			assetsStorage:  assetsStorage,
-			logger:         logger,
-			vboFactory:     vboFactory,
-			textureFactory: textureFactory,
-
-			releasable: releasable,
-		}
-
-		events.ListenE(w.EventsBuilder(), system.Listen)
+		events.ListenE(s.EventsBuilder, s.Listen)
 		return nil
 	})
-
 }
 
 //
 
 func (m *system) getTexture(entity ecs.EntityID) (texture.Texture, error) {
-	textureComponent, ok := m.Render().Texture().Get(entity)
+	textureComponent, ok := m.Render.Texture().Get(entity)
 	if !ok {
 		return nil, nil
 	}
 	imagesCount, okImagesCount := m.texturesImagesCount[textureComponent]
-	textureFrameComponent, ok := m.Render().TextureFrame().Get(entity)
+	textureFrameComponent, ok := m.Render.TextureFrame().Get(entity)
 	if !ok {
 		textureFrameComponent = render.DefaultTextureFrameComponent()
 	}
@@ -158,7 +129,7 @@ func (m *system) getTexture(entity ecs.EntityID) (texture.Texture, error) {
 		return texture, nil
 	}
 
-	textureAsset, err := assets.StorageGet[render.TextureAsset](m.assetsStorage, textureComponent.Asset)
+	textureAsset, err := assets.StorageGet[render.TextureAsset](m.AssetsStorage, textureComponent.Asset)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +140,7 @@ func (m *system) getTexture(entity ecs.EntityID) (texture.Texture, error) {
 	}
 
 	image := textureAsset.Images()[frame]
-	texture, err := m.textureFactory.New(image)
+	texture, err := m.TextureFactory.New(image)
 	if err != nil {
 		return nil, err
 	}
@@ -182,12 +153,12 @@ func (m *system) getMesh(asset assets.AssetID) (vao.VAO, error) {
 	if mesh, ok := m.meshes[asset]; ok {
 		return mesh, nil
 	}
-	meshAsset, err := assets.StorageGet[render.MeshAsset[genericrenderer.Vertex]](m.assetsStorage, asset)
+	meshAsset, err := assets.StorageGet[render.MeshAsset[genericrenderer.Vertex]](m.AssetsStorage, asset)
 	if err != nil {
 		return nil, err
 	}
 
-	VBO := m.vboFactory()
+	VBO := m.VboFactory()
 	VBO.SetVertices(meshAsset.Vertices())
 	EBO := ebo.NewEBO()
 	EBO.SetIndices(meshAsset.Indices())
@@ -199,14 +170,14 @@ func (m *system) getMesh(asset assets.AssetID) (vao.VAO, error) {
 func (m *system) Listen(render.RenderEvent) error {
 	m.program.Use()
 
-	for _, cameraEntity := range m.Camera().Component().GetEntities() {
-		cameraGroups, ok := m.Groups().Component().Get(cameraEntity)
+	for _, cameraEntity := range m.Camera.Component().GetEntities() {
+		cameraGroups, ok := m.Groups.Component().Get(cameraEntity)
 		if !ok {
 			cameraGroups = groups.DefaultGroups()
 		}
 
-		for _, entity := range m.GenericRenderer().Pipeline().GetEntities() {
-			entityGroups, ok := m.Groups().Component().Get(entity)
+		for _, entity := range m.GenericRenderer.Pipeline().GetEntities() {
+			entityGroups, ok := m.Groups.Component().Get(entity)
 			if !ok {
 				entityGroups = groups.DefaultGroups()
 			}
@@ -214,20 +185,20 @@ func (m *system) Listen(render.RenderEvent) error {
 				continue
 			}
 
-			model := m.Transform().Mat4(entity)
+			model := m.Transform.Mat4(entity)
 
 			textureAsset, err := m.getTexture(entity)
 			if textureAsset == nil || err != nil {
-				m.logger.Warn(err)
+				m.Logger.Warn(err)
 				continue
 			}
 
-			colorComponent, ok := m.Render().Color().Get(entity)
+			colorComponent, ok := m.Render.Color().Get(entity)
 			if !ok {
 				colorComponent = render.DefaultColor()
 			}
 
-			meshComponent, ok := m.Render().Mesh().Get(entity)
+			meshComponent, ok := m.Render.Mesh().Get(entity)
 			if !ok {
 				continue
 			}
@@ -240,8 +211,8 @@ func (m *system) Listen(render.RenderEvent) error {
 			meshAsset.Use()
 			gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, meshAsset.EBO().ID())
 
-			mvp := m.Camera().Mat4(cameraEntity).Mul4(model)
-			gl.Viewport(m.Camera().GetViewport(cameraEntity))
+			mvp := m.Camera.Mat4(cameraEntity).Mul4(model)
+			gl.Viewport(m.Camera.GetViewport(cameraEntity))
 			gl.UniformMatrix4fv(m.locations.Mvp, 1, false, &mvp[0])
 			gl.Uniform4fv(m.locations.Color, 1, &colorComponent.Color[0])
 

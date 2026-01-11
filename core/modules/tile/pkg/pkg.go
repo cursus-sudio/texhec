@@ -1,21 +1,26 @@
 package tilepkg
 
 import (
+	gameassets "core/assets"
 	"core/modules/tile"
 	"core/modules/tile/internal/tilecollider"
 	"core/modules/tile/internal/tilerenderer"
-	"core/modules/tile/internal/tiletool"
+	"core/modules/tile/internal/tileservice"
 	"core/modules/tile/internal/tileui"
+	"engine/modules/collider"
 	"engine/modules/groups"
 	"engine/services/codec"
 	"engine/services/ecs"
-	"engine/services/logger"
 
 	"github.com/ogiusek/ioc/v2"
 )
 
 type pkg struct {
 	pkgs []ioc.Pkg
+
+	tileSize   int32
+	gridDepth  float32
+	tileGroups groups.GroupsComponent
 }
 
 func Package(
@@ -28,17 +33,9 @@ func Package(
 ) ioc.Pkg {
 	return pkg{
 		[]ioc.Pkg{
-			tiletool.Package(
+			tileservice.Package(
 				tileSize,
 				gridDepth,
-				mainLayer,
-				layers,
-				minX, maxX, minY, maxY, minZ,
-			),
-			tilecollider.Package(
-				tileSize,
-				gridDepth,
-				tileGroups,
 				mainLayer,
 				layers,
 				minX, maxX, minY, maxY, minZ,
@@ -50,12 +47,15 @@ func Package(
 				tileGroups,
 			),
 		},
+		tileSize,
+		gridDepth,
+		tileGroups,
 	}
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
-		return b.
+	ioc.WrapService(b, func(c ioc.Dic, b codec.Builder) {
+		b.
 			// types
 			Register(tile.Layer(0)).
 			// events
@@ -66,14 +66,17 @@ func (pkg pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.System {
 		systems := []tile.System{
-			tileui.NewSystem(
-				ioc.Get[logger.Logger](c),
-				ioc.Get[tile.ToolFactory](c),
+			tileui.NewSystem(c),
+			tilecollider.TileColliderSystem(c,
+				pkg.tileSize,
+				pkg.gridDepth,
+				pkg.tileGroups,
+				collider.NewCollider(ioc.Get[gameassets.GameAssets](c).SquareCollider),
 			),
 		}
-		return ecs.NewSystemRegister(func(world tile.World) error {
+		return ecs.NewSystemRegister(func() error {
 			for _, system := range systems {
-				if err := system.Register(world); err != nil {
+				if err := system.Register(); err != nil {
 					return err
 				}
 			}

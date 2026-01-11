@@ -5,16 +5,9 @@ import (
 	"time"
 )
 
-type System ecs.SystemRegister[World]
+type System ecs.SystemRegister
 
-type ToolFactory ecs.ToolFactory[World, TransitionTool]
-type TransitionTool interface {
-	Transition() Interface
-}
-type World interface {
-	ecs.World
-}
-type Interface interface {
+type Service interface {
 	Easing() ecs.ComponentsArray[EasingComponent]
 }
 

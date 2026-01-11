@@ -5,34 +5,25 @@ import (
 	"engine/modules/transition"
 	"engine/services/ecs"
 	"engine/services/frames"
-	"sync"
 
 	"github.com/ogiusek/events"
+	"github.com/ogiusek/ioc/v2"
 )
 
-func NewFirstSystem[Component transition.Lerp[Component]]() smooth.StartSystem {
-	mutex := &sync.Mutex{}
-	return ecs.NewSystemRegister(func(w smooth.World) error {
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		t, ok := ecs.GetGlobal[tool[Component]](w)
-		if !ok {
-			t = NewTool[Component](w)
-			w.SaveGlobal(t)
-		}
-
-		events.Listen(w.EventsBuilder(), func(tick frames.TickEvent) {
-			for _, entity := range t.lerpArray.GetEntities() {
-				transitionComponent, ok := t.lerpArray.Get(entity)
+func NewFirstSystem[Component transition.Lerp[Component]](c ioc.Dic) smooth.StartSystem {
+	return ecs.NewSystemRegister(func() error {
+		s := ioc.GetServices[*system[Component]](c)
+		events.Listen(s.EventsBuilder, func(tick frames.TickEvent) {
+			for _, entity := range s.Service.lerpArray.GetEntities() {
+				transitionComponent, ok := s.Service.lerpArray.Get(entity)
 				if !ok {
 					continue
 				}
-				t.lerpArray.Remove(entity)
-				t.componentArray.Set(entity, transitionComponent.To)
+				s.Service.lerpArray.Remove(entity)
+				s.Service.componentArray.Set(entity, transitionComponent.To)
 			}
 
-			t.recordingID = w.Record().Entity().StartBackwardsRecording(t.config)
+			s.Service.recordingID = s.Record.Entity().StartBackwardsRecording(s.Service.config)
 		})
 
 		return nil

@@ -15,13 +15,13 @@ func Package() ioc.Pkg {
 }
 
 func (pkg) Register(b ioc.Builder) {
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
-		return b.
+	ioc.WrapService(b, func(c ioc.Dic, b codec.Builder) {
+		b.
 			Register(definition.DefinitionComponent{}).
 			Register(definition.DefinitionLinkComponent{})
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) definition.ToolFactory {
-		return internal.NewToolFactory()
+	ioc.RegisterSingleton(b, func(c ioc.Dic) definition.Service {
+		return internal.NewService(c)
 	})
 }

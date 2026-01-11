@@ -1,13 +1,11 @@
 package uipkg
 
 import (
-	gameassets "core/assets"
 	"core/modules/tile"
 	"core/modules/ui"
-	"core/modules/ui/internal/uitool"
+	"core/modules/ui/internal/uiservice"
 	"engine/services/codec"
 	"engine/services/ecs"
-	"engine/services/logger"
 	"time"
 
 	"github.com/ogiusek/events"
@@ -31,31 +29,27 @@ func Package(
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.WrapService(b, ioc.DefaultOrder, func(c ioc.Dic, b codec.Builder) codec.Builder {
-		return b.
+	ioc.WrapService(b, func(c ioc.Dic, b codec.Builder) {
+		b.
 			// components
 			Register(ui.UiCameraComponent{}).
 			// events
 			Register(ui.HideUiEvent{})
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) ui.ToolFactory {
-		return uitool.NewToolFactory(
-			pkg.animationDuration,
-			ioc.Get[gameassets.GameAssets](c),
-			ioc.Get[logger.Logger](c),
-		)
+	ioc.RegisterSingleton(b, func(c ioc.Dic) ui.Service {
+		return uiservice.NewService(c, pkg.animationDuration)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ui.System {
-		factory := ioc.Get[ui.ToolFactory](c)
-		return ecs.NewSystemRegister(func(w ui.World) error {
-			events.Listen(w.EventsBuilder(), func(e sdl.MouseButtonEvent) {
+		eventsBuilder := ioc.Get[events.Builder](c)
+		return ecs.NewSystemRegister(func() error {
+			events.Listen(eventsBuilder, func(e sdl.MouseButtonEvent) {
 				if e.Button != sdl.BUTTON_RIGHT || e.State != sdl.RELEASED {
 					return
 				}
-				events.Emit(w.Events(), ui.HideUiEvent{})
+				events.Emit(eventsBuilder.Events(), ui.HideUiEvent{})
 			})
-			factory.Build(w)
+			ioc.Get[ui.Service](c)
 			return nil
 
 		})

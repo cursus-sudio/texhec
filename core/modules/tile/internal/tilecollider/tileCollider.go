@@ -2,46 +2,50 @@ package tilecollider
 
 import (
 	"core/modules/tile"
+	"engine"
 	"engine/modules/collider"
 	"engine/modules/groups"
 	"engine/modules/inputs"
 	"engine/modules/transform"
 	"engine/modules/uuid"
 	"engine/services/ecs"
-	"engine/services/logger"
+
+	"github.com/ogiusek/ioc/v2"
 )
 
-func TileColliderSystem(
-	toolFactory tile.ToolFactory,
-	logger logger.Logger,
+type system struct {
+	engine.World `inject:"1"`
+	Tile         tile.Service `inject:"1"`
+}
+
+func TileColliderSystem(c ioc.Dic,
 	tileSize int32, // transform
 	gridDepth float32,
 	tileGroups groups.GroupsComponent, // groups
 	colliderComponent collider.Component, // collider
-	uuidFactory uuid.Factory, // tools
 ) tile.System {
-	return ecs.NewSystemRegister(func(w tile.World) error {
-		tileTool := toolFactory.Build(w)
+	return ecs.NewSystemRegister(func() error {
+		s := ioc.GetServices[system](c)
 		tilePosDirtySet := ecs.NewDirtySet()
-		tileTool.Tile().Pos().AddDirtySet(tilePosDirtySet)
-		w.UUID().Component().BeforeGet(func() {
+		s.Tile.Pos().AddDirtySet(tilePosDirtySet)
+		s.UUID.Component().BeforeGet(func() {
 			ei := tilePosDirtySet.Get()
 			if len(ei) == 0 {
 				return
 			}
 			for _, entity := range ei {
-				if _, ok := w.UUID().Component().Get(entity); ok {
+				if _, ok := s.UUID.Component().Get(entity); ok {
 					continue
 				}
-				comp := uuid.New(uuidFactory.NewUUID())
-				w.UUID().Component().Set(entity, comp)
+				comp := uuid.New(s.UUID.NewUUID())
+				s.UUID.Component().Set(entity, comp)
 			}
 		})
 
 		//
 
 		tileDirtySet := ecs.NewDirtySet()
-		tileTool.Tile().Pos().AddDirtySet(tileDirtySet)
+		s.Tile.Pos().AddDirtySet(tileDirtySet)
 		applyTileCollider := func() {
 			ei := tileDirtySet.Get()
 			if len(ei) == 0 {
@@ -50,7 +54,7 @@ func TileColliderSystem(
 
 			for _, entity := range ei {
 
-				pos, ok := tileTool.Tile().Pos().Get(entity)
+				pos, ok := s.Tile.Pos().Get(entity)
 				if !ok {
 					continue
 				}
@@ -59,21 +63,21 @@ func TileColliderSystem(
 					float32(tileSize)*float32(pos.Y)+float32(tileSize)/2,
 					gridDepth+float32(pos.Layer),
 				)
-				w.Transform().Pos().Set(entity, transformPos)
-				w.Transform().Size().Set(entity, transform.NewSize(float32(tileSize), float32(tileSize), 1))
-				w.Inputs().LeftClick().Set(entity, inputs.NewLeftClick(tile.NewTileClickEvent(pos)))
-				w.Inputs().Stack().Set(entity, inputs.StackComponent{})
-				w.Collider().Component().Set(entity, colliderComponent)
-				w.Groups().Component().Set(entity, tileGroups)
+				s.Transform.Pos().Set(entity, transformPos)
+				s.Transform.Size().Set(entity, transform.NewSize(float32(tileSize), float32(tileSize), 1))
+				s.Inputs.LeftClick().Set(entity, inputs.NewLeftClick(tile.NewTileClickEvent(pos)))
+				s.Inputs.Stack().Set(entity, inputs.StackComponent{})
+				s.Collider.Component().Set(entity, colliderComponent)
+				s.Groups.Component().Set(entity, tileGroups)
 			}
 		}
 
-		w.Transform().Size().BeforeGet(applyTileCollider)
-		w.Transform().Pos().BeforeGet(applyTileCollider)
-		w.Collider().Component().BeforeGet(applyTileCollider)
-		w.Inputs().LeftClick().BeforeGet(applyTileCollider)
-		w.Inputs().Stack().BeforeGet(applyTileCollider)
-		w.Groups().Component().BeforeGet(applyTileCollider)
+		s.Transform.Size().BeforeGet(applyTileCollider)
+		s.Transform.Pos().BeforeGet(applyTileCollider)
+		s.Collider.Component().BeforeGet(applyTileCollider)
+		s.Inputs.LeftClick().BeforeGet(applyTileCollider)
+		s.Inputs.Stack().BeforeGet(applyTileCollider)
+		s.Groups.Component().BeforeGet(applyTileCollider)
 
 		return nil
 	})

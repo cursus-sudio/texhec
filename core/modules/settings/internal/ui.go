@@ -10,7 +10,7 @@ import (
 	"engine/modules/groups"
 	"engine/modules/inputs"
 	"engine/modules/render"
-	"engine/modules/scenes"
+	"engine/modules/scene"
 	"engine/modules/text"
 	"engine/modules/transform"
 	"engine/services/assets"
@@ -109,7 +109,7 @@ func (s *system) ListenRender(parent ecs.EntityID) error {
 		{"SHOT", audio.NewPlayEvent(gamescenes.EffectChannel, s.gameAssets.ExampleAudio)},
 		{"SHOT2", audio.NewPlayEvent(gamescenes.EffectChannel, s.gameAssets.ExampleAudio)},
 		{"SHOT3", audio.NewPlayEvent(gamescenes.EffectChannel, s.gameAssets.ExampleAudio)},
-		{"QUIT", scenes.NewChangeSceneEvent(gamescenes.MenuID)},
+		{"QUIT", scene.NewChangeSceneEvent(gamescenes.MenuID)},
 	}
 
 	btnAsset, err := assets.GetAsset[render.TextureAsset](s.assets, s.gameAssets.Hud.Btn)

@@ -4,7 +4,6 @@ import (
 	"engine/services/console"
 	"engine/services/ecs"
 	"engine/services/frames"
-	"engine/services/scenes"
 	"fmt"
 	"time"
 
@@ -12,22 +11,19 @@ import (
 )
 
 type logsSystem struct {
-	SceneManager scenes.SceneManager
-	World        ecs.World
-	Console      console.Console
+	World   ecs.World
+	Console console.Console
 
 	frames []time.Time
 }
 
 func NewFpsLoggerSystem(
-	sceneMagener scenes.SceneManager,
 	console console.Console,
 ) ecs.SystemRegister[ecs.World] {
 	return ecs.NewSystemRegister(func(w ecs.World) error {
 		s := &logsSystem{
-			SceneManager: sceneMagener,
-			World:        w,
-			Console:      console,
+			World:   w,
+			Console: console,
 
 			frames: make([]time.Time, 60),
 		}

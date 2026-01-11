@@ -13,6 +13,12 @@ func Package() ioc.Pkg {
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) events.Builder {
+		return events.NewBuilder()
+	})
+	ioc.RegisterSingleton(b, func(c ioc.Dic) events.Events {
+		return ioc.Get[events.Builder](c).Build()
+	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) World {
 		return newConnectedWorld(ioc.Get[events.Builder](c))
 	})

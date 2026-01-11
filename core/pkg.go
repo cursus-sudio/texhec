@@ -35,7 +35,7 @@ import (
 	"engine/modules/record/pkg"
 	"engine/modules/render"
 	"engine/modules/render/pkg"
-	"engine/modules/scenes/pkg"
+	"engine/modules/scene/pkg"
 	"engine/modules/smooth/pkg"
 	"engine/modules/text"
 	"engine/modules/text/pkg"
@@ -48,14 +48,13 @@ import (
 	"engine/services/codec"
 	"engine/services/console"
 	"engine/services/datastructures"
-	"engine/services/eventspkg"
+	"engine/services/ecs"
 	"engine/services/frames"
 	"engine/services/graphics/texture"
 	"engine/services/graphics/texturearray"
 	"engine/services/logger"
 	"engine/services/media"
 	"engine/services/runtime"
-	"engine/services/scenes"
 	"fmt"
 	"time"
 
@@ -122,7 +121,7 @@ func getDic() ioc.Dic {
 
 	pkgs := []ioc.Pkg{
 		clock.Package(time.RFC3339Nano),
-		eventspkg.Package(),
+		ecs.Package(),
 		codec.Package(),
 		runtime.Package(),
 
@@ -135,7 +134,7 @@ func getDic() ioc.Dic {
 		// ecs.Package(), // scenes register world so ecs package isn't registered
 		frames.Package(1, 60),
 		// frames.Package(1, 10000),
-		scenes.Package(),
+		scenepkg.Package(),
 
 		texture.Package(),
 		texturearray.Package(),
@@ -169,7 +168,6 @@ func getDic() ioc.Dic {
 		groupspkg.Package(),
 		inputspkg.Package(),
 		renderpkg.Package(),
-		scenespkg.Package(),
 		textpkg.Package(
 			func(c ioc.Dic) text.FontFamilyComponent {
 				asset := ioc.Get[gameassets.GameAssets](c).FontAsset

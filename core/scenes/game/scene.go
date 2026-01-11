@@ -20,7 +20,6 @@ import (
 	"engine/modules/uuid"
 	"engine/services/ecs"
 	"engine/services/logger"
-	"engine/services/scenes"
 	"errors"
 	"math/rand/v2"
 
@@ -41,6 +40,7 @@ const (
 
 func addScene(
 	world gamescenes.World,
+	sceneParent ecs.EntityID,
 	gameAssets gameassets.GameAssets,
 	logger logger.Logger,
 	isServer bool,
@@ -49,11 +49,13 @@ func addScene(
 	cols := 100
 
 	uiCamera := world.NewEntity()
+	world.Hierarchy().SetParent(uiCamera, sceneParent)
 	world.Camera().Ortho().Set(uiCamera, camera.NewOrtho(-1000, +1000))
 	world.Groups().Component().Set(uiCamera, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 	world.Ui().UiCamera().Set(uiCamera, ui.UiCameraComponent{})
 
 	gameCamera := world.NewEntity()
+	world.Hierarchy().SetParent(gameCamera, sceneParent)
 	world.UUID().Component().Set(gameCamera, uuid.New([16]byte{48}))
 	world.Camera().Ortho().Set(gameCamera, camera.NewOrtho(-1000, +1000))
 	world.Groups().Component().Set(gameCamera, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
@@ -64,10 +66,10 @@ func addScene(
 	))
 
 	signature := world.NewEntity()
+	world.Hierarchy().SetParent(signature, uiCamera)
 	world.Transform().Pos().Set(signature, transform.NewPos(5, 5, 1))
 	world.Transform().Size().Set(signature, transform.NewSize(100, 50, 1))
 	world.Transform().PivotPoint().Set(signature, transform.NewPivotPoint(0, .5, 0))
-	world.Hierarchy().SetParent(signature, uiCamera)
 	world.Transform().Parent().Set(signature, transform.NewParent(transform.RelativePos))
 	world.Transform().ParentPivotPoint().Set(signature, transform.NewParentPivotPoint(0, 0, .5))
 	world.Groups().Component().Set(signature, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
@@ -76,10 +78,10 @@ func addScene(
 	world.Text().Break().Set(signature, text.BreakComponent{Break: text.BreakNone})
 
 	settingsEntity := world.NewEntity()
+	world.Hierarchy().SetParent(settingsEntity, uiCamera)
 	world.Transform().Pos().Set(settingsEntity, transform.NewPos(10, -10, 0))
 	world.Transform().Size().Set(settingsEntity, transform.NewSize(50, 50, 1))
 	world.Transform().PivotPoint().Set(settingsEntity, transform.NewPivotPoint(0, 1, .5))
-	world.Hierarchy().SetParent(settingsEntity, uiCamera)
 	world.Transform().Parent().Set(settingsEntity, transform.NewParent(transform.RelativePos))
 	world.Transform().ParentPivotPoint().Set(settingsEntity, transform.NewParentPivotPoint(0, 1, .5))
 	world.Groups().Component().Set(settingsEntity, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
@@ -99,6 +101,7 @@ func addScene(
 		tilesPosArray := ecs.GetComponentsArray[tile.PosComponent](world)
 		{
 			unit := world.NewEntity()
+			world.Hierarchy().SetParent(unit, sceneParent)
 			world.Tile().Pos().Set(unit, tile.NewPos(1, 1, tile.UnitLayer))
 			world.Definition().Link().Set(unit, definition.NewLink(definition.TileU1))
 		}
@@ -120,12 +123,14 @@ func addScene(
 			case 3:
 				tileType = definition.TileWater
 			}
+			world.Hierarchy().SetParent(entity, sceneParent)
 			tilesPosArray.Set(entity, tile.NewPos(row, col, tile.GroundLayer))
 			tilesTypeArray.Set(entity, definition.NewLink(tileType))
 		}
 
 		{
 			unit := world.NewEntity()
+			world.Hierarchy().SetParent(unit, sceneParent)
 			tilesPosArray.Set(unit, tile.NewPos(0, 0, tile.UnitLayer))
 			tilesTypeArray.Set(unit, definition.NewLink(definition.TileU1))
 		}
@@ -133,6 +138,7 @@ func addScene(
 
 	if isServer {
 		listenerEntity := world.NewEntity()
+		world.Hierarchy().SetParent(listenerEntity, sceneParent)
 		listener, err := world.Connection().Host(":8000", func(cc connection.ConnectionComponent) {
 			entity := world.NewEntity()
 			world.NetSync().Client().Set(entity, netsync.ClientComponent{})
@@ -149,42 +155,35 @@ func addScene(
 			logger.Warn(errors.New("there is no server"))
 		}
 		entity := world.NewEntity()
+		world.Hierarchy().SetParent(entity, sceneParent)
 		world.NetSync().Server().Set(entity, netsync.ServerComponent{})
 		world.Connection().Component().Set(entity, comp)
 	}
 }
 
-func (pkg) LoadObjects(b ioc.Builder) {
-	ioc.WrapServiceInOrder(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.GameBuilder) {
-		b.OnLoad(func(rawWorld ecs.World) {
-			world := ioc.Get[gamescenes.WorldResolver](c)(rawWorld)
+func (pkg) Register(b ioc.Builder) {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) gamescenes.GameBuilder {
+		world := ioc.Get[gamescenes.WorldResolver](c)(ioc.Get[ecs.World](c))
+		return func(sceneParent ecs.EntityID) {
 			addScene(
 				world,
+				sceneParent,
 				ioc.Get[gameassets.GameAssets](c),
 				ioc.Get[logger.Logger](c),
 				true, // is server
 			)
-		})
+		}
 	})
-	ioc.WrapServiceInOrder(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.GameClientBuilder) {
-		b.OnLoad(func(rawWorld ecs.World) {
-			world := ioc.Get[gamescenes.WorldResolver](c)(rawWorld)
+	ioc.RegisterSingleton(b, func(c ioc.Dic) gamescenes.GameClientBuilder {
+		world := ioc.Get[gamescenes.WorldResolver](c)(ioc.Get[ecs.World](c))
+		return func(sceneParent ecs.EntityID) {
 			addScene(
 				world,
+				sceneParent,
 				ioc.Get[gameassets.GameAssets](c),
 				ioc.Get[logger.Logger](c),
 				false, // is server
 			)
-		})
+		}
 	})
-}
-
-func (pkg pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) gamescenes.GameBuilder { return scenes.NewSceneBuilder() })
-	gamescenes.AddDefaults[gamescenes.GameBuilder](b)
-
-	ioc.RegisterSingleton(b, func(c ioc.Dic) gamescenes.GameClientBuilder { return scenes.NewSceneBuilder() })
-	gamescenes.AddDefaults[gamescenes.GameClientBuilder](b)
-
-	pkg.LoadObjects(b)
 }

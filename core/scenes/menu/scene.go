@@ -9,14 +9,13 @@ import (
 	"engine/modules/inputs"
 	"engine/modules/layout"
 	"engine/modules/render"
-	scenessys "engine/modules/scenes"
+	"engine/modules/scene"
 	"engine/modules/text"
 	"engine/modules/transform"
 	"engine/modules/transition"
 	"engine/services/assets"
 	"engine/services/ecs"
 	"engine/services/logger"
-	"engine/services/scenes"
 	"strings"
 	"time"
 
@@ -31,22 +30,24 @@ func Package() ioc.Pkg {
 	return pkg{}
 }
 
-func (pkg) LoadObjects(b ioc.Builder) {
-	ioc.WrapServiceInOrder(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.MenuBuilder) {
+func (pkg) Register(b ioc.Builder) {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) gamescenes.MenuBuilder {
 		gameAssets := ioc.Get[gameassets.GameAssets](c)
 		assetsService := ioc.Get[assets.Assets](c)
 		logger := ioc.Get[logger.Logger](c)
 		worldResolver := ioc.Get[gamescenes.WorldResolver](c)
-		b.OnLoad(func(rawWorld ecs.World) {
-			world := worldResolver(rawWorld)
+		rawWorld := ioc.Get[ecs.World](c)
+		world := worldResolver(rawWorld)
+		return func(sceneParent ecs.EntityID) {
 			cameraEntity := world.NewEntity()
+			world.Hierarchy().SetParent(cameraEntity, sceneParent)
 			world.Camera().Ortho().Set(cameraEntity, camera.NewOrtho(-1000, 1000))
 
 			signature := world.NewEntity()
+			world.Hierarchy().SetParent(signature, cameraEntity)
 			world.Transform().Pos().Set(signature, transform.NewPos(5, 5, 0))
 			world.Transform().Size().Set(signature, transform.NewSize(100, 50, 1))
 			world.Transform().PivotPoint().Set(signature, transform.NewPivotPoint(0, .5, .5))
-			world.Hierarchy().SetParent(signature, cameraEntity)
 			world.Transform().Parent().Set(signature, transform.NewParent(transform.RelativePos))
 			world.Transform().ParentPivotPoint().Set(signature, transform.NewParentPivotPoint(0, 0, .5))
 
@@ -84,10 +85,10 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				OnClick any
 			}
 			buttons := []Button{
-				{Text: "play", OnClick: scenessys.NewChangeSceneEvent(gamescenes.GameID)},
-				{Text: "connect", OnClick: scenessys.NewChangeSceneEvent(gamescenes.GameClientID)},
-				{Text: "settings", OnClick: scenessys.NewChangeSceneEvent(gamescenes.SettingsID)},
-				{Text: "credits", OnClick: scenessys.NewChangeSceneEvent(gamescenes.CreditsID)},
+				{Text: "play", OnClick: scene.NewChangeSceneEvent(gamescenes.GameID)},
+				{Text: "connect", OnClick: scene.NewChangeSceneEvent(gamescenes.GameClientID)},
+				{Text: "settings", OnClick: scene.NewChangeSceneEvent(gamescenes.SettingsID)},
+				{Text: "credits", OnClick: scene.NewChangeSceneEvent(gamescenes.CreditsID)},
 				{Text: "exit", OnClick: inputs.QuitEvent{}},
 			}
 
@@ -100,9 +101,9 @@ func (pkg) LoadObjects(b ioc.Builder) {
 
 			for _, button := range buttons {
 				btn := world.NewEntity()
+				world.Hierarchy().SetParent(btn, buttonArea)
 				world.Transform().Size().Set(btn, transform.NewSize(150, 50, 1))
 				world.Transform().AspectRatio().Set(btn, transform.NewAspectRatio(float32(btnAspectRatio.Dx()), float32(btnAspectRatio.Dy()), 0, transform.PrimaryAxisX))
-				world.Hierarchy().SetParent(btn, buttonArea)
 				world.Transform().Parent().Set(btn, transform.NewParent(transform.RelativePos))
 
 				world.Render().Mesh().Set(btn, render.NewMesh(gameAssets.SquareMesh))
@@ -118,13 +119,6 @@ func (pkg) LoadObjects(b ioc.Builder) {
 				world.Text().Align().Set(btn, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
 				world.Text().FontSize().Set(btn, text.FontSizeComponent{FontSize: 24})
 			}
-		})
+		}
 	})
-}
-
-func (pkg pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) gamescenes.MenuBuilder { return scenes.NewSceneBuilder() })
-	gamescenes.AddDefaults[gamescenes.MenuBuilder](b)
-
-	pkg.LoadObjects(b)
 }

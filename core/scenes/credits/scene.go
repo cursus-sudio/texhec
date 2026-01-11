@@ -9,13 +9,12 @@ import (
 	"engine/modules/genericrenderer"
 	"engine/modules/inputs"
 	"engine/modules/render"
-	scenessys "engine/modules/scenes"
+	"engine/modules/scene"
 	"engine/modules/text"
 	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/ecs"
 	"engine/services/logger"
-	"engine/services/scenes"
 	"strings"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -28,15 +27,17 @@ func Package() ioc.Pkg {
 	return pkg{}
 }
 
-func (pkg) LoadObjects(b ioc.Builder) {
-	ioc.WrapServiceInOrder(b, scenes.LoadObjects, func(c ioc.Dic, b gamescenes.CreditsBuilder) {
+func (pkg) Register(b ioc.Builder) {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) gamescenes.CreditsBuilder {
 		gameAssets := ioc.Get[gameassets.GameAssets](c)
 		logger := ioc.Get[logger.Logger](c)
 		assetsService := ioc.Get[assets.Assets](c)
 		worldResolver := ioc.Get[gamescenes.WorldResolver](c)
-		b.OnLoad(func(rawWorld ecs.World) {
-			world := worldResolver(rawWorld)
+		rawWorld := ioc.Get[ecs.World](c)
+		world := worldResolver(rawWorld)
+		return func(sceneParent ecs.EntityID) {
 			cameraEntity := world.NewEntity()
+			world.Hierarchy().SetParent(cameraEntity, sceneParent)
 			world.Camera().Ortho().Set(cameraEntity, camera.NewOrtho(-1000, +1000))
 
 			signature := world.NewEntity()
@@ -60,11 +61,12 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			world.GenericRenderer().Pipeline().Set(background, genericrenderer.PipelineComponent{})
 
 			buttonArea := world.NewEntity()
-			world.Transform().Size().Set(buttonArea, transform.NewSize(500, 200, 1))
 			world.Hierarchy().SetParent(buttonArea, cameraEntity)
+			world.Transform().Size().Set(buttonArea, transform.NewSize(500, 200, 1))
 			world.Transform().Parent().Set(buttonArea, transform.NewParent(transform.RelativePos))
 
 			draggable := world.NewEntity()
+			world.Hierarchy().SetParent(draggable, sceneParent)
 			world.Transform().Size().Set(draggable, transform.NewSize(50, 50, 3))
 			world.Render().Color().Set(draggable, render.NewColor(mgl32.Vec4{0, 1, 0, .2}))
 			world.Render().Mesh().Set(draggable, render.NewMesh(gameAssets.SquareMesh))
@@ -87,8 +89,8 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			btnAspectRatio := btnAsset.AspectRatio()
 
 			btn := world.NewEntity()
-			world.Transform().Size().Set(btn, transform.NewSize(500, 100, 1))
 			world.Hierarchy().SetParent(btn, buttonArea)
+			world.Transform().Size().Set(btn, transform.NewSize(500, 100, 1))
 			world.Transform().Parent().Set(btn, transform.NewParent(transform.RelativePos))
 			world.Transform().ParentPivotPoint().Set(btn, transform.NewParentPivotPoint(.5, 0, .5))
 			world.Transform().AspectRatio().Set(btn, transform.NewAspectRatio(float32(btnAspectRatio.Dx()), float32(btnAspectRatio.Dy()), 0, transform.PrimaryAxisY))
@@ -97,20 +99,13 @@ func (pkg) LoadObjects(b ioc.Builder) {
 			world.Render().Texture().Set(btn, render.NewTexture(gameAssets.Hud.Btn))
 			world.GenericRenderer().Pipeline().Set(btn, genericrenderer.PipelineComponent{})
 
-			world.Inputs().LeftClick().Set(btn, inputs.NewLeftClick(scenessys.NewChangeSceneEvent(gamescenes.MenuID)))
+			world.Inputs().LeftClick().Set(btn, inputs.NewLeftClick(scene.NewChangeSceneEvent(gamescenes.MenuID)))
 			world.Inputs().KeepSelected().Set(btn, inputs.KeepSelectedComponent{})
 			world.Collider().Component().Set(btn, collider.NewCollider(gameAssets.SquareCollider))
 
 			world.Text().Content().Set(btn, text.TextComponent{Text: strings.ToUpper("return to menu")})
 			world.Text().Align().Set(btn, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
 			world.Text().FontSize().Set(btn, text.FontSizeComponent{FontSize: 32})
-		})
+		}
 	})
-}
-
-func (pkg pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) gamescenes.CreditsBuilder { return scenes.NewSceneBuilder() })
-	gamescenes.AddDefaults[gamescenes.CreditsBuilder](b)
-
-	pkg.LoadObjects(b)
 }

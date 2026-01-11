@@ -15,8 +15,6 @@ import (
 	gtexture "engine/services/graphics/texture"
 	"engine/services/graphics/vao/ebo"
 	"engine/services/logger"
-	appruntime "engine/services/runtime"
-	"engine/services/scenes"
 	"image"
 	_ "image/png"
 	"math"
@@ -146,15 +144,6 @@ func (pkg) Assets(b ioc.Builder) {
 		return gameAssets
 	})
 
-	ioc.WrapServiceInOrder(b, appruntime.OrderCleanUp, func(c ioc.Dic, b appruntime.Builder) {
-		assets := ioc.Get[assets.Assets](c)
-		b.OnStop(func(r appruntime.Runtime) {
-			scene := ioc.Get[scenes.SceneManager](c).CurrentSceneWorld()
-			scene.ReleaseGlobals()
-
-			assets.ReleaseAll()
-		})
-	})
 	ioc.WrapService(b, func(c ioc.Dic, s tile.TileAssets) {
 		gameAssets := ioc.Get[GameAssets](c)
 		assets := datastructures.NewSparseArray[definition.DefinitionID, assets.AssetID]()

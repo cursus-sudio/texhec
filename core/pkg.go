@@ -24,6 +24,7 @@ import (
 	"engine/modules/drag"
 	"engine/modules/drag/pkg"
 	"engine/modules/genericrenderer/pkg"
+	"engine/modules/grid"
 	"engine/modules/grid/pkg"
 	"engine/modules/groups"
 	"engine/modules/groups/pkg"
@@ -250,7 +251,7 @@ func getDic() ioc.Dic {
 		}()),
 		transitionpkg.Package(),
 		layoutpkg.Package(),
-		gridpkg.Package[uint16](true),
+		gridpkg.Package[uint16](nil),
 
 		// game packages
 		fpsloggerpkg.Package(),

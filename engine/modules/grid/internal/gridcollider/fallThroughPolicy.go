@@ -1,4 +1,4 @@
-package internal
+package gridcollider
 
 import (
 	"engine/modules/collider"
@@ -9,18 +9,17 @@ import (
 
 	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
-	"golang.org/x/exp/constraints"
 )
 
-type ClickEvent[TileType constraints.Unsigned] struct {
+type ClickEvent[Tile grid.TileConstraint] struct {
 	Target inputs.Target
 }
 
-func (ClickEvent[TileType]) SetTarget(target inputs.Target) inputs.EventTargetSetter {
-	return ClickEvent[TileType]{target}
+func (ClickEvent[Tile]) SetTarget(target inputs.Target) inputs.EventTargetSetter {
+	return ClickEvent[Tile]{target}
 }
 
-type squareFallThroughPolicy[TileType constraints.Unsigned] struct {
+type squareFallThroughPolicy[Tile grid.TileConstraint] struct {
 	EventsBuilder events.Builder `inject:"1"`
 	Events        events.Events  `inject:"1"`
 	World         ecs.World      `inject:"1"`
@@ -28,18 +27,18 @@ type squareFallThroughPolicy[TileType constraints.Unsigned] struct {
 	Logger        logger.Logger  `inject:"1"`
 
 	DirtyEntities ecs.DirtySet
-	GridArray     ecs.ComponentsArray[grid.SquareGridComponent[TileType]]
+	GridArray     ecs.ComponentsArray[grid.SquareGridComponent[Tile]]
 
 	indexEvent func(grid.Index) any
 }
 
-func NewColliderWithPolicy[TileType constraints.Unsigned](
+func NewColliderWithPolicy[Tile grid.TileConstraint](
 	c ioc.Dic,
 	indexEvent func(grid.Index) any,
 ) collider.FallTroughPolicy {
-	s := ioc.GetServices[*squareFallThroughPolicy[TileType]](c)
+	s := ioc.GetServices[*squareFallThroughPolicy[Tile]](c)
 
-	s.GridArray = ecs.GetComponentsArray[grid.SquareGridComponent[TileType]](s.World)
+	s.GridArray = ecs.GetComponentsArray[grid.SquareGridComponent[Tile]](s.World)
 	s.indexEvent = indexEvent
 
 	s.GridArray.AddDirtySet(s.DirtyEntities)
@@ -50,17 +49,17 @@ func NewColliderWithPolicy[TileType constraints.Unsigned](
 	return s
 }
 
-func (t *squareFallThroughPolicy[TileType]) BeforeGet() {
+func (t *squareFallThroughPolicy[Tile]) BeforeGet() {
 	for _, entity := range t.DirtyEntities.Get() {
 		if !t.World.EntityExists(entity) {
 			continue
 		}
-		t.Inputs.LeftClick().Set(entity, inputs.NewLeftClick(ClickEvent[TileType]{}))
+		t.Inputs.LeftClick().Set(entity, inputs.NewLeftClick(ClickEvent[Tile]{}))
 	}
 }
 
-func (t *squareFallThroughPolicy[TileType]) getIndex(
-	gridComponent grid.SquareGridComponent[TileType],
+func (t *squareFallThroughPolicy[Tile]) getIndex(
+	gridComponent grid.SquareGridComponent[Tile],
 	collision collider.ObjectRayCollision,
 ) (grid.Index, bool) {
 	w := float32(gridComponent.Width())
@@ -77,7 +76,7 @@ func (t *squareFallThroughPolicy[TileType]) getIndex(
 	return index, true
 }
 
-func (t *squareFallThroughPolicy[TileType]) FallThrough(collision collider.ObjectRayCollision) bool {
+func (t *squareFallThroughPolicy[Tile]) FallThrough(collision collider.ObjectRayCollision) bool {
 	gridComponent, ok := t.GridArray.Get(collision.Entity)
 	if !ok {
 		return false
@@ -92,7 +91,7 @@ func (t *squareFallThroughPolicy[TileType]) FallThrough(collision collider.Objec
 	return tile == 0
 }
 
-func (t *squareFallThroughPolicy[TileType]) OnClick(e ClickEvent[TileType]) {
+func (t *squareFallThroughPolicy[Tile]) OnClick(e ClickEvent[Tile]) {
 	gridComponent, ok := t.GridArray.Get(e.Target.Entity)
 	if !ok {
 		return

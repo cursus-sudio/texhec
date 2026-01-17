@@ -24,7 +24,6 @@ import (
 	"engine/modules/drag"
 	"engine/modules/drag/pkg"
 	"engine/modules/genericrenderer/pkg"
-	"engine/modules/grid"
 	"engine/modules/grid/pkg"
 	"engine/modules/groups"
 	"engine/modules/groups/pkg"

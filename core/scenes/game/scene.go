@@ -11,6 +11,7 @@ import (
 	"engine/modules/collider"
 	"engine/modules/connection"
 	"engine/modules/genericrenderer"
+	"engine/modules/grid"
 	"engine/modules/groups"
 	"engine/modules/inputs"
 	"engine/modules/netsync"
@@ -91,6 +92,27 @@ func addScene(
 	world.Inputs.LeftClick().Set(settingsEntity, inputs.NewLeftClick(settings.EnterSettingsEvent{}))
 	world.Inputs.KeepSelected().Set(settingsEntity, inputs.KeepSelectedComponent{})
 	world.Collider.Component().Set(settingsEntity, collider.NewCollider(gameAssets.SquareCollider))
+
+	{ // example grid entity which will be later used
+		gridEntity := world.NewEntity()
+		world.Hierarchy.SetParent(gridEntity, uiCamera)
+		world.Transform.Parent().Set(gridEntity, transform.NewParent(transform.RelativePos))
+		world.Transform.Pos().Set(gridEntity, transform.NewPos(0, 0, 2))
+		world.Transform.Size().Set(gridEntity, transform.NewSize(500, 500, 1))
+
+		world.Render.Mesh().Set(gridEntity, render.NewMesh(gameAssets.SquareMesh))
+		world.Render.Texture().Set(gridEntity, render.NewTexture(gameAssets.Tiles.Forest))
+		world.GenericRenderer.Pipeline().Set(gridEntity, genericrenderer.PipelineComponent{})
+
+		world.Inputs.LeftClick().Set(gridEntity, inputs.NewLeftClick(inputs.QuitEvent{}))
+		world.Collider.Component().Set(gridEntity, collider.NewCollider(gameAssets.SquareCollider))
+		world.Inputs.KeepSelected().Set(gridEntity, inputs.KeepSelectedComponent{})
+		gridComponent := grid.NewSquareGrid[uint16](10, 10)
+		for i := range grid.Index(50) {
+			gridComponent.SetTile(i, 1)
+		}
+		ecs.GetComponentsArray[grid.SquareGridComponent[uint16]](world).Set(gridEntity, gridComponent)
+	}
 
 	if isServer {
 		rand := rand.New(rand.NewPCG(2077, 7137))

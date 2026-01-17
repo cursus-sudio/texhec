@@ -30,6 +30,10 @@ type Service interface {
 	StackedData() []Target
 }
 
+type EventTargetSetter interface {
+	SetTarget(Target) EventTargetSetter
+}
+
 type Target struct {
 	collider.ObjectRayCollision
 	Camera ecs.EntityID

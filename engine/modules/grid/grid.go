@@ -1,12 +1,18 @@
 package grid
 
-import (
-	"golang.org/x/exp/constraints"
-)
-
-type TileConstraint constraints.Unsigned
+type TileConstraint interface {
+	comparable
+}
 
 type Coord int16
+type Coords struct{ X, Y Coord }
+
+func (c *Coords) Coords() (X, Y Coord) {
+	return c.X, c.Y
+}
+
+//
+
 type Index int
 
 type SquareGridComponent[Tile TileConstraint] struct {
@@ -33,8 +39,19 @@ func (g *SquareGridComponent[Tile]) GetIndex(x, y Coord) (Index, bool) {
 	}
 	return Index(x) + Index(y)*Index(g.width), true
 }
-func (g *SquareGridComponent[Tile]) GetCoords(index Index) (x, y Coord) {
-	return Coord(index) % g.width, Coord(index) / g.width
+func (g *SquareGridComponent[Tile]) GetCoords(index Index) Coords {
+	return Coords{
+		X: Coord(index) % g.width,
+		Y: Coord(index) / g.width,
+	}
+}
+func (g *SquareGridComponent[Tile]) GetTiles() []Tile {
+	tiles := make([]Tile, len(g.grid))
+	copy(tiles, g.grid)
+	return tiles
+}
+func (g *SquareGridComponent[Tile]) GetLastIndex() Index {
+	return Index(g.width) * Index(g.height)
 }
 
 // getters and setters tiles

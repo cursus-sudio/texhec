@@ -24,8 +24,7 @@ import (
 	"engine/modules/drag"
 	"engine/modules/drag/pkg"
 	"engine/modules/genericrenderer/pkg"
-	"engine/modules/grid/pkg"
-	"engine/modules/groups"
+	"engine/modules/grid"
 	"engine/modules/groups/pkg"
 	"engine/modules/hierarchy/pkg"
 	"engine/modules/inputs"
@@ -133,29 +132,15 @@ func getDic() ioc.Dic {
 		console.Package(),
 		media.Package(window, ctx),
 		// ecs.Package(), // scenes register world so ecs package isn't registered
-		frames.Package(1, 60),
-		// frames.Package(1, 10000),
+		// frames.Package(1, 60),
+		frames.Package(1, 10000),
 		scenepkg.Package(),
 
 		texture.Package(),
 		texturearray.Package(),
-		tilepkg.Package(
-			100,
-			0,
-			groups.EmptyGroups().Ptr().Enable(gamescene.GameGroup).Val(),
-			tile.GroundLayer,
-			[]tile.Layer{tile.UnitLayer, tile.BuildingLayer},
-			0, 1000, // min-max x
-			0, 1000, // min-max y
-			0, 3, // min-max z
-		),
+		tilepkg.Package(),
 		definitionpkg.Package(),
-		uipkg.Package(
-			3,
-			time.Millisecond*300,
-			// gameassets.ShowMenuAnimation,
-			// gameassets.HideMenuAnimation,
-		),
+		uipkg.Package(time.Millisecond * 300),
 		settingspkg.Package(),
 
 		//
@@ -221,7 +206,7 @@ func getDic() ioc.Dic {
 			record.AddToConfig[transform.PosComponent](config.RecordConfig())
 			record.AddToConfig[camera.OrthoComponent](config.RecordConfig())
 			record.AddToConfig[definition.DefinitionLinkComponent](config.RecordConfig())
-			record.AddToConfig[tile.PosComponent](config.RecordConfig())
+			record.AddToConfig[grid.SquareGridComponent[tile.Type]](config.RecordConfig())
 			// netsyncpkg.AddComponent[transform.PosComponent](config)
 			// netsyncpkg.AddComponent[camera.OrthoComponent](config)
 			// netsyncpkg.AddComponent[definition.DefinitionLinkComponent](config)
@@ -250,7 +235,6 @@ func getDic() ioc.Dic {
 		}()),
 		transitionpkg.Package(),
 		layoutpkg.Package(),
-		gridpkg.Package[uint16](nil),
 
 		// game packages
 		fpsloggerpkg.Package(),

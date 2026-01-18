@@ -1,14 +1,9 @@
 package tile
 
-import (
-	"golang.org/x/exp/constraints"
-)
+import "engine/modules/grid"
 
-type PosComponent struct {
-	X, Y  float32
-	Layer Layer
-}
+type Type uint8
 
-func NewPos[Number constraints.Float | constraints.Integer](x, y Number, layer Layer) PosComponent {
-	return PosComponent{float32(x), float32(y), layer}
+func NewGrid(w, h grid.Coord) grid.SquareGridComponent[Type] {
+	return grid.NewSquareGrid[Type](w, h)
 }

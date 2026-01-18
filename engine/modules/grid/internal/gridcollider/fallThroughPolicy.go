@@ -19,38 +19,45 @@ func (ClickEvent[Tile]) SetTarget(target inputs.Target) inputs.EventTargetSetter
 	return ClickEvent[Tile]{target}
 }
 
+//
+
 type squareFallThroughPolicy[Tile grid.TileConstraint] struct {
-	EventsBuilder events.Builder `inject:"1"`
-	Events        events.Events  `inject:"1"`
-	World         ecs.World      `inject:"1"`
-	Inputs        inputs.Service `inject:"1"`
-	Logger        logger.Logger  `inject:"1"`
+	EventsBuilder events.Builder     `inject:"1"`
+	Events        events.Events      `inject:"1"`
+	World         ecs.World          `inject:"1"`
+	Grid          grid.Service[Tile] `inject:"1"`
+	Inputs        inputs.Service     `inject:"1"`
+	Logger        logger.Logger      `inject:"1"`
 
-	DirtyEntities ecs.DirtySet
-	GridArray     ecs.ComponentsArray[grid.SquareGridComponent[Tile]]
-
-	indexEvent func(grid.Index) any
+	zero          Tile
+	dirtyEntities ecs.DirtySet
+	indexEvent    func(ecs.EntityID, grid.Index) any
 }
 
 func NewColliderWithPolicy[Tile grid.TileConstraint](
 	c ioc.Dic,
-	indexEvent func(grid.Index) any,
+	indexEvent func(ecs.EntityID, grid.Index) any,
 ) collider.FallTroughPolicy {
 	s := ioc.GetServices[*squareFallThroughPolicy[Tile]](c)
 
-	s.GridArray = ecs.GetComponentsArray[grid.SquareGridComponent[Tile]](s.World)
+	s.dirtyEntities = ecs.NewDirtySet()
 	s.indexEvent = indexEvent
 
-	s.GridArray.AddDirtySet(s.DirtyEntities)
-	s.GridArray.BeforeGet(s.BeforeGet)
+	s.Grid.Component().AddDirtySet(s.dirtyEntities)
+	s.Inputs.LeftClick().BeforeGet(s.BeforeGet)
 
 	events.Listen(s.EventsBuilder, s.OnClick)
+
+	if indexEvent == nil {
+		return nil
+	}
 
 	return s
 }
 
 func (t *squareFallThroughPolicy[Tile]) BeforeGet() {
-	for _, entity := range t.DirtyEntities.Get() {
+	entities := t.dirtyEntities.Get()
+	for _, entity := range entities {
 		if !t.World.EntityExists(entity) {
 			continue
 		}
@@ -77,7 +84,7 @@ func (t *squareFallThroughPolicy[Tile]) getIndex(
 }
 
 func (t *squareFallThroughPolicy[Tile]) FallThrough(collision collider.ObjectRayCollision) bool {
-	gridComponent, ok := t.GridArray.Get(collision.Entity)
+	gridComponent, ok := t.Grid.Component().Get(collision.Entity)
 	if !ok {
 		return false
 	}
@@ -88,11 +95,11 @@ func (t *squareFallThroughPolicy[Tile]) FallThrough(collision collider.ObjectRay
 	}
 
 	tile := gridComponent.GetTile(index)
-	return tile == 0
+	return tile == t.zero
 }
 
 func (t *squareFallThroughPolicy[Tile]) OnClick(e ClickEvent[Tile]) {
-	gridComponent, ok := t.GridArray.Get(e.Target.Entity)
+	gridComponent, ok := t.Grid.Component().Get(e.Target.Entity)
 	if !ok {
 		return
 	}
@@ -100,7 +107,6 @@ func (t *squareFallThroughPolicy[Tile]) OnClick(e ClickEvent[Tile]) {
 	if !ok {
 		return
 	}
-	event := t.indexEvent(index)
-	events.Emit(t.Events, event)
-
+	event := t.indexEvent(e.Target.Entity, index)
+	events.EmitAny(t.Events, event)
 }

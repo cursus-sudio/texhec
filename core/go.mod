@@ -9,13 +9,13 @@ require (
 	github.com/ogiusek/events v1.0.6
 	github.com/ogiusek/ioc/v2 v2.1.8
 	github.com/veandco/go-sdl2 v0.4.40
-	golang.org/x/exp v0.0.0-20250911091902-df9299821621
 	golang.org/x/image v0.32.0
 )
 
 require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/optimus-hft/lockset/v2 v2.0.0 // indirect
+	golang.org/x/exp v0.0.0-20250911091902-df9299821621 // indirect
 	golang.org/x/text v0.30.0 // indirect
 )
 

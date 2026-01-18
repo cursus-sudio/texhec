@@ -14,7 +14,7 @@ func RayAABBIntersect(r collider.Ray, box collider.AABB) (bool, float32) {
 	}
 	var tMin, tMax float32 = 0.0, maxDist
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		if r.Direction[i] == 0 {
 			if r.Pos[i] < box.Min[i] || r.Pos[i] > box.Max[i] {
 				return false, 0.0

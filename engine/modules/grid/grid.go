@@ -41,8 +41,8 @@ func (g *SquareGridComponent[Tile]) GetIndex(x, y Coord) (Index, bool) {
 }
 func (g *SquareGridComponent[Tile]) GetCoords(index Index) Coords {
 	return Coords{
-		X: Coord(index) % g.width,
-		Y: Coord(index) / g.width,
+		X: Coord(index % Index(g.width)),
+		Y: Coord(index / Index(g.width)),
 	}
 }
 func (g *SquareGridComponent[Tile]) GetTiles() []Tile {

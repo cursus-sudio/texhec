@@ -45,6 +45,9 @@ func addScene(
 	isServer bool,
 ) {
 	// biggest maps on mods in rusted warfare 2560x1440
+	// - all tiles are rendered at once
+	// - strategic map is used at some point
+	// biggest zoom out in factorio is 448x256 (in 4k)
 	rows := 1000
 	cols := 1000
 

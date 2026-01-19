@@ -10,6 +10,7 @@ var (
 	VertexShader   uint32 = gl.VERTEX_SHADER
 	GeomShader     uint32 = gl.GEOMETRY_SHADER
 	FragmentShader uint32 = gl.FRAGMENT_SHADER
+	ComputeShader  uint32 = gl.COMPUTE_SHADER
 )
 
 type Shader interface {

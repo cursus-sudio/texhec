@@ -1,17 +1,20 @@
 #version 460 core
 
-layout(location = 0) in float x;
-layout(location = 1) in float y;
-layout(location = 2) in int tileType;
+layout(location = 0) in uint tileType;
 
 out GS {
-    flat float x;
-    flat float y;
-    flat int tileType;
+    flat vec2 pos;
+    flat uint tileType;
 } fs_out;
 
+uniform int width;
+
 void main() {
-    fs_out.x = x;
-    fs_out.y = y;
+    int i = gl_VertexID;
+
+    fs_out.pos = vec2(
+            uint(i % width), // X: Coord(index) % g.width
+            uint(i / width)); // Y: Coord(index) / g.width
     fs_out.tileType = tileType;
+    gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
 }

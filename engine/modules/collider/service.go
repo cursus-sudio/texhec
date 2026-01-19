@@ -16,15 +16,11 @@ type Service interface {
 	Raycast(Ray) *ObjectRayCollision
 	RaycastAll(Ray) []ObjectRayCollision
 	NarrowCollisions(ecs.EntityID) []ecs.EntityID
+
+	AddRayFallThroughPolicy(FallTroughPolicy)
 }
 
-// ```go
-//     ShootRay(Ray) (ObjectRayCollision, error)
-//     ShootRaycast(Ray) []ObjectRayCollision
-// ```
-//
-// is this naming clear ?
-// shootRay checks nearest collision returns error if there is none.
-// shootRaycast returns all matching collisions if there is none returns empty slice.
-//
-// could shootRaycast be named better or this naming is already clear ?
+type FallTroughPolicy interface {
+	// position is normalized to be between -1 and 1
+	FallThrough(target ObjectRayCollision) bool
+}

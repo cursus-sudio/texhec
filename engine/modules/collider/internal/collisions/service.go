@@ -30,6 +30,8 @@ type service struct {
 	chunkSize         float32
 	chunks            map[mgl32.Vec2]datastructures.Set[ecs.EntityID]
 	entitiesPositions map[ecs.EntityID][]mgl32.Vec2
+
+	rayFallTroughPolicies []collider.FallTroughPolicy
 }
 
 func NewService(c ioc.Dic,
@@ -42,6 +44,7 @@ func NewService(c ioc.Dic,
 	t.chunkSize = chunkSize
 	t.chunks = make(map[mgl32.Vec2]datastructures.Set[ecs.EntityID])
 	t.entitiesPositions = make(map[ecs.EntityID][]mgl32.Vec2)
+	t.rayFallTroughPolicies = make([]collider.FallTroughPolicy, 0)
 
 	t.Transform.AddDirtySet(t.dirtySet)
 	colliderArray := ecs.GetComponentsArray[collider.Component](t.World)
@@ -207,6 +210,12 @@ func (t *service) CollidesWithRay(entity ecs.EntityID, ray collider.Ray) *collid
 	}
 
 	collision := collider.NewObjectRayCollision(entity, *closestHit)
+
+	for _, rayFallTroughPolicy := range t.rayFallTroughPolicies {
+		if fallThrough := rayFallTroughPolicy.FallThrough(collision); fallThrough {
+			return nil
+		}
+	}
 	return &collision
 }
 
@@ -245,6 +254,7 @@ func (t *service) Raycast(ray collider.Ray) *collider.ObjectRayCollision {
 		}
 
 		hit := collision.Hit
+
 		closestHit = &hit
 		closestEntity = entity
 	}
@@ -300,4 +310,7 @@ func (t *service) NarrowCollisions(entity ecs.EntityID) []ecs.EntityID {
 	t.ApplyChanges()
 	t.Logger.Warn(errors.New("501"))
 	return nil
+}
+func (t *service) AddRayFallThroughPolicy(rayFallTroughPolicy collider.FallTroughPolicy) {
+	t.rayFallTroughPolicies = append(t.rayFallTroughPolicies, rayFallTroughPolicy)
 }

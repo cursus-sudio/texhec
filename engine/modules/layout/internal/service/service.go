@@ -148,10 +148,7 @@ func (t *service) handleParentChildren(parent ecs.EntityID) []save {
 		// update progress
 		size, _ := t.Transform.AbsoluteSize().Get(child)
 		progress -= size.Size[order.Primary()] + gap.Gap
-
-		// t.logger.Info("child %v is %v", child, size)
 	}
-	// t.logger.Info("parent %v, children saves %v", parent, saves)
 
 	return saves
 }

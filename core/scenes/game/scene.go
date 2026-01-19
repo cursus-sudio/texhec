@@ -11,6 +11,7 @@ import (
 	"engine/modules/collider"
 	"engine/modules/connection"
 	"engine/modules/genericrenderer"
+	"engine/modules/grid"
 	"engine/modules/groups"
 	"engine/modules/inputs"
 	"engine/modules/netsync"
@@ -43,8 +44,12 @@ func addScene(
 	gameAssets gameassets.GameAssets,
 	isServer bool,
 ) {
-	rows := 100
-	cols := 100
+	// biggest maps on mods in rusted warfare 2560x1440
+	// - all tiles are rendered at once
+	// - strategic map is used at some point
+	// biggest zoom out in factorio is 448x256 (in 4k)
+	rows := 1000
+	cols := 1000
 
 	uiCamera := world.NewEntity()
 	world.Hierarchy.SetParent(uiCamera, sceneParent)
@@ -59,8 +64,8 @@ func addScene(
 	world.Groups.Component().Set(gameCamera, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 	world.Camera.Mobile().Set(gameCamera, camera.NewMobileCamera())
 	world.Camera.Limits().Set(gameCamera, camera.NewCameraLimits(
-		mgl32.Vec3{0, 0, -1000},
-		mgl32.Vec3{100 * float32(rows), 100 * float32(cols), 1000},
+		mgl32.Vec3{50 * float32(-rows), 50 * float32(-cols), -1000},
+		mgl32.Vec3{50 * float32(rows), 50 * float32(cols), 1000},
 	))
 
 	signature := world.NewEntity()
@@ -77,7 +82,7 @@ func addScene(
 
 	settingsEntity := world.NewEntity()
 	world.Hierarchy.SetParent(settingsEntity, uiCamera)
-	world.Transform.Pos().Set(settingsEntity, transform.NewPos(10, -10, 0))
+	world.Transform.Pos().Set(settingsEntity, transform.NewPos(10, -10, 5))
 	world.Transform.Size().Set(settingsEntity, transform.NewSize(50, 50, 1))
 	world.Transform.PivotPoint().Set(settingsEntity, transform.NewPivotPoint(0, 1, .5))
 	world.Transform.Parent().Set(settingsEntity, transform.NewParent(transform.RelativePos))
@@ -93,25 +98,12 @@ func addScene(
 	world.Collider.Component().Set(settingsEntity, collider.NewCollider(gameAssets.SquareCollider))
 
 	if isServer {
+		gridComponent := tile.NewGrid(grid.Coord(cols), grid.Coord(rows))
+
 		rand := rand.New(rand.NewPCG(2077, 7137))
-
-		tilesTypeArray := ecs.GetComponentsArray[definition.DefinitionLinkComponent](world)
-		tilesPosArray := ecs.GetComponentsArray[tile.PosComponent](world)
-		{
-			unit := world.NewEntity()
-			world.Hierarchy.SetParent(unit, sceneParent)
-			world.Tile.Pos().Set(unit, tile.NewPos(1, 1, tile.UnitLayer))
-			world.Definition.Link().Set(unit, definition.NewLink(definition.TileU1))
-		}
-		for i := 0; i < rows*cols; i++ {
-			row := i % cols
-			col := i / cols
-			entity := world.NewEntity()
+		for i := range gridComponent.GetLastIndex() {
 			tileType := definition.TileMountain
-
-			num := rand.IntN(4)
-
-			switch num {
+			switch rand.IntN(4) {
 			case 0:
 				tileType = definition.TileMountain
 			case 1:
@@ -121,17 +113,17 @@ func addScene(
 			case 3:
 				tileType = definition.TileWater
 			}
-			world.Hierarchy.SetParent(entity, sceneParent)
-			tilesPosArray.Set(entity, tile.NewPos(row, col, tile.GroundLayer))
-			tilesTypeArray.Set(entity, definition.NewLink(tileType))
+			gridComponent.SetTile(i, tile.Type(tileType))
 		}
 
-		{
-			unit := world.NewEntity()
-			world.Hierarchy.SetParent(unit, sceneParent)
-			tilesPosArray.Set(unit, tile.NewPos(0, 0, tile.UnitLayer))
-			tilesTypeArray.Set(unit, definition.NewLink(definition.TileU1))
-		}
+		gridEntity := world.NewEntity()
+		world.Hierarchy.SetParent(gridEntity, sceneParent)
+		world.Transform.Size().Set(gridEntity, transform.NewSize(float32(cols)*100, float32(rows)*100, 1))
+		world.Groups.Component().Set(gridEntity, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
+
+		world.Collider.Component().Set(gridEntity, collider.NewCollider(gameAssets.SquareCollider))
+		world.Inputs.Stack().Set(gridEntity, inputs.StackComponent{})
+		world.Tile.Grid().Set(gridEntity, gridComponent)
 	}
 
 	if isServer {

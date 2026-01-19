@@ -2,15 +2,21 @@ package tileservice
 
 import (
 	"core/modules/tile"
-	"engine/modules/relation"
+	"engine/modules/grid"
 	"engine/services/ecs"
+
+	"github.com/ogiusek/ioc/v2"
 )
 
 type service struct {
-	TilePos  relation.Service[tile.PosComponent]
-	PosArray ecs.ComponentsArray[tile.PosComponent]
+	grid.Service[tile.Type] `inject:"1"`
 }
 
-func (t *service) PosKey() relation.Service[tile.PosComponent] { return t.TilePos }
+func NewService(c ioc.Dic) tile.Service {
+	s := ioc.GetServices[*service](c)
+	return s
+}
 
-func (t *service) Pos() ecs.ComponentsArray[tile.PosComponent] { return t.PosArray }
+func (t *service) Grid() ecs.ComponentsArray[grid.SquareGridComponent[tile.Type]] {
+	return t.Component()
+}

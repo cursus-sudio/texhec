@@ -1,7 +1,6 @@
 package uipkg
 
 import (
-	"core/modules/tile"
 	"core/modules/ui"
 	"core/modules/ui/internal/uiservice"
 	"engine/services/codec"
@@ -14,16 +13,13 @@ import (
 )
 
 type pkg struct {
-	maxLayer          tile.Layer
 	animationDuration time.Duration
 }
 
 func Package(
-	maxLayer tile.Layer,
 	animationDuration time.Duration,
 ) ioc.Pkg {
 	return pkg{
-		maxLayer,
 		animationDuration,
 	}
 }

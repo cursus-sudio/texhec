@@ -39,7 +39,7 @@ type clickSystem struct {
 	movedEntity  *ecs.EntityID
 	movedFrom    *window.MousePos
 
-	stacked []ecs.EntityID
+	stacked []inputs.Target
 }
 
 func NewClickSystem(c ioc.Dic) inputs.System {
@@ -94,17 +94,13 @@ cleanUp:
 }
 
 func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) {
-	stackedBefore := make([]ecs.EntityID, len(s.stacked))
+	stackedBefore := make([]inputs.Target, len(s.stacked))
 	copy(stackedBefore, s.stacked)
 
-	stacked := []ecs.EntityID{}
-	{
-		for _, collision := range s.Inputs.StackedData() {
-			stacked = append(stacked, collision.Entity)
-		}
-	}
+	var stacked []inputs.Target
+	stacked = append(stacked, s.Inputs.StackedData()...)
 
-	var entity *ecs.EntityID
+	var target *inputs.Target
 
 	i := 0
 	for i = range s.stacked {
@@ -118,10 +114,10 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) {
 
 	if i >= 0 && len(s.stacked) >= i && len(stacked) > i {
 		s.stacked = s.stacked[:i]
-		entity = &stacked[i]
+		target = &stacked[i]
 	} else if len(stacked) != 0 {
 		s.stacked = nil
-		entity = &stacked[0]
+		target = &stacked[0]
 	} else {
 		s.stacked = nil
 	}
@@ -131,31 +127,33 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) {
 	switch event.State {
 	case sdl.PRESSED:
 		s.moved = 0
-		s.movedEntity = entity
+		if target != nil {
+			s.movedEntity = &target.Entity
+		}
 		s.emitDrag = true
 
-		if entity == nil {
+		if target == nil {
 			s.movedFrom = &pos
 			break
 		}
 
-		if _, ok := s.Inputs.KeepSelected().Get(*entity); ok {
+		if _, ok := s.Inputs.KeepSelected().Get(target.Entity); ok {
 			s.emitDrag = false
 			break
 		}
 		s.movedFrom = &pos
-		hover, _ := s.Inputs.Hovered().Get(*entity)
+		hover, _ := s.Inputs.Hovered().Get(target.Entity)
 		s.movingCamera = hover.Camera
 
 	case sdl.RELEASED:
 		dragged := s.movedEntity
 		s.movedEntity = nil
 		s.movedFrom = nil
-		if entity == nil || dragged == nil || *entity != *dragged {
+		if target == nil || dragged == nil || target.Entity != *dragged {
 			break
 		}
 
-		if _, ok := s.Inputs.KeepSelected().Get(*entity); !ok && s.moved > s.maxMoved {
+		if _, ok := s.Inputs.KeepSelected().Get(target.Entity); !ok && s.moved > s.maxMoved {
 			break
 		}
 
@@ -163,36 +161,40 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) {
 
 		switch event.Button {
 		case sdl.BUTTON_LEFT:
-			if comp, ok := s.Inputs.LeftClick().Get(*entity); ok {
+			if comp, ok := s.Inputs.LeftClick().Get(target.Entity); ok {
 				eventToEmit = comp.Event
 			}
 			switch event.Clicks {
 			case 2:
-				if comp, ok := s.Inputs.DoubleLeftClick().Get(*entity); ok {
+				if comp, ok := s.Inputs.DoubleLeftClick().Get(target.Entity); ok {
 					eventToEmit = comp.Event
 				}
 			}
 		case sdl.BUTTON_RIGHT:
-			if comp, ok := s.Inputs.RightClick().Get(*entity); ok {
+			if comp, ok := s.Inputs.RightClick().Get(target.Entity); ok {
 				eventToEmit = comp.Event
 			}
 			switch event.Clicks {
 			case 2:
-				if comp, ok := s.Inputs.DoubleRightClick().Get(*entity); ok {
+				if comp, ok := s.Inputs.DoubleRightClick().Get(target.Entity); ok {
 					eventToEmit = comp.Event
 				}
 			}
 		}
 
-		if _, ok := s.Inputs.Stack().Get(*entity); !ok {
+		if _, ok := s.Inputs.Stack().Get(target.Entity); !ok {
 			s.stacked = nil
-		} else if len(s.stacked) != 0 && s.stacked[0] == *entity {
+		} else if len(s.stacked) != 0 && s.stacked[0] == *target {
 			s.stacked = s.stacked[:1]
 		} else {
-			s.stacked = append(s.stacked, *entity)
+			s.stacked = append(s.stacked, *target)
 		}
 
 		if eventToEmit != nil {
+
+			if setter, ok := eventToEmit.(inputs.EventTargetSetter); ok {
+				eventToEmit = setter.SetTarget(*target)
+			}
 			events.EmitAny(s.Events, eventToEmit)
 		}
 	}
@@ -203,14 +205,14 @@ func (s *clickSystem) ListenClick(event sdl.MouseButtonEvent) {
 		if slices.Contains(s.stacked, prevTarget) {
 			continue
 		}
-		removed = append(removed, prevTarget)
+		removed = append(removed, prevTarget.Entity)
 	}
 	added := []ecs.EntityID{}
 	for _, target := range s.stacked {
 		if slices.Contains(stackedBefore, target) {
 			continue
 		}
-		added = append(added, target)
+		added = append(added, target.Entity)
 	}
 
 	for _, added := range added {

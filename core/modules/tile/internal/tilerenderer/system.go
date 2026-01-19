@@ -1,11 +1,9 @@
 package tilerenderer
 
 import (
-	"core/modules/definition"
 	"core/modules/tile"
 	_ "embed"
 	"engine"
-	"engine/modules/groups"
 	"engine/modules/render"
 	"engine/services/datastructures"
 	"engine/services/ecs"
@@ -31,95 +29,101 @@ type TileType struct {
 	Texture image.Image
 }
 
-type layer struct {
-	vao           vao.VAO
-	vertices      vbo.VBOSetter[TileData]
-	verticesCount int32
-	changed       bool
-	tiles         datastructures.SparseArray[ecs.EntityID, TileData]
+type entityBatch struct {
+	vao      vao.VAO
+	vertices vbo.VBOSetter[tile.Type]
 }
 
 type system struct {
-	program   program.Program
-	locations locations
+	engine.World `inject:"1"`
+	Tile         tile.Service              `inject:"1"`
+	VboFactory   vbo.VBOFactory[tile.Type] `inject:"1"`
 
+	program      program.Program
+	locations    locations
 	textureArray texturearray.TextureArray
-	rendered     datastructures.SparseArray[ecs.EntityID, tile.PosComponent]
-	layers       []*layer
-
-	tileSize  int32
-	gridDepth float32
 
 	dirtySet ecs.DirtySet
-	engine.World
-	Definition   definition.Service
-	tilePosArray ecs.ComponentsArray[tile.PosComponent]
-	gridGroups   groups.GroupsComponent
+	batches  datastructures.SparseArray[ecs.EntityID, entityBatch]
 }
 
 type locations struct {
-	Camera    int32 `uniform:"camera"`    // mat4
-	TileSize  int32 `uniform:"tileSize"`  // int
-	GridDepth int32 `uniform:"gridDepth"` // float32
+	Mvp   int32 `uniform:"mvp"`   // mat4
+	Width int32 `uniform:"width"` // int
+	// widthInv and heightInv is 2/width and 2/height
+	WidthInv  int32 `uniform:"widthInv"`  // float
+	HeightInv int32 `uniform:"heightInv"` // float
 }
 
 func (s *system) Listen(render.RenderEvent) {
+	// before get
 	dirtyEntities := s.dirtySet.Get()
 	for _, entity := range dirtyEntities {
-		if tilePos, ok := s.rendered.Get(entity); ok {
-			layer := s.layers[tilePos.Layer]
-			layer.changed = true
-			layer.tiles.Remove(entity)
-			s.rendered.Remove(entity)
-		}
-		tileType, ok := s.Definition.Link().Get(entity)
-		if !ok {
+		batch, batchOk := s.batches.Get(entity)
+		grid, compOk := s.Tile.Grid().Get(entity)
+
+		if !batchOk && !compOk {
 			continue
 		}
-		tilePos, ok := s.tilePosArray.Get(entity)
-		if !ok {
+		if batchOk && !compOk {
+			batch.vao.Release()
+			s.batches.Remove(entity)
 			continue
 		}
-		layer := s.layers[tilePos.Layer]
-		layer.changed = true
-		tile := TileData{tilePos.X, tilePos.Y, tileType.DefinitionID}
-		layer.tiles.Set(entity, tile)
-		s.rendered.Set(entity, tilePos)
+		if batchOk && compOk {
+			batch.vertices.SetVertices(grid.GetTiles())
+			continue
+		}
+		if !batchOk && compOk {
+			VBO := s.VboFactory()
+			VBO.SetVertices(grid.GetTiles())
+			VAO := vao.NewVAO(VBO, nil)
+			batch := entityBatch{
+				VAO,
+				VBO,
+			}
+			s.batches.Set(entity, batch)
+			continue
+		}
 	}
 
+	// render
 	w, h := s.Window.Window().GetSize()
 	defer func() { gl.Viewport(0, 0, w, h) }()
-	for _, layer := range s.layers {
-		if layer.changed {
-			layer.vertices.SetVertices(layer.tiles.GetValues())
-			layer.verticesCount = int32(len(layer.tiles.GetValues()))
-			layer.changed = false
-		}
-	}
 
 	s.program.Use()
 	s.textureArray.Use()
-	for _, layer := range s.layers {
-		layer.vao.Use()
+	for _, entity := range s.batches.GetIndices() {
+		batch, ok := s.batches.Get(entity)
+		if !ok {
+			continue
+		}
+		batch.vao.Use()
 
-		gl.Uniform1i(s.locations.TileSize, s.tileSize)
-		gl.Uniform1f(s.locations.GridDepth, s.gridDepth)
+		grid, ok := s.Tile.Grid().Get(entity)
+		if !ok {
+			continue
+		}
+
+		matrix := s.Transform.Mat4(entity)
+		groups, _ := s.Groups.Component().Get(entity)
+
+		gl.Uniform1i(s.locations.Width, int32(grid.Width()))
+		gl.Uniform1f(s.locations.WidthInv, 2/float32(grid.Width()))
+		gl.Uniform1f(s.locations.HeightInv, 2/float32(grid.Height()))
 
 		for _, cameraEntity := range s.Camera.Component().GetEntities() {
-			cameraGroups, ok := s.Groups.Component().Get(cameraEntity)
-			if !ok {
-				cameraGroups = groups.DefaultGroups()
-			}
-
-			if !cameraGroups.SharesAnyGroup(s.gridGroups) {
+			cameraGroups, _ := s.Groups.Component().Get(cameraEntity)
+			if !cameraGroups.SharesAnyGroup(groups) {
 				continue
 			}
 
 			cameraMatrix := s.Camera.Mat4(cameraEntity)
-			gl.UniformMatrix4fv(s.locations.Camera, 1, false, &cameraMatrix[0])
+			mvp := cameraMatrix.Mul4(matrix)
+			gl.UniformMatrix4fv(s.locations.Mvp, 1, false, &mvp[0])
 
 			gl.Viewport(s.Camera.GetViewport(cameraEntity))
-			gl.DrawArrays(gl.POINTS, 0, layer.verticesCount)
+			gl.DrawArrays(gl.POINTS, 0, int32(batch.vertices.Len()))
 		}
 	}
 }

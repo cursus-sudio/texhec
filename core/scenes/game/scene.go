@@ -44,6 +44,7 @@ func addScene(
 	gameAssets gameassets.GameAssets,
 	isServer bool,
 ) {
+	// biggest maps on mods in rusted warfare 2560x1440
 	rows := 1000
 	cols := 1000
 

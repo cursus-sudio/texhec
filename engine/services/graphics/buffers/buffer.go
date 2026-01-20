@@ -13,8 +13,8 @@ type Buffer[Stored comparable] interface {
 	ID() uint32
 	Get() []Stored
 	Add(elements ...Stored)
-	Set(index int, e Stored) error
-	Remove(indices ...int) error
+	Set(index int, e Stored)
+	Remove(indices ...int)
 	Release()
 
 	Flush()

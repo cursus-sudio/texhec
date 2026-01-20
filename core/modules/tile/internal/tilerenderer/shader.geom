@@ -7,14 +7,30 @@ layout(triangle_strip, max_vertices = 4) out;
 //
 
 in GS {
-    flat vec2 pos;
-    flat uint tileType;
+    flat int vertexID;
 } gs_in[];
 
 out FS {
     vec2 uv;
-    flat int tileType;
+    flat int tileType[4];
 } gs_out;
+
+layout(std430, binding = 0) buffer Grid {
+    int grid[];
+};
+
+uniform uint width;
+
+vec2 getCoord(int i) {
+    return vec2(
+        i % width, // X: Coord(index) % g.width
+        i / width //  Y: Coord(index) / g.width
+    );
+}
+
+int getIndex(vec2 coord) {
+    return int(coord.x) + int(coord.y) * int(width);
+}
 
 //
 
@@ -22,7 +38,7 @@ uniform mat4 mvp;
 uniform float widthInv;
 uniform float heightInv;
 
-vec2 offsets[4] = vec2[](
+vec2 corners[4] = vec2[](
         vec2(0.0, 0.0),
         vec2(0.0, 1.0),
         vec2(1.0, 0.0),
@@ -30,16 +46,20 @@ vec2 offsets[4] = vec2[](
     );
 
 void main() {
-    int tileType = int(gs_in[0].tileType);
+    int i = gs_in[0].vertexID;
 
-    gs_out.tileType = tileType;
+    int tileType = int(grid[i]);
+    vec2 coord = getCoord(i);
+
+    // tile types are determined by neighbours
+    gs_out.tileType[0] = tileType;
 
     for (int i = 0; i < 4; i++) {
-        gl_Position = mvp * vec4(
-                    widthInv * (gs_in[0].pos.x + offsets[i].x) - 1,
-                    heightInv * (gs_in[0].pos.y + offsets[i].y) - 1,
-                    0.0, 1.0);
-        gs_out.uv = offsets[i];
+        vec4 pos = vec4(0, 0, 0, 1);
+        pos.x = widthInv * (coord.x + corners[i].x) - 1;
+        pos.y = heightInv * (coord.y + corners[i].y) - 1;
+        gl_Position = mvp * pos;
+        gs_out.uv = corners[i];
         EmitVertex();
     }
 

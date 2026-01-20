@@ -11,6 +11,7 @@ import (
 	"engine/services/graphics/program"
 	"engine/services/graphics/shader"
 	"engine/services/graphics/texturearray"
+	"engine/services/graphics/vao"
 	"image"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -94,6 +95,7 @@ func (factory *TileRenderSystemRegister) Register() error {
 	s := ioc.GetServices[*system](factory.C)
 
 	s.program = p
+	s.vao = vao.NewVAO(nil, nil)
 	s.locations = locations
 	s.textureArray = textureArray
 

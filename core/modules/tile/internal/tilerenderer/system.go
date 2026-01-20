@@ -7,10 +7,10 @@ import (
 	"engine/modules/render"
 	"engine/services/datastructures"
 	"engine/services/ecs"
+	"engine/services/graphics/buffers"
 	"engine/services/graphics/program"
 	"engine/services/graphics/texturearray"
 	"engine/services/graphics/vao"
-	"engine/services/graphics/vao/vbo"
 	"image"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -30,18 +30,23 @@ type TileType struct {
 }
 
 type entityBatch struct {
-	vao      vao.VAO
-	vertices vbo.VBOSetter[tile.Type]
+	buffer buffers.Buffer[int32]
 }
+
+func (b *entityBatch) Release() {
+	b.buffer.Release()
+}
+
+//
 
 type system struct {
 	engine.World `inject:"1"`
-	Tile         tile.Service              `inject:"1"`
-	VboFactory   vbo.VBOFactory[tile.Type] `inject:"1"`
+	Tile         tile.Service `inject:"1"`
 
 	program      program.Program
 	locations    locations
 	textureArray texturearray.TextureArray
+	vao          vao.VAO
 
 	dirtySet ecs.DirtySet
 	batches  datastructures.SparseArray[ecs.EntityID, entityBatch]
@@ -49,7 +54,8 @@ type system struct {
 
 type locations struct {
 	Mvp   int32 `uniform:"mvp"`   // mat4
-	Width int32 `uniform:"width"` // int
+	Width int32 `uniform:"width"` // uint
+	// Height int32 `uniform:"height"` // uint
 	// widthInv and heightInv is 2/width and 2/height
 	WidthInv  int32 `uniform:"widthInv"`  // float
 	HeightInv int32 `uniform:"heightInv"` // float
@@ -66,23 +72,31 @@ func (s *system) Listen(render.RenderEvent) {
 			continue
 		}
 		if batchOk && !compOk {
-			batch.vao.Release()
+			batch.Release()
 			s.batches.Remove(entity)
 			continue
 		}
-		if batchOk && compOk {
-			batch.vertices.SetVertices(grid.GetTiles())
-			continue
-		}
 		if !batchOk && compOk {
-			VBO := s.VboFactory()
-			VBO.SetVertices(grid.GetTiles())
-			VAO := vao.NewVAO(VBO, nil)
+			var buffer uint32
+			gl.GenBuffers(1, &buffer)
+			gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, buffer)
+
 			batch := entityBatch{
-				VAO,
-				VBO,
+				buffers.NewBuffer[int32](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer),
 			}
 			s.batches.Set(entity, batch)
+			for i, tile := range grid.GetTiles() {
+				batch.buffer.Set(i, int32(tile))
+			}
+			batch.buffer.Flush()
+			continue
+		}
+		if batchOk && compOk {
+			batch.buffer.Add()
+			for i, tile := range grid.GetTiles() {
+				batch.buffer.Set(i, int32(tile))
+			}
+			batch.buffer.Flush()
 			continue
 		}
 	}
@@ -92,13 +106,14 @@ func (s *system) Listen(render.RenderEvent) {
 	defer func() { gl.Viewport(0, 0, w, h) }()
 
 	s.program.Use()
+	s.vao.Use()
 	s.textureArray.Use()
 	for _, entity := range s.batches.GetIndices() {
 		batch, ok := s.batches.Get(entity)
 		if !ok {
 			continue
 		}
-		batch.vao.Use()
+		gl.BindBuffer(gl.SHADER_STORAGE_BUFFER, batch.buffer.ID())
 
 		grid, ok := s.Tile.Grid().Get(entity)
 		if !ok {
@@ -108,7 +123,8 @@ func (s *system) Listen(render.RenderEvent) {
 		matrix := s.Transform.Mat4(entity)
 		groups, _ := s.Groups.Component().Get(entity)
 
-		gl.Uniform1i(s.locations.Width, int32(grid.Width()))
+		gl.Uniform1ui(s.locations.Width, uint32(grid.Width()))
+		// gl.Uniform1ui(s.locations.Height, uint32(grid.Height()))
 		gl.Uniform1f(s.locations.WidthInv, 2/float32(grid.Width()))
 		gl.Uniform1f(s.locations.HeightInv, 2/float32(grid.Height()))
 
@@ -123,7 +139,9 @@ func (s *system) Listen(render.RenderEvent) {
 			gl.UniformMatrix4fv(s.locations.Mvp, 1, false, &mvp[0])
 
 			gl.Viewport(s.Camera.GetViewport(cameraEntity))
-			gl.DrawArrays(gl.POINTS, 0, int32(batch.vertices.Len()))
+			// verticesCount := (grid.Height() + 1) * (grid.Width() + 1)
+			verticesCount := grid.Height() * grid.Width()
+			gl.DrawArrays(gl.POINTS, 0, int32(verticesCount))
 		}
 	}
 }

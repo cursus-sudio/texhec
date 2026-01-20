@@ -12,7 +12,7 @@ in GS {
 
 out FS {
     vec2 uv;
-    flat int tileType;
+    flat int tileType[4];
 } gs_out;
 
 layout(std430, binding = 0) buffer Grid {
@@ -38,7 +38,7 @@ uniform mat4 mvp;
 uniform float widthInv;
 uniform float heightInv;
 
-vec2 offsets[4] = vec2[](
+vec2 corners[4] = vec2[](
         vec2(0.0, 0.0),
         vec2(0.0, 1.0),
         vec2(1.0, 0.0),
@@ -49,16 +49,17 @@ void main() {
     int i = gs_in[0].vertexID;
 
     int tileType = int(grid[i]);
-    vec2 pos = getCoord(i);
+    vec2 coord = getCoord(i);
 
-    gs_out.tileType = tileType;
+    // tile types are determined by neighbours
+    gs_out.tileType[0] = tileType;
 
     for (int i = 0; i < 4; i++) {
-        gl_Position = mvp * vec4(
-                    widthInv * (pos.x + offsets[i].x) - 1,
-                    heightInv * (pos.y + offsets[i].y) - 1,
-                    0, 1);
-        gs_out.uv = offsets[i];
+        vec4 pos = vec4(0, 0, 0, 1);
+        pos.x = widthInv * (coord.x + corners[i].x) - 1;
+        pos.y = heightInv * (coord.y + corners[i].y) - 1;
+        gl_Position = mvp * pos;
+        gs_out.uv = corners[i];
         EmitVertex();
     }
 

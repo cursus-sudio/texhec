@@ -1,30 +1,21 @@
 package gameassets
 
 import (
-	"bytes"
 	"core/modules/definition"
 	"core/modules/tile"
-	"engine/modules/audio"
 	"engine/modules/collider"
 	"engine/modules/genericrenderer"
 	"engine/modules/render"
-	"engine/modules/text"
 	"engine/modules/transition"
 	"engine/services/assets"
 	"engine/services/datastructures"
-	gtexture "engine/services/graphics/texture"
 	"engine/services/graphics/vao/ebo"
 	"engine/services/logger"
-	"image"
 	_ "image/png"
 	"math"
-	"os"
-	"strings"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
-	"github.com/veandco/go-sdl2/mix"
-	"golang.org/x/image/font/opentype"
 )
 
 type GameAssets struct {
@@ -61,50 +52,6 @@ func Package() ioc.Pkg {
 func (pkg) Assets(b ioc.Builder) {
 	// register specific files
 	ioc.WrapService(b, func(c ioc.Dic, b assets.AssetsStorageBuilder) {
-		b.RegisterExtension("wav", func(id assets.AssetID) (any, error) {
-			source, err := os.ReadFile(string(id))
-			if err != nil {
-				return nil, err
-			}
-			chunk, err := mix.QuickLoadWAV(source)
-			if err != nil {
-				return nil, err
-			}
-			audio := audio.NewAudioAsset(chunk, source)
-			return audio, nil
-		})
-
-		b.RegisterExtension("png", func(id assets.AssetID) (any, error) {
-			source, err := os.ReadFile(string(id))
-			if err != nil {
-				return nil, err
-			}
-			imgFile := bytes.NewBuffer(source)
-			img, _, err := image.Decode(imgFile)
-			if err != nil {
-				return nil, err
-			}
-
-			img = gtexture.FlipImage(img)
-			if !strings.Contains(string(id), "tiles") {
-				img = TrimTransparentBackground(img)
-			}
-			return render.NewTextureStorageAsset(img)
-		})
-
-		b.RegisterExtension("ttf", func(id assets.AssetID) (any, error) {
-			source, err := os.ReadFile(string(id))
-			if err != nil {
-				return nil, err
-			}
-			font, err := opentype.Parse(source)
-			if err != nil {
-				return nil, err
-			}
-			asset := text.NewFontFaceAsset(*font)
-			return asset, nil
-		})
-
 		gameAssets := ioc.Get[GameAssets](c)
 		b.RegisterAsset(gameAssets.SquareMesh, func() (any, error) {
 			vertices := []genericrenderer.Vertex{

@@ -3,9 +3,12 @@ package audiopkg
 import (
 	"engine/modules/audio"
 	"engine/modules/audio/internal"
+	"engine/services/assets"
 	"engine/services/codec"
+	"os"
 
 	"github.com/ogiusek/ioc/v2"
+	"github.com/veandco/go-sdl2/mix"
 )
 
 type pkg struct{}
@@ -32,5 +35,20 @@ func (pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) audio.System {
 		return internal.NewSystem(c)
+	})
+
+	ioc.WrapService(b, func(c ioc.Dic, b assets.AssetsStorageBuilder) {
+		b.RegisterExtension("wav", func(id assets.AssetID) (any, error) {
+			source, err := os.ReadFile(string(id))
+			if err != nil {
+				return nil, err
+			}
+			chunk, err := mix.QuickLoadWAV(source)
+			if err != nil {
+				return nil, err
+			}
+			audio := audio.NewAudioAsset(chunk, source)
+			return audio, nil
+		})
 	})
 }

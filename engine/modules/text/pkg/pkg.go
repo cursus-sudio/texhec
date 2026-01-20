@@ -9,6 +9,7 @@ import (
 	"engine/services/ecs"
 	"engine/services/graphics/vao/vbo"
 	"engine/services/logger"
+	"os"
 	"unsafe"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -118,5 +119,21 @@ func (pkg pkg) Register(b ioc.Builder) {
 			})
 			return vbo
 		}
+	})
+
+	ioc.WrapService(b, func(c ioc.Dic, b assets.AssetsStorageBuilder) {
+		b.RegisterExtension("ttf", func(id assets.AssetID) (any, error) {
+			source, err := os.ReadFile(string(id))
+			if err != nil {
+				return nil, err
+			}
+			font, err := opentype.Parse(source)
+			if err != nil {
+				return nil, err
+			}
+			asset := text.NewFontFaceAsset(*font)
+			return asset, nil
+		})
+
 	})
 }

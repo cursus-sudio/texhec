@@ -4,7 +4,7 @@ type TileConstraint interface {
 	comparable
 }
 
-type Coord int16
+type Coord int32
 type Coords struct{ X, Y Coord }
 
 func (c *Coords) Coords() (X, Y Coord) {
@@ -13,7 +13,7 @@ func (c *Coords) Coords() (X, Y Coord) {
 
 //
 
-type Index int
+type Index int32
 
 type SquareGridComponent[Tile TileConstraint] struct {
 	width, height Coord

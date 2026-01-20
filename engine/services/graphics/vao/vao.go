@@ -26,7 +26,9 @@ func NewVAO(VBO vbo.VBO, EBO ebo.EBO) VAO {
 	gl.GenVertexArrays(1, &id)
 
 	gl.BindVertexArray(id)
-	VBO.Configure()
+	if VBO != nil {
+		VBO.Configure()
+	}
 	if EBO != nil {
 		EBO.Configure()
 	}

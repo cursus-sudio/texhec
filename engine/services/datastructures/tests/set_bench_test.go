@@ -8,12 +8,12 @@ import (
 
 func BenchmarkMapGetByIndex(b *testing.B) {
 	m := map[int]string{}
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		m[i] = fmt.Sprintf("%d", i)
 	}
 	b.StartTimer()
 	var s string
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		s = m[0]
 	}
 	if false {
@@ -23,34 +23,34 @@ func BenchmarkMapGetByIndex(b *testing.B) {
 
 func BenchmarkIndexTrackerGetByIndex(b *testing.B) {
 	m := datastructures.NewSet[string]()
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		m.Add(fmt.Sprintf("%d", i))
 	}
 	b.StartTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		m.GetStored(0)
 	}
 }
 
 func BenchmarkIndexTrackerGetByValue(b *testing.B) {
 	m := datastructures.NewSet[string]()
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		m.Add(fmt.Sprintf("%d", i))
 	}
 	m.GetIndex("0")
 	b.StartTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		m.GetIndex("0")
 	}
 }
 
 func BenchmarkMapIterate(b *testing.B) {
 	m := map[int]string{}
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		m[i] = fmt.Sprintf("%d", i)
 	}
 	b.StartTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		for range m {
 		}
 	}
@@ -58,11 +58,11 @@ func BenchmarkMapIterate(b *testing.B) {
 
 func BenchmarkIndexTrackerIterate(b *testing.B) {
 	m := datastructures.NewSet[string]()
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		m.Add(fmt.Sprintf("%d", i))
 	}
 	b.StartTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		for range m.Get() {
 		}
 	}
@@ -71,7 +71,7 @@ func BenchmarkIndexTrackerIterate(b *testing.B) {
 func BenchmarkMapAdd(b *testing.B) {
 	m := map[int]string{}
 	b.StartTimer()
-	for i := 0; i < b.N; i++ {
+	for i := range b.N {
 		m[i] = fmt.Sprintf("%d", i)
 	}
 
@@ -80,18 +80,18 @@ func BenchmarkMapAdd(b *testing.B) {
 func BenchmarkIndexTrackerAdd(b *testing.B) {
 	m := datastructures.NewSet[string]()
 	b.StartTimer()
-	for i := 0; i < b.N; i++ {
+	for i := range b.N {
 		m.Add(fmt.Sprintf("%d", i))
 	}
 }
 
 func BenchmarkMapDelete(b *testing.B) {
 	m := map[int]string{}
-	for i := 0; i < b.N; i++ {
+	for i := range b.N {
 		m[i] = fmt.Sprintf("%d", i)
 	}
 	b.StartTimer()
-	for i := 0; i < b.N; i++ {
+	for i := range b.N {
 		delete(m, i)
 	}
 }
@@ -103,6 +103,6 @@ func BenchmarkIndexTrackerDelete(b *testing.B) {
 	}
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_ = m.Remove(i)
+		m.Remove(i)
 	}
 }

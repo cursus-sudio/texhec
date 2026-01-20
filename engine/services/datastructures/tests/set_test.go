@@ -34,10 +34,7 @@ func TestSet(t *testing.T) {
 		return
 	}
 
-	if err := s.Remove(index); err != nil {
-		t.Errorf("unexpeceted error during removal \"%s\"\n", err.Error())
-		return
-	}
+	s.Remove(index)
 
 	if len(s.Get()) != 0 {
 		t.Errorf("expected empty array after removing last element")
@@ -52,7 +49,7 @@ func TestSet(t *testing.T) {
 
 func TestSetRemove(t *testing.T) {
 	s := datastructures.NewSet[int]()
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		s.Add(i)
 	}
 	initialLen := len(s.Get())
@@ -64,7 +61,7 @@ func TestSetRemove(t *testing.T) {
 		t.Errorf("expected elements to be of len %d but its %d\n", initialLen-len(removed), len(s.Get()))
 	}
 arr:
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		for _, r := range removed {
 			if r == i {
 				continue arr

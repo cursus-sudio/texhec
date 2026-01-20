@@ -5,8 +5,8 @@ type Set[Stored comparable] interface {
 	GetStored(index int) (element Stored, ok bool)
 	GetIndex(element Stored) (index int, ok bool)
 	Add(elements ...Stored)
-	Set(index int, e Stored) error
-	Remove(indices ...int) error
+	Set(index int, e Stored)
+	Remove(indices ...int)
 	RemoveElements(elements ...Stored)
 }
 
@@ -77,5 +77,5 @@ func (s *set[Stored]) RemoveElements(elements ...Stored) {
 		}
 		indices = append(indices, index)
 	}
-	_ = s.Remove(indices...)
+	s.Remove(indices...)
 }

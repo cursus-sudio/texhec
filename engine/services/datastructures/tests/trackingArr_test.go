@@ -7,16 +7,16 @@ import (
 
 func TestTrackingArrRemove(t *testing.T) {
 	s := datastructures.NewTrackingArray[int]()
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		s.Add(i)
 	}
 	removed := []int{6}
 	for _, remove := range removed {
-		_ = s.Remove(remove)
+		s.Remove(remove)
 		// s.RemoveElements(remove)
 	}
 arr:
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		for _, r := range removed {
 			if r == i {
 				continue arr

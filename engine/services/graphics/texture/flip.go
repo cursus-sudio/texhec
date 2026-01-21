@@ -1,4 +1,4 @@
-package texture
+package gtexture
 
 import (
 	"image"

@@ -40,6 +40,9 @@ type TileAssets struct {
 	Forest   assets.AssetID `path:"tiles/forest.png"`
 	Water    assets.AssetID `path:"tiles/water.png"`
 
+	Grass assets.AssetID `path:"tiles/grass.biom"`
+	Sand  assets.AssetID `path:"tiles/sand.biom"`
+
 	Unit assets.AssetID `path:"tiles/u1.png"`
 }
 

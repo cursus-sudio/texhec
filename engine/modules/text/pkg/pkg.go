@@ -134,6 +134,5 @@ func (pkg pkg) Register(b ioc.Builder) {
 			asset := text.NewFontFaceAsset(*font)
 			return asset, nil
 		})
-
 	})
 }

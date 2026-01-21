@@ -1,4 +1,4 @@
-package renderpkg
+package gtexture
 
 import (
 	"image"

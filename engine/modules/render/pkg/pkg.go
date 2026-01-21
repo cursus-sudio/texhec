@@ -58,7 +58,7 @@ func (pkg) Register(b ioc.Builder) {
 
 			img = gtexture.FlipImage(img)
 			if !strings.Contains(string(id), "tiles") {
-				img = TrimTransparentBackground(img)
+				img = gtexture.TrimTransparentBackground(img)
 			}
 			return render.NewTextureStorageAsset(img)
 		})

@@ -58,10 +58,10 @@ type system struct {
 	AssetsStorage  assets.AssetsStorage                   `inject:"1"`
 	Logger         logger.Logger                          `inject:"1"`
 	VboFactory     vbo.VBOFactory[genericrenderer.Vertex] `inject:"1"`
-	TextureFactory texture.Factory                        `inject:"1"`
+	TextureFactory gtexture.Factory                       `inject:"1"`
 
 	texturesImagesCount map[render.TextureComponent]int
-	textures            map[textureKey]texture.Texture
+	textures            map[textureKey]gtexture.Texture
 	meshes              map[assets.AssetID]vao.VAO
 	program             program.Program
 	locations           locations
@@ -98,7 +98,7 @@ func NewSystem(c ioc.Dic) genericrenderer.System {
 		s := ioc.GetServices[*system](c)
 
 		s.texturesImagesCount = make(map[render.TextureComponent]int)
-		s.textures = make(map[textureKey]texture.Texture)
+		s.textures = make(map[textureKey]gtexture.Texture)
 		s.meshes = make(map[assets.AssetID]vao.VAO)
 		s.program = p
 		s.locations = locations
@@ -110,7 +110,7 @@ func NewSystem(c ioc.Dic) genericrenderer.System {
 
 //
 
-func (m *system) getTexture(entity ecs.EntityID) (texture.Texture, error) {
+func (m *system) getTexture(entity ecs.EntityID) (gtexture.Texture, error) {
 	textureComponent, ok := m.Render.Texture().Get(entity)
 	if !ok {
 		return nil, nil

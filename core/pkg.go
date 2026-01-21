@@ -136,7 +136,7 @@ func getDic() ioc.Dic {
 		// frames.Package(1, 10000),
 		scenepkg.Package(),
 
-		texture.Package(),
+		gtexture.Package(),
 		texturearray.Package(),
 		tilepkg.Package(),
 		definitionpkg.Package(),
@@ -253,8 +253,8 @@ func getDic() ioc.Dic {
 		pkg.Register(b)
 	}
 
-	ioc.WrapService(b, func(c ioc.Dic, f texture.Factory) {
-		f.Wrap(func(t texture.Texture) {
+	ioc.WrapService(b, func(c ioc.Dic, f gtexture.Factory) {
+		f.Wrap(func(t gtexture.Texture) {
 			t.Use()
 			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)

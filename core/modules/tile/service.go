@@ -10,8 +10,10 @@ import (
 type Type uint8
 
 const (
-	TileGrass Type = iota + 1
+	_ Type = iota
+	TileGrass
 	TileSand
+	TileWater
 )
 
 func NewGrid(w, h grid.Coord) grid.SquareGridComponent[Type] {

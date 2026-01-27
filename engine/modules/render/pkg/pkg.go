@@ -10,7 +10,6 @@ import (
 	gtexture "engine/services/graphics/texture"
 	"image"
 	"os"
-	"strings"
 
 	"github.com/ogiusek/ioc/v2"
 )
@@ -56,10 +55,7 @@ func (pkg) Register(b ioc.Builder) {
 				return nil, err
 			}
 
-			img = gtexture.FlipImage(img)
-			if !strings.Contains(string(id), "tiles") {
-				img = gtexture.TrimTransparentBackground(img)
-			}
+			img = gtexture.NewImage(img).FlipV().TrimTransparentBackground().Image()
 			return render.NewTextureStorageAsset(img)
 		})
 	})

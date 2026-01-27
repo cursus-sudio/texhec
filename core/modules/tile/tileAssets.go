@@ -34,7 +34,7 @@ func greatestCommonDivisor(a, b int) int {
 // - 1010
 // - 1001
 // - 0001
-func NewBiomAsset(srcImages [5]image.Image) (BiomAsset, error) {
+func NewBiomAsset(srcImages [6]image.Image) (BiomAsset, error) {
 	var res image.Rectangle
 	for i, img := range srcImages {
 		bounds := img.Bounds()
@@ -63,23 +63,47 @@ func NewBiomAsset(srcImages [5]image.Image) (BiomAsset, error) {
 	// - 1001 -> 0110
 	// - 0001 -> 0010 -> 1000 -> 0100
 	dstImages := [15]image.Image{
-		gtexture.RotateClockwise(srcImages[4], 3), // 1000
-		gtexture.RotateClockwise(srcImages[4], 0), // 0100
-		gtexture.RotateClockwise(srcImages[2], 1), // 1100
-		gtexture.RotateClockwise(srcImages[4], 2), // 0010
-		gtexture.RotateClockwise(srcImages[2], 0), // 1010
-		gtexture.RotateClockwise(srcImages[3], 2), // 0110
-		gtexture.RotateClockwise(srcImages[1], 1), // 1110
-		gtexture.RotateClockwise(srcImages[4], 1), // 0001
-		gtexture.RotateClockwise(srcImages[3], 1), // 1001
-		gtexture.RotateClockwise(srcImages[2], 2), // 0101
-		gtexture.RotateClockwise(srcImages[1], 2), // 1101
-		gtexture.RotateClockwise(srcImages[2], 3), // 0011
-		gtexture.RotateClockwise(srcImages[1], 0), // 1011
-		gtexture.RotateClockwise(srcImages[1], 3), // 0111
-		gtexture.RotateClockwise(srcImages[0], 0), // 1111
+		// this is old version with 5 images
+		// before adding as first image full bottom
+		// it uses fewer images to define tile
+		// but it flipped horizontal and vertical axis
+		// gtexture.NewImage(srcImages[4]).RotateClockwise(3).Image(), // 1000
+		// gtexture.NewImage(srcImages[4]).RotateClockwise(0).Image(), // 0100
+		// gtexture.NewImage(srcImages[2]).RotateClockwise(1).Image(), // 1100
+		// gtexture.NewImage(srcImages[4]).RotateClockwise(2).Image(), // 0010
+		// gtexture.NewImage(srcImages[2]).RotateClockwise(0).Image(), // 1010
+		// gtexture.NewImage(srcImages[3]).RotateClockwise(2).Image(), // 0110
+		// gtexture.NewImage(srcImages[1]).RotateClockwise(1).Image(), // 1110
+		// gtexture.NewImage(srcImages[4]).RotateClockwise(1).Image(), // 0001
+		// gtexture.NewImage(srcImages[3]).RotateClockwise(1).Image(), // 1001
+		// gtexture.NewImage(srcImages[2]).RotateClockwise(2).Image(), // 0101
+		// gtexture.NewImage(srcImages[1]).RotateClockwise(2).Image(), // 1101
+		// gtexture.NewImage(srcImages[2]).RotateClockwise(3).Image(), // 0011
+		// gtexture.NewImage(srcImages[1]).RotateClockwise(0).Image(), // 1011
+		// gtexture.NewImage(srcImages[1]).RotateClockwise(3).Image(), // 0111
+		// gtexture.NewImage(srcImages[0]).RotateClockwise(0).Image(), // 1111
+
+		// this is new version of tiles
+		// it uses one more tile to define biom
+		// but it maintains horizontal and vertical axis
+		gtexture.NewImage(srcImages[5]).FlipH().Image(),  // 1000
+		gtexture.NewImage(srcImages[5]).Image(),          // 0100
+		gtexture.NewImage(srcImages[0]).Image(),          // 1100
+		gtexture.NewImage(srcImages[5]).FlipHV().Image(), // 0010
+		gtexture.NewImage(srcImages[3]).Image(),          // 1010
+		gtexture.NewImage(srcImages[4]).Image(),          // 0110
+		gtexture.NewImage(srcImages[2]).FlipV().Image(),  // 1110
+		gtexture.NewImage(srcImages[5]).FlipV().Image(),  // 0001
+		gtexture.NewImage(srcImages[4]).FlipH().Image(),  // 1001
+		gtexture.NewImage(srcImages[3]).FlipH().Image(),  // 0101
+		gtexture.NewImage(srcImages[2]).FlipHV().Image(), // 1101
+		gtexture.NewImage(srcImages[0]).FlipV().Image(),  // 0011
+		gtexture.NewImage(srcImages[2]).Image(),          // 1011
+		gtexture.NewImage(srcImages[2]).FlipH().Image(),  // 0111
+		gtexture.NewImage(srcImages[1]).Image(),          // 1111
 	}
 
+	// add this to test:
 	// b := map[bool]int{false: 0, true: 1}
 	// s := &strings.Builder{}
 	// for i, img := range dstImages {

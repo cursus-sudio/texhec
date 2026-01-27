@@ -60,7 +60,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 
 	ioc.WrapService(b, func(c ioc.Dic, b assets.AssetsStorageBuilder) {
 		b.RegisterExtension("biom", func(id assets.AssetID) (any, error) {
-			images := [6]image.Image{}
+			images := [6][]image.Image{}
 			directory, _ := strings.CutSuffix(string(id), ".biom")
 			for i := range 6 {
 				file := fmt.Sprintf("%v/%v.png", directory, i+1)
@@ -74,7 +74,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 					return nil, err
 				}
 				img = gtexture.NewImage(img).FlipV().Image()
-				images[i] = img
+				images[i] = append(images[i], img)
 			}
 
 			return tile.NewBiomAsset(images)

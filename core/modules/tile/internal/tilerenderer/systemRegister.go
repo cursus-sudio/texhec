@@ -50,7 +50,7 @@ func (service *TileRenderSystemRegister) AddType(addedAssets datastructures.Spar
 
 		base := id*15 + 1
 		for i, img := range texture.Images() {
-			service.textures.Set(base+uint32(i), img)
+			service.textures.Set(base+uint32(i), img[0])
 		}
 	}
 }

@@ -53,7 +53,7 @@ func (pkg) Register(b ioc.Builder) {
 			world.Transform.Parent().Set(background, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
 			world.Transform.ParentPivotPoint().Set(background, transform.NewParentPivotPoint(.5, .5, .5))
 			world.Render.Mesh().Set(background, render.NewMesh(gameAssets.SquareMesh))
-			world.Render.Texture().Set(background, render.NewTexture(gameAssets.Tiles.Mountain))
+			world.Render.Texture().Set(background, render.NewTexture(gameAssets.Hud.Background))
 			world.GenericRenderer.Pipeline().Set(background, genericrenderer.PipelineComponent{})
 
 			buttonArea := world.NewEntity()

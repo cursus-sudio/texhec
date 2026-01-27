@@ -58,7 +58,7 @@ func (pkg) Register(b ioc.Builder) {
 			world.Transform.PivotPoint().Set(background, transform.NewPivotPoint(.5, .5, 0))
 			world.Transform.ParentPivotPoint().Set(background, transform.NewParentPivotPoint(.5, .5, 0))
 			world.Render.Mesh().Set(background, render.NewMesh(gameAssets.SquareMesh))
-			world.Render.Texture().Set(background, render.NewTexture(gameAssets.Tiles.Forest))
+			world.Render.Texture().Set(background, render.NewTexture(gameAssets.Hud.Background))
 			world.GenericRenderer.Pipeline().Set(background, genericrenderer.PipelineComponent{})
 			world.Transition.Easing().Set(background, transition.NewEasing(gameassets.MyEasingFunction))
 			events.Emit(world.Events, transition.NewTransitionEvent(

@@ -28,17 +28,12 @@ type GameAssets struct {
 }
 
 type HudAssets struct {
-	Btn assets.AssetID `path:"hud/btn.png"`
-	// BtnAspectRatio mgl32.Vec3
-	Settings assets.AssetID `path:"hud/settings.png"`
-	Water    assets.AssetID `path:"tiles/water.png"`
+	Btn        assets.AssetID `path:"hud/btn.png"`
+	Settings   assets.AssetID `path:"hud/settings.png"`
+	Background assets.AssetID `path:"hud/background.png"`
 }
 
 type TileAssets struct {
-	Mountain assets.AssetID `path:"tiles/mountain.png"`
-	Ground   assets.AssetID `path:"tiles/ground.png"`
-	Forest   assets.AssetID `path:"tiles/forest.png"`
-
 	Grass assets.AssetID `path:"tiles/grass.biom"`
 	Sand  assets.AssetID `path:"tiles/sand.biom"`
 	Water assets.AssetID `path:"tiles/water.biom"`

@@ -47,7 +47,7 @@ func (pkg) Register(b ioc.Builder) {
 			world.Hierarchy.SetParent(background, cameraEntity)
 			world.Transform.Parent().Set(background, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
 			world.Render.Mesh().Set(background, render.NewMesh(gameassets.SquareMesh))
-			world.Render.Texture().Set(background, render.NewTexture(gameassets.Tiles.Ground))
+			world.Render.Texture().Set(background, render.NewTexture(gameassets.Hud.Background))
 			world.GenericRenderer.Pipeline().Set(background, genericrenderer.PipelineComponent{})
 
 			buttonArea := world.NewEntity()

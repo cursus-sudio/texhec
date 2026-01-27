@@ -1,7 +1,6 @@
 package gamescenes
 
 import (
-	"core/modules/definition"
 	"core/modules/fpslogger"
 	"core/modules/settings"
 	"core/modules/tile"
@@ -46,9 +45,8 @@ type World struct {
 	engine.World `inject:"1"`
 
 	// game
-	Definition definition.Service `inject:"1"`
-	Tile       tile.Service       `inject:"1"`
-	Ui         ui.Service         `inject:"1"`
+	Tile tile.Service `inject:"1"`
+	Ui   ui.Service   `inject:"1"`
 }
 
 type MenuBuilder scene.Scene

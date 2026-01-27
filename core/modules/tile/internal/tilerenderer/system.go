@@ -29,11 +29,11 @@ type TileType struct {
 	Texture image.Image
 }
 
-type entityBatch struct {
+type Batch struct {
 	buffer buffers.Buffer[int32]
 }
 
-func (b *entityBatch) Release() {
+func (b *Batch) Release() {
 	b.buffer.Release()
 }
 
@@ -45,17 +45,18 @@ type system struct {
 
 	program      program.Program
 	locations    locations
+	ids          datastructures.SparseArray[tile.Type, uint32]
 	textureArray texturearray.TextureArray
 	vao          vao.VAO
 
 	dirtySet ecs.DirtySet
-	batches  datastructures.SparseArray[ecs.EntityID, entityBatch]
+	batches  datastructures.SparseArray[ecs.EntityID, Batch]
 }
 
 type locations struct {
-	Mvp   int32 `uniform:"mvp"`   // mat4
-	Width int32 `uniform:"width"` // uint
-	// Height int32 `uniform:"height"` // uint
+	Mvp    int32 `uniform:"mvp"`    // mat4
+	Width  int32 `uniform:"width"`  // uint
+	Height int32 `uniform:"height"` // uint
 	// widthInv and heightInv is 2/width and 2/height
 	WidthInv  int32 `uniform:"widthInv"`  // float
 	HeightInv int32 `uniform:"heightInv"` // float
@@ -81,24 +82,34 @@ func (s *system) Listen(render.RenderEvent) {
 			gl.GenBuffers(1, &buffer)
 			gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, buffer)
 
-			batch := entityBatch{
+			batch = Batch{
 				buffers.NewBuffer[int32](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer),
 			}
 			s.batches.Set(entity, batch)
-			for i, tile := range grid.GetTiles() {
-				batch.buffer.Set(i, int32(tile))
-			}
-			batch.buffer.Flush()
-			continue
 		}
-		if batchOk && compOk {
-			batch.buffer.Add()
-			for i, tile := range grid.GetTiles() {
-				batch.buffer.Set(i, int32(tile))
+
+		// builder := &strings.Builder{}
+		// for range grid.Height() {
+		// 	builder.WriteString("%v %v %v %v %v %v %v %v %v %v\n")
+		// }
+		// tiles := grid.GetTiles()
+		// args := make([]any, len(tiles))
+		// for i, v := range tiles {
+		// 	args[i] = v
+		// }
+		// s.Logger.Info(builder.String(), args...)
+
+		for i, tile := range grid.GetTiles() {
+			// there is a conflict
+			// we use definitionID to define tile and textures used
+			// but tile values are tile.Type diffrentiate it
+			id, ok := s.ids.Get(tile)
+			if !ok {
+				continue
 			}
-			batch.buffer.Flush()
-			continue
+			batch.buffer.Set(i, int32(id))
 		}
+		batch.buffer.Flush()
 	}
 
 	// render
@@ -115,16 +126,13 @@ func (s *system) Listen(render.RenderEvent) {
 		}
 		gl.BindBuffer(gl.SHADER_STORAGE_BUFFER, batch.buffer.ID())
 
-		grid, ok := s.Tile.Grid().Get(entity)
-		if !ok {
-			continue
-		}
+		grid, _ := s.Tile.Grid().Get(entity)
 
 		matrix := s.Transform.Mat4(entity)
 		groups, _ := s.Groups.Component().Get(entity)
 
 		gl.Uniform1ui(s.locations.Width, uint32(grid.Width()))
-		// gl.Uniform1ui(s.locations.Height, uint32(grid.Height()))
+		gl.Uniform1ui(s.locations.Height, uint32(grid.Height()))
 		gl.Uniform1f(s.locations.WidthInv, 2/float32(grid.Width()))
 		gl.Uniform1f(s.locations.HeightInv, 2/float32(grid.Height()))
 
@@ -139,8 +147,8 @@ func (s *system) Listen(render.RenderEvent) {
 			gl.UniformMatrix4fv(s.locations.Mvp, 1, false, &mvp[0])
 
 			gl.Viewport(s.Camera.GetViewport(cameraEntity))
-			// verticesCount := (grid.Height() + 1) * (grid.Width() + 1)
-			verticesCount := grid.Height() * grid.Width()
+			verticesCount := (grid.Width() + 1) * (grid.Height() + 1)
+			// verticesCount := grid.Width() * grid.Height()
 			gl.DrawArrays(gl.POINTS, 0, int32(verticesCount))
 		}
 	}

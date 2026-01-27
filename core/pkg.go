@@ -2,8 +2,6 @@ package main
 
 import (
 	gameassets "core/assets"
-	"core/modules/definition"
-	"core/modules/definition/pkg"
 	fpsloggerpkg "core/modules/fpslogger/pkg"
 	"core/modules/settings"
 	settingspkg "core/modules/settings/pkg"
@@ -136,10 +134,9 @@ func getDic() ioc.Dic {
 		// frames.Package(1, 10000),
 		scenepkg.Package(),
 
-		texture.Package(),
+		gtexture.Package(),
 		texturearray.Package(),
 		tilepkg.Package(),
-		definitionpkg.Package(),
 		uipkg.Package(time.Millisecond * 300),
 		settingspkg.Package(),
 
@@ -205,7 +202,6 @@ func getDic() ioc.Dic {
 			)
 			record.AddToConfig[transform.PosComponent](config.RecordConfig())
 			record.AddToConfig[camera.OrthoComponent](config.RecordConfig())
-			record.AddToConfig[definition.DefinitionLinkComponent](config.RecordConfig())
 			record.AddToConfig[grid.SquareGridComponent[tile.Type]](config.RecordConfig())
 			// netsyncpkg.AddComponent[transform.PosComponent](config)
 			// netsyncpkg.AddComponent[camera.OrthoComponent](config)
@@ -253,8 +249,8 @@ func getDic() ioc.Dic {
 		pkg.Register(b)
 	}
 
-	ioc.WrapService(b, func(c ioc.Dic, f texture.Factory) {
-		f.Wrap(func(t texture.Texture) {
+	ioc.WrapService(b, func(c ioc.Dic, f gtexture.Factory) {
+		f.Wrap(func(t gtexture.Texture) {
 			t.Use()
 			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)

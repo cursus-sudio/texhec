@@ -1,30 +1,20 @@
 package gameassets
 
 import (
-	"bytes"
-	"core/modules/definition"
 	"core/modules/tile"
-	"engine/modules/audio"
 	"engine/modules/collider"
 	"engine/modules/genericrenderer"
 	"engine/modules/render"
-	"engine/modules/text"
 	"engine/modules/transition"
 	"engine/services/assets"
 	"engine/services/datastructures"
-	gtexture "engine/services/graphics/texture"
 	"engine/services/graphics/vao/ebo"
 	"engine/services/logger"
-	"image"
 	_ "image/png"
 	"math"
-	"os"
-	"strings"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
-	"github.com/veandco/go-sdl2/mix"
-	"golang.org/x/image/font/opentype"
 )
 
 type GameAssets struct {
@@ -49,6 +39,9 @@ type TileAssets struct {
 	Forest   assets.AssetID `path:"tiles/forest.png"`
 	Water    assets.AssetID `path:"tiles/water.png"`
 
+	Grass assets.AssetID `path:"tiles/grass.biom"`
+	Sand  assets.AssetID `path:"tiles/sand.biom"`
+
 	Unit assets.AssetID `path:"tiles/u1.png"`
 }
 
@@ -61,50 +54,6 @@ func Package() ioc.Pkg {
 func (pkg) Assets(b ioc.Builder) {
 	// register specific files
 	ioc.WrapService(b, func(c ioc.Dic, b assets.AssetsStorageBuilder) {
-		b.RegisterExtension("wav", func(id assets.AssetID) (any, error) {
-			source, err := os.ReadFile(string(id))
-			if err != nil {
-				return nil, err
-			}
-			chunk, err := mix.QuickLoadWAV(source)
-			if err != nil {
-				return nil, err
-			}
-			audio := audio.NewAudioAsset(chunk, source)
-			return audio, nil
-		})
-
-		b.RegisterExtension("png", func(id assets.AssetID) (any, error) {
-			source, err := os.ReadFile(string(id))
-			if err != nil {
-				return nil, err
-			}
-			imgFile := bytes.NewBuffer(source)
-			img, _, err := image.Decode(imgFile)
-			if err != nil {
-				return nil, err
-			}
-
-			img = gtexture.FlipImage(img)
-			if !strings.Contains(string(id), "tiles") {
-				img = TrimTransparentBackground(img)
-			}
-			return render.NewTextureStorageAsset(img)
-		})
-
-		b.RegisterExtension("ttf", func(id assets.AssetID) (any, error) {
-			source, err := os.ReadFile(string(id))
-			if err != nil {
-				return nil, err
-			}
-			font, err := opentype.Parse(source)
-			if err != nil {
-				return nil, err
-			}
-			asset := text.NewFontFaceAsset(*font)
-			return asset, nil
-		})
-
 		gameAssets := ioc.Get[GameAssets](c)
 		b.RegisterAsset(gameAssets.SquareMesh, func() (any, error) {
 			vertices := []genericrenderer.Vertex{
@@ -146,12 +95,9 @@ func (pkg) Assets(b ioc.Builder) {
 
 	ioc.WrapService(b, func(c ioc.Dic, s tile.TileAssets) {
 		gameAssets := ioc.Get[GameAssets](c)
-		assets := datastructures.NewSparseArray[definition.DefinitionID, assets.AssetID]()
-		assets.Set(definition.TileMountain, gameAssets.Tiles.Mountain)
-		assets.Set(definition.TileGround, gameAssets.Tiles.Ground)
-		assets.Set(definition.TileForest, gameAssets.Tiles.Forest)
-		assets.Set(definition.TileWater, gameAssets.Tiles.Water)
-		assets.Set(definition.TileU1, gameAssets.Tiles.Unit)
+		assets := datastructures.NewSparseArray[tile.Type, assets.AssetID]()
+		assets.Set(tile.TileGrass, gameAssets.Tiles.Grass)
+		assets.Set(tile.TileSand, gameAssets.Tiles.Sand)
 		s.AddType(assets)
 	})
 }

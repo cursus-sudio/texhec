@@ -103,7 +103,7 @@ func (s *fontService) AssetFont(assetID assets.AssetID) (Font, error) {
 			Face: fontFace,
 		}
 		image := s.getLetterImage(drawer, glyph)
-		fontMeta.Images.Set(glyphID, texture.FlipImage(image))
+		fontMeta.Images.Set(glyphID, gtexture.FlipImage(image))
 	}
 
 	cached := fontAsset{asset, fontMeta}

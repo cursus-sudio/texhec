@@ -1,4 +1,4 @@
-package texture
+package gtexture
 
 import "github.com/ogiusek/ioc/v2"
 

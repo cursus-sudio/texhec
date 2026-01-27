@@ -60,21 +60,47 @@ func (pkg pkg) Register(b ioc.Builder) {
 
 	ioc.WrapService(b, func(c ioc.Dic, b assets.AssetsStorageBuilder) {
 		b.RegisterExtension("biom", func(id assets.AssetID) (any, error) {
-			images := [6]image.Image{}
+			images := [6][]image.Image{}
+			suffixes := [6]string{
+				"1.png",
+				"2.png",
+				"3.png",
+				"4.png",
+				"5.png",
+				"6.png",
+			}
 			directory, _ := strings.CutSuffix(string(id), ".biom")
+
+			files, err := os.ReadDir(directory)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, file := range files {
+				for i, suffix := range suffixes {
+					name := file.Name()
+					if !strings.HasSuffix(name, suffix) {
+						continue
+					}
+					file := fmt.Sprintf("%v/%v", directory, name)
+					source, err := os.ReadFile(file)
+					if err != nil {
+						return nil, err
+					}
+					imgFile := bytes.NewBuffer(source)
+					img, _, err := image.Decode(imgFile)
+					if err != nil {
+						return nil, err
+					}
+					img = gtexture.NewImage(img).FlipV().Image()
+					images[i] = append(images[i], img)
+				}
+			}
+
 			for i := range 6 {
-				file := fmt.Sprintf("%v/%v.png", directory, i+1)
-				source, err := os.ReadFile(file)
-				if err != nil {
-					return nil, err
+				if len(images[i]) == 0 {
+					return nil, fmt.Errorf("there is no tile variant for %v tile", i)
 				}
-				imgFile := bytes.NewBuffer(source)
-				img, _, err := image.Decode(imgFile)
-				if err != nil {
-					return nil, err
-				}
-				img = gtexture.NewImage(img).FlipV().Image()
-				images[i] = img
 			}
 
 			return tile.NewBiomAsset(images)

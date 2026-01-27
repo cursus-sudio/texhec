@@ -12,11 +12,18 @@ in GS {
 
 out FS {
     vec2 uv;
-    flat int tileType[4];
+    flat int textures[4];
 } gs_out;
 
 layout(std430, binding = 0) buffer Grid {
     int grid[];
+};
+
+layout(std430, binding = 1) buffer TileTextures {
+    int tileTextures[];
+};
+layout(std430, binding = 2) buffer TileTexturesSize {
+    int tileTexturesSize[];
 };
 
 uniform uint width;
@@ -34,11 +41,26 @@ int getIndex(vec2 coord) { // this doesn't use +1 because tile map is still norm
     return int(coord.x) + int(coord.y) * int(width);
 }
 
-int getTile(int index) {
-    return grid[getIndex(getCoord(index))];
-}
 int getTile(vec2 coord) {
     return grid[getIndex(coord)];
+}
+int getTile(int index) {
+    return getTile(getCoord(index));
+}
+
+int getTexture(int seed, int i) {
+    return tileTextures[i] + seed % tileTexturesSize[i];
+}
+
+int seed(int num) {
+    uint seed = num;
+    seed = seed * 1664525u + 1013904223u;
+    seed ^= seed >> 16;
+    seed *= 0x85ebca6bu;
+    seed ^= seed >> 13;
+    seed *= 0xc2b2ae35u;
+    seed ^= seed >> 16;
+    return int(seed);
 }
 
 //
@@ -64,13 +86,14 @@ void setBioms(int index, vec2 coord) {
     int bioms[4] = neighbours;
     sort4(bioms);
 
+    int seed = seed(index);
     for (int i = 0; i < 4; i++) {
         int base = bioms[i] * 15;
         int mask = 0;
         for (int n = 0; n < 4; n++) {
             mask |= int(neighbours[n] == bioms[i]) * (1 << n);
         }
-        gs_out.tileType[i] = base + mask;
+        gs_out.textures[i] = getTexture(seed, base + mask);
     }
 }
 

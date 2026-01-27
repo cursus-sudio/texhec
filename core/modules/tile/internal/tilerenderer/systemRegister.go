@@ -6,6 +6,7 @@ import (
 	"engine/services/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
+	"engine/services/graphics/buffers"
 	"engine/services/graphics/program"
 	"engine/services/graphics/shader"
 	"engine/services/graphics/texturearray"
@@ -24,22 +25,24 @@ type TileRenderSystemRegister struct {
 	engine.World        `inject:"1"`
 	Tile                tile.Service `inject:"1"`
 
-	C        ioc.Dic
-	ids      datastructures.SparseArray[tile.Type, uint32]
-	textures datastructures.SparseArray[uint32, image.Image]
+	C            ioc.Dic
+	ids          datastructures.SparseArray[tile.Type, uint32]
+	tileTextures datastructures.SparseArray[uint32, [2]int32]
+	textures     datastructures.SparseArray[uint32, image.Image]
 }
 
 func NewTileRenderSystemRegister(c ioc.Dic) *TileRenderSystemRegister {
 	s := ioc.GetServices[*TileRenderSystemRegister](c)
 	s.C = c
 	s.ids = datastructures.NewSparseArray[tile.Type, uint32]()
+	s.tileTextures = datastructures.NewSparseArray[uint32, [2]int32]()
 	s.textures = datastructures.NewSparseArray[uint32, image.Image]()
 	return s
 }
 
 func (service *TileRenderSystemRegister) AddType(addedAssets datastructures.SparseArray[tile.Type, assets.AssetID]) {
 	for _, assetIndex := range addedAssets.GetIndices() {
-		id := uint32(len(service.ids.GetIndices()))
+		id := uint32(service.ids.Size())
 		service.ids.Set(assetIndex, id)
 		asset, _ := addedAssets.Get(assetIndex)
 		texture, err := assets.GetAsset[tile.BiomAsset](service.Assets, asset)
@@ -48,9 +51,16 @@ func (service *TileRenderSystemRegister) AddType(addedAssets datastructures.Spar
 			continue
 		}
 
-		base := id*15 + 1
-		for i, img := range texture.Images() {
-			service.textures.Set(base+uint32(i), img)
+		rangeBase := id*15 + 1
+		for i, images := range texture.Images() {
+			size := service.textures.Size()
+			tileRange := [2]int32{int32(size), int32(len(images))}
+			service.tileTextures.Set(rangeBase+uint32(i), tileRange)
+
+			imageBase := size
+			for i, img := range images {
+				service.textures.Set(uint32(imageBase+i), img)
+			}
 		}
 	}
 }
@@ -104,6 +114,25 @@ func (factory *TileRenderSystemRegister) Register() error {
 	s.locations = locations
 	s.ids = factory.ids
 	s.textureArray = textureArray
+
+	var buffer uint32
+	gl.GenBuffers(1, &buffer)
+	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, buffer)
+	s.texturesBuffer = buffers.NewBuffer[int32](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
+	for _, id := range factory.tileTextures.GetIndices() {
+		value, _ := factory.tileTextures.Get(id)
+		s.texturesBuffer.Set(int(id), value[0])
+	}
+	s.texturesBuffer.Flush()
+
+	gl.GenBuffers(1, &buffer)
+	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 2, buffer)
+	s.texturesSizeBuffer = buffers.NewBuffer[int32](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
+	for _, id := range factory.tileTextures.GetIndices() {
+		value, _ := factory.tileTextures.Get(id)
+		s.texturesSizeBuffer.Set(int(id), value[1])
+	}
+	s.texturesSizeBuffer.Flush()
 
 	s.dirtySet = dirtySet
 	s.batches = datastructures.NewSparseArray[ecs.EntityID, Batch]()

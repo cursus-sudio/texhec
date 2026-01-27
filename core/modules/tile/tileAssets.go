@@ -9,13 +9,13 @@ import (
 //
 
 type BiomAsset interface {
-	Images() [15]image.Image
+	Images() [15][]image.Image
 	Res() image.Rectangle
 	AspectRatio() image.Rectangle
 }
 
 type biomAsset struct {
-	images      [15]image.Image
+	images      [15][]image.Image
 	res         image.Rectangle
 	aspectRatio image.Rectangle
 }
@@ -34,17 +34,19 @@ func greatestCommonDivisor(a, b int) int {
 // - 1010
 // - 1001
 // - 0001
-func NewBiomAsset(srcImages [6]image.Image) (BiomAsset, error) {
+func NewBiomAsset(srcImages [6][]image.Image) (BiomAsset, error) {
 	var res image.Rectangle
-	for i, img := range srcImages {
-		bounds := img.Bounds()
-		bounds = image.Rect(0, 0, bounds.Dx(), bounds.Dy())
-		if i == 0 {
-			res = bounds
-			continue
-		}
-		if res != bounds {
-			return nil, render.ErrTextureAssetImagesHasToMatchResolution
+	for i, imgages := range srcImages {
+		for _, img := range imgages {
+			bounds := img.Bounds()
+			bounds = image.Rect(0, 0, bounds.Dx(), bounds.Dy())
+			if i == 0 {
+				res = bounds
+				continue
+			}
+			if res != bounds {
+				return nil, render.ErrTextureAssetImagesHasToMatchResolution
+			}
 		}
 	}
 
@@ -62,60 +64,39 @@ func NewBiomAsset(srcImages [6]image.Image) (BiomAsset, error) {
 	// - 1010 -> 1100 -> 0101 -> 0011
 	// - 1001 -> 0110
 	// - 0001 -> 0010 -> 1000 -> 0100
-	dstImages := [15]image.Image{
-		// this is old version with 5 images
-		// before adding as first image full bottom
-		// it uses fewer images to define tile
-		// but it flipped horizontal and vertical axis
-		// gtexture.NewImage(srcImages[4]).RotateClockwise(3).Image(), // 1000
-		// gtexture.NewImage(srcImages[4]).RotateClockwise(0).Image(), // 0100
-		// gtexture.NewImage(srcImages[2]).RotateClockwise(1).Image(), // 1100
-		// gtexture.NewImage(srcImages[4]).RotateClockwise(2).Image(), // 0010
-		// gtexture.NewImage(srcImages[2]).RotateClockwise(0).Image(), // 1010
-		// gtexture.NewImage(srcImages[3]).RotateClockwise(2).Image(), // 0110
-		// gtexture.NewImage(srcImages[1]).RotateClockwise(1).Image(), // 1110
-		// gtexture.NewImage(srcImages[4]).RotateClockwise(1).Image(), // 0001
-		// gtexture.NewImage(srcImages[3]).RotateClockwise(1).Image(), // 1001
-		// gtexture.NewImage(srcImages[2]).RotateClockwise(2).Image(), // 0101
-		// gtexture.NewImage(srcImages[1]).RotateClockwise(2).Image(), // 1101
-		// gtexture.NewImage(srcImages[2]).RotateClockwise(3).Image(), // 0011
-		// gtexture.NewImage(srcImages[1]).RotateClockwise(0).Image(), // 1011
-		// gtexture.NewImage(srcImages[1]).RotateClockwise(3).Image(), // 0111
-		// gtexture.NewImage(srcImages[0]).RotateClockwise(0).Image(), // 1111
 
-		// this is new version of tiles
-		// it uses one more tile to define biom
-		// but it maintains horizontal and vertical axis
-		gtexture.NewImage(srcImages[5]).FlipH().Image(),  // 1000
-		gtexture.NewImage(srcImages[5]).Image(),          // 0100
-		gtexture.NewImage(srcImages[0]).Image(),          // 1100
-		gtexture.NewImage(srcImages[5]).FlipHV().Image(), // 0010
-		gtexture.NewImage(srcImages[3]).Image(),          // 1010
-		gtexture.NewImage(srcImages[4]).Image(),          // 0110
-		gtexture.NewImage(srcImages[2]).FlipV().Image(),  // 1110
-		gtexture.NewImage(srcImages[5]).FlipV().Image(),  // 0001
-		gtexture.NewImage(srcImages[4]).FlipH().Image(),  // 1001
-		gtexture.NewImage(srcImages[3]).FlipH().Image(),  // 0101
-		gtexture.NewImage(srcImages[2]).FlipHV().Image(), // 1101
-		gtexture.NewImage(srcImages[0]).FlipV().Image(),  // 0011
-		gtexture.NewImage(srcImages[2]).Image(),          // 1011
-		gtexture.NewImage(srcImages[2]).FlipH().Image(),  // 0111
-		gtexture.NewImage(srcImages[1]).Image(),          // 1111
+	// this is new version of tiles
+	// it uses one more tile to define biom
+	// but it maintains horizontal and vertical axis
+	dstImages := [15][]image.Image{}
+	// this code either can be organized by srcImages or dstImages
+	// ordering in ascending order for srcImages sounds best for maintanance
+	// but due to additional for loops dstImages in ascending order are choosen
+	for _, img := range srcImages[0] {
+		dstImages[2] = append(dstImages[2], img)
+		dstImages[11] = append(dstImages[11], gtexture.NewImage(img).FlipV().Image())
 	}
-
-	// add this to test:
-	// b := map[bool]int{false: 0, true: 1}
-	// s := &strings.Builder{}
-	// for i, img := range dstImages {
-	// 	bounds := img.Bounds()
-	// 	_, _, _, lt := img.At(bounds.Min.X, bounds.Min.Y).RGBA()
-	// 	_, _, _, rt := img.At(bounds.Max.X-1, bounds.Min.Y).RGBA()
-	// 	_, _, _, lb := img.At(bounds.Min.X, bounds.Max.Y-1).RGBA()
-	// 	_, _, _, rb := img.At(bounds.Max.X-1, bounds.Max.Y-1).RGBA()
-	// 	fmt.Fprintf(s, "i: %2d, lt rt lb rb %d%d%d%d\n", i, b[lt > 0], b[rt > 0], b[lb > 0], b[rb > 0])
-	// }
-	// fmt.Fprintf(s, "\n\n")
-	// print(s.String())
+	dstImages[14] = append(dstImages[14], srcImages[1]...)
+	for _, img := range srcImages[2] {
+		dstImages[6] = append(dstImages[6], gtexture.NewImage(img).FlipV().Image())
+		dstImages[10] = append(dstImages[10], gtexture.NewImage(img).FlipHV().Image())
+		dstImages[12] = append(dstImages[12], img)
+		dstImages[13] = append(dstImages[13], gtexture.NewImage(img).FlipH().Image())
+	}
+	for _, img := range srcImages[3] {
+		dstImages[4] = append(dstImages[4], img)
+		dstImages[9] = append(dstImages[9], gtexture.NewImage(img).FlipH().Image())
+	}
+	for _, img := range srcImages[4] {
+		dstImages[5] = append(dstImages[5], img)
+		dstImages[8] = append(dstImages[8], gtexture.NewImage(img).FlipH().Image())
+	}
+	for _, img := range srcImages[5] {
+		dstImages[0] = append(dstImages[0], gtexture.NewImage(img).FlipH().Image())
+		dstImages[1] = append(dstImages[1], img)
+		dstImages[3] = append(dstImages[3], gtexture.NewImage(img).FlipHV().Image())
+		dstImages[7] = append(dstImages[7], gtexture.NewImage(img).FlipV().Image())
+	}
 
 	asset := &biomAsset{
 		images:      dstImages,
@@ -125,7 +106,7 @@ func NewBiomAsset(srcImages [6]image.Image) (BiomAsset, error) {
 	return asset, nil
 }
 
-func (a *biomAsset) Images() [15]image.Image      { return a.images }
+func (a *biomAsset) Images() [15][]image.Image    { return a.images }
 func (a *biomAsset) Res() image.Rectangle         { return a.res }
 func (a *biomAsset) AspectRatio() image.Rectangle { return a.aspectRatio }
 func (a *biomAsset) Release()                     {}

@@ -25,13 +25,13 @@ func newImage(v uint8) image.Image {
 }
 
 func TestNewAsset(t *testing.T) {
-	srcImages := [6]image.Image{
-		newImage(0b0011),
-		newImage(0b1111),
-		newImage(0b1110),
-		newImage(0b1010),
-		newImage(0b1001),
-		newImage(0b0001),
+	srcImages := [6][]image.Image{
+		{newImage(0b0011)},
+		{newImage(0b1111)},
+		{newImage(0b1110)},
+		{newImage(0b1010)},
+		{newImage(0b1001)},
+		{newImage(0b0001)},
 	}
 
 	biom, err := tile.NewBiomAsset(srcImages)
@@ -40,8 +40,8 @@ func TestNewAsset(t *testing.T) {
 	}
 	images := biom.Images()
 
-	for i, img := range images {
-
+	for i, imgs := range images {
+		img := imgs[0]
 		bounds := img.Bounds()
 		// images are flipped so t and b are swapped
 		_, _, _, lt := img.At(bounds.Min.X, bounds.Max.Y-1).RGBA()

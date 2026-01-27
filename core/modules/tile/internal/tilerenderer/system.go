@@ -43,11 +43,13 @@ type system struct {
 	engine.World `inject:"1"`
 	Tile         tile.Service `inject:"1"`
 
-	program      program.Program
-	locations    locations
-	ids          datastructures.SparseArray[tile.Type, uint32]
-	textureArray texturearray.TextureArray
-	vao          vao.VAO
+	program            program.Program
+	locations          locations
+	ids                datastructures.SparseArray[tile.Type, uint32]
+	textureArray       texturearray.TextureArray
+	texturesBuffer     buffers.Buffer[int32]
+	texturesSizeBuffer buffers.Buffer[int32]
+	vao                vao.VAO
 
 	dirtySet ecs.DirtySet
 	batches  datastructures.SparseArray[ecs.EntityID, Batch]
@@ -88,17 +90,6 @@ func (s *system) Listen(render.RenderEvent) {
 			s.batches.Set(entity, batch)
 		}
 
-		// builder := &strings.Builder{}
-		// for range grid.Height() {
-		// 	builder.WriteString("%v %v %v %v %v %v %v %v %v %v\n")
-		// }
-		// tiles := grid.GetTiles()
-		// args := make([]any, len(tiles))
-		// for i, v := range tiles {
-		// 	args[i] = v
-		// }
-		// s.Logger.Info(builder.String(), args...)
-
 		for i, tile := range grid.GetTiles() {
 			// there is a conflict
 			// we use definitionID to define tile and textures used
@@ -114,6 +105,8 @@ func (s *system) Listen(render.RenderEvent) {
 
 	// render
 	w, h := s.Window.Window().GetSize()
+	gl.BindBuffer(gl.SHADER_STORAGE_BUFFER, s.texturesBuffer.ID())
+	gl.BindBuffer(gl.SHADER_STORAGE_BUFFER, s.texturesSizeBuffer.ID())
 	defer func() { gl.Viewport(0, 0, w, h) }()
 
 	s.program.Use()

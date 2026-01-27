@@ -1,7 +1,6 @@
 package gameassets
 
 import (
-	"core/modules/definition"
 	"core/modules/tile"
 	"engine/modules/collider"
 	"engine/modules/genericrenderer"
@@ -96,12 +95,9 @@ func (pkg) Assets(b ioc.Builder) {
 
 	ioc.WrapService(b, func(c ioc.Dic, s tile.TileAssets) {
 		gameAssets := ioc.Get[GameAssets](c)
-		assets := datastructures.NewSparseArray[definition.DefinitionID, assets.AssetID]()
-		assets.Set(definition.TileMountain, gameAssets.Tiles.Mountain)
-		assets.Set(definition.TileGround, gameAssets.Tiles.Ground)
-		assets.Set(definition.TileForest, gameAssets.Tiles.Forest)
-		assets.Set(definition.TileWater, gameAssets.Tiles.Water)
-		assets.Set(definition.TileU1, gameAssets.Tiles.Unit)
+		assets := datastructures.NewSparseArray[tile.Type, assets.AssetID]()
+		assets.Set(tile.TileGrass, gameAssets.Tiles.Grass)
+		assets.Set(tile.TileSand, gameAssets.Tiles.Sand)
 		s.AddType(assets)
 	})
 }

@@ -14,6 +14,7 @@ require (
 require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/optimus-hft/lockset/v2 v2.0.0 // indirect
+	github.com/stretchr/testify v1.11.1 // indirect
 	golang.org/x/exp v0.0.0-20250911091902-df9299821621 // indirect
 	golang.org/x/image v0.32.0 // indirect
 	golang.org/x/text v0.30.0 // indirect

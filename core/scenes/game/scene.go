@@ -2,7 +2,6 @@ package gamescene
 
 import (
 	gameassets "core/assets"
-	"core/modules/definition"
 	"core/modules/settings"
 	"core/modules/tile"
 	"core/modules/ui"
@@ -102,16 +101,12 @@ func addScene(
 
 		rand := rand.New(rand.NewPCG(2077, 7137))
 		for i := range gridComponent.GetLastIndex() {
-			tileType := definition.TileMountain
-			switch rand.IntN(4) {
+			tileType := tile.TileGrass
+			switch rand.IntN(2) {
 			case 0:
-				tileType = definition.TileMountain
+				tileType = tile.TileGrass
 			case 1:
-				tileType = definition.TileGround
-			case 2:
-				tileType = definition.TileForest
-			case 3:
-				tileType = definition.TileWater
+				tileType = tile.TileSand
 			}
 			gridComponent.SetTile(i, tile.Type(tileType))
 		}

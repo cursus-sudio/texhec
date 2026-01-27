@@ -63,7 +63,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 			images := [5]image.Image{}
 			directory, _ := strings.CutSuffix(string(id), ".biom")
 			for i := range 5 {
-				file := fmt.Sprintf("%v/%v.png", directory, i)
+				file := fmt.Sprintf("%v/%v.png", directory, i+1)
 				source, err := os.ReadFile(file)
 				if err != nil {
 					return nil, err

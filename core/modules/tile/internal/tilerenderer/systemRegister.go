@@ -1,10 +1,8 @@
 package tilerenderer
 
 import (
-	"core/modules/definition"
 	"core/modules/tile"
 	"engine"
-	"engine/modules/render"
 	"engine/services/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
@@ -27,26 +25,33 @@ type TileRenderSystemRegister struct {
 	Tile                tile.Service `inject:"1"`
 
 	C        ioc.Dic
+	ids      datastructures.SparseArray[tile.Type, uint32]
 	textures datastructures.SparseArray[uint32, image.Image]
 }
 
-func NewTileRenderSystemRegister(c ioc.Dic,
-) *TileRenderSystemRegister {
+func NewTileRenderSystemRegister(c ioc.Dic) *TileRenderSystemRegister {
 	s := ioc.GetServices[*TileRenderSystemRegister](c)
 	s.C = c
+	s.ids = datastructures.NewSparseArray[tile.Type, uint32]()
 	s.textures = datastructures.NewSparseArray[uint32, image.Image]()
 	return s
 }
 
-func (service *TileRenderSystemRegister) AddType(addedAssets datastructures.SparseArray[definition.DefinitionID, assets.AssetID]) {
+func (service *TileRenderSystemRegister) AddType(addedAssets datastructures.SparseArray[tile.Type, assets.AssetID]) {
 	for _, assetIndex := range addedAssets.GetIndices() {
+		id := uint32(len(service.ids.GetIndices()))
+		service.ids.Set(assetIndex, id)
 		asset, _ := addedAssets.Get(assetIndex)
-		texture, err := assets.GetAsset[render.TextureAsset](service.Assets, asset)
+		texture, err := assets.GetAsset[tile.BiomAsset](service.Assets, asset)
 		if err != nil {
+			service.Logger.Warn(err)
 			continue
 		}
 
-		service.textures.Set(uint32(assetIndex), texture.Images()[0])
+		base := id*15 + 1
+		for i, img := range texture.Images() {
+			service.textures.Set(base+uint32(i), img)
+		}
 	}
 }
 
@@ -97,10 +102,11 @@ func (factory *TileRenderSystemRegister) Register() error {
 	s.program = p
 	s.vao = vao.NewVAO(nil, nil)
 	s.locations = locations
+	s.ids = factory.ids
 	s.textureArray = textureArray
 
 	s.dirtySet = dirtySet
-	s.batches = datastructures.NewSparseArray[ecs.EntityID, entityBatch]()
+	s.batches = datastructures.NewSparseArray[ecs.EntityID, Batch]()
 
 	events.Listen(factory.EventsBuilder, s.Listen)
 	return nil

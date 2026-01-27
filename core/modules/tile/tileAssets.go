@@ -1,17 +1,10 @@
 package tile
 
 import (
-	"core/modules/definition"
 	"engine/modules/render"
-	"engine/services/assets"
-	"engine/services/datastructures"
 	gtexture "engine/services/graphics/texture"
 	"image"
 )
-
-type TileAssets interface {
-	AddType(addedAssets datastructures.SparseArray[definition.DefinitionID, assets.AssetID])
-}
 
 //
 
@@ -70,22 +63,35 @@ func NewBiomAsset(srcImages [5]image.Image) (BiomAsset, error) {
 	// - 1001 -> 0110
 	// - 0001 -> 0010 -> 1000 -> 0100
 	dstImages := [15]image.Image{
-		gtexture.RotateClockwise(srcImages[4], 2), // 1000
-		gtexture.RotateClockwise(srcImages[4], 3), // 0100
+		gtexture.RotateClockwise(srcImages[4], 3), // 1000
+		gtexture.RotateClockwise(srcImages[4], 0), // 0100
 		gtexture.RotateClockwise(srcImages[2], 1), // 1100
-		gtexture.RotateClockwise(srcImages[4], 1), // 0010
+		gtexture.RotateClockwise(srcImages[4], 2), // 0010
 		gtexture.RotateClockwise(srcImages[2], 0), // 1010
-		gtexture.RotateClockwise(srcImages[3], 1), // 0110
-		gtexture.RotateClockwise(srcImages[1], 0), // 1110
-		gtexture.RotateClockwise(srcImages[4], 0), // 0001
-		gtexture.RotateClockwise(srcImages[3], 0), // 1001
+		gtexture.RotateClockwise(srcImages[3], 2), // 0110
+		gtexture.RotateClockwise(srcImages[1], 1), // 1110
+		gtexture.RotateClockwise(srcImages[4], 1), // 0001
+		gtexture.RotateClockwise(srcImages[3], 1), // 1001
 		gtexture.RotateClockwise(srcImages[2], 2), // 0101
-		gtexture.RotateClockwise(srcImages[1], 1), // 1101
+		gtexture.RotateClockwise(srcImages[1], 2), // 1101
 		gtexture.RotateClockwise(srcImages[2], 3), // 0011
-		gtexture.RotateClockwise(srcImages[1], 3), // 1011
-		gtexture.RotateClockwise(srcImages[1], 2), // 0111
+		gtexture.RotateClockwise(srcImages[1], 0), // 1011
+		gtexture.RotateClockwise(srcImages[1], 3), // 0111
 		gtexture.RotateClockwise(srcImages[0], 0), // 1111
 	}
+
+	// b := map[bool]int{false: 0, true: 1}
+	// s := &strings.Builder{}
+	// for i, img := range dstImages {
+	// 	bounds := img.Bounds()
+	// 	_, _, _, lt := img.At(bounds.Min.X, bounds.Min.Y).RGBA()
+	// 	_, _, _, rt := img.At(bounds.Max.X-1, bounds.Min.Y).RGBA()
+	// 	_, _, _, lb := img.At(bounds.Min.X, bounds.Max.Y-1).RGBA()
+	// 	_, _, _, rb := img.At(bounds.Max.X-1, bounds.Max.Y-1).RGBA()
+	// 	fmt.Fprintf(s, "i: %2d, lt rt lb rb %d%d%d%d\n", i, b[lt > 0], b[rt > 0], b[lb > 0], b[rb > 0])
+	// }
+	// fmt.Fprintf(s, "\n\n")
+	// print(s.String())
 
 	asset := &biomAsset{
 		images:      dstImages,

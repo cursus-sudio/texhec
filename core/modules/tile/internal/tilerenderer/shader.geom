@@ -20,46 +20,87 @@ layout(std430, binding = 0) buffer Grid {
 };
 
 uniform uint width;
+uniform uint height;
 
 vec2 getCoord(int i) {
-    return vec2(
-        i % width, // X: Coord(index) % g.width
-        i / width //  Y: Coord(index) / g.width
+    return vec2( // this uses +1 because of dual grid system
+        i % (width + 1), // X: Coord(index) % g.width
+        i / (width + 1) //  Y: Coord(index) / g.width
     );
 }
 
-int getIndex(vec2 coord) {
+int getIndex(vec2 coord) { // this doesn't use +1 because tile map is still normal
+    coord = clamp(coord, vec2(0, 0), vec2(width - 1, height - 1));
     return int(coord.x) + int(coord.y) * int(width);
+}
+
+int getTile(int index) {
+    return grid[getIndex(getCoord(index))];
+}
+int getTile(vec2 coord) {
+    return grid[getIndex(coord)];
 }
 
 //
 
+void sort4(inout int a[4]) {
+    int tmp;
+    #define SWAP(i, j) if (a[i] < a[j]) { tmp = a[i]; a[i] = a[j]; a[j] = tmp; }
+    SWAP(0, 1);
+    SWAP(2, 3);
+    SWAP(0, 2);
+    SWAP(1, 3);
+    SWAP(1, 2);
+    #undef SWAP
+}
+
+void setBioms(int index, vec2 coord) {
+    int neighbours[4] = {
+            getTile(coord + vec2(-1, -1)),
+            getTile(coord + vec2(0, -1)),
+            getTile(coord + vec2(-1, 0)),
+            getTile(coord + vec2(0, 0))
+        };
+    int bioms[4] = neighbours;
+    sort4(bioms);
+
+    for (int i = 0; i < 4; i++) {
+        int base = bioms[i] * 15;
+        int mask = 0;
+        for (int n = 0; n < 4; n++) {
+            mask |= int(neighbours[n] == bioms[i]) * (1 << n);
+        }
+        gs_out.tileType[i] = base + mask;
+    }
+}
+
 uniform mat4 mvp;
-uniform float widthInv;
-uniform float heightInv;
+uniform float widthInv; // = 2 / width
+uniform float heightInv; // = 2 / height
 
 vec2 corners[4] = vec2[](
-        vec2(0.0, 0.0),
-        vec2(0.0, 1.0),
-        vec2(1.0, 0.0),
-        vec2(1.0, 1.0)
+        vec2(-.5, -.5),
+        vec2(-.5, 0.5),
+        vec2(0.5, -.5),
+        vec2(0.5, 0.5)
     );
 
 void main() {
     int i = gs_in[0].vertexID;
 
-    int tileType = int(grid[i]);
     vec2 coord = getCoord(i);
-
-    // tile types are determined by neighbours
-    gs_out.tileType[0] = tileType;
+    setBioms(i, coord);
 
     for (int i = 0; i < 4; i++) {
         vec4 pos = vec4(0, 0, 0, 1);
-        pos.x = widthInv * (coord.x + corners[i].x) - 1;
-        pos.y = heightInv * (coord.y + corners[i].y) - 1;
+        vec2 offset = vec2(
+                coord.x + corners[i].x,
+                coord.y + corners[i].y
+            );
+        pos.x = widthInv * offset.x - 1;
+        pos.y = heightInv * offset.y - 1;
         gl_Position = mvp * pos;
-        gs_out.uv = corners[i];
+        gs_out.uv = corners[i] + vec2(.5, .5);
         EmitVertex();
     }
 

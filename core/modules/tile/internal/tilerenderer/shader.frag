@@ -11,7 +11,8 @@ out vec4 fragColor;
 
 void main() {
     for (int i = 0; i < 4; i++) {
-        fragColor = texture(tex, vec3(fs.uv, fs.tileType[i]));
+        int type = fs.tileType[i];
+        fragColor = texture(tex, vec3(fs.uv, type));
         if (fragColor.a != 0) {
             break;
         }

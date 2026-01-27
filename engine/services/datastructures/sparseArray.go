@@ -8,6 +8,7 @@ type SparseArray[Index constraints.Integer, Value any] interface {
 	Get(index Index) (value Value, ok bool)
 	GetValues() []Value
 	GetIndices() []Index
+	Size() int
 	// if false then updated
 	Set(index Index, value Value) (added bool)
 	Remove(index Index) (removed bool)
@@ -47,6 +48,8 @@ func (a *sparseArray[Index, Value]) Get(index Index) (Value, bool) {
 
 func (a *sparseArray[Index, Value]) GetValues() []Value  { return a.Values }
 func (a *sparseArray[Index, Value]) GetIndices() []Index { return a.Indices }
+
+func (a *sparseArray[Index, Value]) Size() int { return len(a.Indices) }
 
 func (a *sparseArray[Index, Value]) Set(index Index, value Value) bool {
 	for int(index) >= len(a.ValuesIndices) {

@@ -61,14 +61,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, func(c ioc.Dic, b assets.AssetsStorageBuilder) {
 		b.RegisterExtension("biom", func(id assets.AssetID) (any, error) {
 			images := [6][]image.Image{}
-			suffixes := [6]string{
-				"1.png",
-				"2.png",
-				"3.png",
-				"4.png",
-				"5.png",
-				"6.png",
-			}
 			directory, _ := strings.CutSuffix(string(id), ".biom")
 
 			files, err := os.ReadDir(directory)
@@ -77,9 +69,10 @@ func (pkg pkg) Register(b ioc.Builder) {
 			}
 
 			for _, file := range files {
-				for i, suffix := range suffixes {
+				for i := range 6 {
 					name := file.Name()
-					if !strings.HasSuffix(name, suffix) {
+					if !strings.HasPrefix(name, fmt.Sprintf("%v.", i+1)) ||
+						!strings.HasSuffix(name, ".png") {
 						continue
 					}
 					file := fmt.Sprintf("%v/%v", directory, name)

@@ -102,10 +102,12 @@ func addScene(
 		rand := rand.New(rand.NewPCG(2077, 7137))
 		for i := range gridComponent.GetLastIndex() {
 			tileType := tile.TileGrass
-			switch rand.IntN(2) {
+			switch rand.IntN(3) {
 			case 0:
 				tileType = tile.TileGrass
 			case 1:
+				tileType = tile.TileWater
+			case 2:
 				tileType = tile.TileSand
 			}
 			gridComponent.SetTile(i, tile.Type(tileType))

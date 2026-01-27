@@ -31,16 +31,17 @@ type HudAssets struct {
 	Btn assets.AssetID `path:"hud/btn.png"`
 	// BtnAspectRatio mgl32.Vec3
 	Settings assets.AssetID `path:"hud/settings.png"`
+	Water    assets.AssetID `path:"tiles/water.png"`
 }
 
 type TileAssets struct {
 	Mountain assets.AssetID `path:"tiles/mountain.png"`
 	Ground   assets.AssetID `path:"tiles/ground.png"`
 	Forest   assets.AssetID `path:"tiles/forest.png"`
-	Water    assets.AssetID `path:"tiles/water.png"`
 
 	Grass assets.AssetID `path:"tiles/grass.biom"`
 	Sand  assets.AssetID `path:"tiles/sand.biom"`
+	Water assets.AssetID `path:"tiles/water.biom"`
 
 	Unit assets.AssetID `path:"tiles/u1.png"`
 }
@@ -96,8 +97,9 @@ func (pkg) Assets(b ioc.Builder) {
 	ioc.WrapService(b, func(c ioc.Dic, s tile.TileAssets) {
 		gameAssets := ioc.Get[GameAssets](c)
 		assets := datastructures.NewSparseArray[tile.Type, assets.AssetID]()
-		assets.Set(tile.TileGrass, gameAssets.Tiles.Grass)
 		assets.Set(tile.TileSand, gameAssets.Tiles.Sand)
+		assets.Set(tile.TileGrass, gameAssets.Tiles.Grass)
+		assets.Set(tile.TileWater, gameAssets.Tiles.Water)
 		s.AddType(assets)
 	})
 }

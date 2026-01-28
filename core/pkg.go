@@ -15,6 +15,7 @@ import (
 	menuscene "core/scenes/menu"
 	settingsscene "core/scenes/settings"
 	"engine/modules/audio/pkg"
+	"engine/modules/batcher/pkg"
 	"engine/modules/camera"
 	"engine/modules/camera/pkg"
 	"engine/modules/collider/pkg"
@@ -195,6 +196,7 @@ func getDic() ioc.Dic {
 		transformpkg.Package(),
 		hierarchypkg.Package(),
 		uuidpkg.Package(),
+		batcherpkg.Package(time.Second / 60),
 		connectionpkg.Package(),
 		netsyncpkg.Package(func() netsyncpkg.Config {
 			config := netsyncpkg.NewConfig(

@@ -33,7 +33,6 @@ import (
 	"engine/modules/record/pkg"
 	"engine/modules/render"
 	"engine/modules/render/pkg"
-	"engine/modules/renderer/pkg"
 	"engine/modules/scene/pkg"
 	"engine/modules/smooth/pkg"
 	"engine/modules/text"
@@ -148,7 +147,6 @@ func getDic() ioc.Dic {
 		camerapkg.Package(.01, 10),
 		colliderpkg.Package(),
 		dragpkg.Package(),
-		rendererpkg.Package(),
 		groupspkg.Package(),
 		inputspkg.Package(),
 		renderpkg.Package(),

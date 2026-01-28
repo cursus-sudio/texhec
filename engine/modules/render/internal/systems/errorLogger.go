@@ -1,7 +1,8 @@
-package internal
+package systems
 
 import (
 	"engine/modules/render"
+	"engine/modules/render/internal/service"
 	"engine/services/ecs"
 	"engine/services/frames"
 	"engine/services/logger"
@@ -28,6 +29,6 @@ func NewErrorLogger(c ioc.Dic) render.System {
 
 func (logger *errorLogger) Listen(args frames.FrameEvent) {
 	if glErr := gl.GetError(); glErr != gl.NO_ERROR {
-		logger.Logger.Warn(fmt.Errorf("opengl error: %x %s", glErr, glErrorStrings[glErr]))
+		logger.Logger.Warn(fmt.Errorf("opengl error: %x %s", glErr, service.GlErrorStrings[glErr]))
 	}
 }

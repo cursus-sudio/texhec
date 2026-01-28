@@ -1,4 +1,4 @@
-package internal
+package service
 
 import (
 	"engine/modules/render"
@@ -15,6 +15,9 @@ type service struct {
 	meshArray         ecs.ComponentsArray[render.MeshComponent]
 	textureArray      ecs.ComponentsArray[render.TextureComponent]
 	textureFrameArray ecs.ComponentsArray[render.TextureFrameComponent]
+
+	directArray     ecs.ComponentsArray[render.DirectComponent]
+	instancingArray ecs.ComponentsArray[render.InstancingComponent]
 }
 
 func NewService(c ioc.Dic) render.Service {
@@ -23,12 +26,15 @@ func NewService(c ioc.Dic) render.Service {
 	s.meshArray = ecs.GetComponentsArray[render.MeshComponent](s.World)
 	s.textureArray = ecs.GetComponentsArray[render.TextureComponent](s.World)
 	s.textureFrameArray = ecs.GetComponentsArray[render.TextureFrameComponent](s.World)
+
+	s.directArray = ecs.GetComponentsArray[render.DirectComponent](s.World)
+	s.instancingArray = ecs.GetComponentsArray[render.InstancingComponent](s.World)
 	return s
 }
 
 //
 
-var glErrorStrings = map[uint32]string{
+var GlErrorStrings = map[uint32]string{
 	gl.NO_ERROR:                      "GL_NO_ERROR",
 	gl.INVALID_ENUM:                  "GL_INVALID_ENUM",
 	gl.INVALID_VALUE:                 "GL_INVALID_VALUE",
@@ -54,9 +60,20 @@ func (t *service) TextureFrame() ecs.ComponentsArray[render.TextureFrameComponen
 	return t.textureFrameArray
 }
 
+func (t *service) Direct() ecs.ComponentsArray[render.DirectComponent] {
+	return t.directArray
+}
+func (t *service) Instancing() ecs.ComponentsArray[render.InstancingComponent] {
+	return t.instancingArray
+}
+func (t *service) Render(entity ecs.EntityID) {
+	// when instancing will be working change this to instancing by default
+	t.directArray.Set(entity, render.DirectComponent{})
+}
+
 func (*service) Error() error {
 	if glErr := gl.GetError(); glErr != gl.NO_ERROR {
-		return fmt.Errorf("opengl error: %x %s", glErr, glErrorStrings[glErr])
+		return fmt.Errorf("opengl error: %x %s", glErr, GlErrorStrings[glErr])
 	}
 	return nil
 }

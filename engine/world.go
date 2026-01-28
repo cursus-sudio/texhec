@@ -13,7 +13,6 @@ import (
 	"engine/modules/netsync"
 	"engine/modules/record"
 	"engine/modules/render"
-	"engine/modules/renderer"
 	"engine/modules/text"
 	"engine/modules/transform"
 	"engine/modules/transition"
@@ -33,7 +32,6 @@ type World struct {
 	Camera     camera.Service     `inject:"1"`
 	Collider   collider.Service   `inject:"1"`
 	Connection connection.Service `inject:"1"`
-	Renderer   renderer.Service   `inject:"1"`
 	Groups     groups.Service     `inject:"1"`
 	Hierarchy  hierarchy.Service  `inject:"1"`
 	Inputs     inputs.Service     `inject:"1"`

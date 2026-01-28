@@ -2,6 +2,7 @@ package engine
 
 import (
 	"engine/modules/audio"
+	"engine/modules/batcher"
 	"engine/modules/camera"
 	"engine/modules/collider"
 	"engine/modules/connection"
@@ -28,6 +29,7 @@ import (
 type World struct {
 	ecs.World       `inject:"1"`
 	Audio           audio.Service           `inject:"1"`
+	Batcher         batcher.Service         `inject:"1"`
 	Camera          camera.Service          `inject:"1"`
 	Collider        collider.Service        `inject:"1"`
 	Connection      connection.Service      `inject:"1"`

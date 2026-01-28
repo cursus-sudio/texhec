@@ -6,6 +6,7 @@ import (
 	"core/modules/tile"
 	"core/modules/ui"
 	gamescenes "core/scenes"
+	"engine/modules/batcher"
 	"engine/modules/camera"
 	"engine/modules/collider"
 	"engine/modules/connection"
@@ -21,6 +22,7 @@ import (
 	"engine/services/ecs"
 	"errors"
 	"math/rand/v2"
+	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
@@ -49,6 +51,17 @@ func addScene(
 	// biggest zoom out in factorio is 448x256 (in 4k)
 	rows := 1000
 	cols := 1000
+
+	taskFactory := world.Batcher.NewTask()
+	taskFactory.AddBatch(batcher.NewBatch(1000, func(i int) {
+		time.Sleep(time.Millisecond)
+		world.Logger.Info("finished %v", i)
+	}))
+	taskFactory.AddBatch(batcher.NewBatch(1000, func(i int) {
+		time.Sleep(time.Millisecond)
+		world.Logger.Info("finished %v", i)
+	}))
+	world.Batcher.Queue(taskFactory.Build())
 
 	uiCamera := world.NewEntity()
 	world.Hierarchy.SetParent(uiCamera, sceneParent)

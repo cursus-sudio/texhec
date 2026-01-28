@@ -7,6 +7,7 @@ import (
 	"core/modules/ui"
 	"engine"
 	"engine/modules/audio"
+	"engine/modules/batcher"
 	"engine/modules/camera"
 	"engine/modules/connection"
 	"engine/modules/drag"
@@ -126,6 +127,7 @@ func (pkg) Register(b ioc.Builder) {
 				// } (update)
 				ioc.Get[smooth.StopSystem](c),
 				ioc.Get[netsync.StopSystem](c),
+				ioc.Get[batcher.System](c),
 
 				// audio
 				ioc.Get[audio.System](c),

@@ -7,5 +7,5 @@ import (
 type System ecs.SystemRegister
 
 type Service interface {
-	Pipeline() ecs.ComponentsArray[PipelineComponent]
+	Direct() ecs.ComponentsArray[DirectComponent]
 }

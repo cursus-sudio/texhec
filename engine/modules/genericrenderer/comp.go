@@ -8,4 +8,4 @@ type Vertex struct {
 	// vertexGroups (for animation) []VertexGroupWeight {Name string; weight float32} (weights should add up to one)
 }
 
-type PipelineComponent struct{}
+type DirectComponent struct{}

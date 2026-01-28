@@ -1,4 +1,4 @@
-package renderer
+package direct
 
 import (
 	"engine/modules/genericrenderer"
@@ -10,15 +10,15 @@ import (
 type service struct {
 	World ecs.World `inject:"1"`
 
-	pipelineArray ecs.ComponentsArray[genericrenderer.PipelineComponent]
+	pipelineArray ecs.ComponentsArray[genericrenderer.DirectComponent]
 }
 
 func NewService(c ioc.Dic) genericrenderer.Service {
 	t := ioc.GetServices[*service](c)
-	t.pipelineArray = ecs.GetComponentsArray[genericrenderer.PipelineComponent](t.World)
+	t.pipelineArray = ecs.GetComponentsArray[genericrenderer.DirectComponent](t.World)
 	return t
 }
 
-func (t *service) Pipeline() ecs.ComponentsArray[genericrenderer.PipelineComponent] {
+func (t *service) Direct() ecs.ComponentsArray[genericrenderer.DirectComponent] {
 	return t.pipelineArray
 }

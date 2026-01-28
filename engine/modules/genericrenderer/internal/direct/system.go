@@ -1,4 +1,4 @@
-package renderer
+package direct
 
 import (
 	_ "embed"
@@ -176,7 +176,7 @@ func (m *system) Listen(render.RenderEvent) error {
 			cameraGroups = groups.DefaultGroups()
 		}
 
-		for _, entity := range m.GenericRenderer.Pipeline().GetEntities() {
+		for _, entity := range m.GenericRenderer.Direct().GetEntities() {
 			entityGroups, ok := m.Groups.Component().Get(entity)
 			if !ok {
 				entityGroups = groups.DefaultGroups()

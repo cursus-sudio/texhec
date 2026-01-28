@@ -75,7 +75,7 @@ func (t *service) Init() error {
 	t.Render.Color().Set(menu, render.NewColor(mgl32.Vec4{1, 1, 1, .5}))
 	t.Render.Mesh().Set(menu, render.NewMesh(t.GameAssets.SquareMesh))
 	t.Render.Texture().Set(menu, render.NewTexture(t.GameAssets.Hud.Background))
-	t.GenericRenderer.Pipeline().Set(menu, genericrenderer.PipelineComponent{})
+	t.GenericRenderer.Direct().Set(menu, genericrenderer.DirectComponent{})
 
 	t.Groups.Inherit().Set(menu, groups.InheritGroupsComponent{})
 	t.Collider.Component().Set(menu, collider.NewCollider(t.GameAssets.SquareCollider))
@@ -99,7 +99,7 @@ func (t *service) Init() error {
 	t.Render.Color().Set(quit, render.NewColor(mgl32.Vec4{1, 0, 0, 1}))
 	t.Render.Mesh().Set(quit, render.NewMesh(t.GameAssets.SquareMesh))
 	t.Render.Texture().Set(quit, render.NewTexture(t.GameAssets.Hud.Background))
-	t.GenericRenderer.Pipeline().Set(quit, genericrenderer.PipelineComponent{})
+	t.GenericRenderer.Direct().Set(quit, genericrenderer.DirectComponent{})
 
 	t.Inputs.LeftClick().Set(quit, inputs.NewLeftClick(ui.HideUiEvent{}))
 	t.Inputs.KeepSelected().Set(quit, inputs.KeepSelectedComponent{})

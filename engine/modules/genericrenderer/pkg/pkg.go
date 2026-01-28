@@ -2,7 +2,7 @@ package genericrendererpkg
 
 import (
 	"engine/modules/genericrenderer"
-	"engine/modules/genericrenderer/internal/renderer"
+	"engine/modules/genericrenderer/internal/direct"
 	"engine/services/graphics/vao/vbo"
 	"unsafe"
 
@@ -33,10 +33,10 @@ func (pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) genericrenderer.System {
-		return renderer.NewSystem(c)
+		return direct.NewSystem(c)
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) genericrenderer.Service {
-		return renderer.NewService(c)
+		return direct.NewService(c)
 	})
 }

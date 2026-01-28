@@ -20,10 +20,7 @@ layout(std430, binding = 0) buffer Grid {
 };
 
 layout(std430, binding = 1) buffer TileTextures {
-    int tileTextures[];
-};
-layout(std430, binding = 2) buffer TileTexturesSize {
-    int tileTexturesSize[];
+    vec2 tileTextures[]; // [index, amount]
 };
 
 uniform uint width;
@@ -49,7 +46,7 @@ int getTile(int index) {
 }
 
 int getTexture(int seed, int i) {
-    return tileTextures[i] + seed % tileTexturesSize[i];
+    return int(tileTextures[i].x) + seed % int(tileTextures[i].y);
 }
 
 int seed(int num) {

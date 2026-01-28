@@ -14,6 +14,7 @@ import (
 	"image"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 //go:embed shader.vert
@@ -43,13 +44,13 @@ type system struct {
 	engine.World `inject:"1"`
 	Tile         tile.Service `inject:"1"`
 
-	program            program.Program
-	locations          locations
-	ids                datastructures.SparseArray[tile.Type, uint32]
-	textureArray       texturearray.TextureArray
-	texturesBuffer     buffers.Buffer[int32]
-	texturesSizeBuffer buffers.Buffer[int32]
-	vao                vao.VAO
+	program        program.Program
+	locations      locations
+	ids            datastructures.SparseArray[tile.Type, uint32]
+	textureArray   texturearray.TextureArray
+	texturesBuffer buffers.Buffer[mgl32.Vec2] // [index, amount]
+	// texturesSizeBuffer buffers.Buffer[int32]
+	vao vao.VAO
 
 	dirtySet ecs.DirtySet
 	batches  datastructures.SparseArray[ecs.EntityID, Batch]
@@ -106,7 +107,6 @@ func (s *system) Listen(render.RenderEvent) {
 	// render
 	w, h := s.Window.Window().GetSize()
 	gl.BindBuffer(gl.SHADER_STORAGE_BUFFER, s.texturesBuffer.ID())
-	gl.BindBuffer(gl.SHADER_STORAGE_BUFFER, s.texturesSizeBuffer.ID())
 	defer func() { gl.Viewport(0, 0, w, h) }()
 
 	s.program.Use()

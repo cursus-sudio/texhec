@@ -23,6 +23,7 @@ func (r TextureArray) Use() {
 
 type Factory interface {
 	New(images datastructures.SparseArray[uint32, image.Image]) (TextureArray, error)
+	NewFromSlice([]image.Image) (TextureArray, error)
 	Wrap(wrapper func(TextureArray))
 }
 
@@ -62,6 +63,14 @@ func (f *factory) New(asset datastructures.SparseArray[uint32, image.Image]) (Te
 	}
 
 	return textureArray, nil
+}
+
+func (f *factory) NewFromSlice(images []image.Image) (TextureArray, error) {
+	arr := datastructures.NewSparseArray[uint32, image.Image]()
+	for i, image := range images {
+		arr.Set(uint32(i), image)
+	}
+	return f.New(arr)
 }
 
 func (f *factory) Wrap(wrapper func(TextureArray)) {

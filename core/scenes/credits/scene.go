@@ -6,7 +6,6 @@ import (
 	"engine/modules/camera"
 	"engine/modules/collider"
 	"engine/modules/drag"
-	"engine/modules/genericrenderer"
 	"engine/modules/inputs"
 	"engine/modules/render"
 	"engine/modules/scene"
@@ -54,7 +53,7 @@ func (pkg) Register(b ioc.Builder) {
 			world.Transform.ParentPivotPoint().Set(background, transform.NewParentPivotPoint(.5, .5, .5))
 			world.Render.Mesh().Set(background, render.NewMesh(gameAssets.SquareMesh))
 			world.Render.Texture().Set(background, render.NewTexture(gameAssets.Hud.Background))
-			world.GenericRenderer.Direct().Set(background, genericrenderer.DirectComponent{})
+			world.Renderer.Render(background)
 
 			buttonArea := world.NewEntity()
 			world.Hierarchy.SetParent(buttonArea, cameraEntity)
@@ -67,7 +66,7 @@ func (pkg) Register(b ioc.Builder) {
 			world.Render.Color().Set(draggable, render.NewColor(mgl32.Vec4{0, 1, 0, .2}))
 			world.Render.Mesh().Set(draggable, render.NewMesh(gameAssets.SquareMesh))
 			world.Render.Texture().Set(draggable, render.NewTexture(gameAssets.Hud.Btn))
-			world.GenericRenderer.Direct().Set(draggable, genericrenderer.DirectComponent{})
+			world.Renderer.Render(draggable)
 
 			world.Collider.Component().Set(draggable, collider.NewCollider(gameAssets.SquareCollider))
 			world.Inputs.Drag().Set(draggable, inputs.NewDragComponent(drag.NewDraggable(draggable)))
@@ -93,7 +92,7 @@ func (pkg) Register(b ioc.Builder) {
 
 			world.Render.Mesh().Set(btn, render.NewMesh(gameAssets.SquareMesh))
 			world.Render.Texture().Set(btn, render.NewTexture(gameAssets.Hud.Btn))
-			world.GenericRenderer.Direct().Set(btn, genericrenderer.DirectComponent{})
+			world.Renderer.Render(btn)
 
 			world.Inputs.LeftClick().Set(btn, inputs.NewLeftClick(scene.NewChangeSceneEvent(gamescenes.MenuID)))
 			world.Inputs.KeepSelected().Set(btn, inputs.KeepSelectedComponent{})

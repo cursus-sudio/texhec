@@ -3,9 +3,9 @@ package direct
 import (
 	_ "embed"
 	"engine/modules/camera"
-	"engine/modules/genericrenderer"
 	"engine/modules/groups"
 	"engine/modules/render"
+	"engine/modules/renderer"
 	"engine/modules/transform"
 	"engine/services/assets"
 	"engine/services/ecs"
@@ -46,19 +46,19 @@ type textureKey struct {
 //
 
 type system struct {
-	EventsBuilder   events.Builder          `inject:"1"`
-	World           ecs.World               `inject:"1"`
-	GenericRenderer genericrenderer.Service `inject:"1"`
-	Render          render.Service          `inject:"1"`
-	Camera          camera.Service          `inject:"1"`
-	Groups          groups.Service          `inject:"1"`
-	Transform       transform.Service       `inject:"1"`
+	EventsBuilder   events.Builder    `inject:"1"`
+	World           ecs.World         `inject:"1"`
+	GenericRenderer renderer.Service  `inject:"1"`
+	Render          render.Service    `inject:"1"`
+	Camera          camera.Service    `inject:"1"`
+	Groups          groups.Service    `inject:"1"`
+	Transform       transform.Service `inject:"1"`
 
-	Window         window.Api                             `inject:"1"`
-	AssetsStorage  assets.AssetsStorage                   `inject:"1"`
-	Logger         logger.Logger                          `inject:"1"`
-	VboFactory     vbo.VBOFactory[genericrenderer.Vertex] `inject:"1"`
-	TextureFactory gtexture.Factory                       `inject:"1"`
+	Window         window.Api                      `inject:"1"`
+	AssetsStorage  assets.AssetsStorage            `inject:"1"`
+	Logger         logger.Logger                   `inject:"1"`
+	VboFactory     vbo.VBOFactory[renderer.Vertex] `inject:"1"`
+	TextureFactory gtexture.Factory                `inject:"1"`
 
 	texturesImagesCount map[render.TextureComponent]int
 	textures            map[textureKey]gtexture.Texture
@@ -67,7 +67,7 @@ type system struct {
 	locations           locations
 }
 
-func NewSystem(c ioc.Dic) genericrenderer.System {
+func NewSystem(c ioc.Dic) renderer.System {
 	return ecs.NewSystemRegister(func() error {
 		vert, err := shader.NewShader(vertSource, shader.VertexShader)
 		if err != nil {
@@ -153,7 +153,7 @@ func (m *system) getMesh(asset assets.AssetID) (vao.VAO, error) {
 	if mesh, ok := m.meshes[asset]; ok {
 		return mesh, nil
 	}
-	meshAsset, err := assets.StorageGet[render.MeshAsset[genericrenderer.Vertex]](m.AssetsStorage, asset)
+	meshAsset, err := assets.StorageGet[render.MeshAsset[renderer.Vertex]](m.AssetsStorage, asset)
 	if err != nil {
 		return nil, err
 	}

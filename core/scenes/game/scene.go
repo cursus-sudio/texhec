@@ -10,7 +10,6 @@ import (
 	"engine/modules/camera"
 	"engine/modules/collider"
 	"engine/modules/connection"
-	"engine/modules/genericrenderer"
 	"engine/modules/grid"
 	"engine/modules/groups"
 	"engine/modules/inputs"
@@ -103,7 +102,7 @@ func addScene(
 
 	world.Render.Mesh().Set(settingsEntity, render.NewMesh(gameAssets.SquareMesh))
 	world.Render.Texture().Set(settingsEntity, render.NewTexture(gameAssets.Hud.Settings))
-	world.GenericRenderer.Direct().Set(settingsEntity, genericrenderer.DirectComponent{})
+	world.Renderer.Render(settingsEntity)
 
 	world.Inputs.LeftClick().Set(settingsEntity, inputs.NewLeftClick(settings.EnterSettingsEvent{}))
 	world.Inputs.KeepSelected().Set(settingsEntity, inputs.KeepSelectedComponent{})

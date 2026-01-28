@@ -11,10 +11,10 @@ import (
 	"engine/modules/camera"
 	"engine/modules/connection"
 	"engine/modules/drag"
-	"engine/modules/genericrenderer"
 	"engine/modules/inputs"
 	"engine/modules/netsync"
 	"engine/modules/render"
+	"engine/modules/renderer"
 	"engine/modules/scene"
 	"engine/modules/smooth"
 	"engine/modules/text"
@@ -135,7 +135,7 @@ func (pkg) Register(b ioc.Builder) {
 				// render
 				ioc.Get[render.System](c),
 				ioc.Get[tile.SystemRenderer](c),
-				ioc.Get[genericrenderer.System](c),
+				ioc.Get[renderer.System](c),
 				ioc.Get[text.System](c),
 				ioc.Get[fpslogger.System](c),
 			)

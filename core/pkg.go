@@ -22,7 +22,6 @@ import (
 	"engine/modules/connection/pkg"
 	"engine/modules/drag"
 	"engine/modules/drag/pkg"
-	"engine/modules/genericrenderer/pkg"
 	"engine/modules/grid"
 	"engine/modules/groups/pkg"
 	"engine/modules/hierarchy/pkg"
@@ -34,6 +33,7 @@ import (
 	"engine/modules/record/pkg"
 	"engine/modules/render"
 	"engine/modules/render/pkg"
+	"engine/modules/renderer/pkg"
 	"engine/modules/scene/pkg"
 	"engine/modules/smooth/pkg"
 	"engine/modules/text"
@@ -148,7 +148,7 @@ func getDic() ioc.Dic {
 		camerapkg.Package(.01, 10),
 		colliderpkg.Package(),
 		dragpkg.Package(),
-		genericrendererpkg.Package(),
+		rendererpkg.Package(),
 		groupspkg.Package(),
 		inputspkg.Package(),
 		renderpkg.Package(),

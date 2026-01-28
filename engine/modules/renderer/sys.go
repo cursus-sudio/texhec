@@ -1,4 +1,4 @@
-package genericrenderer
+package renderer
 
 import (
 	"engine/services/ecs"
@@ -7,5 +7,8 @@ import (
 type System ecs.SystemRegister
 
 type Service interface {
+	// adds default render component
+	Render(ecs.EntityID)
+
 	Direct() ecs.ComponentsArray[DirectComponent]
 }

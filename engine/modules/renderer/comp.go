@@ -1,4 +1,4 @@
-package genericrenderer
+package renderer
 
 type Vertex struct {
 	Pos [3]float32

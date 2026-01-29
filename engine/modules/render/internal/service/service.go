@@ -16,9 +16,6 @@ type service struct {
 	meshArray         ecs.ComponentsArray[render.MeshComponent]
 	textureArray      ecs.ComponentsArray[render.TextureComponent]
 	textureFrameArray ecs.ComponentsArray[render.TextureFrameComponent]
-
-	// directArray     ecs.ComponentsArray[render.DirectComponent]
-	// instancingArray ecs.ComponentsArray[render.InstancingComponent]
 }
 
 func NewService(c ioc.Dic) render.Service {
@@ -27,9 +24,6 @@ func NewService(c ioc.Dic) render.Service {
 	s.meshArray = ecs.GetComponentsArray[render.MeshComponent](s.World)
 	s.textureArray = ecs.GetComponentsArray[render.TextureComponent](s.World)
 	s.textureFrameArray = ecs.GetComponentsArray[render.TextureFrameComponent](s.World)
-
-	// s.directArray = ecs.GetComponentsArray[render.DirectComponent](s.World)
-	// s.instancingArray = ecs.GetComponentsArray[render.InstancingComponent](s.World)
 
 	// defaults
 	s.colorArray.SetEmpty(render.NewColor(mgl32.Vec4{1, 1, 1, 1}))
@@ -66,18 +60,6 @@ func (t *service) Texture() ecs.ComponentsArray[render.TextureComponent] {
 }
 func (t *service) TextureFrame() ecs.ComponentsArray[render.TextureFrameComponent] {
 	return t.textureFrameArray
-}
-
-//	func (t *service) Direct() ecs.ComponentsArray[render.DirectComponent] {
-//		return t.directArray
-//	}
-//
-//	func (t *service) Instancing() ecs.ComponentsArray[render.InstancingComponent] {
-//		return t.instancingArray
-//	}
-func (t *service) Render(entity ecs.EntityID) {
-	// when instancing will be working change this to instancing by default
-	// t.directArray.Set(entity, render.DirectComponent{})
 }
 
 func (*service) Error() error {

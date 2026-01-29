@@ -102,7 +102,6 @@ func addScene(
 
 	world.Render.Mesh().Set(settingsEntity, render.NewMesh(gameAssets.SquareMesh))
 	world.Render.Texture().Set(settingsEntity, render.NewTexture(gameAssets.Hud.Settings))
-	world.Render.Render(settingsEntity)
 
 	world.Inputs.LeftClick().Set(settingsEntity, inputs.NewLeftClick(settings.EnterSettingsEvent{}))
 	world.Inputs.KeepSelected().Set(settingsEntity, inputs.KeepSelectedComponent{})

@@ -130,6 +130,7 @@ func (pkg) Register(b ioc.Builder) {
 
 				// audio
 				ioc.Get[audio.System](c),
+				ioc.Get[inputs.ShutdownSystem](c), // after batcher and before render system
 
 				// render
 				ioc.Get[render.System](c),

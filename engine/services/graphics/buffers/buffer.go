@@ -11,6 +11,7 @@ import (
 
 type Buffer[Stored comparable] interface {
 	ID() uint32
+	Bind()
 	Get() []Stored
 	Add(elements ...Stored)
 	Set(index int, e Stored)
@@ -50,6 +51,10 @@ func NewBuffer[Stored comparable](
 }
 
 func (s *buffer[Stored]) ID() uint32 { return s.buffer }
+
+func (s *buffer[Stored]) Bind() {
+	gl.BindBuffer(s.target, s.ID())
+}
 
 func (s *buffer[Stored]) CheckBufferSize() bool {
 	elementsCount := len(s.Get())

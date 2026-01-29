@@ -14,10 +14,6 @@ func NewColor(color mgl32.Vec4) ColorComponent {
 	}
 }
 
-func DefaultColor() ColorComponent {
-	return NewColor(mgl32.Vec4{1, 1, 1, 1})
-}
-
 func (c1 ColorComponent) Lerp(c2 ColorComponent, mix32 float32) ColorComponent {
 	return ColorComponent{c1.Color.Mul(1 - mix32).Add(c2.Color.Mul(mix32))}
 }

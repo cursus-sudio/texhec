@@ -3,7 +3,6 @@ package gameassets
 import (
 	"core/modules/tile"
 	"engine/modules/collider"
-	"engine/modules/genericrenderer"
 	"engine/modules/render"
 	"engine/modules/transition"
 	"engine/services/assets"
@@ -52,7 +51,7 @@ func (pkg) Assets(b ioc.Builder) {
 	ioc.WrapService(b, func(c ioc.Dic, b assets.AssetsStorageBuilder) {
 		gameAssets := ioc.Get[GameAssets](c)
 		b.RegisterAsset(gameAssets.SquareMesh, func() (any, error) {
-			vertices := []genericrenderer.Vertex{
+			vertices := []render.Vertex{
 				{Pos: [3]float32{1, 1, 1}, TexturePos: [2]float32{1, 1}},
 				{Pos: [3]float32{1, -1, 1}, TexturePos: [2]float32{1, 0}},
 				{Pos: [3]float32{-1, -1, 1}, TexturePos: [2]float32{0, 0}},

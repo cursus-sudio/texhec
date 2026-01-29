@@ -1,4 +1,4 @@
-package internal
+package service
 
 import (
 	"engine/modules/render"
@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -23,12 +24,19 @@ func NewService(c ioc.Dic) render.Service {
 	s.meshArray = ecs.GetComponentsArray[render.MeshComponent](s.World)
 	s.textureArray = ecs.GetComponentsArray[render.TextureComponent](s.World)
 	s.textureFrameArray = ecs.GetComponentsArray[render.TextureFrameComponent](s.World)
+
+	// defaults
+	s.colorArray.SetEmpty(render.NewColor(mgl32.Vec4{1, 1, 1, 1}))
+	// no default mesh
+	// no default texture
+	s.textureFrameArray.SetEmpty(render.NewTextureFrameComponent(0))
+
 	return s
 }
 
 //
 
-var glErrorStrings = map[uint32]string{
+var GlErrorStrings = map[uint32]string{
 	gl.NO_ERROR:                      "GL_NO_ERROR",
 	gl.INVALID_ENUM:                  "GL_INVALID_ENUM",
 	gl.INVALID_VALUE:                 "GL_INVALID_VALUE",
@@ -56,7 +64,7 @@ func (t *service) TextureFrame() ecs.ComponentsArray[render.TextureFrameComponen
 
 func (*service) Error() error {
 	if glErr := gl.GetError(); glErr != gl.NO_ERROR {
-		return fmt.Errorf("opengl error: %x %s", glErr, glErrorStrings[glErr])
+		return fmt.Errorf("opengl error: %x %s", glErr, GlErrorStrings[glErr])
 	}
 	return nil
 }

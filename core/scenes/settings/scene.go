@@ -5,7 +5,6 @@ import (
 	"core/modules/settings"
 	gamescenes "core/scenes"
 	"engine/modules/camera"
-	"engine/modules/genericrenderer"
 	"engine/modules/layout"
 	"engine/modules/render"
 	"engine/modules/text"
@@ -48,7 +47,6 @@ func (pkg) Register(b ioc.Builder) {
 			world.Transform.Parent().Set(background, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
 			world.Render.Mesh().Set(background, render.NewMesh(gameassets.SquareMesh))
 			world.Render.Texture().Set(background, render.NewTexture(gameassets.Hud.Background))
-			world.GenericRenderer.Pipeline().Set(background, genericrenderer.PipelineComponent{})
 
 			buttonArea := world.NewEntity()
 			world.Transform.Size().Set(buttonArea, transform.NewSize(500, 200, 1))

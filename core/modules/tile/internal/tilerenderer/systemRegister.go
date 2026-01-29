@@ -14,6 +14,7 @@ import (
 	"image"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
@@ -27,7 +28,7 @@ type TileRenderSystemRegister struct {
 
 	C            ioc.Dic
 	ids          datastructures.SparseArray[tile.Type, uint32]
-	tileTextures datastructures.SparseArray[uint32, [2]int32]
+	tileTextures datastructures.SparseArray[uint32, mgl32.Vec2]
 	textures     datastructures.SparseArray[uint32, image.Image]
 }
 
@@ -35,7 +36,7 @@ func NewTileRenderSystemRegister(c ioc.Dic) *TileRenderSystemRegister {
 	s := ioc.GetServices[*TileRenderSystemRegister](c)
 	s.C = c
 	s.ids = datastructures.NewSparseArray[tile.Type, uint32]()
-	s.tileTextures = datastructures.NewSparseArray[uint32, [2]int32]()
+	s.tileTextures = datastructures.NewSparseArray[uint32, mgl32.Vec2]()
 	s.textures = datastructures.NewSparseArray[uint32, image.Image]()
 	return s
 }
@@ -54,7 +55,7 @@ func (service *TileRenderSystemRegister) AddType(addedAssets datastructures.Spar
 		rangeBase := id*15 + 1
 		for i, images := range texture.Images() {
 			size := service.textures.Size()
-			tileRange := [2]int32{int32(size), int32(len(images))}
+			tileRange := mgl32.Vec2{float32(size), float32(len(images))}
 			service.tileTextures.Set(rangeBase+uint32(i), tileRange)
 
 			imageBase := size
@@ -117,22 +118,12 @@ func (factory *TileRenderSystemRegister) Register() error {
 
 	var buffer uint32
 	gl.GenBuffers(1, &buffer)
-	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, buffer)
-	s.texturesBuffer = buffers.NewBuffer[int32](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
+	s.texturesBuffer = buffers.NewBuffer[mgl32.Vec2](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
 	for _, id := range factory.tileTextures.GetIndices() {
 		value, _ := factory.tileTextures.Get(id)
-		s.texturesBuffer.Set(int(id), value[0])
+		s.texturesBuffer.Set(int(id), value)
 	}
 	s.texturesBuffer.Flush()
-
-	gl.GenBuffers(1, &buffer)
-	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 2, buffer)
-	s.texturesSizeBuffer = buffers.NewBuffer[int32](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
-	for _, id := range factory.tileTextures.GetIndices() {
-		value, _ := factory.tileTextures.Get(id)
-		s.texturesSizeBuffer.Set(int(id), value[1])
-	}
-	s.texturesSizeBuffer.Flush()
 
 	s.dirtySet = dirtySet
 	s.batches = datastructures.NewSparseArray[ecs.EntityID, Batch]()

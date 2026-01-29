@@ -5,7 +5,6 @@ import (
 	gamescenes "core/scenes"
 	"engine/modules/camera"
 	"engine/modules/collider"
-	"engine/modules/genericrenderer"
 	"engine/modules/inputs"
 	"engine/modules/layout"
 	"engine/modules/render"
@@ -59,7 +58,6 @@ func (pkg) Register(b ioc.Builder) {
 			world.Transform.ParentPivotPoint().Set(background, transform.NewParentPivotPoint(.5, .5, 0))
 			world.Render.Mesh().Set(background, render.NewMesh(gameAssets.SquareMesh))
 			world.Render.Texture().Set(background, render.NewTexture(gameAssets.Hud.Background))
-			world.GenericRenderer.Pipeline().Set(background, genericrenderer.PipelineComponent{})
 			world.Transition.Easing().Set(background, transition.NewEasing(gameassets.MyEasingFunction))
 			events.Emit(world.Events, transition.NewTransitionEvent(
 				background,
@@ -105,7 +103,6 @@ func (pkg) Register(b ioc.Builder) {
 				world.Render.Mesh().Set(btn, render.NewMesh(gameAssets.SquareMesh))
 				world.Render.Texture().Set(btn, render.NewTexture(gameAssets.Hud.Btn))
 				world.Render.TextureFrame().Set(btn, render.NewTextureFrameComponent(1))
-				world.GenericRenderer.Pipeline().Set(btn, genericrenderer.PipelineComponent{})
 
 				world.Inputs.LeftClick().Set(btn, inputs.NewLeftClick(button.OnClick))
 				world.Collider.Component().Set(btn, collider.NewCollider(gameAssets.SquareCollider))

@@ -14,6 +14,7 @@ import (
 	"image"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 //go:embed shader.vert
@@ -43,13 +44,13 @@ type system struct {
 	engine.World `inject:"1"`
 	Tile         tile.Service `inject:"1"`
 
-	program            program.Program
-	locations          locations
-	ids                datastructures.SparseArray[tile.Type, uint32]
-	textureArray       texturearray.TextureArray
-	texturesBuffer     buffers.Buffer[int32]
-	texturesSizeBuffer buffers.Buffer[int32]
-	vao                vao.VAO
+	program        program.Program
+	locations      locations
+	ids            datastructures.SparseArray[tile.Type, uint32]
+	textureArray   texturearray.TextureArray
+	texturesBuffer buffers.Buffer[mgl32.Vec2] // [index, amount]
+	// texturesSizeBuffer buffers.Buffer[int32]
+	vao vao.VAO
 
 	dirtySet ecs.DirtySet
 	batches  datastructures.SparseArray[ecs.EntityID, Batch]
@@ -82,7 +83,6 @@ func (s *system) Listen(render.RenderEvent) {
 		if !batchOk && compOk {
 			var buffer uint32
 			gl.GenBuffers(1, &buffer)
-			gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, buffer)
 
 			batch = Batch{
 				buffers.NewBuffer[int32](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer),
@@ -105,8 +105,8 @@ func (s *system) Listen(render.RenderEvent) {
 
 	// render
 	w, h := s.Window.Window().GetSize()
-	gl.BindBuffer(gl.SHADER_STORAGE_BUFFER, s.texturesBuffer.ID())
-	gl.BindBuffer(gl.SHADER_STORAGE_BUFFER, s.texturesSizeBuffer.ID())
+	s.texturesBuffer.Bind()
+	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, s.texturesBuffer.ID())
 	defer func() { gl.Viewport(0, 0, w, h) }()
 
 	s.program.Use()
@@ -117,7 +117,8 @@ func (s *system) Listen(render.RenderEvent) {
 		if !ok {
 			continue
 		}
-		gl.BindBuffer(gl.SHADER_STORAGE_BUFFER, batch.buffer.ID())
+		batch.buffer.Bind()
+		gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, batch.buffer.ID())
 
 		grid, _ := s.Tile.Grid().Get(entity)
 

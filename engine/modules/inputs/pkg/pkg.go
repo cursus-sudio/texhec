@@ -50,7 +50,6 @@ func (pkg) Register(b ioc.Builder) {
 			ecs.RegisterSystems(
 				systems.NewInputsSystem(c),
 				systems.NewResizeSystem(c),
-				systems.NewQuitSystem(c),
 
 				ecs.NewSystemRegister(func() error {
 					eventsBuilder := ioc.Get[events.Builder](c)
@@ -74,5 +73,8 @@ func (pkg) Register(b ioc.Builder) {
 			)
 			return nil
 		})
+	})
+	ioc.RegisterSingleton(b, func(c ioc.Dic) inputs.ShutdownSystem {
+		return systems.NewQuitSystem(c)
 	})
 }

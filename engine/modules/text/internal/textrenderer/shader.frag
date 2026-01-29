@@ -11,6 +11,6 @@ uniform vec4 u_color;
 out vec4 fragColor;
 
 void main() {
-    vec4 texColor = texture(tex, vec3(fs.uv.xy, fs.glyph));
+    vec4 texColor = texture(tex, vec3(fs.uv, fs.glyph));
     fragColor = texColor * u_color;
 }

@@ -6,6 +6,7 @@ import (
 )
 
 type System ecs.SystemRegister
+type ShutdownSystem ecs.SystemRegister
 
 type QuitEvent struct{}
 

@@ -11,7 +11,6 @@ import (
 	"engine/modules/camera"
 	"engine/modules/connection"
 	"engine/modules/drag"
-	"engine/modules/genericrenderer"
 	"engine/modules/inputs"
 	"engine/modules/netsync"
 	"engine/modules/render"
@@ -131,11 +130,12 @@ func (pkg) Register(b ioc.Builder) {
 
 				// audio
 				ioc.Get[audio.System](c),
+				ioc.Get[inputs.ShutdownSystem](c), // after batcher and before render system
 
 				// render
 				ioc.Get[render.System](c),
 				ioc.Get[tile.SystemRenderer](c),
-				ioc.Get[genericrenderer.System](c),
+				ioc.Get[render.SystemRenderer](c),
 				ioc.Get[text.System](c),
 				ioc.Get[fpslogger.System](c),
 			)

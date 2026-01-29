@@ -8,7 +8,6 @@ import (
 	"engine"
 	"engine/modules/audio"
 	"engine/modules/collider"
-	"engine/modules/genericrenderer"
 	"engine/modules/groups"
 	"engine/modules/inputs"
 	"engine/modules/render"
@@ -123,7 +122,6 @@ func (s *system) ListenRender(parent ecs.EntityID) error {
 
 		s.Render.Mesh().Set(btnEntity, render.NewMesh(s.GameAssets.SquareMesh))
 		s.Render.Texture().Set(btnEntity, render.NewTexture(s.GameAssets.Hud.Btn))
-		s.GenericRenderer.Pipeline().Set(btnEntity, genericrenderer.PipelineComponent{})
 
 		s.Text.Content().Set(btnEntity, text.TextComponent{Text: btn.text})
 		s.Text.FontSize().Set(btnEntity, text.FontSizeComponent{FontSize: 25})

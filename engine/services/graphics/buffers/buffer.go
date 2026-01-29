@@ -5,12 +5,14 @@ import (
 	"reflect"
 	"sort"
 	"sync"
+	"unsafe"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
 type Buffer[Stored comparable] interface {
 	ID() uint32
+	Bind()
 	Get() []Stored
 	Add(elements ...Stored)
 	Set(index int, e Stored)
@@ -51,6 +53,10 @@ func NewBuffer[Stored comparable](
 
 func (s *buffer[Stored]) ID() uint32 { return s.buffer }
 
+func (s *buffer[Stored]) Bind() {
+	gl.BindBuffer(s.target, s.ID())
+}
+
 func (s *buffer[Stored]) CheckBufferSize() bool {
 	elementsCount := len(s.Get())
 	if s.bufferLen != elementsCount {
@@ -77,7 +83,11 @@ func (s *buffer[Stored]) Flush() {
 
 	arr := s.Get()
 	if resized := s.CheckBufferSize(); resized {
-		gl.BufferData(s.target, s.bufferLen*s.elementSize, gl.Ptr(arr), s.usage)
+		var ptr unsafe.Pointer
+		if s.bufferLen != 0 {
+			ptr = gl.Ptr(arr)
+		}
+		gl.BufferData(s.target, s.bufferLen*s.elementSize, ptr, s.usage)
 		return
 	}
 

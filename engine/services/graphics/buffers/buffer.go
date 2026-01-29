@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"sort"
 	"sync"
+	"unsafe"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
@@ -82,7 +83,11 @@ func (s *buffer[Stored]) Flush() {
 
 	arr := s.Get()
 	if resized := s.CheckBufferSize(); resized {
-		gl.BufferData(s.target, s.bufferLen*s.elementSize, gl.Ptr(arr), s.usage)
+		var ptr unsafe.Pointer
+		if s.bufferLen != 0 {
+			ptr = gl.Ptr(arr)
+		}
+		gl.BufferData(s.target, s.bufferLen*s.elementSize, ptr, s.usage)
 		return
 	}
 

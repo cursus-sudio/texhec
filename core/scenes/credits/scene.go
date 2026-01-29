@@ -57,12 +57,14 @@ func (pkg) Register(b ioc.Builder) {
 
 			buttonArea := world.NewEntity()
 			world.Hierarchy.SetParent(buttonArea, cameraEntity)
+			world.Transform.Pos().Set(buttonArea, transform.NewPos(0, 0, 1))
 			world.Transform.Size().Set(buttonArea, transform.NewSize(500, 200, 1))
 			world.Transform.Parent().Set(buttonArea, transform.NewParent(transform.RelativePos))
 
 			draggable := world.NewEntity()
 			world.Hierarchy.SetParent(draggable, sceneParent)
-			world.Transform.Size().Set(draggable, transform.NewSize(50, 50, 3))
+			world.Transform.Pos().Set(draggable, transform.NewPos(0, 0, 2))
+			world.Transform.Size().Set(draggable, transform.NewSize(50, 50, 1))
 			world.Render.Color().Set(draggable, render.NewColor(mgl32.Vec4{0, 1, 0, .2}))
 			world.Render.Mesh().Set(draggable, render.NewMesh(gameAssets.SquareMesh))
 			world.Render.Texture().Set(draggable, render.NewTexture(gameAssets.Hud.Btn))

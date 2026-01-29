@@ -48,3 +48,4 @@ func NewMeshStorageAsset(
 
 func (asset *meshStorageAsset) Vertices() []Vertex   { return asset.vertices }
 func (asset *meshStorageAsset) Indices() []ebo.Index { return asset.indices }
+func (a *meshStorageAsset) Release()                 {}

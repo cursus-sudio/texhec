@@ -1,4 +1,4 @@
 package render
 
-type DirectComponent struct{}
-type InstancingComponent struct{}
+// type DirectComponent struct{}
+// type InstancingComponent struct{}

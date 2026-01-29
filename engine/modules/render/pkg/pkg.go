@@ -3,7 +3,8 @@ package renderpkg
 import (
 	"bytes"
 	"engine/modules/render"
-	"engine/modules/render/internal/direct"
+	// "engine/modules/render/internal/direct"
+	"engine/modules/render/internal/instancing"
 	"engine/modules/render/internal/service"
 	"engine/modules/render/internal/systems"
 	transitionpkg "engine/modules/transition/pkg"
@@ -54,20 +55,26 @@ func (pkg) Register(b ioc.Builder) {
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) render.System {
 		return ecs.NewSystemRegister(func() error {
-			ecs.RegisterSystems(
+			errs := ecs.RegisterSystems(
 				systems.NewClearSystem(c),
 				systems.NewErrorLogger(c),
 				systems.NewRenderSystem(c),
 			)
+			if len(errs) != 0 {
+				return errs[0]
+			}
 			return nil
 		})
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) render.SystemRenderer {
 		return ecs.NewSystemRegister(func() error {
-			ecs.RegisterSystems(
-				direct.NewSystem(c),
+			errs := ecs.RegisterSystems(
+				instancing.NewSystem(c),
 			)
+			if len(errs) != 0 {
+				return errs[0]
+			}
 			return nil
 		})
 	})

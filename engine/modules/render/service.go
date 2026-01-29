@@ -10,8 +10,8 @@ type Service interface {
 	Texture() ecs.ComponentsArray[TextureComponent]
 	TextureFrame() ecs.ComponentsArray[TextureFrameComponent]
 
-	Direct() ecs.ComponentsArray[DirectComponent]
-	Instancing() ecs.ComponentsArray[InstancingComponent]
+	// Direct() ecs.ComponentsArray[DirectComponent]
+	// Instancing() ecs.ComponentsArray[InstancingComponent]
 
 	Render(ecs.EntityID)
 

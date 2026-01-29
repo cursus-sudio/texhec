@@ -135,7 +135,8 @@ func (s *textRenderer) Listen(rendersys.RenderEvent) {
 
 		// apply changes on batch
 		font.textures.Use()
-		gl.BindBuffer(gl.SHADER_STORAGE_BUFFER, font.glyphsWidth.ID())
+		font.glyphsWidth.Bind()
+		gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, font.glyphsWidth.ID())
 		layout.vao.Use()
 
 		{

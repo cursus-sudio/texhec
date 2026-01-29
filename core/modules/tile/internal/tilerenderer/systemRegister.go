@@ -118,7 +118,6 @@ func (factory *TileRenderSystemRegister) Register() error {
 
 	var buffer uint32
 	gl.GenBuffers(1, &buffer)
-	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, buffer)
 	s.texturesBuffer = buffers.NewBuffer[mgl32.Vec2](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
 	for _, id := range factory.tileTextures.GetIndices() {
 		value, _ := factory.tileTextures.Get(id)

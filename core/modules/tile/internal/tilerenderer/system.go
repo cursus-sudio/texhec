@@ -83,7 +83,6 @@ func (s *system) Listen(render.RenderEvent) {
 		if !batchOk && compOk {
 			var buffer uint32
 			gl.GenBuffers(1, &buffer)
-			gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, buffer)
 
 			batch = Batch{
 				buffers.NewBuffer[int32](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer),
@@ -106,7 +105,8 @@ func (s *system) Listen(render.RenderEvent) {
 
 	// render
 	w, h := s.Window.Window().GetSize()
-	gl.BindBuffer(gl.SHADER_STORAGE_BUFFER, s.texturesBuffer.ID())
+	s.texturesBuffer.Bind()
+	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, s.texturesBuffer.ID())
 	defer func() { gl.Viewport(0, 0, w, h) }()
 
 	s.program.Use()
@@ -117,7 +117,8 @@ func (s *system) Listen(render.RenderEvent) {
 		if !ok {
 			continue
 		}
-		gl.BindBuffer(gl.SHADER_STORAGE_BUFFER, batch.buffer.ID())
+		batch.buffer.Bind()
+		gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, batch.buffer.ID())
 
 		grid, _ := s.Tile.Grid().Get(entity)
 

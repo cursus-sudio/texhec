@@ -4,6 +4,7 @@ import (
 	gameassets "core/assets"
 	"core/modules/fpslogger"
 	"core/modules/generation"
+	"core/modules/loading"
 	"core/modules/settings"
 	"core/modules/tile"
 	"core/modules/ui"
@@ -127,6 +128,7 @@ func (pkg) Register(b ioc.Builder) {
 				// ui update
 				ioc.Get[ui.System](c),
 				ioc.Get[settings.System](c),
+				ioc.Get[loading.System](c),
 				// } (update)
 				ioc.Get[smooth.StopSystem](c),
 				ioc.Get[netsync.StopSystem](c),

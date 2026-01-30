@@ -33,8 +33,14 @@ func NewService(
 	return s
 }
 
-func (s *Service) Queue(task batcher.Task)      { s.tasks = append(s.tasks, task) }
 func (s *Service) NewTask() batcher.TaskFactory { return NewTaskFactory(s.workers) }
+func (s *Service) Queue(task batcher.Task)      { s.tasks = append(s.tasks, task) }
+func (s *Service) Progress() float32 {
+	if len(s.tasks) != 0 {
+		return s.tasks[0].Progress()
+	}
+	return -1
+}
 
 func (s *Service) System() batcher.System {
 	return ecs.NewSystemRegister(func() error {

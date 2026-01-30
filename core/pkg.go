@@ -4,6 +4,7 @@ import (
 	gameassets "core/assets"
 	fpsloggerpkg "core/modules/fpslogger/pkg"
 	generationpkg "core/modules/generation/pkg"
+	loadingpkg "core/modules/loading/pkg"
 	"core/modules/settings"
 	settingspkg "core/modules/settings/pkg"
 	"core/modules/tile"
@@ -234,6 +235,7 @@ func getDic() ioc.Dic {
 		}()),
 		transitionpkg.Package(),
 		layoutpkg.Package(),
+		loadingpkg.Package(),
 
 		// game packages
 		fpsloggerpkg.Package(),

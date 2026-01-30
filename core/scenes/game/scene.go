@@ -2,11 +2,10 @@ package gamescene
 
 import (
 	gameassets "core/assets"
+	"core/modules/generation"
 	"core/modules/settings"
-	"core/modules/tile"
 	"core/modules/ui"
 	gamescenes "core/scenes"
-	"engine/modules/batcher"
 	"engine/modules/camera"
 	"engine/modules/collider"
 	"engine/modules/connection"
@@ -20,8 +19,6 @@ import (
 	"engine/modules/uuid"
 	"engine/services/ecs"
 	"errors"
-	"math/rand/v2"
-	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
@@ -50,17 +47,6 @@ func addScene(
 	// biggest zoom out in factorio is 448x256 (in 4k)
 	rows := 1000
 	cols := 1000
-
-	taskFactory := world.Batcher.NewTask()
-	taskFactory.AddBatch(batcher.NewBatch(1000, func(i int) {
-		time.Sleep(time.Millisecond)
-		world.Logger.Info("finished %v", i)
-	}))
-	taskFactory.AddBatch(batcher.NewBatch(1000, func(i int) {
-		time.Sleep(time.Millisecond)
-		world.Logger.Info("finished %v", i)
-	}))
-	world.Batcher.Queue(taskFactory.Build())
 
 	uiCamera := world.NewEntity()
 	world.Hierarchy.SetParent(uiCamera, sceneParent)
@@ -108,30 +94,36 @@ func addScene(
 	world.Collider.Component().Set(settingsEntity, collider.NewCollider(gameAssets.SquareCollider))
 
 	if isServer {
-		gridComponent := tile.NewGrid(grid.Coord(cols), grid.Coord(rows))
-
-		rand := rand.New(rand.NewPCG(2077, 7137))
-		for i := range gridComponent.GetLastIndex() {
-			tileType := tile.TileGrass
-			switch rand.IntN(3) {
-			case 0:
-				tileType = tile.TileGrass
-			case 1:
-				tileType = tile.TileWater
-			case 2:
-				tileType = tile.TileSand
-			}
-			gridComponent.SetTile(i, tile.Type(tileType))
-		}
+		// gridComponent := tile.NewGrid(grid.Coord(cols), grid.Coord(rows))
+		//
+		// rand := rand.New(rand.NewPCG(2077, 7137))
+		// for i := range gridComponent.GetLastIndex() {
+		// 	tileType := tile.TileGrass
+		// 	switch rand.IntN(3) {
+		// 	case 0:
+		// 		tileType = tile.TileGrass
+		// 	case 1:
+		// 		tileType = tile.TileWater
+		// 	case 2:
+		// 		tileType = tile.TileSand
+		// 	}
+		// 	gridComponent.SetTile(i, tile.Type(tileType))
+		// }
 
 		gridEntity := world.NewEntity()
+
 		world.Hierarchy.SetParent(gridEntity, sceneParent)
 		world.Transform.Size().Set(gridEntity, transform.NewSize(float32(cols)*100, float32(rows)*100, 1))
 		world.Groups.Component().Set(gridEntity, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 
 		world.Collider.Component().Set(gridEntity, collider.NewCollider(gameAssets.SquareCollider))
 		world.Inputs.Stack().Set(gridEntity, inputs.StackComponent{})
-		world.Tile.Grid().Set(gridEntity, gridComponent)
+
+		task := world.Generation.Generate(generation.NewConfiguration(
+			gridEntity, 21377137,
+			grid.Coords{X: grid.Coord(cols), Y: grid.Coord(rows)},
+		))
+		world.Batcher.Queue(task)
 	}
 
 	if isServer {

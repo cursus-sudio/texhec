@@ -27,9 +27,10 @@ type GameAssets struct {
 }
 
 type HudAssets struct {
-	Btn        assets.AssetID `path:"hud/btn.png"`
-	Settings   assets.AssetID `path:"hud/settings.png"`
-	Background assets.AssetID `path:"hud/background.png"`
+	Btn      assets.AssetID `path:"hud/btn.png"`
+	Settings assets.AssetID `path:"hud/settings.png"`
+	// Background assets.AssetID `path:"hud/background.png"`
+	Background assets.AssetID `path:"hud/bg1.gif"`
 }
 
 type TileAssets struct {

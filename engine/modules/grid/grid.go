@@ -1,5 +1,7 @@
 package grid
 
+import "golang.org/x/exp/constraints"
+
 type TileConstraint interface {
 	comparable
 }
@@ -9,6 +11,10 @@ type Coords struct{ X, Y Coord }
 
 func (c *Coords) Coords() (X, Y Coord) {
 	return c.X, c.Y
+}
+
+func NewCoords[Number constraints.Integer](x, y Number) Coords {
+	return Coords{Coord(x), Coord(y)}
 }
 
 //

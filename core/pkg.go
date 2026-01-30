@@ -3,6 +3,7 @@ package main
 import (
 	gameassets "core/assets"
 	fpsloggerpkg "core/modules/fpslogger/pkg"
+	generationpkg "core/modules/generation/pkg"
 	"core/modules/settings"
 	settingspkg "core/modules/settings/pkg"
 	"core/modules/tile"
@@ -137,6 +138,7 @@ func getDic() ioc.Dic {
 		gtexture.Package(),
 		texturearray.Package(),
 		tilepkg.Package(),
+		generationpkg.Package(),
 		uipkg.Package(time.Millisecond * 300),
 		settingspkg.Package(),
 

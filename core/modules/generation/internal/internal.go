@@ -43,6 +43,7 @@ func (s *service) Generate(c generation.Configuration) batcher.Task {
 var tiles []tile.Type = []tile.Type{
 	tile.TileGrass,
 	tile.TileWater,
+	tile.TileMountain,
 	tile.TileSand,
 }
 

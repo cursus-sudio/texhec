@@ -63,20 +63,19 @@ func (pkg pkg) Register(b ioc.Builder) {
 			images := [6][]image.Image{}
 			directory, _ := strings.CutSuffix(string(id), ".biom")
 
-			files, err := os.ReadDir(directory)
-			if err != nil {
-				return nil, err
-			}
+			for i := range 6 {
+				tileDir := fmt.Sprintf("%v/%v", directory, i+1)
+				files, err := os.ReadDir(tileDir)
+				if err != nil {
+					return nil, err
+				}
+				if len(files) == 0 {
+					return nil, fmt.Errorf("there is no tile variant for %v tile", i)
+				}
 
-			for _, file := range files {
-				for i := range 6 {
-					name := file.Name()
-					if !strings.HasPrefix(name, fmt.Sprintf("%v.", i+1)) ||
-						!strings.HasSuffix(name, ".png") {
-						continue
-					}
-					file := fmt.Sprintf("%v/%v", directory, name)
-					source, err := os.ReadFile(file)
+				for _, file := range files {
+					filePath := fmt.Sprintf("%v/%v", tileDir, file.Name())
+					source, err := os.ReadFile(filePath)
 					if err != nil {
 						return nil, err
 					}
@@ -87,12 +86,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 					}
 					img = gtexture.NewImage(img).FlipV().Image()
 					images[i] = append(images[i], img)
-				}
-			}
-
-			for i := range 6 {
-				if len(images[i]) == 0 {
-					return nil, fmt.Errorf("there is no tile variant for %v tile", i)
 				}
 			}
 

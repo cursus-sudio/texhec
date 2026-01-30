@@ -14,6 +14,7 @@ const (
 	TileGrass
 	TileSand
 	TileWater
+	TileMountain
 )
 
 func NewGrid(w, h grid.Coord) grid.SquareGridComponent[Type] {

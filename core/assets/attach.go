@@ -34,9 +34,10 @@ type HudAssets struct {
 }
 
 type TileAssets struct {
-	Grass assets.AssetID `path:"tiles/grass.biom"`
-	Sand  assets.AssetID `path:"tiles/sand.biom"`
-	Water assets.AssetID `path:"tiles/water.biom"`
+	Grass    assets.AssetID `path:"tiles/grass.biom"`
+	Sand     assets.AssetID `path:"tiles/sand.biom"`
+	Mountain assets.AssetID `path:"tiles/mountain.biom"`
+	Water    assets.AssetID `path:"tiles/water.biom"`
 
 	Unit assets.AssetID `path:"tiles/u1.png"`
 }
@@ -93,6 +94,7 @@ func (pkg) Assets(b ioc.Builder) {
 		gameAssets := ioc.Get[GameAssets](c)
 		assets := datastructures.NewSparseArray[tile.Type, assets.AssetID]()
 		assets.Set(tile.TileSand, gameAssets.Tiles.Sand)
+		assets.Set(tile.TileMountain, gameAssets.Tiles.Mountain)
 		assets.Set(tile.TileGrass, gameAssets.Tiles.Grass)
 		assets.Set(tile.TileWater, gameAssets.Tiles.Water)
 		s.AddType(assets)

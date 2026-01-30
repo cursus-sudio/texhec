@@ -1,7 +1,6 @@
 package settingsscene
 
 import (
-	gameassets "core/assets"
 	"core/modules/settings"
 	gamescenes "core/scenes"
 	"engine/modules/camera"
@@ -23,7 +22,6 @@ func Package() ioc.Pkg {
 
 func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) gamescenes.SettingsBuilder {
-		gameassets := ioc.Get[gameassets.GameAssets](c)
 		return func(sceneParent ecs.EntityID) {
 			world := ioc.GetServices[gamescenes.World](c)
 			cameraEntity := world.NewEntity()
@@ -45,8 +43,8 @@ func (pkg) Register(b ioc.Builder) {
 			background := world.NewEntity()
 			world.Hierarchy.SetParent(background, cameraEntity)
 			world.Transform.Parent().Set(background, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
-			world.Render.Mesh().Set(background, render.NewMesh(gameassets.SquareMesh))
-			world.Render.Texture().Set(background, render.NewTexture(gameassets.Hud.Background))
+			world.Render.Mesh().Set(background, render.NewMesh(world.GameAssets.SquareMesh))
+			world.Render.Texture().Set(background, render.NewTexture(world.GameAssets.Hud.Background))
 
 			buttonArea := world.NewEntity()
 			world.Transform.Size().Set(buttonArea, transform.NewSize(500, 200, 1))

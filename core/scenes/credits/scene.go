@@ -1,7 +1,6 @@
 package creditsscene
 
 import (
-	gameassets "core/assets"
 	gamescenes "core/scenes"
 	"engine/modules/camera"
 	"engine/modules/collider"
@@ -27,7 +26,6 @@ func Package() ioc.Pkg {
 
 func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) gamescenes.CreditsBuilder {
-		gameAssets := ioc.Get[gameassets.GameAssets](c)
 		assetsService := ioc.Get[assets.Assets](c)
 		return func(sceneParent ecs.EntityID) {
 			world := ioc.GetServices[gamescenes.World](c)
@@ -51,8 +49,8 @@ func (pkg) Register(b ioc.Builder) {
 			world.Hierarchy.SetParent(background, cameraEntity)
 			world.Transform.Parent().Set(background, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
 			world.Transform.ParentPivotPoint().Set(background, transform.NewParentPivotPoint(.5, .5, .5))
-			world.Render.Mesh().Set(background, render.NewMesh(gameAssets.SquareMesh))
-			world.Render.Texture().Set(background, render.NewTexture(gameAssets.Hud.Background))
+			world.Render.Mesh().Set(background, render.NewMesh(world.GameAssets.SquareMesh))
+			world.Render.Texture().Set(background, render.NewTexture(world.GameAssets.Hud.Background))
 
 			buttonArea := world.NewEntity()
 			world.Hierarchy.SetParent(buttonArea, cameraEntity)
@@ -65,10 +63,10 @@ func (pkg) Register(b ioc.Builder) {
 			world.Transform.Pos().Set(draggable, transform.NewPos(0, 0, 2))
 			world.Transform.Size().Set(draggable, transform.NewSize(50, 50, 1))
 			world.Render.Color().Set(draggable, render.NewColor(mgl32.Vec4{0, 1, 0, .2}))
-			world.Render.Mesh().Set(draggable, render.NewMesh(gameAssets.SquareMesh))
-			world.Render.Texture().Set(draggable, render.NewTexture(gameAssets.Hud.Btn))
+			world.Render.Mesh().Set(draggable, render.NewMesh(world.GameAssets.SquareMesh))
+			world.Render.Texture().Set(draggable, render.NewTexture(world.GameAssets.Hud.Btn))
 
-			world.Collider.Component().Set(draggable, collider.NewCollider(gameAssets.SquareCollider))
+			world.Collider.Component().Set(draggable, collider.NewCollider(world.GameAssets.SquareCollider))
 			world.Inputs.Drag().Set(draggable, inputs.NewDragComponent(drag.NewDraggable(draggable)))
 
 			world.Text.Content().Set(draggable, text.TextComponent{Text: strings.ToUpper("drag me")})
@@ -76,7 +74,7 @@ func (pkg) Register(b ioc.Builder) {
 			world.Text.FontSize().Set(draggable, text.FontSizeComponent{FontSize: 15})
 			world.Text.Color().Set(draggable, text.TextColorComponent{Color: mgl32.Vec4{.5, 0, 1, 1}})
 
-			btnAsset, err := assets.GetAsset[render.TextureAsset](assetsService, gameAssets.Hud.Btn)
+			btnAsset, err := assets.GetAsset[render.TextureAsset](assetsService, world.GameAssets.Hud.Btn)
 			if err != nil {
 				world.Logger.Warn(err)
 				return
@@ -90,12 +88,12 @@ func (pkg) Register(b ioc.Builder) {
 			world.Transform.ParentPivotPoint().Set(btn, transform.NewParentPivotPoint(.5, 0, .5))
 			world.Transform.AspectRatio().Set(btn, transform.NewAspectRatio(float32(btnAspectRatio.Dx()), float32(btnAspectRatio.Dy()), 0, transform.PrimaryAxisY))
 
-			world.Render.Mesh().Set(btn, render.NewMesh(gameAssets.SquareMesh))
-			world.Render.Texture().Set(btn, render.NewTexture(gameAssets.Hud.Btn))
+			world.Render.Mesh().Set(btn, render.NewMesh(world.GameAssets.SquareMesh))
+			world.Render.Texture().Set(btn, render.NewTexture(world.GameAssets.Hud.Btn))
 
 			world.Inputs.LeftClick().Set(btn, inputs.NewLeftClick(scene.NewChangeSceneEvent(gamescenes.MenuID)))
 			world.Inputs.KeepSelected().Set(btn, inputs.KeepSelectedComponent{})
-			world.Collider.Component().Set(btn, collider.NewCollider(gameAssets.SquareCollider))
+			world.Collider.Component().Set(btn, collider.NewCollider(world.GameAssets.SquareCollider))
 
 			world.Text.Content().Set(btn, text.TextComponent{Text: strings.ToUpper("return to menu")})
 			world.Text.Align().Set(btn, text.TextAlignComponent{Vertical: .5, Horizontal: .5})

@@ -45,8 +45,8 @@ func (s *service) Generate(c generation.Configuration) batcher.Task {
 		s.Tile.Grid().Set(c.Entity, gridComponent)
 	})
 
-	task.AddBatch(generateBatch)
-	task.AddBatch(flushBatch)
+	task.AddConcurrentBatch(generateBatch)
+	task.AddOrderedBatch(flushBatch)
 
 	return task.Build()
 }

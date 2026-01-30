@@ -30,7 +30,6 @@ func Package() ioc.Pkg {
 
 func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) gamescenes.MenuBuilder {
-		gameAssets := ioc.Get[gameassets.GameAssets](c)
 		assetsService := ioc.Get[assets.Assets](c)
 		return func(sceneParent ecs.EntityID) {
 			world := ioc.GetServices[gamescenes.World](c)
@@ -56,8 +55,8 @@ func (pkg) Register(b ioc.Builder) {
 			world.Transform.Pos().Set(background, transform.NewPos(0, 0, 1))
 			world.Transform.PivotPoint().Set(background, transform.NewPivotPoint(.5, .5, 0))
 			world.Transform.ParentPivotPoint().Set(background, transform.NewParentPivotPoint(.5, .5, 0))
-			world.Render.Mesh().Set(background, render.NewMesh(gameAssets.SquareMesh))
-			world.Render.Texture().Set(background, render.NewTexture(gameAssets.Hud.Background))
+			world.Render.Mesh().Set(background, render.NewMesh(world.GameAssets.SquareMesh))
+			world.Render.Texture().Set(background, render.NewTexture(world.GameAssets.Hud.Background))
 			world.Transition.Easing().Set(background, transition.NewEasing(gameassets.MyEasingFunction))
 			events.Emit(world.Events, transition.NewTransitionEvent(
 				background,
@@ -86,7 +85,7 @@ func (pkg) Register(b ioc.Builder) {
 				{Text: "exit", OnClick: inputs.QuitEvent{}},
 			}
 
-			btnAsset, err := assets.GetAsset[render.TextureAsset](assetsService, gameAssets.Hud.Btn)
+			btnAsset, err := assets.GetAsset[render.TextureAsset](assetsService, world.GameAssets.Hud.Btn)
 			if err != nil {
 				world.Logger.Warn(err)
 				return
@@ -100,12 +99,12 @@ func (pkg) Register(b ioc.Builder) {
 				world.Transform.AspectRatio().Set(btn, transform.NewAspectRatio(float32(btnAspectRatio.Dx()), float32(btnAspectRatio.Dy()), 0, transform.PrimaryAxisX))
 				world.Transform.Parent().Set(btn, transform.NewParent(transform.RelativePos))
 
-				world.Render.Mesh().Set(btn, render.NewMesh(gameAssets.SquareMesh))
-				world.Render.Texture().Set(btn, render.NewTexture(gameAssets.Hud.Btn))
+				world.Render.Mesh().Set(btn, render.NewMesh(world.GameAssets.SquareMesh))
+				world.Render.Texture().Set(btn, render.NewTexture(world.GameAssets.Hud.Btn))
 				world.Render.TextureFrame().Set(btn, render.NewTextureFrameComponent(1))
 
 				world.Inputs.LeftClick().Set(btn, inputs.NewLeftClick(button.OnClick))
-				world.Collider.Component().Set(btn, collider.NewCollider(gameAssets.SquareCollider))
+				world.Collider.Component().Set(btn, collider.NewCollider(world.GameAssets.SquareCollider))
 				world.Inputs.KeepSelected().Set(btn, inputs.KeepSelectedComponent{})
 
 				world.Text.Content().Set(btn, text.TextComponent{Text: strings.ToUpper(button.Text)})

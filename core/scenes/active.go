@@ -1,8 +1,10 @@
 package gamescenes
 
 import (
+	gameassets "core/assets"
 	"core/modules/fpslogger"
 	"core/modules/generation"
+	"core/modules/loading"
 	"core/modules/settings"
 	"core/modules/tile"
 	"core/modules/ui"
@@ -46,9 +48,10 @@ type World struct {
 	engine.World `inject:"1"`
 
 	// game
-	Tile       tile.Service       `inject:"1"`
-	Generation generation.Service `inject:"1"`
-	Ui         ui.Service         `inject:"1"`
+	GameAssets gameassets.GameAssets `inject:"1"`
+	Tile       tile.Service          `inject:"1"`
+	Generation generation.Service    `inject:"1"`
+	Ui         ui.Service            `inject:"1"`
 }
 
 type MenuBuilder scene.Scene
@@ -125,6 +128,7 @@ func (pkg) Register(b ioc.Builder) {
 				// ui update
 				ioc.Get[ui.System](c),
 				ioc.Get[settings.System](c),
+				ioc.Get[loading.System](c),
 				// } (update)
 				ioc.Get[smooth.StopSystem](c),
 				ioc.Get[netsync.StopSystem](c),

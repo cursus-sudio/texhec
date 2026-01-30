@@ -3,17 +3,24 @@ package internal
 import "engine/modules/batcher"
 
 type taskFactory struct {
-	batches []batcher.Batch
+	batches                []Batch
+	concurrentRoutinesUsed int
 }
 
-func NewTaskFactory() batcher.TaskFactory {
+func NewTaskFactory(concurrentRoutineUsed int) batcher.TaskFactory {
 	return &taskFactory{
-		make([]batcher.Batch, 0),
+		make([]Batch, 0),
+		concurrentRoutineUsed,
 	}
 }
 
-func (f *taskFactory) AddBatch(b batcher.Batch) batcher.TaskFactory {
-	f.batches = append(f.batches, b)
+func (f *taskFactory) AddOrderedBatch(b batcher.Batch) batcher.TaskFactory {
+	f.batches = append(f.batches, NewOrderedBatch(b))
+	return f
+}
+
+func (f *taskFactory) AddConcurrentBatch(b batcher.Batch) batcher.TaskFactory {
+	f.batches = append(f.batches, NewConcurrentBatch(b, f.concurrentRoutinesUsed))
 	return f
 }
 

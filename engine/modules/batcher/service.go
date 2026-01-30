@@ -14,7 +14,8 @@ func NewBatch(steps int, handler func(int)) Batch {
 }
 
 type TaskFactory interface {
-	AddBatch(Batch) TaskFactory
+	AddOrderedBatch(Batch) TaskFactory
+	AddConcurrentBatch(Batch) TaskFactory
 	Build() Task
 }
 
@@ -24,6 +25,10 @@ type Task interface {
 }
 
 type Service interface {
-	Queue(Task)
 	NewTask() TaskFactory
+
+	Queue(Task)
+	// progress of first task in queue
+	// when there is no tasks in queue -1 is returned
+	Progress() float32
 }

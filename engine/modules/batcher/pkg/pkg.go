@@ -9,19 +9,25 @@ import (
 )
 
 type pkg struct {
+	workers            int
 	frameLoadingBudget time.Duration
 }
 
 func Package(
+	workers int,
 	frameLoadingBudget time.Duration,
 ) ioc.Pkg {
-	return pkg{frameLoadingBudget}
+	return pkg{
+		workers,
+		frameLoadingBudget,
+	}
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) *internal.Service {
 		return internal.NewService(
 			c,
+			pkg.workers,
 			pkg.frameLoadingBudget,
 		)
 	})

@@ -4,6 +4,7 @@ import (
 	gameassets "core/assets"
 	fpsloggerpkg "core/modules/fpslogger/pkg"
 	generationpkg "core/modules/generation/pkg"
+	loadingpkg "core/modules/loading/pkg"
 	"core/modules/settings"
 	settingspkg "core/modules/settings/pkg"
 	"core/modules/tile"
@@ -53,8 +54,9 @@ import (
 	"engine/services/graphics/texturearray"
 	"engine/services/logger"
 	"engine/services/media"
-	"engine/services/runtime"
+	appruntime "engine/services/runtime"
 	"fmt"
+	"runtime"
 	"time"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -122,7 +124,7 @@ func getDic() ioc.Dic {
 		clock.Package(time.RFC3339Nano),
 		ecs.Package(),
 		codec.Package(),
-		runtime.Package(),
+		appruntime.Package(),
 
 		assets.Package("assets/files/"),
 		logger.Package(true, func(c ioc.Dic, message string) {
@@ -196,7 +198,7 @@ func getDic() ioc.Dic {
 		transformpkg.Package(),
 		hierarchypkg.Package(),
 		uuidpkg.Package(),
-		batcherpkg.Package(time.Second / 60),
+		batcherpkg.Package(max(1, runtime.NumCPU()-1), time.Second/60),
 		connectionpkg.Package(),
 		netsyncpkg.Package(func() netsyncpkg.Config {
 			config := netsyncpkg.NewConfig(
@@ -233,6 +235,7 @@ func getDic() ioc.Dic {
 		}()),
 		transitionpkg.Package(),
 		layoutpkg.Package(),
+		loadingpkg.Package(),
 
 		// game packages
 		fpsloggerpkg.Package(),

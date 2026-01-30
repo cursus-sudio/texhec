@@ -1,7 +1,6 @@
 package gamescene
 
 import (
-	gameassets "core/assets"
 	"core/modules/generation"
 	"core/modules/settings"
 	"core/modules/ui"
@@ -38,7 +37,6 @@ const (
 func addScene(
 	world gamescenes.World,
 	sceneParent ecs.EntityID,
-	gameAssets gameassets.GameAssets,
 	isServer bool,
 ) {
 	// biggest maps on mods in rusted warfare 2560x1440
@@ -86,12 +84,12 @@ func addScene(
 	world.Transform.ParentPivotPoint().Set(settingsEntity, transform.NewParentPivotPoint(0, 1, .5))
 	world.Groups.Component().Set(settingsEntity, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 
-	world.Render.Mesh().Set(settingsEntity, render.NewMesh(gameAssets.SquareMesh))
-	world.Render.Texture().Set(settingsEntity, render.NewTexture(gameAssets.Hud.Settings))
+	world.Render.Mesh().Set(settingsEntity, render.NewMesh(world.GameAssets.SquareMesh))
+	world.Render.Texture().Set(settingsEntity, render.NewTexture(world.GameAssets.Hud.Settings))
 
 	world.Inputs.LeftClick().Set(settingsEntity, inputs.NewLeftClick(settings.EnterSettingsEvent{}))
 	world.Inputs.KeepSelected().Set(settingsEntity, inputs.KeepSelectedComponent{})
-	world.Collider.Component().Set(settingsEntity, collider.NewCollider(gameAssets.SquareCollider))
+	world.Collider.Component().Set(settingsEntity, collider.NewCollider(world.GameAssets.SquareCollider))
 
 	if isServer {
 		gridEntity := world.NewEntity()
@@ -100,7 +98,7 @@ func addScene(
 		world.Transform.Size().Set(gridEntity, transform.NewSize(float32(cols)*100, float32(rows)*100, 1))
 		world.Groups.Component().Set(gridEntity, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 
-		world.Collider.Component().Set(gridEntity, collider.NewCollider(gameAssets.SquareCollider))
+		world.Collider.Component().Set(gridEntity, collider.NewCollider(world.GameAssets.SquareCollider))
 		world.Inputs.Stack().Set(gridEntity, inputs.StackComponent{})
 
 		task := world.Generation.Generate(generation.NewConfiguration(
@@ -142,7 +140,6 @@ func (pkg) Register(b ioc.Builder) {
 			addScene(
 				world,
 				sceneParent,
-				ioc.Get[gameassets.GameAssets](c),
 				true, // is server
 			)
 		}
@@ -153,7 +150,6 @@ func (pkg) Register(b ioc.Builder) {
 			addScene(
 				world,
 				sceneParent,
-				ioc.Get[gameassets.GameAssets](c),
 				false, // is server
 			)
 		}

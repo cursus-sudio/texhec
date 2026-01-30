@@ -3,7 +3,6 @@ package renderpkg
 import (
 	"bytes"
 	"engine/modules/render"
-	// "engine/modules/render/internal/direct"
 	"engine/modules/render/internal/instancing"
 	"engine/modules/render/internal/service"
 	"engine/modules/render/internal/systems"
@@ -13,6 +12,9 @@ import (
 	gtexture "engine/services/graphics/texture"
 	"engine/services/graphics/vao/vbo"
 	"image"
+	"image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 	"os"
 	"unsafe"
 
@@ -80,7 +82,7 @@ func (pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.WrapService(b, func(c ioc.Dic, b assets.AssetsStorageBuilder) {
-		b.RegisterExtension("png", func(id assets.AssetID) (any, error) {
+		imageHandler := func(id assets.AssetID) (any, error) {
 			source, err := os.ReadFile(string(id))
 			if err != nil {
 				return nil, err
@@ -93,6 +95,29 @@ func (pkg) Register(b ioc.Builder) {
 
 			img = gtexture.NewImage(img).FlipV().TrimTransparentBackground().Image()
 			return render.NewTextureStorageAsset(img)
+		}
+		b.RegisterExtension("png", imageHandler)
+		b.RegisterExtension("jpg", imageHandler)
+		b.RegisterExtension("jpeg", imageHandler)
+
+		b.RegisterExtension("gif", func(id assets.AssetID) (any, error) {
+			source, err := os.ReadFile(string(id))
+			if err != nil {
+				return nil, err
+			}
+			imgFile := bytes.NewBuffer(source)
+			gif, err := gif.DecodeAll(imgFile)
+			if err != nil {
+				return nil, err
+			}
+
+			images := make([]image.Image, 0, len(gif.Image))
+			for _, img := range gif.Image {
+				finalImg := gtexture.NewImage(img).FlipV().TrimTransparentBackground().Image()
+				images = append(images, finalImg)
+			}
+
+			return render.NewTextureStorageAsset(images...)
 		})
 	})
 }

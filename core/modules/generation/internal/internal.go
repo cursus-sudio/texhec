@@ -6,7 +6,6 @@ import (
 	"engine"
 	"engine/modules/batcher"
 	"engine/modules/grid"
-	"fmt"
 	"math/rand/v2"
 
 	"github.com/ogiusek/ioc/v2"
@@ -28,18 +27,8 @@ func (s *service) Generate(c generation.Configuration) batcher.Task {
 	gridComponent := tile.NewGrid(c.Size.Coords())
 	generateBatch := batcher.NewBatch(int(gridComponent.GetLastIndex()), func(i int) {
 		rand := rand.New(rand.NewPCG(c.Seed, uint64(i)))
-		var tileType tile.Type
-		switch rand.IntN(3) {
-		case 0:
-			tileType = tile.TileGrass
-		case 1:
-			tileType = tile.TileWater
-		case 2:
-			tileType = tile.TileSand
-		default:
-			s.Logger.Warn(fmt.Errorf("missing number handler"))
-		}
-		gridComponent.SetTile(grid.Index(i), tile.Type(tileType))
+		tile := s.GetTile(rand)
+		gridComponent.SetTile(grid.Index(i), tile)
 	})
 	flushBatch := batcher.NewBatch(1, func(i int) {
 		s.Tile.Grid().Set(c.Entity, gridComponent)
@@ -49,4 +38,16 @@ func (s *service) Generate(c generation.Configuration) batcher.Task {
 	task.AddOrderedBatch(flushBatch)
 
 	return task.Build()
+}
+
+var tiles []tile.Type = []tile.Type{
+	tile.TileGrass,
+	tile.TileWater,
+	tile.TileMountain,
+	tile.TileSand,
+}
+
+func (s *service) GetTile(rand *rand.Rand) tile.Type {
+	i := rand.IntN(len(tiles))
+	return tiles[i]
 }

@@ -53,8 +53,9 @@ import (
 	"engine/services/graphics/texturearray"
 	"engine/services/logger"
 	"engine/services/media"
-	"engine/services/runtime"
+	appruntime "engine/services/runtime"
 	"fmt"
+	"runtime"
 	"time"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -122,7 +123,7 @@ func getDic() ioc.Dic {
 		clock.Package(time.RFC3339Nano),
 		ecs.Package(),
 		codec.Package(),
-		runtime.Package(),
+		appruntime.Package(),
 
 		assets.Package("assets/files/"),
 		logger.Package(true, func(c ioc.Dic, message string) {
@@ -196,7 +197,7 @@ func getDic() ioc.Dic {
 		transformpkg.Package(),
 		hierarchypkg.Package(),
 		uuidpkg.Package(),
-		batcherpkg.Package(time.Second / 60),
+		batcherpkg.Package(max(1, runtime.NumCPU()-1), time.Second/60),
 		connectionpkg.Package(),
 		netsyncpkg.Package(func() netsyncpkg.Config {
 			config := netsyncpkg.NewConfig(

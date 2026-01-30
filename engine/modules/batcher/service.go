@@ -14,7 +14,8 @@ func NewBatch(steps int, handler func(int)) Batch {
 }
 
 type TaskFactory interface {
-	AddBatch(Batch) TaskFactory
+	AddOrderedBatch(Batch) TaskFactory
+	AddConcurrentBatch(Batch) TaskFactory
 	Build() Task
 }
 

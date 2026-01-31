@@ -4,6 +4,7 @@ import (
 	"engine/modules/transition"
 	"engine/modules/transition/internal/easing"
 	"engine/modules/transition/internal/service"
+	"engine/modules/transition/internal/system"
 	"engine/modules/transition/internal/transitionimpl"
 	"engine/services/codec"
 
@@ -24,7 +25,9 @@ func (pkg) Register(b ioc.Builder) {
 			Register(transition.Progress(0))
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) transitionimpl.Builder {
-		return transitionimpl.NewBuilder()
+		b := transitionimpl.NewBuilder()
+		b.Register(system.NewSystem(c)) // delayedEvent system
+		return b
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) transition.System {

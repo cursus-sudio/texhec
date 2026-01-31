@@ -21,7 +21,7 @@ type TextureFrameComponent struct {
 	FrameNormalized float64
 }
 
-func NewTextureFrameComponent(frameNormalized float64) TextureFrameComponent {
+func NewTextureFrame(frameNormalized float64) TextureFrameComponent {
 	return TextureFrameComponent{
 		FrameNormalized: max(min(frameNormalized, 1), 0),
 	}
@@ -66,7 +66,7 @@ func greatestCommonDivisor(a, b int) int {
 	return a
 }
 
-func NewTextureStorageAsset(
+func NewTextureAsset(
 	images ...image.Image,
 ) (TextureAsset, error) {
 	if len(images) == 0 {

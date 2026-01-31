@@ -29,7 +29,7 @@ func NewService(c ioc.Dic) render.Service {
 	s.colorArray.SetEmpty(render.NewColor(mgl32.Vec4{1, 1, 1, 1}))
 	// no default mesh
 	// no default texture
-	s.textureFrameArray.SetEmpty(render.NewTextureFrameComponent(0))
+	s.textureFrameArray.SetEmpty(render.NewTextureFrame(0))
 
 	return s
 }

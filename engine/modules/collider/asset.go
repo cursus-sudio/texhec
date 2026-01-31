@@ -46,7 +46,7 @@ type colliderAsset struct {
 	polygons []Polygon
 }
 
-func NewColliderStorageAsset(
+func NewColliderAsset(
 	aabbs []AABB,
 	ranges []Range,
 	polygons []Polygon,

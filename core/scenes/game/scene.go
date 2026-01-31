@@ -59,8 +59,8 @@ func addScene(
 	world.Groups.Component().Set(gameCamera, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 	world.Camera.Mobile().Set(gameCamera, camera.NewMobileCamera())
 	world.Camera.Limits().Set(gameCamera, camera.NewCameraLimits(
-		mgl32.Vec3{50 * float32(-rows), 50 * float32(-cols), -1000},
-		mgl32.Vec3{50 * float32(rows), 50 * float32(cols), 1000},
+		mgl32.Vec3{50 * float32(-cols), 50 * float32(-rows), -1000},
+		mgl32.Vec3{50 * float32(cols), 50 * float32(rows), 1000},
 	))
 
 	signature := world.NewEntity()

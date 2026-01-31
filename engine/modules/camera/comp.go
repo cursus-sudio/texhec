@@ -34,10 +34,10 @@ func NewCameraLimits(min, max mgl32.Vec3) CameraLimitsComponent {
 type ViewportComponent struct{ X, Y, W, H int32 }
 type NormalizedViewportComponent struct{ X, Y, W, H float32 }
 
-func NewViewportComponent(x, y, w, h int32) ViewportComponent {
+func NewViewport(x, y, w, h int32) ViewportComponent {
 	return ViewportComponent{x, y, w, h}
 }
-func NewNormalizedViewportComponent(x, y, w, h float32) NormalizedViewportComponent {
+func NewNormalizedViewport(x, y, w, h float32) NormalizedViewportComponent {
 	return NormalizedViewportComponent{x, y, w, h}
 }
 

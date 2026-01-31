@@ -94,7 +94,7 @@ func (pkg) Register(b ioc.Builder) {
 			}
 
 			img = gtexture.NewImage(img).FlipV().TrimTransparentBackground().Image()
-			return render.NewTextureStorageAsset(img)
+			return render.NewTextureAsset(img)
 		}
 		b.RegisterExtension("png", imageHandler)
 		b.RegisterExtension("jpg", imageHandler)
@@ -117,7 +117,7 @@ func (pkg) Register(b ioc.Builder) {
 				images = append(images, finalImg)
 			}
 
-			return render.NewTextureStorageAsset(images...)
+			return render.NewTextureAsset(images...)
 		})
 	})
 }

@@ -88,7 +88,7 @@ func (pkg) Register(b ioc.Builder) {
 
 				world.Render.Mesh().Set(btn, render.NewMesh(world.GameAssets.SquareMesh))
 				world.Render.Texture().Set(btn, render.NewTexture(world.GameAssets.Hud.Btn))
-				world.Render.TextureFrame().Set(btn, render.NewTextureFrameComponent(1))
+				world.Render.TextureFrame().Set(btn, render.NewTextureFrame(1))
 
 				world.Inputs.LeftClick().Set(btn, inputs.NewLeftClick(button.OnClick))
 				world.Collider.Component().Set(btn, collider.NewCollider(world.GameAssets.SquareCollider))

@@ -31,7 +31,7 @@ func (s *service) Generate(c generation.Configuration) batcher.Task {
 	jobs := int(gridComponent.GetLastIndex() / grid.Index(s.tilesPerJob))
 	generateBatch := batcher.NewBatch(jobs, func(i int) {
 		rand := rand.New(rand.NewPCG(c.Seed, uint64(i)))
-		for j := range 10 {
+		for j := range s.tilesPerJob {
 			tile := s.GetTile(rand)
 			gridComponent.SetTile(grid.Index(i*s.tilesPerJob+j), tile)
 		}

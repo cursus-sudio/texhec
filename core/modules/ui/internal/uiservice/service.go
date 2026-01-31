@@ -27,7 +27,6 @@ type service struct {
 	animationDuration time.Duration
 
 	bgTimePerFrame time.Duration
-	bgTexture      int
 
 	uiCameraArray           ecs.ComponentsArray[ui.UiCameraComponent]
 	animatedBackgroundArray ecs.ComponentsArray[ui.AnimatedBackgroundComponent]

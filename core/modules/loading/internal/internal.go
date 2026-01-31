@@ -3,9 +3,9 @@ package internal
 import (
 	gameassets "core/assets"
 	"core/modules/loading"
+	"core/modules/ui"
 	"engine"
 	"engine/modules/camera"
-	"engine/modules/render"
 	"engine/modules/text"
 	"engine/modules/transform"
 	"engine/services/ecs"
@@ -19,6 +19,7 @@ import (
 type system struct {
 	World      engine.World          `inject:"1"`
 	GameAssets gameassets.GameAssets `inject:"1"`
+	Ui         ui.Service            `inject:"1"`
 
 	Camera *ecs.EntityID
 	Text   ecs.EntityID
@@ -50,12 +51,10 @@ func (s *system) Render(message string) {
 
 	background := s.World.NewEntity()
 	s.World.Hierarchy.SetParent(background, cameraEntity)
-	s.World.Transform.Parent().Set(background, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
 	s.World.Transform.Pos().Set(background, transform.NewPos(0, 0, 1))
 	s.World.Transform.PivotPoint().Set(background, transform.NewPivotPoint(.5, .5, 0))
 	s.World.Transform.ParentPivotPoint().Set(background, transform.NewParentPivotPoint(.5, .5, 0))
-	s.World.Render.Mesh().Set(background, render.NewMesh(s.GameAssets.SquareMesh))
-	s.World.Render.Texture().Set(background, render.NewTexture(s.GameAssets.Hud.Background))
+	s.Ui.AnimatedBackground().Set(background, ui.NewAnimatedBackground())
 
 	textEntity := s.World.NewEntity()
 	s.World.Hierarchy.SetParent(textEntity, cameraEntity)

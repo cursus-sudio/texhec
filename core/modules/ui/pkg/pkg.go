@@ -3,6 +3,7 @@ package uipkg
 import (
 	"core/modules/ui"
 	"core/modules/ui/internal/uiservice"
+	"core/modules/ui/internal/updatebg"
 	"engine/services/codec"
 	"engine/services/ecs"
 	"time"
@@ -14,13 +15,16 @@ import (
 
 type pkg struct {
 	animationDuration time.Duration
+	bgTimePerFrame    time.Duration
 }
 
 func Package(
 	animationDuration time.Duration,
+	bgTimePerFrame time.Duration,
 ) ioc.Pkg {
 	return pkg{
 		animationDuration,
+		bgTimePerFrame,
 	}
 }
 
@@ -34,11 +38,15 @@ func (pkg pkg) Register(b ioc.Builder) {
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ui.Service {
-		return uiservice.NewService(c, pkg.animationDuration)
+		return uiservice.NewService(c, pkg.animationDuration, pkg.bgTimePerFrame)
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ui.System {
 		eventsBuilder := ioc.Get[events.Builder](c)
 		return ecs.NewSystemRegister(func() error {
+			if err := updatebg.NewSystem(c, pkg.bgTimePerFrame).Register(); err != nil {
+				return err
+			}
+
 			events.Listen(eventsBuilder, func(e sdl.MouseButtonEvent) {
 				if e.Button != sdl.BUTTON_RIGHT || e.State != sdl.RELEASED {
 					return
@@ -47,7 +55,6 @@ func (pkg pkg) Register(b ioc.Builder) {
 			})
 			ioc.Get[ui.Service](c)
 			return nil
-
 		})
 	})
 }

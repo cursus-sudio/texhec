@@ -41,7 +41,7 @@ func main() {
 	gl.ClearColor(0.2, 0.3, 0.3, 1.0)
 	// load world before starting timer
 
-	events.Emit(ioc.Get[events.Events](c), scene.NewChangeSceneEvent(gamescenes.GameID))
+	events.Emit(ioc.Get[events.Events](c), scene.NewChangeSceneEvent(gamescenes.MenuID))
 	frontendRuntime := ioc.Get[appruntime.Runtime](c)
 	frontendRuntime.Run()
 }

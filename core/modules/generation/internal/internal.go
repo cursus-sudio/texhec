@@ -14,10 +14,13 @@ import (
 type service struct {
 	engine.World `inject:"1"`
 	Tile         tile.Service `inject:"1"`
+
+	tilesPerJob int
 }
 
 func NewService(c ioc.Dic) generation.Service {
 	s := ioc.GetServices[*service](c)
+	s.tilesPerJob = 10
 	return s
 }
 
@@ -25,10 +28,13 @@ func (s *service) Generate(c generation.Configuration) batcher.Task {
 	task := s.Batcher.NewTask()
 
 	gridComponent := tile.NewGrid(c.Size.Coords())
-	generateBatch := batcher.NewBatch(int(gridComponent.GetLastIndex()), func(i int) {
+	jobs := int(gridComponent.GetLastIndex() / grid.Index(s.tilesPerJob))
+	generateBatch := batcher.NewBatch(jobs, func(i int) {
 		rand := rand.New(rand.NewPCG(c.Seed, uint64(i)))
-		tile := s.GetTile(rand)
-		gridComponent.SetTile(grid.Index(i), tile)
+		for j := range 10 {
+			tile := s.GetTile(rand)
+			gridComponent.SetTile(grid.Index(i*s.tilesPerJob+j), tile)
+		}
 	})
 	flushBatch := batcher.NewBatch(1, func(i int) {
 		s.Tile.Grid().Set(c.Entity, gridComponent)

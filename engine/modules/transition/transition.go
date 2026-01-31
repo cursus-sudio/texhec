@@ -63,6 +63,23 @@ func NewTransitionEvent[Component Lerp[Component]](
 
 //
 
+type DelayedEvent struct {
+	Event    any
+	Duration time.Duration
+}
+
+func NewDelayedEvent(
+	event any,
+	duration time.Duration,
+) DelayedEvent {
+	return DelayedEvent{
+		Event:    event,
+		Duration: duration,
+	}
+}
+
+//
+
 type EasingID uint16
 type EasingFunction func(t Progress) Progress
 

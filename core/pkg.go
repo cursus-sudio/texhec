@@ -141,7 +141,10 @@ func getDic() ioc.Dic {
 		texturearray.Package(),
 		tilepkg.Package(),
 		generationpkg.Package(),
-		uipkg.Package(time.Millisecond * 300),
+		uipkg.Package(
+			time.Millisecond*300, // animation duration
+			time.Millisecond*100, // bgTimePerFrame
+		),
 		settingspkg.Package(),
 
 		//

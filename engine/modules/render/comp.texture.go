@@ -21,7 +21,7 @@ type TextureFrameComponent struct {
 	FrameNormalized float64
 }
 
-func NewTextureFrameComponent(frameNormalized float64) TextureFrameComponent {
+func NewTextureFrame(frameNormalized float64) TextureFrameComponent {
 	return TextureFrameComponent{
 		FrameNormalized: max(min(frameNormalized, 1), 0),
 	}

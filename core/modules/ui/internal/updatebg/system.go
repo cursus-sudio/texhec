@@ -108,8 +108,8 @@ func (s *System) Init() error {
 			s.Render.Texture().Set(entity, render.NewTexture(bg))
 			s.Transition.Easing().Set(entity, transition.NewEasing(gameassets.MyEasingFunction))
 			transitionArr.Set(entity, transition.NewTransition(
-				render.NewTextureFrameComponent(0),
-				render.NewTextureFrameComponent(1),
+				render.NewTextureFrame(0),
+				render.NewTextureFrame(1),
 				duration,
 			))
 		}

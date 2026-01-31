@@ -59,7 +59,7 @@ func (pkg) Assets(b ioc.Builder) {
 			img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 			white := color.RGBA{255, 255, 255, 255}
 			img.Set(0, 0, white)
-			asset, err := render.NewTextureStorageAsset(img)
+			asset, err := render.NewTextureAsset(img)
 			return asset, err
 		})
 		b.RegisterAsset(gameAssets.SquareMesh, func() (any, error) {
@@ -74,12 +74,12 @@ func (pkg) Assets(b ioc.Builder) {
 				0, 1, 2,
 				0, 2, 3,
 			}
-			asset := render.NewMeshStorageAsset(vertices, indices)
+			asset := render.NewMeshAsset(vertices, indices)
 			return asset, nil
 		})
 
 		b.RegisterAsset(gameAssets.SquareCollider, func() (any, error) {
-			asset := collider.NewColliderStorageAsset(
+			asset := collider.NewColliderAsset(
 				[]collider.AABB{collider.NewAABB(mgl32.Vec3{-1, -1}, mgl32.Vec3{1, 1})},
 				[]collider.Range{collider.NewRange(collider.Leaf, 0, 2)},
 				[]collider.Polygon{

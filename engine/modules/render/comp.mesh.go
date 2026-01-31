@@ -30,22 +30,22 @@ type MeshAsset interface {
 	Indices() []ebo.Index
 }
 
-type meshStorageAsset struct {
+type meshAsset struct {
 	vertices []Vertex
 	indices  []ebo.Index
 }
 
-func NewMeshStorageAsset(
+func NewMeshAsset(
 	vertices []Vertex,
 	indices []ebo.Index,
 ) MeshAsset {
-	asset := &meshStorageAsset{
+	asset := &meshAsset{
 		vertices: vertices,
 		indices:  indices,
 	}
 	return asset
 }
 
-func (asset *meshStorageAsset) Vertices() []Vertex   { return asset.vertices }
-func (asset *meshStorageAsset) Indices() []ebo.Index { return asset.indices }
-func (a *meshStorageAsset) Release()                 {}
+func (asset *meshAsset) Vertices() []Vertex   { return asset.vertices }
+func (asset *meshAsset) Indices() []ebo.Index { return asset.indices }
+func (a *meshAsset) Release()                 {}

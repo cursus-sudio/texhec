@@ -66,7 +66,7 @@ func greatestCommonDivisor(a, b int) int {
 	return a
 }
 
-func NewTextureStorageAsset(
+func NewTextureAsset(
 	images ...image.Image,
 ) (TextureAsset, error) {
 	if len(images) == 0 {

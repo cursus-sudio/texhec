@@ -13,6 +13,7 @@ import (
 	"engine/modules/inputs"
 	"engine/modules/netsync"
 	"engine/modules/render"
+	"engine/modules/seed"
 	"engine/modules/text"
 	"engine/modules/transform"
 	"engine/modules/uuid"
@@ -101,8 +102,8 @@ func addScene(
 		world.Collider.Component().Set(gridEntity, collider.NewCollider(world.GameAssets.SquareCollider))
 		world.Inputs.Stack().Set(gridEntity, inputs.StackComponent{})
 
-		task := world.Generation.Generate(generation.NewConfiguration(
-			gridEntity, 21377137,
+		task := world.Generation.Generate(generation.NewConfig(
+			gridEntity, seed.New(21377137),
 			grid.NewCoords(cols, rows),
 		))
 		world.Batcher.Queue(task)

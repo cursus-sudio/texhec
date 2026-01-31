@@ -6,6 +6,7 @@ import (
 	"engine"
 	"engine/modules/batcher"
 	"engine/modules/grid"
+	"engine/modules/seed"
 	"math/rand/v2"
 
 	"github.com/ogiusek/ioc/v2"
@@ -19,21 +20,22 @@ type service struct {
 }
 
 func NewService(c ioc.Dic) generation.Service {
-	s := ioc.GetServices[*service](c)
+	s := ioc.GetServices[service](c)
 	s.tilesPerJob = 10
-	return s
+	return &s
 }
 
-func (s *service) Generate(c generation.Configuration) batcher.Task {
+func (s *service) Generate(c generation.Config) batcher.Task {
 	task := s.Batcher.NewTask()
 
 	gridComponent := tile.NewGrid(c.Size.Coords())
 	jobs := int(gridComponent.GetLastIndex() / grid.Index(s.tilesPerJob))
 	generateBatch := batcher.NewBatch(jobs, func(i int) {
-		rand := rand.New(rand.NewPCG(c.Seed, uint64(i)))
+		rand := c.Seed.SeededRand(seed.New(i))
 		for j := range s.tilesPerJob {
 			tile := s.GetTile(rand)
-			gridComponent.SetTile(grid.Index(i*s.tilesPerJob+j), tile)
+			gridI := grid.Index(i*s.tilesPerJob + j)
+			gridComponent.SetTile(gridI, tile)
 		}
 	})
 	flushBatch := batcher.NewBatch(1, func(i int) {

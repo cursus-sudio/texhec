@@ -3,22 +3,23 @@ package generation
 import (
 	"engine/modules/batcher"
 	"engine/modules/grid"
+	"engine/modules/seed"
 	"engine/services/ecs"
 )
 
-type Configuration struct {
+type Config struct {
 	Entity ecs.EntityID
-	Seed   uint64
+	Seed   seed.Seed
 	// will be generated <0, n)
 	Size grid.Coords
 }
 
-func NewConfiguration(
+func NewConfig(
 	entity ecs.EntityID,
-	seed uint64,
+	seed seed.Seed,
 	size grid.Coords,
-) Configuration {
-	return Configuration{
+) Config {
+	return Config{
 		entity,
 		seed,
 		size,
@@ -27,5 +28,5 @@ func NewConfiguration(
 
 type Service interface {
 	// adds to world all grids
-	Generate(Configuration) batcher.Task
+	Generate(Config) batcher.Task
 }

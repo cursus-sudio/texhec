@@ -1,7 +1,7 @@
 package menuscene
 
 import (
-	gameassets "core/assets"
+	"core/modules/ui"
 	gamescenes "core/scenes"
 	"engine/modules/camera"
 	"engine/modules/collider"
@@ -11,14 +11,10 @@ import (
 	"engine/modules/scene"
 	"engine/modules/text"
 	"engine/modules/transform"
-	"engine/modules/transition"
 	"engine/services/assets"
 	"engine/services/ecs"
 	"strings"
-	"time"
 
-	"github.com/go-gl/mathgl/mgl32"
-	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -51,19 +47,10 @@ func (pkg) Register(b ioc.Builder) {
 
 			background := world.NewEntity()
 			world.Hierarchy.SetParent(background, cameraEntity)
-			world.Transform.Parent().Set(background, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
 			world.Transform.Pos().Set(background, transform.NewPos(0, 0, 1))
 			world.Transform.PivotPoint().Set(background, transform.NewPivotPoint(.5, .5, 0))
 			world.Transform.ParentPivotPoint().Set(background, transform.NewParentPivotPoint(.5, .5, 0))
-			world.Render.Mesh().Set(background, render.NewMesh(world.GameAssets.SquareMesh))
-			world.Render.Texture().Set(background, render.NewTexture(world.GameAssets.Hud.Background))
-			world.Transition.Easing().Set(background, transition.NewEasing(gameassets.MyEasingFunction))
-			events.Emit(world.Events, transition.NewTransitionEvent(
-				background,
-				render.NewColor(mgl32.Vec4{1, 0, 1, 1}),
-				render.NewColor(mgl32.Vec4{1, 1, 1, 1}),
-				time.Second,
-			))
+			world.Ui.AnimatedBackground().Set(background, ui.NewAnimatedBackground())
 
 			buttonArea := world.NewEntity()
 			world.Hierarchy.SetParent(buttonArea, cameraEntity)

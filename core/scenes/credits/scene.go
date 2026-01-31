@@ -1,6 +1,7 @@
 package creditsscene
 
 import (
+	"core/modules/ui"
 	gamescenes "core/scenes"
 	"engine/modules/camera"
 	"engine/modules/collider"
@@ -47,10 +48,7 @@ func (pkg) Register(b ioc.Builder) {
 
 			background := world.NewEntity()
 			world.Hierarchy.SetParent(background, cameraEntity)
-			world.Transform.Parent().Set(background, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
-			world.Transform.ParentPivotPoint().Set(background, transform.NewParentPivotPoint(.5, .5, .5))
-			world.Render.Mesh().Set(background, render.NewMesh(world.GameAssets.SquareMesh))
-			world.Render.Texture().Set(background, render.NewTexture(world.GameAssets.Hud.Background))
+			world.Ui.AnimatedBackground().Set(background, ui.NewAnimatedBackground())
 
 			buttonArea := world.NewEntity()
 			world.Hierarchy.SetParent(buttonArea, cameraEntity)

@@ -2,10 +2,10 @@ package settingsscene
 
 import (
 	"core/modules/settings"
+	"core/modules/ui"
 	gamescenes "core/scenes"
 	"engine/modules/camera"
 	"engine/modules/layout"
-	"engine/modules/render"
 	"engine/modules/text"
 	"engine/modules/transform"
 	"engine/services/ecs"
@@ -42,9 +42,7 @@ func (pkg) Register(b ioc.Builder) {
 
 			background := world.NewEntity()
 			world.Hierarchy.SetParent(background, cameraEntity)
-			world.Transform.Parent().Set(background, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
-			world.Render.Mesh().Set(background, render.NewMesh(world.GameAssets.SquareMesh))
-			world.Render.Texture().Set(background, render.NewTexture(world.GameAssets.Hud.Background))
+			world.Ui.AnimatedBackground().Set(background, ui.NewAnimatedBackground())
 
 			buttonArea := world.NewEntity()
 			world.Transform.Size().Set(buttonArea, transform.NewSize(500, 200, 1))

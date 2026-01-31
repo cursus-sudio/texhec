@@ -9,6 +9,8 @@ import (
 	"engine/services/datastructures"
 	"engine/services/graphics/vao/ebo"
 	"engine/services/logger"
+	"image"
+	"image/color"
 	_ "image/png"
 	"math"
 
@@ -21,16 +23,17 @@ type GameAssets struct {
 	Hud          HudAssets
 	ExampleAudio assets.AssetID `path:"audio.wav"`
 
+	Blank          assets.AssetID `path:"blank texture"`
 	SquareMesh     assets.AssetID `path:"square mesh"`
 	SquareCollider assets.AssetID `path:"square collider"`
 	FontAsset      assets.AssetID `path:"font1.ttf"`
 }
 
 type HudAssets struct {
-	Btn      assets.AssetID `path:"hud/btn.png"`
-	Settings assets.AssetID `path:"hud/settings.png"`
-	// Background assets.AssetID `path:"hud/background.png"`
-	Background assets.AssetID `path:"hud/bg1.gif"`
+	Btn         assets.AssetID `path:"hud/btn.png"`
+	Settings    assets.AssetID `path:"hud/settings.png"`
+	Background1 assets.AssetID `path:"hud/bg1.gif"`
+	Background2 assets.AssetID `path:"hud/bg2.gif"`
 }
 
 type TileAssets struct {
@@ -52,6 +55,13 @@ func (pkg) Assets(b ioc.Builder) {
 	// register specific files
 	ioc.WrapService(b, func(c ioc.Dic, b assets.AssetsStorageBuilder) {
 		gameAssets := ioc.Get[GameAssets](c)
+		b.RegisterAsset(gameAssets.Blank, func() (any, error) {
+			img := image.NewRGBA(image.Rect(0, 0, 1, 1))
+			white := color.RGBA{255, 255, 255, 255}
+			img.Set(0, 0, white)
+			asset, err := render.NewTextureStorageAsset(img)
+			return asset, err
+		})
 		b.RegisterAsset(gameAssets.SquareMesh, func() (any, error) {
 			vertices := []render.Vertex{
 				{Pos: [3]float32{1, 1, 1}, TexturePos: [2]float32{1, 1}},

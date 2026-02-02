@@ -65,8 +65,7 @@ type locations struct {
 	HeightInv int32 `uniform:"heightInv"` // float
 }
 
-func (s *system) Listen(render.RenderEvent) {
-	// before get
+func (s *system) ListenFlush(render.FlushEvent) {
 	dirtyEntities := s.dirtySet.Get()
 	for _, entity := range dirtyEntities {
 		batch, batchOk := s.batches.Get(entity)
@@ -102,8 +101,8 @@ func (s *system) Listen(render.RenderEvent) {
 		}
 		batch.buffer.Flush()
 	}
-
-	// render
+}
+func (s *system) ListenRender(render.RenderEvent) {
 	w, h := s.Window.Window().GetSize()
 	s.texturesBuffer.Bind()
 	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, s.texturesBuffer.ID())

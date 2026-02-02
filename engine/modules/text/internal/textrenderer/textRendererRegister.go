@@ -124,7 +124,8 @@ func (f *textRendererRegister) Register() error {
 		array.AddDirtySet(renderer.dirtyEntities)
 	}
 
-	events.Listen(f.EventsBuilder, renderer.Listen)
+	events.Listen(f.EventsBuilder, renderer.ListenFlush)
+	events.Listen(f.EventsBuilder, renderer.ListenRender)
 
 	return nil
 }

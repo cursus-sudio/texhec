@@ -124,6 +124,14 @@ func (s *batch) Remove(entity ecs.EntityID) {
 //
 
 func (s *batch) Bind() {
+	if s.Dirty {
+		s.Dirty = false
+		s.Models.Flush()
+		s.Colors.Flush()
+		s.Frames.Flush()
+		s.Groups.Flush()
+	}
+
 	s.VAO.Use()
 	s.TextureArray.Use()
 
@@ -139,14 +147,6 @@ func (s *batch) Bind() {
 }
 
 func (s *batch) Render() {
-	if s.Dirty {
-		s.Dirty = false
-		s.Models.Flush()
-		s.Colors.Flush()
-		s.Frames.Flush()
-		s.Groups.Flush()
-	}
-
 	gl.DrawElementsInstanced(
 		gl.TRIANGLES,
 		int32(s.VAO.EBO().Len()),

@@ -15,6 +15,7 @@ var (
 
 type Service interface {
 	Component() ecs.ComponentsArray[Component]
+	Priority() ecs.ComponentsArray[PriorityComponent]
 
 	Mobile() ecs.ComponentsArray[MobileCameraComponent]
 	Limits() ecs.ComponentsArray[CameraLimitsComponent]
@@ -25,6 +26,9 @@ type Service interface {
 	OrthoResolution() ecs.ComponentsArray[OrthoResolutionComponent]
 	Perspective() ecs.ComponentsArray[PerspectiveComponent]
 	DynamicPerspective() ecs.ComponentsArray[DynamicPerspectiveComponent]
+
+	// returns cameras from smallest to biggest
+	OrderedCameras() []ecs.EntityID
 
 	GetViewport(camera ecs.EntityID) (x, y, w, h int32)
 	Mat4(caemra ecs.EntityID) mgl32.Mat4

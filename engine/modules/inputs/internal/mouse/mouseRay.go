@@ -52,7 +52,7 @@ func (s *cameraRaySystem) Listen(args ShootRayEvent) error {
 	mousePos := s.Window.GetMousePos()
 
 	targets := []inputs.Target{}
-	for _, cameraEntity := range s.Camera.Component().GetEntities() {
+	for _, cameraEntity := range s.Camera.OrderedCameras() {
 		ray := s.Camera.ShootRay(cameraEntity, mousePos)
 
 		cameraCollisions := s.Collider.RaycastAll(ray)
@@ -66,6 +66,14 @@ func (s *cameraRaySystem) Listen(args ShootRayEvent) error {
 	}
 
 	slices.SortFunc(targets, func(a, b inputs.Target) int {
+		p1, _ := s.Camera.Priority().Get(a.Camera)
+		p2, _ := s.Camera.Priority().Get(b.Camera)
+		if p1.Priority > p2.Priority {
+			return -1
+		}
+		if p1.Priority < p2.Priority {
+			return 1
+		}
 		if a.Hit.Distance < b.Hit.Distance {
 			return -1
 		}

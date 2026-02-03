@@ -65,7 +65,7 @@ type locations struct {
 	HeightInv int32 `uniform:"heightInv"` // float
 }
 
-func (s *system) ListenRender(render.RenderEvent) {
+func (s *system) ListenRender(render render.RenderEvent) {
 	dirtyEntities := s.dirtySet.Get()
 	for _, entity := range dirtyEntities {
 		batch, batchOk := s.batches.Get(entity)
@@ -99,41 +99,37 @@ func (s *system) ListenRender(render.RenderEvent) {
 		batch.buffer.Flush()
 	}
 
-	w, h := s.Window.Window().GetSize()
 	s.texturesBuffer.Bind()
-	defer func() { gl.Viewport(0, 0, w, h) }()
 
 	s.program.Bind()
 	s.vao.Bind()
 	s.textureArray.Bind()
-	for _, cameraEntity := range s.Camera.Component().GetEntities() {
-		cameraGroups, _ := s.Groups.Component().Get(cameraEntity)
-		cameraMatrix := s.Camera.Mat4(cameraEntity)
 
-		gl.Viewport(s.Camera.GetViewport(cameraEntity))
-		for _, entity := range s.batches.GetIndices() {
-			batch, ok := s.batches.Get(entity)
-			if !ok {
-				continue
-			}
-			if groups, _ := s.Groups.Component().Get(entity); !cameraGroups.SharesAnyGroup(groups) {
-				continue
-			}
-			batch.buffer.Bind()
+	cameraGroups, _ := s.Groups.Component().Get(render.Camera)
+	cameraMatrix := s.Camera.Mat4(render.Camera)
 
-			grid, _ := s.Tile.Grid().Get(entity)
-
-			gl.Uniform1ui(s.locations.Width, uint32(grid.Width()))
-			gl.Uniform1ui(s.locations.Height, uint32(grid.Height()))
-			gl.Uniform1f(s.locations.WidthInv, 2/float32(grid.Width()))
-			gl.Uniform1f(s.locations.HeightInv, 2/float32(grid.Height()))
-
-			mvp := cameraMatrix.Mul4(s.Transform.Mat4(entity))
-			gl.UniformMatrix4fv(s.locations.Mvp, 1, false, &mvp[0])
-
-			verticesCount := (grid.Width() + 1) * (grid.Height() + 1)
-			// verticesCount := grid.Width() * grid.Height()
-			gl.DrawArrays(gl.POINTS, 0, int32(verticesCount))
+	for _, entity := range s.batches.GetIndices() {
+		batch, ok := s.batches.Get(entity)
+		if !ok {
+			continue
 		}
+		if groups, _ := s.Groups.Component().Get(entity); !cameraGroups.SharesAnyGroup(groups) {
+			continue
+		}
+		batch.buffer.Bind()
+
+		grid, _ := s.Tile.Grid().Get(entity)
+
+		gl.Uniform1ui(s.locations.Width, uint32(grid.Width()))
+		gl.Uniform1ui(s.locations.Height, uint32(grid.Height()))
+		gl.Uniform1f(s.locations.WidthInv, 2/float32(grid.Width()))
+		gl.Uniform1f(s.locations.HeightInv, 2/float32(grid.Height()))
+
+		mvp := cameraMatrix.Mul4(s.Transform.Mat4(entity))
+		gl.UniformMatrix4fv(s.locations.Mvp, 1, false, &mvp[0])
+
+		verticesCount := (grid.Width() + 1) * (grid.Height() + 1)
+		// verticesCount := grid.Width() * grid.Height()
+		gl.DrawArrays(gl.POINTS, 0, int32(verticesCount))
 	}
 }

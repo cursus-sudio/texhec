@@ -113,7 +113,7 @@ func NewSystem(c ioc.Dic) render.SystemRenderer {
 	})
 }
 
-func (s *system) ListenRender(render.RenderEvent) error {
+func (s *system) ListenRender(render render.RenderEvent) error {
 	// batch
 	// for dirtyEntity in entities
 	//  if exists than add (create batch if it doesn't exist)
@@ -156,17 +156,15 @@ func (s *system) ListenRender(render.RenderEvent) error {
 	//   bind camera mat4
 	//   render
 	s.program.Bind()
+
 	for _, batch := range s.batches {
-		for _, camera := range s.Camera.Component().GetEntities() {
-			gl.Viewport(s.Camera.GetViewport(camera))
-			camMatrix := s.Camera.Mat4(camera)
-			gl.UniformMatrix4fv(s.locations.Camera, 1, false, &camMatrix[0])
+		camMatrix := s.Camera.Mat4(render.Camera)
+		gl.UniformMatrix4fv(s.locations.Camera, 1, false, &camMatrix[0])
 
-			camGroups, _ := s.Groups.Component().Get(camera)
-			gl.Uniform1ui(s.locations.CameraGroups, camGroups.Mask)
+		camGroups, _ := s.Groups.Component().Get(render.Camera)
+		gl.Uniform1ui(s.locations.CameraGroups, camGroups.Mask)
 
-			batch.Render()
-		}
+		batch.Render()
 	}
 	return nil
 }

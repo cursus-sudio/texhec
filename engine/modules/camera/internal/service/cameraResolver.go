@@ -9,6 +9,8 @@ import (
 	"engine/services/ecs"
 	"engine/services/media/window"
 	"reflect"
+	"slices"
+	"sort"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
@@ -45,6 +47,7 @@ type service struct {
 	Window    window.Api        `inject:"1"`
 
 	cameraArray      ecs.ComponentsArray[camera.Component]
+	priorityArray    ecs.ComponentsArray[camera.PriorityComponent]
 	projectionsArray ecs.ComponentsArray[projectionComponent]
 
 	projectionIDs map[reflect.Type]projectionID
@@ -66,6 +69,7 @@ type service struct {
 func NewSerivce(c ioc.Dic) Service {
 	s := ioc.GetServices[*service](c)
 	s.cameraArray = ecs.GetComponentsArray[camera.Component](s.World)
+	s.priorityArray = ecs.GetComponentsArray[camera.PriorityComponent](s.World)
 	s.projectionsArray = ecs.GetComponentsArray[projectionComponent](s.World)
 
 	s.projectionIDs = make(map[reflect.Type]projectionID)
@@ -89,6 +93,10 @@ func NewSerivce(c ioc.Dic) Service {
 
 func (t *service) Component() ecs.ComponentsArray[camera.Component] {
 	return t.cameraArray
+}
+
+func (t *service) Priority() ecs.ComponentsArray[camera.PriorityComponent] {
+	return t.priorityArray
 }
 
 func (t *service) Mobile() ecs.ComponentsArray[camera.MobileCameraComponent] {
@@ -118,6 +126,18 @@ func (t *service) DynamicPerspective() ecs.ComponentsArray[camera.DynamicPerspec
 }
 
 //
+
+// returns cameras from smallest to biggest
+func (t *service) OrderedCameras() []ecs.EntityID {
+	cameras := t.Component().GetEntities()
+	cameras = slices.Clone(cameras)
+	sort.Slice(cameras, func(i, j int) bool {
+		o1, _ := t.priorityArray.Get(cameras[i])
+		o2, _ := t.priorityArray.Get(cameras[j])
+		return o1.Priority < o2.Priority
+	})
+	return cameras
+}
 
 func (t *service) GetViewport(entity ecs.EntityID) (x, y, w, h int32) {
 	viewportComponent, ok := t.viewport.Get(entity)

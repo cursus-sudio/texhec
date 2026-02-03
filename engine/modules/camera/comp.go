@@ -16,6 +16,17 @@ func NewCamera[Projection any]() Component {
 
 //
 
+type PriorityComponent struct {
+	// biggest camera is uppermost
+	Priority int
+}
+
+func NewPriority(priority int) PriorityComponent {
+	return PriorityComponent{priority}
+}
+
+//
+
 // component specifying that camera can be freely moved on map
 type MobileCameraComponent struct{}
 

@@ -23,7 +23,6 @@ type batch struct {
 	system       *system
 	VAO          vao.VAO
 	TextureArray texturearray.TextureArray
-	FramesCount  int
 	Dirty        bool
 
 	// buffers (model, color, frame)
@@ -36,25 +35,32 @@ type batch struct {
 
 func (s *system) NewBatch(batchKey batchKey) (*batch, error) {
 	// mesh
-	meshAsset, err := assets.GetAsset[render.MeshAsset](s.Assets, batchKey.mesh.ID)
-	if err != nil {
-		return nil, err
+	VAO, ok := s.meshes[batchKey.mesh.ID]
+	if !ok {
+		meshAsset, err := assets.GetAsset[render.MeshAsset](s.Assets, batchKey.mesh.ID)
+		if err != nil {
+			return nil, err
+		}
+		VBO := s.VboFactory()
+		VBO.SetVertices(meshAsset.Vertices())
+		EBO := ebo.NewEBO()
+		EBO.SetIndices(meshAsset.Indices())
+		VAO = vao.NewVAO(VBO, EBO)
+		s.meshes[batchKey.mesh.ID] = VAO
 	}
-
-	VBO := s.VboFactory()
-	VBO.SetVertices(meshAsset.Vertices())
-	EBO := ebo.NewEBO()
-	EBO.SetIndices(meshAsset.Indices())
-	VAO := vao.NewVAO(VBO, EBO)
 
 	// texture
-	textureAsset, err := assets.GetAsset[render.TextureAsset](s.Assets, batchKey.texture.Asset)
-	if err != nil {
-		return nil, err
-	}
-	textureArr, err := s.TextureArrayFactory.NewFromSlice(textureAsset.Images())
-	if err != nil {
-		return nil, err
+	textureArr, ok := s.textures[batchKey.texture.Asset]
+	if !ok {
+		textureAsset, err := assets.GetAsset[render.TextureAsset](s.Assets, batchKey.texture.Asset)
+		if err != nil {
+			return nil, err
+		}
+		textureArr, err = s.TextureArrayFactory.NewFromSlice(textureAsset.Images())
+		if err != nil {
+			return nil, err
+		}
+		s.textures[batchKey.texture.Asset] = textureArr
 	}
 
 	// batch
@@ -62,7 +68,6 @@ func (s *system) NewBatch(batchKey batchKey) (*batch, error) {
 		system:       s,
 		VAO:          VAO,
 		TextureArray: textureArr,
-		FramesCount:  len(textureAsset.Images()),
 		Dirty:        true,
 
 		Entities: datastructures.NewSet[ecs.EntityID](),
@@ -90,7 +95,7 @@ func (s *batch) Upsert(entity ecs.EntityID) {
 	textureFrame, _ := s.system.Render.TextureFrame().Get(entity)
 	groups, _ := s.system.Groups.Component().Get(entity)
 
-	frame := int32(textureFrame.GetFrame(s.FramesCount))
+	frame := int32(textureFrame.GetFrame(s.TextureArray.ImagesCount))
 
 	s.Dirty = true
 	s.Models.Set(index, model)

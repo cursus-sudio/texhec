@@ -12,6 +12,7 @@ import (
 	"engine/services/graphics/program"
 	"engine/services/graphics/shader"
 	"engine/services/graphics/texturearray"
+	"engine/services/graphics/vao"
 	"engine/services/graphics/vao/vbo"
 	"engine/services/logger"
 	"engine/services/media/window"
@@ -54,6 +55,9 @@ type system struct {
 	entitiesBatches datastructures.SparseArray[ecs.EntityID, batchKey]
 	batches         map[batchKey]*batch
 
+	meshes   map[assets.AssetID]vao.VAO
+	textures map[assets.AssetID]texturearray.TextureArray
+
 	program   program.Program
 	locations locations
 }
@@ -91,6 +95,9 @@ func NewSystem(c ioc.Dic) render.SystemRenderer {
 		s.dirtyEntities = ecs.NewDirtySet()
 		s.entitiesBatches = datastructures.NewSparseArray[ecs.EntityID, batchKey]()
 		s.batches = make(map[batchKey]*batch)
+
+		s.meshes = make(map[assets.AssetID]vao.VAO)
+		s.textures = make(map[assets.AssetID]texturearray.TextureArray)
 
 		s.program = p
 		s.locations = locations

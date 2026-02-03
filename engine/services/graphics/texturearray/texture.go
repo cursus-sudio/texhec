@@ -10,7 +10,8 @@ import (
 )
 
 type TextureArray struct {
-	Texture uint32
+	Texture     uint32
+	ImagesCount int
 }
 
 func (r TextureArray) Release() {
@@ -57,6 +58,7 @@ func (f *factory) New(asset datastructures.SparseArray[uint32, image.Image]) (Te
 	}
 
 	textureArray.Texture = createTexs(w, h, images)
+	textureArray.ImagesCount = images.Size()
 
 	for _, wrapper := range f.wrappers {
 		wrapper(textureArray)

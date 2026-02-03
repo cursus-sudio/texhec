@@ -126,7 +126,6 @@ func (factory *TileRenderSystemRegister) Register() error {
 	s.dirtySet = dirtySet
 	s.batches = datastructures.NewSparseArray[ecs.EntityID, Batch]()
 
-	events.Listen(factory.EventsBuilder, s.ListenFlush)
 	events.Listen(factory.EventsBuilder, s.ListenRender)
 	return nil
 }

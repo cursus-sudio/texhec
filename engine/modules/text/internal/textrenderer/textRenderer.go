@@ -52,7 +52,7 @@ func (s *textRenderer) ensureFontExists(asset assets.AssetID) error {
 	return nil
 }
 
-func (s *textRenderer) ListenFlush(rendersys.FlushEvent) {
+func (s *textRenderer) ListenRender(rendersys.RenderEvent) {
 	dirtyEntities := s.dirtyEntities.Get()
 
 	// ensure fonts exist
@@ -105,12 +105,9 @@ func (s *textRenderer) ListenFlush(rendersys.FlushEvent) {
 		batch := NewLayoutBatch(s.VboFactory, layout)
 		s.layoutsBatches.Set(entity, batch)
 	}
-}
-
-func (s *textRenderer) ListenRender(rendersys.RenderEvent) {
-	s.program.Bind()
 
 	// render layouts
+	s.program.Bind()
 	for _, entity := range s.layoutsBatches.GetIndices() {
 		layout, _ := s.layoutsBatches.Get(entity)
 		font, ok := s.fontsBatches.Get(layout.Layout.Font)

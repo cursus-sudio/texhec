@@ -26,7 +26,6 @@ func NewRenderSystem(c ioc.Dic) render.System {
 }
 
 func (s *renderSystem) Listen(args frames.FrameEvent) error {
-	events.Emit(s.Events, render.FlushEvent{})
 	events.Emit(s.Events, render.RenderEvent{})
 
 	s.Window.Window().GLSwap()

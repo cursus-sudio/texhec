@@ -101,18 +101,17 @@ func NewSystem(c ioc.Dic) render.SystemRenderer {
 		s.Render.Mesh().AddDirtySet(s.dirtyEntities)
 		s.Render.Texture().AddDirtySet(s.dirtyEntities)
 
-		// events.ListenE(s.EventsBuilder, s.ListenFlush)
 		events.ListenE(s.EventsBuilder, s.ListenRender)
 		return nil
 	})
 }
 
-func (s *system) ListenFlush(render.FlushEvent) error {
-	var err error
+func (s *system) ListenRender(render.RenderEvent) error {
 	// batch
 	// for dirtyEntity in entities
 	//  if exists than add (create batch if it doesn't exist)
 	//  else remove
+	var err error
 	for _, entity := range s.dirtyEntities.Get() {
 		batchKey, batchKeyOk := batchKey{}, true
 		if batchKeyOk {
@@ -142,20 +141,14 @@ func (s *system) ListenFlush(render.FlushEvent) error {
 		batch.Upsert(entity)
 		s.entitiesBatches.Set(entity, batchKey)
 	}
-	return nil
-}
 
-func (s *system) ListenRender(render.RenderEvent) error {
-	s.program.Bind()
-	if err := s.ListenFlush(render.FlushEvent{}); err != nil {
-		return err
-	}
 	// render
 	// for batch in batches
 	//  bind everything
 	//  for camera in cameras
 	//   bind camera mat4
 	//   render
+	s.program.Bind()
 	for _, batch := range s.batches {
 		for _, camera := range s.Camera.Component().GetEntities() {
 			gl.Viewport(s.Camera.GetViewport(camera))

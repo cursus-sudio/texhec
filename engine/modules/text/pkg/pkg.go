@@ -94,7 +94,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 		return textrenderer.NewFontKeys()
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) text.System {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) text.SystemRenderer {
 		return textrenderer.NewTextRenderer(
 			c,
 			pkg.defaultFontFamily(c).FontFamily,

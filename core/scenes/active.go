@@ -142,7 +142,7 @@ func (pkg) Register(b ioc.Builder) {
 				ioc.Get[render.System](c),
 				ioc.Get[tile.SystemRenderer](c),
 				ioc.Get[render.SystemRenderer](c),
-				ioc.Get[text.System](c),
+				ioc.Get[text.SystemRenderer](c),
 				ioc.Get[fpslogger.System](c),
 			)
 			for _, err := range errs {

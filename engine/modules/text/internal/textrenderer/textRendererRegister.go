@@ -52,7 +52,7 @@ func NewTextRenderer(c ioc.Dic,
 	defaultTextAsset assets.AssetID,
 	defaultColor text.TextColorComponent,
 	removeOncePerNCalls uint16,
-) text.System {
+) text.SystemRenderer {
 	s := ioc.GetServices[*textRendererRegister](c)
 	s.defaultTextAsset = defaultTextAsset
 	s.defaultColor = defaultColor

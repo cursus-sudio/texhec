@@ -121,6 +121,10 @@ func (s *batch) Remove(entity ecs.EntityID) {
 //
 
 func (s *batch) Render() {
+	if len(s.Entities.Get()) == 0 {
+		return
+	}
+
 	if s.Dirty {
 		s.Dirty = false
 		s.Models.Flush()

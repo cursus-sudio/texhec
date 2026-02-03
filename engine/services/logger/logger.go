@@ -49,3 +49,12 @@ func (logger *logger) Fatal(err error) {
 	message := fmt.Sprintf("\033[31m[ Error ]\033[0m %s \033[31m\n%s\033[0m\n", logger.Clock.Now(), err)
 	logger.Panic(message)
 }
+
+// func renderColor(b *strings.Builder, color mgl64.Vec3) {
+// 	fmt.Fprintf(b,
+// 		"\033[38;2;%d;%d;%dm█",
+// 		uint8(color[0]*255),
+// 		uint8(color[1]*255),
+// 		uint8(color[2]*255),
+// 	)
+// }

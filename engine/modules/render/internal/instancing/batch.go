@@ -69,18 +69,10 @@ func (s *system) NewBatch(batchKey batchKey) (*batch, error) {
 	}
 
 	// buffers
-	var buffer uint32
-	gl.GenBuffers(1, &buffer)
-	batch.Models = buffers.NewBuffer[mgl32.Mat4](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
-
-	gl.GenBuffers(1, &buffer)
-	batch.Colors = buffers.NewBuffer[mgl32.Vec4](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
-
-	gl.GenBuffers(1, &buffer)
-	batch.Frames = buffers.NewBuffer[int32](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
-
-	gl.GenBuffers(1, &buffer)
-	batch.Groups = buffers.NewBuffer[uint32](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
+	batch.Models = buffers.NewBuffer[mgl32.Mat4](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, 0)
+	batch.Colors = buffers.NewBuffer[mgl32.Vec4](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, 1)
+	batch.Frames = buffers.NewBuffer[int32](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, 2)
+	batch.Groups = buffers.NewBuffer[uint32](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, 3)
 
 	return batch, nil
 }
@@ -139,11 +131,6 @@ func (s *batch) Bind() {
 	s.Colors.Bind()
 	s.Frames.Bind()
 	s.Groups.Bind()
-
-	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, s.Models.ID())
-	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, s.Colors.ID())
-	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 2, s.Frames.ID())
-	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 3, s.Groups.ID())
 }
 
 func (s *batch) Render() {

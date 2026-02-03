@@ -26,6 +26,8 @@ type buffer[Stored comparable] struct {
 	mutex  sync.Locker
 	target uint32
 	usage  uint32
+	index  uint32
+
 	buffer uint32
 
 	elementSize int
@@ -36,25 +38,29 @@ type buffer[Stored comparable] struct {
 func NewBuffer[Stored comparable](
 	target uint32, // gl.SHADER_STORAGE_BUFFER / gl.DRAW_INDIRECT_BUFFER
 	usage uint32, // gl.STATIC_DRAW / gl.DYNAMIC_DRAW
-	bufferID uint32,
+	index uint32,
 ) Buffer[Stored] {
 	mutex := &sync.Mutex{}
-	return &buffer[Stored]{
+	b := &buffer[Stored]{
 		mutex:  mutex,
 		target: target,
 		usage:  usage,
-		buffer: bufferID,
+		index:  index,
+
+		buffer: 0,
 
 		elementSize:   int(reflect.TypeFor[Stored]().Size()),
 		TrackingArray: datastructures.NewThreadSafeTrackingArray[Stored](mutex),
 		bufferLen:     0,
 	}
+	gl.GenBuffers(1, &b.buffer)
+	return b
 }
 
 func (s *buffer[Stored]) ID() uint32 { return s.buffer }
 
 func (s *buffer[Stored]) Bind() {
-	gl.BindBuffer(s.target, s.ID())
+	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, s.index, s.ID())
 }
 
 func (s *buffer[Stored]) CheckBufferSize() bool {

@@ -23,7 +23,6 @@ type batch struct {
 	system       *system
 	VAO          vao.VAO
 	TextureArray texturearray.TextureArray
-	FramesCount  int
 	Dirty        bool
 
 	// buffers (model, color, frame)
@@ -36,25 +35,32 @@ type batch struct {
 
 func (s *system) NewBatch(batchKey batchKey) (*batch, error) {
 	// mesh
-	meshAsset, err := assets.GetAsset[render.MeshAsset](s.Assets, batchKey.mesh.ID)
-	if err != nil {
-		return nil, err
+	VAO, ok := s.meshes[batchKey.mesh.ID]
+	if !ok {
+		meshAsset, err := assets.GetAsset[render.MeshAsset](s.Assets, batchKey.mesh.ID)
+		if err != nil {
+			return nil, err
+		}
+		VBO := s.VboFactory()
+		VBO.SetVertices(meshAsset.Vertices())
+		EBO := ebo.NewEBO()
+		EBO.SetIndices(meshAsset.Indices())
+		VAO = vao.NewVAO(VBO, EBO)
+		s.meshes[batchKey.mesh.ID] = VAO
 	}
-
-	VBO := s.VboFactory()
-	VBO.SetVertices(meshAsset.Vertices())
-	EBO := ebo.NewEBO()
-	EBO.SetIndices(meshAsset.Indices())
-	VAO := vao.NewVAO(VBO, EBO)
 
 	// texture
-	textureAsset, err := assets.GetAsset[render.TextureAsset](s.Assets, batchKey.texture.Asset)
-	if err != nil {
-		return nil, err
-	}
-	textureArr, err := s.TextureArrayFactory.NewFromSlice(textureAsset.Images())
-	if err != nil {
-		return nil, err
+	textureArr, ok := s.textures[batchKey.texture.Asset]
+	if !ok {
+		textureAsset, err := assets.GetAsset[render.TextureAsset](s.Assets, batchKey.texture.Asset)
+		if err != nil {
+			return nil, err
+		}
+		textureArr, err = s.TextureArrayFactory.NewFromSlice(textureAsset.Images())
+		if err != nil {
+			return nil, err
+		}
+		s.textures[batchKey.texture.Asset] = textureArr
 	}
 
 	// batch
@@ -62,25 +68,16 @@ func (s *system) NewBatch(batchKey batchKey) (*batch, error) {
 		system:       s,
 		VAO:          VAO,
 		TextureArray: textureArr,
-		FramesCount:  len(textureAsset.Images()),
 		Dirty:        true,
 
 		Entities: datastructures.NewSet[ecs.EntityID](),
 	}
 
 	// buffers
-	var buffer uint32
-	gl.GenBuffers(1, &buffer)
-	batch.Models = buffers.NewBuffer[mgl32.Mat4](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
-
-	gl.GenBuffers(1, &buffer)
-	batch.Colors = buffers.NewBuffer[mgl32.Vec4](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
-
-	gl.GenBuffers(1, &buffer)
-	batch.Frames = buffers.NewBuffer[int32](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
-
-	gl.GenBuffers(1, &buffer)
-	batch.Groups = buffers.NewBuffer[uint32](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
+	batch.Models = buffers.NewBuffer[mgl32.Mat4](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, 0)
+	batch.Colors = buffers.NewBuffer[mgl32.Vec4](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, 1)
+	batch.Frames = buffers.NewBuffer[int32](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, 2)
+	batch.Groups = buffers.NewBuffer[uint32](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, 3)
 
 	return batch, nil
 }
@@ -98,7 +95,7 @@ func (s *batch) Upsert(entity ecs.EntityID) {
 	textureFrame, _ := s.system.Render.TextureFrame().Get(entity)
 	groups, _ := s.system.Groups.Component().Get(entity)
 
-	frame := int32(textureFrame.GetFrame(s.FramesCount))
+	frame := int32(textureFrame.GetFrame(s.TextureArray.ImagesCount))
 
 	s.Dirty = true
 	s.Models.Set(index, model)
@@ -123,22 +120,11 @@ func (s *batch) Remove(entity ecs.EntityID) {
 
 //
 
-func (s *batch) Bind() {
-	s.VAO.Use()
-	s.TextureArray.Use()
-
-	s.Models.Bind()
-	s.Colors.Bind()
-	s.Frames.Bind()
-	s.Groups.Bind()
-
-	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, s.Models.ID())
-	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, s.Colors.ID())
-	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 2, s.Frames.ID())
-	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 3, s.Groups.ID())
-}
-
 func (s *batch) Render() {
+	if len(s.Entities.Get()) == 0 {
+		return
+	}
+
 	if s.Dirty {
 		s.Dirty = false
 		s.Models.Flush()
@@ -146,6 +132,14 @@ func (s *batch) Render() {
 		s.Frames.Flush()
 		s.Groups.Flush()
 	}
+
+	s.VAO.Bind()
+	s.TextureArray.Bind()
+
+	s.Models.Bind()
+	s.Colors.Bind()
+	s.Frames.Bind()
+	s.Groups.Bind()
 
 	gl.DrawElementsInstanced(
 		gl.TRIANGLES,

@@ -58,7 +58,6 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) render.System {
 		return ecs.NewSystemRegister(func() error {
 			errs := ecs.RegisterSystems(
-				systems.NewClearSystem(c),
 				systems.NewErrorLogger(c),
 				systems.NewRenderSystem(c),
 			)

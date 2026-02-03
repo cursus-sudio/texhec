@@ -23,9 +23,7 @@ func NewFontBatch(
 		return fontBatch{}, err
 	}
 
-	var buffer uint32
-	gl.GenBuffers(1, &buffer)
-	glyphsWidth := buffers.NewBuffer[float32](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
+	glyphsWidth := buffers.NewBuffer[float32](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, 0)
 
 	for _, index := range font.GlyphsWidth.GetIndices() {
 		width, _ := font.GlyphsWidth.Get(index)

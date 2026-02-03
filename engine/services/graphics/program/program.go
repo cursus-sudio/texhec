@@ -15,7 +15,7 @@ var (
 type Program interface {
 	ID() uint32
 	Locations(reflect.Type) (any, error)
-	Use()
+	Bind()
 	Release()
 }
 
@@ -35,7 +35,7 @@ func NewProgram(p uint32, parameters []Parameter) (Program, error) {
 
 func (p *program) ID() uint32 { return p.id }
 
-func (p *program) Use() {
+func (p *program) Bind() {
 	gl.UseProgram(p.id)
 }
 

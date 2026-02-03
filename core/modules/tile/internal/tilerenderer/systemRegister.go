@@ -116,9 +116,7 @@ func (factory *TileRenderSystemRegister) Register() error {
 	s.ids = factory.ids
 	s.textureArray = textureArray
 
-	var buffer uint32
-	gl.GenBuffers(1, &buffer)
-	s.texturesBuffer = buffers.NewBuffer[mgl32.Vec2](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, buffer)
+	s.texturesBuffer = buffers.NewBuffer[mgl32.Vec2](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, 1)
 	for _, id := range factory.tileTextures.GetIndices() {
 		value, _ := factory.tileTextures.Get(id)
 		s.texturesBuffer.Set(int(id), value)
@@ -128,6 +126,6 @@ func (factory *TileRenderSystemRegister) Register() error {
 	s.dirtySet = dirtySet
 	s.batches = datastructures.NewSparseArray[ecs.EntityID, Batch]()
 
-	events.Listen(factory.EventsBuilder, s.Listen)
+	events.Listen(factory.EventsBuilder, s.ListenRender)
 	return nil
 }

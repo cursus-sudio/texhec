@@ -13,7 +13,7 @@ import (
 	"engine/modules/inputs"
 	"engine/modules/netsync"
 	"engine/modules/render"
-	"engine/modules/text"
+	"engine/modules/seed"
 	"engine/modules/transform"
 	"engine/modules/uuid"
 	"engine/services/ecs"
@@ -47,6 +47,7 @@ func addScene(
 	cols := 1000
 
 	uiCamera := world.NewEntity()
+	world.Camera.Priority().Set(uiCamera, camera.NewPriority(1))
 	world.Hierarchy.SetParent(uiCamera, sceneParent)
 	world.Camera.Ortho().Set(uiCamera, camera.NewOrtho(-1000, +1000))
 	world.Groups.Component().Set(uiCamera, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
@@ -63,21 +64,9 @@ func addScene(
 		mgl32.Vec3{50 * float32(cols), 50 * float32(rows), 1000},
 	))
 
-	signature := world.NewEntity()
-	world.Hierarchy.SetParent(signature, uiCamera)
-	world.Transform.Pos().Set(signature, transform.NewPos(5, 5, 1))
-	world.Transform.Size().Set(signature, transform.NewSize(100, 50, 1))
-	world.Transform.PivotPoint().Set(signature, transform.NewPivotPoint(0, .5, 0))
-	world.Transform.Parent().Set(signature, transform.NewParent(transform.RelativePos))
-	world.Transform.ParentPivotPoint().Set(signature, transform.NewParentPivotPoint(0, 0, .5))
-	world.Groups.Component().Set(signature, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
-
-	world.Text.FontSize().Set(signature, text.FontSizeComponent{FontSize: 32})
-	world.Text.Break().Set(signature, text.BreakComponent{Break: text.BreakNone})
-
 	settingsEntity := world.NewEntity()
 	world.Hierarchy.SetParent(settingsEntity, uiCamera)
-	world.Transform.Pos().Set(settingsEntity, transform.NewPos(10, -10, 5))
+	world.Transform.Pos().Set(settingsEntity, transform.NewPos(10, -10, 0))
 	world.Transform.Size().Set(settingsEntity, transform.NewSize(50, 50, 1))
 	world.Transform.PivotPoint().Set(settingsEntity, transform.NewPivotPoint(0, 1, .5))
 	world.Transform.Parent().Set(settingsEntity, transform.NewParent(transform.RelativePos))
@@ -101,8 +90,8 @@ func addScene(
 		world.Collider.Component().Set(gridEntity, collider.NewCollider(world.GameAssets.SquareCollider))
 		world.Inputs.Stack().Set(gridEntity, inputs.StackComponent{})
 
-		task := world.Generation.Generate(generation.NewConfiguration(
-			gridEntity, 21377137,
+		task := world.Generation.Generate(generation.NewConfig(
+			gridEntity, seed.New(21377137),
 			grid.NewCoords(cols, rows),
 		))
 		world.Batcher.Queue(task)

@@ -12,6 +12,7 @@ import (
 	"engine/services/graphics/program"
 	"engine/services/graphics/shader"
 	"engine/services/graphics/texturearray"
+	"engine/services/graphics/vao"
 	"engine/services/graphics/vao/vbo"
 	"engine/services/logger"
 	"engine/services/media/window"
@@ -54,6 +55,9 @@ type system struct {
 	entitiesBatches datastructures.SparseArray[ecs.EntityID, batchKey]
 	batches         map[batchKey]*batch
 
+	meshes   map[assets.AssetID]vao.VAO
+	textures map[assets.AssetID]texturearray.TextureArray
+
 	program   program.Program
 	locations locations
 }
@@ -92,6 +96,9 @@ func NewSystem(c ioc.Dic) render.SystemRenderer {
 		s.entitiesBatches = datastructures.NewSparseArray[ecs.EntityID, batchKey]()
 		s.batches = make(map[batchKey]*batch)
 
+		s.meshes = make(map[assets.AssetID]vao.VAO)
+		s.textures = make(map[assets.AssetID]texturearray.TextureArray)
+
 		s.program = p
 		s.locations = locations
 
@@ -101,17 +108,17 @@ func NewSystem(c ioc.Dic) render.SystemRenderer {
 		s.Render.Mesh().AddDirtySet(s.dirtyEntities)
 		s.Render.Texture().AddDirtySet(s.dirtyEntities)
 
-		events.ListenE(s.EventsBuilder, s.Listen)
+		events.ListenE(s.EventsBuilder, s.ListenRender)
 		return nil
 	})
 }
 
-func (s *system) Listen(render.RenderEvent) error {
-	var err error
+func (s *system) ListenRender(render render.RenderEvent) error {
 	// batch
 	// for dirtyEntity in entities
 	//  if exists than add (create batch if it doesn't exist)
 	//  else remove
+	var err error
 	for _, entity := range s.dirtyEntities.Get() {
 		batchKey, batchKeyOk := batchKey{}, true
 		if batchKeyOk {
@@ -148,20 +155,16 @@ func (s *system) Listen(render.RenderEvent) error {
 	//  for camera in cameras
 	//   bind camera mat4
 	//   render
-	s.program.Use()
+	s.program.Bind()
+
 	for _, batch := range s.batches {
-		batch.Bind()
-		for _, camera := range s.Camera.Component().GetEntities() {
-			gl.Viewport(s.Camera.GetViewport(camera))
-			camMatrix := s.Camera.Mat4(camera)
-			gl.UniformMatrix4fv(s.locations.Camera, 1, false, &camMatrix[0])
+		camMatrix := s.Camera.Mat4(render.Camera)
+		gl.UniformMatrix4fv(s.locations.Camera, 1, false, &camMatrix[0])
 
-			camGroups, _ := s.Groups.Component().Get(camera)
-			gl.Uniform1ui(s.locations.CameraGroups, camGroups.Mask)
+		camGroups, _ := s.Groups.Component().Get(render.Camera)
+		gl.Uniform1ui(s.locations.CameraGroups, camGroups.Mask)
 
-			batch.Render()
-		}
+		batch.Render()
 	}
-
 	return nil
 }

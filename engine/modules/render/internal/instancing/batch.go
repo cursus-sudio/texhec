@@ -115,7 +115,7 @@ func (s *batch) Remove(entity ecs.EntityID) {
 
 //
 
-func (s *batch) Bind() {
+func (s *batch) Render() {
 	if s.Dirty {
 		s.Dirty = false
 		s.Models.Flush()
@@ -131,9 +131,7 @@ func (s *batch) Bind() {
 	s.Colors.Bind()
 	s.Frames.Bind()
 	s.Groups.Bind()
-}
 
-func (s *batch) Render() {
 	gl.DrawElementsInstanced(
 		gl.TRIANGLES,
 		int32(s.VAO.EBO().Len()),

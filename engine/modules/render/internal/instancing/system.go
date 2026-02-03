@@ -157,7 +157,6 @@ func (s *system) ListenRender(render.RenderEvent) error {
 	//   bind camera mat4
 	//   render
 	for _, batch := range s.batches {
-		batch.Bind()
 		for _, camera := range s.Camera.Component().GetEntities() {
 			gl.Viewport(s.Camera.GetViewport(camera))
 			camMatrix := s.Camera.Mat4(camera)

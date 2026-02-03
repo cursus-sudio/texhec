@@ -12,7 +12,7 @@ type VAO interface {
 	VBO() vbo.VBO
 	EBO() ebo.EBO
 	Release()
-	Use()
+	Bind()
 }
 
 type vao struct {
@@ -58,6 +58,6 @@ func (vao *vao) Release() {
 	vao.ReleaseVAO()
 }
 
-func (vao *vao) Use() {
+func (vao *vao) Bind() {
 	gl.BindVertexArray(vao.id)
 }

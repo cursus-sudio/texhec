@@ -146,7 +146,7 @@ func (s *system) ListenFlush(render.FlushEvent) error {
 }
 
 func (s *system) ListenRender(render.RenderEvent) error {
-	s.program.Use()
+	s.program.Bind()
 	if err := s.ListenFlush(render.FlushEvent{}); err != nil {
 		return err
 	}

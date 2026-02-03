@@ -132,8 +132,8 @@ func (s *batch) Bind() {
 		s.Groups.Flush()
 	}
 
-	s.VAO.Use()
-	s.TextureArray.Use()
+	s.VAO.Bind()
+	s.TextureArray.Bind()
 
 	s.Models.Bind()
 	s.Colors.Bind()

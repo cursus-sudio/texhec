@@ -17,7 +17,7 @@ func (r TextureArray) Release() {
 	gl.DeleteTextures(1, &r.Texture)
 }
 
-func (r TextureArray) Use() {
+func (r TextureArray) Bind() {
 	gl.BindTexture(gl.TEXTURE_2D_ARRAY, r.Texture)
 }
 

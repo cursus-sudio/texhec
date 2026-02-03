@@ -108,9 +108,9 @@ func (s *system) ListenRender(render.RenderEvent) {
 	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, s.texturesBuffer.ID())
 	defer func() { gl.Viewport(0, 0, w, h) }()
 
-	s.program.Use()
-	s.vao.Use()
-	s.textureArray.Use()
+	s.program.Bind()
+	s.vao.Bind()
+	s.textureArray.Bind()
 	for _, entity := range s.batches.GetIndices() {
 		batch, ok := s.batches.Get(entity)
 		if !ok {

@@ -8,7 +8,7 @@ import (
 
 type Texture interface {
 	ID() uint32
-	Use()
+	Bind()
 	Release()
 }
 
@@ -18,7 +18,7 @@ type texture struct {
 
 func (t *texture) ID() uint32 { return t.id }
 
-func (t *texture) Use() {
+func (t *texture) Bind() {
 	gl.BindTexture(gl.TEXTURE_2D, t.id)
 }
 

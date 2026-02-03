@@ -108,7 +108,7 @@ func (s *textRenderer) ListenFlush(rendersys.FlushEvent) {
 }
 
 func (s *textRenderer) ListenRender(rendersys.RenderEvent) {
-	s.program.Use()
+	s.program.Bind()
 
 	// render layouts
 	for _, entity := range s.layoutsBatches.GetIndices() {
@@ -136,10 +136,10 @@ func (s *textRenderer) ListenRender(rendersys.RenderEvent) {
 		}
 
 		// apply changes on batch
-		font.textures.Use()
+		font.textures.Bind()
 		font.glyphsWidth.Bind()
 		gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, font.glyphsWidth.ID())
-		layout.vao.Use()
+		layout.vao.Bind()
 
 		{
 			offset := mgl32.Vec2{

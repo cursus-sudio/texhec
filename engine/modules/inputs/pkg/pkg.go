@@ -49,7 +49,6 @@ func (pkg) Register(b ioc.Builder) {
 		return ecs.NewSystemRegister(func() error {
 			ecs.RegisterSystems(
 				systems.NewInputsSystem(c),
-				systems.NewResizeSystem(c),
 
 				ecs.NewSystemRegister(func() error {
 					eventsBuilder := ioc.Get[events.Builder](c)

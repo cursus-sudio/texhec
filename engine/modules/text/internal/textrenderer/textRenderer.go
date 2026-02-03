@@ -35,9 +35,8 @@ type textRenderer struct {
 
 func (s *textRenderer) ensureFontExists(asset assets.AssetID) error {
 	key := s.FontsKeys.GetKey(asset)
-	if batch, ok := s.fontsBatches.Get(key); ok {
-		batch.Release()
-		s.fontsBatches.Remove(key)
+	if _, ok := s.fontsBatches.Get(key); ok {
+		return nil
 	}
 
 	font, err := s.FontService.AssetFont(asset)

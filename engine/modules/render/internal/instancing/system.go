@@ -101,8 +101,8 @@ func NewSystem(c ioc.Dic) render.SystemRenderer {
 		s.Render.Mesh().AddDirtySet(s.dirtyEntities)
 		s.Render.Texture().AddDirtySet(s.dirtyEntities)
 
-		events.ListenE(s.EventsBuilder, s.ListenFlush)
-		events.Listen(s.EventsBuilder, s.ListenRender)
+		// events.ListenE(s.EventsBuilder, s.ListenFlush)
+		events.ListenE(s.EventsBuilder, s.ListenRender)
 		return nil
 	})
 }
@@ -145,8 +145,11 @@ func (s *system) ListenFlush(render.FlushEvent) error {
 	return nil
 }
 
-func (s *system) ListenRender(render.RenderEvent) {
+func (s *system) ListenRender(render.RenderEvent) error {
 	s.program.Use()
+	if err := s.ListenFlush(render.FlushEvent{}); err != nil {
+		return err
+	}
 	// render
 	// for batch in batches
 	//  bind everything
@@ -166,4 +169,5 @@ func (s *system) ListenRender(render.RenderEvent) {
 			batch.Render()
 		}
 	}
+	return nil
 }

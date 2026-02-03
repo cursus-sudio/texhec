@@ -106,34 +106,31 @@ func (s *system) ListenRender(render.RenderEvent) {
 	s.program.Bind()
 	s.vao.Bind()
 	s.textureArray.Bind()
-	for _, entity := range s.batches.GetIndices() {
-		batch, ok := s.batches.Get(entity)
-		if !ok {
-			continue
-		}
-		batch.buffer.Bind()
+	for _, cameraEntity := range s.Camera.Component().GetEntities() {
+		cameraGroups, _ := s.Groups.Component().Get(cameraEntity)
+		cameraMatrix := s.Camera.Mat4(cameraEntity)
 
-		grid, _ := s.Tile.Grid().Get(entity)
-
-		matrix := s.Transform.Mat4(entity)
-		groups, _ := s.Groups.Component().Get(entity)
-
-		gl.Uniform1ui(s.locations.Width, uint32(grid.Width()))
-		gl.Uniform1ui(s.locations.Height, uint32(grid.Height()))
-		gl.Uniform1f(s.locations.WidthInv, 2/float32(grid.Width()))
-		gl.Uniform1f(s.locations.HeightInv, 2/float32(grid.Height()))
-
-		for _, cameraEntity := range s.Camera.Component().GetEntities() {
-			cameraGroups, _ := s.Groups.Component().Get(cameraEntity)
-			if !cameraGroups.SharesAnyGroup(groups) {
+		gl.Viewport(s.Camera.GetViewport(cameraEntity))
+		for _, entity := range s.batches.GetIndices() {
+			batch, ok := s.batches.Get(entity)
+			if !ok {
 				continue
 			}
+			if groups, _ := s.Groups.Component().Get(entity); !cameraGroups.SharesAnyGroup(groups) {
+				continue
+			}
+			batch.buffer.Bind()
 
-			cameraMatrix := s.Camera.Mat4(cameraEntity)
-			mvp := cameraMatrix.Mul4(matrix)
+			grid, _ := s.Tile.Grid().Get(entity)
+
+			gl.Uniform1ui(s.locations.Width, uint32(grid.Width()))
+			gl.Uniform1ui(s.locations.Height, uint32(grid.Height()))
+			gl.Uniform1f(s.locations.WidthInv, 2/float32(grid.Width()))
+			gl.Uniform1f(s.locations.HeightInv, 2/float32(grid.Height()))
+
+			mvp := cameraMatrix.Mul4(s.Transform.Mat4(entity))
 			gl.UniformMatrix4fv(s.locations.Mvp, 1, false, &mvp[0])
 
-			gl.Viewport(s.Camera.GetViewport(cameraEntity))
 			verticesCount := (grid.Width() + 1) * (grid.Height() + 1)
 			// verticesCount := grid.Width() * grid.Height()
 			gl.DrawArrays(gl.POINTS, 0, int32(verticesCount))

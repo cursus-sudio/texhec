@@ -53,10 +53,8 @@ func (s *textRenderer) ensureFontExists(asset assets.AssetID) error {
 }
 
 func (s *textRenderer) ListenRender(rendersys.RenderEvent) {
-	dirtyEntities := s.dirtyEntities.Get()
-
-	// ensure fonts exist
-	if len(dirtyEntities) != 0 {
+	if dirtyEntities := s.dirtyEntities.Get(); len(dirtyEntities) != 0 {
+		// ensure fonts exist
 		// get used fonts
 		fonts := datastructures.NewSparseArray[FontKey, assets.AssetID]()
 		fonts.Set(s.FontsKeys.GetKey(s.defaultTextAsset), s.defaultTextAsset)
@@ -87,87 +85,87 @@ func (s *textRenderer) ListenRender(rendersys.RenderEvent) {
 		for _, value := range fonts.GetValues() {
 			s.Logger.Warn(s.ensureFontExists(value))
 		}
-	}
 
-	// ensure layouts exist
-	// add batches
-	for _, entity := range dirtyEntities {
-		if prevBatch, ok := s.layoutsBatches.Get(entity); ok {
-			prevBatch.Release()
-			s.layoutsBatches.Remove(entity)
-		}
+		//
 
-		layout, err := s.LayoutService.EntityLayout(entity)
-		if err != nil {
-			continue
-		}
-
-		batch := NewLayoutBatch(s.VboFactory, layout)
-		s.layoutsBatches.Set(entity, batch)
-	}
-
-	// render layouts
-	s.program.Bind()
-	for _, entity := range s.layoutsBatches.GetIndices() {
-		layout, _ := s.layoutsBatches.Get(entity)
-		font, ok := s.fontsBatches.Get(layout.Layout.Font)
-		if !ok {
+		// ensure layouts exist
+		// add batches
+		for _, entity := range dirtyEntities {
 			if prevBatch, ok := s.layoutsBatches.Get(entity); ok {
 				prevBatch.Release()
 				s.layoutsBatches.Remove(entity)
 			}
-			continue
-		}
 
-		pos, _ := s.Transform.AbsolutePos().Get(entity)
-		rot, _ := s.Transform.AbsoluteRotation().Get(entity)
-		size, _ := s.Transform.AbsoluteSize().Get(entity)
-		entityColor, ok := s.Text.Color().Get(entity)
-		if !ok {
-			entityColor = s.defaultColor
-		}
-
-		entityGroups, ok := s.Groups.Component().Get(entity)
-		if !ok {
-			entityGroups = groups.DefaultGroups()
-		}
-
-		// apply changes on batch
-		font.textures.Bind()
-		font.glyphsWidth.Bind()
-		layout.vao.Bind()
-
-		{
-			offset := mgl32.Vec2{
-				(-size.Size.X() / 2) / float32(layout.Layout.FontSize),
-				(size.Size.Y()/2 - float32(layout.Layout.FontSize)) / float32(layout.Layout.FontSize),
+			layout, err := s.LayoutService.EntityLayout(entity)
+			if err != nil {
+				continue
 			}
-			gl.Uniform2f(s.locations.Offset, offset.X(), offset.Y())
+
+			batch := NewLayoutBatch(s.VboFactory, layout)
+			s.layoutsBatches.Set(entity, batch)
 		}
+	}
 
-		translation := mgl32.Translate3D(pos.Pos.Elem())
-		rotation := rot.Rotation.Mat4()
-		scale := mgl32.Scale3D(
-			float32(layout.Layout.FontSize),
-			float32(layout.Layout.FontSize),
-			size.Size.Z()/2,
-		)
-		entityMvp := translation.Mul4(rotation).Mul4(scale)
+	// render layouts
+	s.program.Bind()
+	for _, cameraEntity := range s.Camera.Component().GetEntities() {
+		cameraGroups, _ := s.Groups.Component().Get(cameraEntity)
+		cameraMatrix := s.Camera.Mat4(cameraEntity)
+		gl.Viewport(s.Camera.GetViewport(cameraEntity))
 
-		for _, cameraEntity := range s.Camera.Component().GetEntities() {
-			cameraGroups, ok := s.Groups.Component().Get(cameraEntity)
+		for _, entity := range s.layoutsBatches.GetIndices() {
+			entityColor, ok := s.Text.Color().Get(entity)
 			if !ok {
-				cameraGroups = groups.DefaultGroups()
+				entityColor = s.defaultColor
 			}
 
+			entityGroups, ok := s.Groups.Component().Get(entity)
+			if !ok {
+				entityGroups = groups.DefaultGroups()
+			}
 			if !cameraGroups.SharesAnyGroup(entityGroups) {
 				continue
 			}
 
-			mvp := s.Camera.Mat4(cameraEntity).Mul4(entityMvp)
-			gl.UniformMatrix4fv(s.locations.Mvp, 1, false, &mvp[0])
+			layout, _ := s.layoutsBatches.Get(entity)
+			font, ok := s.fontsBatches.Get(layout.Layout.Font)
+			if !ok {
+				if prevBatch, ok := s.layoutsBatches.Get(entity); ok {
+					prevBatch.Release()
+					s.layoutsBatches.Remove(entity)
+				}
+				continue
+			}
+
+			pos, _ := s.Transform.AbsolutePos().Get(entity)
+			rot, _ := s.Transform.AbsoluteRotation().Get(entity)
+			size, _ := s.Transform.AbsoluteSize().Get(entity)
+
+			{
+				translation := mgl32.Translate3D(pos.Pos.Elem())
+				rotation := rot.Rotation.Mat4()
+				scale := mgl32.Scale3D(
+					float32(layout.Layout.FontSize),
+					float32(layout.Layout.FontSize),
+					size.Size.Z()/2,
+				)
+				entityModel := translation.Mul4(rotation).Mul4(scale)
+				mvp := cameraMatrix.Mul4(entityModel)
+				gl.UniformMatrix4fv(s.locations.Mvp, 1, false, &mvp[0])
+			}
 			gl.Uniform4fv(s.locations.Color, 1, &entityColor.Color[0])
-			gl.Viewport(s.Camera.GetViewport(cameraEntity))
+			{
+				offset := mgl32.Vec2{
+					(-size.Size.X() / 2) / float32(layout.Layout.FontSize),
+					(size.Size.Y()/2 - float32(layout.Layout.FontSize)) / float32(layout.Layout.FontSize),
+				}
+				gl.Uniform2f(s.locations.Offset, offset.X(), offset.Y())
+			}
+
+			// apply changes on batch
+			font.textures.Bind()
+			font.glyphsWidth.Bind()
+			layout.vao.Bind()
 
 			gl.DrawArrays(gl.POINTS, 0, layout.verticesCount)
 		}

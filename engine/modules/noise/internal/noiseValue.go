@@ -53,8 +53,8 @@ func NewValueNoise(
 
 		res = cdf(res, standardDeviation)
 		res = math.Min(math.Max(res, 0), 1)
-
-		return res * layer.ValueMultiplier
+		res = layer.Easing(res)
+		return res
 	})
 }
 

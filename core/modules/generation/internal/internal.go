@@ -7,6 +7,7 @@ import (
 	"engine/modules/batcher"
 	"engine/modules/grid"
 	"engine/modules/noise"
+	"math"
 	"slices"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -28,14 +29,10 @@ type service struct {
 func NewService(c ioc.Dic) generation.Service {
 	s := ioc.GetServices[service](c)
 	s.types = []tile.Type{}
-	// s.addChance(tile.TileWater, 10)
-	// s.addChance(tile.TileSand, 3)
-	// s.addChance(tile.TileGrass, 10)
-	// s.addChance(tile.TileMountain, 1)
-	s.addChance(tile.TileWater, 40)
-	s.addChance(tile.TileSand, 3)
-	s.addChance(tile.TileGrass, 20)
-	s.addChance(tile.TileMountain, 7)
+	s.addChance(tile.TileWater, 35)
+	s.addChance(tile.TileSand, 10)
+	s.addChance(tile.TileGrass, 35)
+	s.addChance(tile.TileMountain, 20)
 	s.tilesPerJob = 100
 	return &s
 }
@@ -49,24 +46,27 @@ func MapRange(val, min, max float64) float64 { return min + (val * (max - min)) 
 func (s *service) Generate(c generation.Config) batcher.Task {
 	task := s.Batcher.NewTask()
 
-	noise := s.Noise.NewNoise(c.Seed).
-		AddValue(noise.LayerConfig{
-			CellSize:        100.,
-			ValueMultiplier: .5,
-		}).
-		AddValue(noise.LayerConfig{
-			CellSize:        30.,
-			ValueMultiplier: .3,
-		}).
-		AddValue(noise.LayerConfig{
-			CellSize:        10,
-			ValueMultiplier: .1,
-		}).
-		AddValue(noise.LayerConfig{
-			CellSize:        5,
-			ValueMultiplier: .1,
-		}).
-		Build()
+	noise := s.Noise.NewNoise(c.Seed).AddValue(
+		// main size
+		noise.NewLayer(100, func(v float64) float64 { return v * .5 }),
+		noise.NewLayer(40, func(v float64) float64 { return v * .1 }),
+		noise.NewLayer(40, func(v float64) float64 { return v * .05 }),
+		noise.NewLayer(40, func(v float64) float64 { return v * .05 }),
+	).AddPerlin(
+		// just many small noises
+		noise.NewLayer(40, func(v float64) float64 { return v * .05 }),
+		noise.NewLayer(20, func(v float64) float64 { return v * .05 }),
+
+		// mountain
+		noise.NewLayer(500, func(v float64) float64 {
+			const fraction = 2
+			v = v*fraction - fraction + 1
+			if v < 0 {
+				return 0
+			}
+			return (1 - math.Pow(1-v, 5)) * .2
+		}),
+	).Build()
 
 	gridComponent := tile.NewGrid(c.Size.Coords())
 	jobs := int(gridComponent.GetLastIndex()) / s.tilesPerJob

@@ -1,22 +1,21 @@
 package test
 
 import (
+	"engine/modules/noise"
 	"engine/modules/seed"
 	"testing"
 )
 
-func TestPerlinNoiseDistribution(t *testing.T) {
+func TestNoisesDistributions(t *testing.T) {
 	s := NewSetup(t)
-	noise := s.Noise.NewNoise(seed.New(1)).
-		AddPerlin(s.Layer).
-		Build()
-	s.TestDistribution(noise)
-}
-
-func TestValueNoiseDistribution(t *testing.T) {
-	s := NewSetup(t)
-	noise := s.Noise.NewNoise(seed.New(1)).
-		AddValue(s.Layer).
-		Build()
-	s.TestDistribution(noise)
+	tests := map[string]func(b noise.Factory) noise.Factory{
+		"perlin": func(b noise.Factory) noise.Factory { return b.AddPerlin(s.Layer) },
+		"value":  func(b noise.Factory) noise.Factory { return b.AddValue(s.Layer) },
+	}
+	for testName, noiseAdd := range tests {
+		t.Run(testName, func(t *testing.T) {
+			noise := noiseAdd(s.Noise.NewNoise(seed.New(1)))
+			s.TestDistribution(noise.Build())
+		})
+	}
 }

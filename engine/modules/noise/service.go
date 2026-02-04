@@ -7,8 +7,7 @@ import (
 )
 
 type Noise interface {
-	Wrap(easing func(v float64) float64) Noise
-	// returns normalized value
+	// returns normalized value <0, 1> with equal distribution
 	Read(mgl64.Vec2) float64
 }
 
@@ -19,17 +18,23 @@ type Noise interface {
 // size if for x and y value
 // intensity of to normalize <0, Intensity>
 type LayerConfig struct {
-	CellSize        float64 // default size is 1
-	ValueMultiplier float64 //
+	CellSize float64               // default size is 1
+	Easing   func(float64) float64 //
+}
+
+func NewLayer(cellSize float64, easing func(v float64) float64) LayerConfig {
+	return LayerConfig{
+		CellSize: cellSize,
+		Easing:   easing,
+	}
 }
 
 //
 
-// each layer offset is `mgl64.Vec2{math.Pi, math.Pi}.Mul(i)`
+// each layer offset is `mgl64.Vec2{math.Pi, math.Pi}.Mul(layerIndex)`
 type Factory interface {
 	AddPerlin(...LayerConfig) Factory
 	AddValue(...LayerConfig) Factory
-	// NewFBM(FBMConfig) // FBM stands for Fractal Brownian Motion
 	Build() Noise
 }
 

@@ -81,9 +81,11 @@ func NewPerlinNoise(
 		// const rangeLimit float64 = 0.707 // this is in theory limit (at least according to ai)
 		const rangeLimit float64 = 0.88 // this is +/- limit i found running perlin for an hour
 		res = MapRange(res, -rangeLimit, rangeLimit, 0, 1)
+
 		res = cdf(res, standardDeviation)
 		res = math.Min(math.Max(res, 0), 1)
-		return res * layer.ValueMultiplier
+		res = layer.Easing(res)
+		return res
 	})
 }
 

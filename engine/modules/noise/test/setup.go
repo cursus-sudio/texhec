@@ -31,10 +31,7 @@ func NewSetup(t *testing.T) Setup {
 	c := b.Build()
 	setup := ioc.GetServices[Setup](c)
 	setup.T = t
-	setup.Layer = noise.LayerConfig{
-		CellSize:        10.,
-		ValueMultiplier: 1,
-	}
+	setup.Layer = noise.NewLayer(10, func(v float64) float64 { return v })
 	return setup
 }
 

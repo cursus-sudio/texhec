@@ -24,10 +24,15 @@ func valueInterpolate(t float64) float64 {
 	return t * t * (3 - 2*t)
 }
 
-func NewValueNoise(seed uint64, layer noise.LayerConfig) Noise {
-	return NewNoise(func(coords mgl64.Vec2) float64 {
-		coords = coords.Add(layer.Offset)
-		coords = coords.Mul(layer.CellSize)
+func NewValueNoise(
+	seed uint64,
+	offset mgl64.Vec2,
+	layer noise.LayerConfig,
+) noise.Noise {
+	standardDeviation := standardDeviation(3, .522672)
+	return noise.NewNoise(func(coords mgl64.Vec2) float64 {
+		coords = coords.Add(offset)
+		coords = coords.Mul(1 / layer.CellSize)
 
 		i := mgl64.Vec2{math.Floor(coords.X()), math.Floor(coords.Y())}
 		f := mgl64.Vec2{fract(coords.X()), fract(coords.Y())}
@@ -45,6 +50,9 @@ func NewValueNoise(seed uint64, layer noise.LayerConfig) Noise {
 			lerp(c, d, ux),
 			uy,
 		)
+
+		res = cdf(res, standardDeviation)
+		res = math.Min(math.Max(res, 0), 1)
 
 		return res * layer.ValueMultiplier
 	})

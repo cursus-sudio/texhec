@@ -44,10 +44,16 @@ func perlinInterpolate(t float64) float64 {
 	return t * t * t * (t*(t*6-15) + 10)
 }
 
-func NewPerlinNoise(seed uint64, layer noise.LayerConfig) Noise {
-	return NewNoise(func(coords mgl64.Vec2) float64 {
-		coords = coords.Add(layer.Offset)
-		coords = coords.Mul(layer.CellSize)
+func NewPerlinNoise(
+	seed uint64,
+	offset mgl64.Vec2,
+	layer noise.LayerConfig,
+) noise.Noise {
+	standardDeviation := standardDeviation(3, .902177)
+
+	return noise.NewNoise(func(coords mgl64.Vec2) float64 {
+		coords = coords.Add(offset)
+		coords = coords.Mul(1 / layer.CellSize)
 		i := mgl64.Vec2{math.Floor(coords.X()), math.Floor(coords.Y())}
 		f := coords.Sub(i)
 
@@ -72,12 +78,11 @@ func NewPerlinNoise(seed uint64, layer noise.LayerConfig) Noise {
 			uy,
 		)
 
-		res = res*0.5 + 0.5
-
-		// stretch (.1, .9) to (0, 1) and clamp the rest
-		res = (res - .1) / (.9 - .1)
-		res = mgl64.Clamp(res, 0, 1)
-
+		// const rangeLimit float64 = 0.707 // this is in theory limit (at least according to ai)
+		const rangeLimit float64 = 0.88 // this is +/- limit i found running perlin for an hour
+		res = MapRange(res, -rangeLimit, rangeLimit, 0, 1)
+		res = cdf(res, standardDeviation)
+		res = math.Min(math.Max(res, 0), 1)
 		return res * layer.ValueMultiplier
 	})
 }
@@ -107,33 +112,4 @@ func NewPerlinNoise(seed uint64, layer noise.LayerConfig) Noise {
 //
 //     float result = mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
 //     return result * .5 + .5;
-// }
-
-//
-//
-//
-
-// old hash
-// pX := c.X()*127.1 + c.Y()*311.7
-// pY := c.X()*269.5 + c.Y()*183.3
-//
-// // sin(p) * 43758.5453123
-// resX := math.Sin(pX) * 43758.5453123
-// resY := math.Sin(pY) * 43758.5453123
-//
-// // -1.0 + 2.0 * fract(...)
-// _, fracX := math.Modf(resX)
-// _, fracY := math.Modf(resY)
-//
-// // Handling negative Modf results to ensure they stay in [0, 1]
-// if fracX < 0 {
-// 	fracX += 1.0
-// }
-// if fracY < 0 {
-// 	fracY += 1.0
-// }
-//
-// return mgl64.Vec2{
-// 	-1.0 + 2.0*fracX,
-// 	-1.0 + 2.0*fracY,
 // }

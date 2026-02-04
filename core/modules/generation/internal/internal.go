@@ -6,39 +6,92 @@ import (
 	"engine"
 	"engine/modules/batcher"
 	"engine/modules/grid"
-	"engine/modules/seed"
-	"math/rand/v2"
+	"engine/modules/noise"
+	"slices"
 
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/ogiusek/ioc/v2"
 )
+
+type config struct {
+	types       []tile.Type
+	tilesPerJob int
+}
 
 type service struct {
 	engine.World `inject:"1"`
 	Tile         tile.Service `inject:"1"`
 
-	tilesPerJob int
+	config
 }
 
 func NewService(c ioc.Dic) generation.Service {
 	s := ioc.GetServices[service](c)
-	s.tilesPerJob = 10
+	s.types = []tile.Type{}
+	s.addChance(tile.TileWater, 35)
+	s.addChance(tile.TileSand, 10)
+	s.addChance(tile.TileGrass, 50)
+	s.addChance(tile.TileMountain, 5)
+	s.tilesPerJob = 100
 	return &s
 }
+
+func (s *service) addChance(tileType tile.Type, chance int) {
+	s.types = append(s.types, slices.Repeat([]tile.Type{tileType}, chance)...)
+}
+
+func MapRange(val, min, max float64) float64 { return min + (val * (max - min)) }
 
 func (s *service) Generate(c generation.Config) batcher.Task {
 	task := s.Batcher.NewTask()
 
+	// multiplier := 1. / 5
+	multiplier := 1.
+	noise := s.Noise.NewNoise(c.Seed).AddValue(
+		noise.NewLayer(100*multiplier, .10),
+		noise.NewLayer(100*multiplier, .10),
+		noise.NewLayer(040*multiplier, .10),
+		noise.NewLayer(040*multiplier, .05),
+		noise.NewLayer(040*multiplier, .05),
+	).AddPerlin(
+		noise.NewLayer(500*multiplier, .30),
+		noise.NewLayer(100*multiplier, .20),
+		//
+		noise.NewLayer(040*multiplier, .05),
+		noise.NewLayer(020*multiplier, .05),
+	).Build()
+
 	gridComponent := tile.NewGrid(c.Size.Coords())
-	jobs := int(gridComponent.GetLastIndex() / grid.Index(s.tilesPerJob))
+	jobs := int(gridComponent.GetLastIndex()) / s.tilesPerJob
 	generateBatch := batcher.NewBatch(jobs, func(i int) {
-		rand := c.Seed.SeededRand(seed.New(i))
 		for j := range s.tilesPerJob {
-			tile := s.GetTile(rand)
 			gridI := grid.Index(i*s.tilesPerJob + j)
-			gridComponent.SetTile(gridI, tile)
+			s.SetTile(gridComponent, gridI, noise)
 		}
 	})
 	flushBatch := batcher.NewBatch(1, func(i int) {
+		// typesCount := []int64{
+		// 	0,
+		// 	0,
+		// 	0,
+		// 	0,
+		// }
+		// count := gridComponent.GetLastIndex()
+		// for i := range count {
+		// 	v := gridComponent.GetTile(i)
+		// 	atomic.AddInt64(&typesCount[v-1], 1)
+		// }
+		// text := &strings.Builder{}
+		// for i, typeCount := range typesCount {
+		// 	fmt.Fprintf(text, "%v %05.2f%% \n",
+		// 		i,
+		// 		float64(typeCount*100)/float64(count),
+		// 	)
+		// }
+		//
+		// print(text.String())
+		// print("\n\n\n")
+		// s.Logger.Info(text.String())
 		s.Tile.Grid().Set(c.Entity, gridComponent)
 	})
 
@@ -48,14 +101,15 @@ func (s *service) Generate(c generation.Config) batcher.Task {
 	return task.Build()
 }
 
-var tiles []tile.Type = []tile.Type{
-	tile.TileGrass,
-	tile.TileWater,
-	tile.TileMountain,
-	tile.TileSand,
-}
-
-func (s *service) GetTile(rand *rand.Rand) tile.Type {
-	i := rand.IntN(len(tiles))
-	return tiles[i]
+func (s *service) SetTile(
+	grid grid.SquareGridComponent[tile.Type],
+	index grid.Index,
+	noise noise.Noise,
+) {
+	coords := grid.GetCoords(index)
+	value := noise.Read(mgl64.Vec2{float64(coords.X), float64(coords.Y)})
+	value *= float64(len(s.types))
+	value = min(value, float64(len(s.types)-1))
+	tileValue := s.types[int(value)]
+	grid.SetTile(index, tileValue)
 }

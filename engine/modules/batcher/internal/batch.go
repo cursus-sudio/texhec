@@ -37,44 +37,6 @@ func NewOrderedBatch(b batcher.Batch) Batch {
 
 //
 
-// func worker(id int, jobs <-chan int, wg *sync.WaitGroup) {
-// 	// Signal WaitGroup when this worker's loop finally ends
-// 	defer wg.Done()
-//
-// 	for j := range jobs {
-// 		fmt.Printf("Worker %d started job %d\n", id, j)
-// 		time.Sleep(time.Second) // Simulate work
-// 		fmt.Printf("Worker %d finished job %d\n", id, j)
-// 	}
-// }
-//
-// func test() {
-// 	const numWorkers = 10
-// 	const numJobs = 50
-//
-// 	jobs := make(chan int, numJobs)
-// 	var wg sync.WaitGroup
-//
-// 	// 1. Start 10 workers
-// 	for w := 1; w <= numWorkers; w++ {
-// 		wg.Add(1)
-// 		go worker(w, jobs, &wg)
-// 	}
-//
-// 	// 2. Send jobs to the pool
-// 	// This won't block because the channel is buffered
-// 	for j := 1; j <= numJobs; j++ {
-// 		jobs <- j
-// 	}
-//
-// 	// 3. Close the channel to tell workers no more jobs are coming
-// 	close(jobs)
-//
-// 	// 4. Wait for all workers to finish their current job and exit
-// 	wg.Wait()
-// 	fmt.Println("All work complete.")
-// }
-
 type concurrentBatch struct {
 	blueprint batcher.Batch
 	index     int

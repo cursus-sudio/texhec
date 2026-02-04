@@ -11,9 +11,9 @@ type Type uint8
 
 const (
 	_ Type = iota
-	TileGrass
-	TileSand
 	TileWater
+	TileSand
+	TileGrass
 	TileMountain
 )
 

@@ -1,6 +1,8 @@
 package internal
 
-import "engine/modules/batcher"
+import (
+	"engine/modules/batcher"
+)
 
 type task struct {
 	allSteps    int
@@ -11,7 +13,7 @@ type task struct {
 }
 
 func NewTask(batches []Batch) batcher.Task {
-	allSteps := 0
+	var allSteps int
 	for _, batch := range batches {
 		allSteps += batch.Steps()
 	}

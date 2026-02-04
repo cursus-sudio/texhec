@@ -7,10 +7,7 @@ import (
 	"engine/modules/batcher"
 	"engine/modules/grid"
 	"engine/modules/noise"
-	"fmt"
 	"slices"
-	"strings"
-	"sync/atomic"
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/ogiusek/ioc/v2"
@@ -73,27 +70,27 @@ func (s *service) Generate(c generation.Config) batcher.Task {
 		}
 	})
 	flushBatch := batcher.NewBatch(1, func(i int) {
-		typesCount := []int64{
-			0,
-			0,
-			0,
-			0,
-		}
-		count := gridComponent.GetLastIndex()
-		for i := range count {
-			v := gridComponent.GetTile(i)
-			atomic.AddInt64(&typesCount[v-1], 1)
-		}
-		text := &strings.Builder{}
-		for i, typeCount := range typesCount {
-			fmt.Fprintf(text, "%v %05.2f%% \n",
-				i,
-				float64(typeCount*100)/float64(count),
-			)
-		}
-
-		print(text.String())
-		print("\n\n\n")
+		// typesCount := []int64{
+		// 	0,
+		// 	0,
+		// 	0,
+		// 	0,
+		// }
+		// count := gridComponent.GetLastIndex()
+		// for i := range count {
+		// 	v := gridComponent.GetTile(i)
+		// 	atomic.AddInt64(&typesCount[v-1], 1)
+		// }
+		// text := &strings.Builder{}
+		// for i, typeCount := range typesCount {
+		// 	fmt.Fprintf(text, "%v %05.2f%% \n",
+		// 		i,
+		// 		float64(typeCount*100)/float64(count),
+		// 	)
+		// }
+		//
+		// print(text.String())
+		// print("\n\n\n")
 		// s.Logger.Info(text.String())
 		s.Tile.Grid().Set(c.Entity, gridComponent)
 	})

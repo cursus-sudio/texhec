@@ -91,13 +91,16 @@ func addScene(
 		world.Inputs.Stack().Set(gridEntity, inputs.StackComponent{})
 
 		task := world.Generation.Generate(generation.NewConfig(
-			gridEntity, seed.New(21377137),
+			gridEntity,
+			// seed.New(world.Clock.Now().Unix()),
+			seed.New(21377137),
 			grid.NewCoords(cols, rows),
 		))
 		world.Batcher.Queue(task)
 	}
 
 	if isServer {
+		return
 		listenerEntity := world.NewEntity()
 		world.Hierarchy.SetParent(listenerEntity, sceneParent)
 		listener, err := world.Connection.Host(":8000", func(cc connection.ConnectionComponent) {

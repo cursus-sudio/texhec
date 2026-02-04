@@ -77,6 +77,9 @@ func (s *system) Listen(frames.FrameEvent) {
 		return
 	}
 
-	message := fmt.Sprintf("Loading... %3d", int(progress*100))
+	if progress < 0 && progress != -1 {
+		panic(progress)
+	}
+	message := fmt.Sprintf("Loading... %6.2f%%", progress*100)
 	s.Render(message)
 }

@@ -5,11 +5,11 @@ import "engine/services/ecs"
 type System ecs.SystemRegister
 
 type Batch struct {
-	Steps   int
-	Handler func(int)
+	Steps   int64
+	Handler func(int64)
 }
 
-func NewBatch(steps int, handler func(int)) Batch {
+func NewBatch(steps int64, handler func(int64)) Batch {
 	return Batch{steps, handler}
 }
 

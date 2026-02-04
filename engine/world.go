@@ -11,6 +11,7 @@ import (
 	"engine/modules/inputs"
 	"engine/modules/layout"
 	"engine/modules/netsync"
+	"engine/modules/noise"
 	"engine/modules/record"
 	"engine/modules/render"
 	"engine/modules/text"
@@ -18,6 +19,7 @@ import (
 	"engine/modules/transition"
 	"engine/modules/uuid"
 	"engine/services/assets"
+	"engine/services/clock"
 	"engine/services/ecs"
 	"engine/services/logger"
 	"engine/services/media/window"
@@ -37,6 +39,7 @@ type World struct {
 	Inputs     inputs.Service     `inject:"1"`
 	Layout     layout.Service     `inject:"1"`
 	NetSync    netsync.Service    `inject:"1"`
+	Noise      noise.Service      `inject:"1"`
 	Record     record.Service     `inject:"1"`
 	Render     render.Service     `inject:"1"`
 	Text       text.Service       `inject:"1"`
@@ -44,6 +47,7 @@ type World struct {
 	Transition transition.Service `inject:"1"`
 	UUID       uuid.Service       `inject:"1"`
 
+	Clock  clock.Clock   `inject:"1"`
 	Logger logger.Logger `inject:"1"`
 
 	EventsBuilder events.Builder `inject:"1"`

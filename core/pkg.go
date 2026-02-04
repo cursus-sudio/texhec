@@ -2,15 +2,15 @@ package main
 
 import (
 	gameassets "core/assets"
-	fpsloggerpkg "core/modules/fpslogger/pkg"
-	generationpkg "core/modules/generation/pkg"
-	loadingpkg "core/modules/loading/pkg"
+	"core/modules/fpslogger/pkg"
+	"core/modules/generation/pkg"
+	"core/modules/loading/pkg"
 	"core/modules/settings"
-	settingspkg "core/modules/settings/pkg"
+	"core/modules/settings/pkg"
 	"core/modules/tile"
-	tilepkg "core/modules/tile/pkg"
+	"core/modules/tile/pkg"
 	"core/modules/ui"
-	uipkg "core/modules/ui/pkg"
+	"core/modules/ui/pkg"
 	gamescenes "core/scenes"
 	creditsscene "core/scenes/credits"
 	gamescene "core/scenes/game"
@@ -31,6 +31,7 @@ import (
 	"engine/modules/inputs/pkg"
 	"engine/modules/layout/pkg"
 	"engine/modules/netsync/pkg"
+	"engine/modules/noise/pkg"
 	"engine/modules/record"
 	"engine/modules/record/pkg"
 	"engine/modules/render"
@@ -239,6 +240,7 @@ func getDic() ioc.Dic {
 		transitionpkg.Package(),
 		layoutpkg.Package(),
 		loadingpkg.Package(),
+		noisepkg.Package(),
 
 		// game packages
 		fpsloggerpkg.Package(),

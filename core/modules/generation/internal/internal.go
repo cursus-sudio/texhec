@@ -48,22 +48,20 @@ func MapRange(val, min, max float64) float64 { return min + (val * (max - min)) 
 func (s *service) Generate(c generation.Config) batcher.Task {
 	task := s.Batcher.NewTask()
 
-	// multiplier := 1. / 4
+	// multiplier := 1. / 5
 	multiplier := 1.
 	noise := s.Noise.NewNoise(c.Seed).AddValue(
-		// main size
-		noise.NewLayer(100*multiplier, .25),
-		noise.NewLayer(100*multiplier, .25),
+		noise.NewLayer(100*multiplier, .10),
+		noise.NewLayer(100*multiplier, .10),
 		noise.NewLayer(040*multiplier, .10),
 		noise.NewLayer(040*multiplier, .05),
 		noise.NewLayer(040*multiplier, .05),
 	).AddPerlin(
-		// just many small noises
+		noise.NewLayer(500*multiplier, .30),
+		noise.NewLayer(100*multiplier, .20),
+		//
 		noise.NewLayer(040*multiplier, .05),
 		noise.NewLayer(020*multiplier, .05),
-
-		// mountain
-		noise.NewLayer(500*multiplier, .20),
 	).Build()
 
 	gridComponent := tile.NewGrid(c.Size.Coords())
@@ -88,12 +86,15 @@ func (s *service) Generate(c generation.Config) batcher.Task {
 		}
 		text := &strings.Builder{}
 		for i, typeCount := range typesCount {
-			fmt.Fprintf(text, "%v %05.2f%%%% \n",
+			fmt.Fprintf(text, "%v %05.2f%% \n",
 				i,
 				float64(typeCount*100)/float64(count),
 			)
 		}
-		s.Logger.Info(text.String())
+
+		print(text.String())
+		print("\n\n\n")
+		// s.Logger.Info(text.String())
 		s.Tile.Grid().Set(c.Entity, gridComponent)
 	})
 

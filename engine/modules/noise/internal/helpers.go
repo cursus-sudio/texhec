@@ -47,14 +47,17 @@ func CalculateDistribution(
 	noise noise.Noise,
 	samplesSqrt int,
 ) [3]float64 {
+	mul := math.Pi
 	count := [3]int64{}
 	wg := &sync.WaitGroup{}
 	for x := range samplesSqrt {
 		wg.Add(1)
+		xCoord := float64(x) * mul
 		go func() {
 			defer wg.Done()
 			for y := range samplesSqrt {
-				v := noise.Read(mgl64.Vec2{float64(x), float64(y)})
+				yCoord := float64(y) * mul
+				v := noise.Read(mgl64.Vec2{xCoord, yCoord})
 				atomic.AddInt64(&count[min(int(v*3), 2)], 1)
 			}
 		}()

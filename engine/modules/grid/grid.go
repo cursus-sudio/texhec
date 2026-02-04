@@ -19,7 +19,7 @@ func NewCoords[Number constraints.Integer](x, y Number) Coords {
 
 //
 
-type Index int32
+type Index int64
 
 type SquareGridComponent[Tile TileConstraint] struct {
 	width, height Coord

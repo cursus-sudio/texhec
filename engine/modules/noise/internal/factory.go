@@ -29,9 +29,6 @@ func (f *factory) Add(
 ) {
 	i := len(f.Noises)
 	seed := seed.New(f.Seed.Value() + uint64(i))
-	if layer.Easing == nil {
-		layer.Easing = func(v float64) float64 { return v }
-	}
 	noise := fn(
 		seed.Value(),
 		mgl64.Vec2{math.Pi, math.Pi}.Mul(float64(i)),
@@ -55,5 +52,22 @@ func (f *factory) AddValue(layers ...noise.LayerConfig) noise.Factory {
 }
 
 func (f *factory) Build() noise.Noise {
-	return noise.MergeNoise(f.Noises...)
+	n1 := noise.NewNoise(func(v mgl64.Vec2) float64 {
+		var s float64
+		for _, noise := range f.Noises {
+			s += noise.Read(v)
+		}
+		return s
+	})
+
+	values := CalculateDistribution(n1, 1000)
+	standardDeviation := standardDeviation(3, values[1])
+	return noise.NewNoise(func(v mgl64.Vec2) float64 {
+		var s float64
+		for _, noise := range f.Noises {
+			s += noise.Read(v)
+		}
+		s = cdf(s, standardDeviation)
+		return s
+	})
 }

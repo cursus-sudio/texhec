@@ -7,8 +7,10 @@ import (
 	"engine/modules/batcher"
 	"engine/modules/grid"
 	"engine/modules/noise"
-	"math"
+	"fmt"
 	"slices"
+	"strings"
+	"sync/atomic"
 
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/ogiusek/ioc/v2"
@@ -31,8 +33,8 @@ func NewService(c ioc.Dic) generation.Service {
 	s.types = []tile.Type{}
 	s.addChance(tile.TileWater, 35)
 	s.addChance(tile.TileSand, 10)
-	s.addChance(tile.TileGrass, 35)
-	s.addChance(tile.TileMountain, 20)
+	s.addChance(tile.TileGrass, 50)
+	s.addChance(tile.TileMountain, 5)
 	s.tilesPerJob = 100
 	return &s
 }
@@ -46,26 +48,22 @@ func MapRange(val, min, max float64) float64 { return min + (val * (max - min)) 
 func (s *service) Generate(c generation.Config) batcher.Task {
 	task := s.Batcher.NewTask()
 
+	// multiplier := 1. / 4
+	multiplier := 1.
 	noise := s.Noise.NewNoise(c.Seed).AddValue(
 		// main size
-		noise.NewLayer(100, func(v float64) float64 { return v * .5 }),
-		noise.NewLayer(40, func(v float64) float64 { return v * .1 }),
-		noise.NewLayer(40, func(v float64) float64 { return v * .05 }),
-		noise.NewLayer(40, func(v float64) float64 { return v * .05 }),
+		noise.NewLayer(100*multiplier, .25),
+		noise.NewLayer(100*multiplier, .25),
+		noise.NewLayer(040*multiplier, .10),
+		noise.NewLayer(040*multiplier, .05),
+		noise.NewLayer(040*multiplier, .05),
 	).AddPerlin(
 		// just many small noises
-		noise.NewLayer(40, func(v float64) float64 { return v * .05 }),
-		noise.NewLayer(20, func(v float64) float64 { return v * .05 }),
+		noise.NewLayer(040*multiplier, .05),
+		noise.NewLayer(020*multiplier, .05),
 
 		// mountain
-		noise.NewLayer(500, func(v float64) float64 {
-			const fraction = 2
-			v = v*fraction - fraction + 1
-			if v < 0 {
-				return 0
-			}
-			return (1 - math.Pow(1-v, 5)) * .2
-		}),
+		noise.NewLayer(500*multiplier, .20),
 	).Build()
 
 	gridComponent := tile.NewGrid(c.Size.Coords())
@@ -77,6 +75,25 @@ func (s *service) Generate(c generation.Config) batcher.Task {
 		}
 	})
 	flushBatch := batcher.NewBatch(1, func(i int) {
+		typesCount := []int64{
+			0,
+			0,
+			0,
+			0,
+		}
+		count := gridComponent.GetLastIndex()
+		for i := range count {
+			v := gridComponent.GetTile(i)
+			atomic.AddInt64(&typesCount[v-1], 1)
+		}
+		text := &strings.Builder{}
+		for i, typeCount := range typesCount {
+			fmt.Fprintf(text, "%v %05.2f%%%% \n",
+				i,
+				float64(typeCount*100)/float64(count),
+			)
+		}
+		s.Logger.Info(text.String())
 		s.Tile.Grid().Set(c.Entity, gridComponent)
 	})
 

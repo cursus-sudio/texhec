@@ -1,7 +1,10 @@
 package internal
 
 import (
+	"engine/modules/noise"
 	"math"
+	"sync"
+	"sync/atomic"
 
 	"github.com/go-gl/mathgl/mgl64"
 )
@@ -38,4 +41,29 @@ func standardDeviation(segmentsCount, valueInMainSegment float64) float64 {
 // s is StandardDeviation
 func cdf(x, s float64) float64 {
 	return 0.5 * (1 + math.Erf((x-0.5)/(s*math.Sqrt(2))))
+}
+
+func CalculateDistribution(
+	noise noise.Noise,
+	samplesSqrt int,
+) [3]float64 {
+	count := [3]int64{}
+	wg := &sync.WaitGroup{}
+	for x := range samplesSqrt {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for y := range samplesSqrt {
+				v := noise.Read(mgl64.Vec2{float64(x), float64(y)})
+				atomic.AddInt64(&count[min(int(v*3), 2)], 1)
+			}
+		}()
+	}
+	wg.Wait()
+	res := [3]float64{}
+	for i := range 3 {
+		res[i] = float64(count[i]) / float64(samplesSqrt*samplesSqrt)
+	}
+
+	return res
 }

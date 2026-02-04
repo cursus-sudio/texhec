@@ -11,21 +11,15 @@ type Noise interface {
 	Read(mgl64.Vec2) float64
 }
 
-// *-*
-// | | y
-// *-*
-// .x
-// size if for x and y value
-// intensity of to normalize <0, Intensity>
 type LayerConfig struct {
-	CellSize float64               // default size is 1
-	Easing   func(float64) float64 //
+	CellSize   float64 // default size is 1
+	Multiplier float64 // default value is 1
 }
 
-func NewLayer(cellSize float64, easing func(v float64) float64) LayerConfig {
+func NewLayer(cellSize, multiplier float64) LayerConfig {
 	return LayerConfig{
-		CellSize: cellSize,
-		Easing:   easing,
+		CellSize:   cellSize,
+		Multiplier: multiplier,
 	}
 }
 

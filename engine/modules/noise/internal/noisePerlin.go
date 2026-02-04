@@ -84,7 +84,7 @@ func NewPerlinNoise(
 
 		res = cdf(res, standardDeviation)
 		res = math.Min(math.Max(res, 0), 1)
-		res = layer.Easing(res)
+		res *= layer.Multiplier
 		return res
 	})
 }

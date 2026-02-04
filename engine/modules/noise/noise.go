@@ -19,14 +19,3 @@ func NewNoise(fn func(mgl64.Vec2) float64) Noise {
 	n := noise(fn)
 	return &n
 }
-
-func MergeNoise(noises ...Noise) Noise {
-	n := noise(func(c mgl64.Vec2) float64 {
-		var s float64
-		for _, noise := range noises {
-			s += noise.Read(c)
-		}
-		return s
-	})
-	return &n
-}

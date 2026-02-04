@@ -5,7 +5,7 @@ import (
 )
 
 type task struct {
-	allSteps    int64
+	allSteps    int
 	currentStep int
 
 	currentBatch int
@@ -13,7 +13,7 @@ type task struct {
 }
 
 func NewTask(batches []Batch) batcher.Task {
-	var allSteps int64
+	var allSteps int
 	for _, batch := range batches {
 		allSteps += batch.Steps()
 	}

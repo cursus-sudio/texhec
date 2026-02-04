@@ -100,7 +100,9 @@ func addScene(
 	}
 
 	if isServer {
-		return
+		if true {
+			return
+		}
 		listenerEntity := world.NewEntity()
 		world.Hierarchy.SetParent(listenerEntity, sceneParent)
 		listener, err := world.Connection.Host(":8000", func(cc connection.ConnectionComponent) {

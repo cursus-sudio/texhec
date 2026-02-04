@@ -7,12 +7,12 @@ import (
 
 type Batch interface {
 	Step() (finished bool)
-	Steps() int64
+	Steps() int
 }
 
 type orderedBatch struct {
 	blueprint batcher.Batch
-	index     int64
+	index     int
 }
 
 func (b *orderedBatch) Step() (finished bool) {
@@ -24,7 +24,7 @@ func (b *orderedBatch) Step() (finished bool) {
 	return false
 }
 
-func (b *orderedBatch) Steps() int64 {
+func (b *orderedBatch) Steps() int {
 	return b.blueprint.Steps
 }
 
@@ -39,11 +39,11 @@ func NewOrderedBatch(b batcher.Batch) Batch {
 
 type concurrentBatch struct {
 	blueprint batcher.Batch
-	index     int64
+	index     int
 
 	concurrentRoutinesUsed int
 	wg                     *sync.WaitGroup
-	todo                   chan int64
+	todo                   chan int
 }
 
 func (b *concurrentBatch) Step() (finished bool) {
@@ -73,7 +73,7 @@ func (b *concurrentBatch) Step() (finished bool) {
 	return false
 }
 
-func (b *concurrentBatch) Steps() int64 {
+func (b *concurrentBatch) Steps() int {
 	return b.blueprint.Steps
 }
 
@@ -84,7 +84,7 @@ func NewConcurrentBatch(b batcher.Batch, concurrentRoutinesUsed int) Batch {
 
 		concurrentRoutinesUsed: concurrentRoutinesUsed,
 		wg:                     &sync.WaitGroup{},
-		todo:                   make(chan int64, concurrentRoutinesUsed),
+		todo:                   make(chan int, concurrentRoutinesUsed),
 	}
 	return batch
 }

@@ -15,7 +15,7 @@ import (
 
 type config struct {
 	types       []tile.Type
-	tilesPerJob int64
+	tilesPerJob int
 }
 
 type service struct {
@@ -47,8 +47,6 @@ func (s *service) addChance(tileType tile.Type, chance int) {
 func MapRange(val, min, max float64) float64 { return min + (val * (max - min)) }
 
 func (s *service) Generate(c generation.Config) batcher.Task {
-	c.Size.X = 1000
-	c.Size.Y = 1000
 	task := s.Batcher.NewTask()
 
 	noise := s.Noise.NewNoise(c.Seed).
@@ -71,14 +69,14 @@ func (s *service) Generate(c generation.Config) batcher.Task {
 		Build()
 
 	gridComponent := tile.NewGrid(c.Size.Coords())
-	jobs := int64(gridComponent.GetLastIndex()) / s.tilesPerJob
-	generateBatch := batcher.NewBatch(jobs, func(i int64) {
+	jobs := int(gridComponent.GetLastIndex()) / s.tilesPerJob
+	generateBatch := batcher.NewBatch(jobs, func(i int) {
 		for j := range s.tilesPerJob {
 			gridI := grid.Index(i*s.tilesPerJob + j)
 			s.SetTile(gridComponent, gridI, noise)
 		}
 	})
-	flushBatch := batcher.NewBatch(1, func(i int64) {
+	flushBatch := batcher.NewBatch(1, func(i int) {
 		s.Tile.Grid().Set(c.Entity, gridComponent)
 	})
 

@@ -49,7 +49,6 @@ func NewPerlinNoise(
 	offset mgl64.Vec2,
 	layer noise.LayerConfig,
 ) noise.Noise {
-	standardDeviation := standardDeviation(3, .902177)
 
 	return noise.NewNoise(func(coords mgl64.Vec2) float64 {
 		coords = coords.Add(offset)
@@ -82,6 +81,7 @@ func NewPerlinNoise(
 		const rangeLimit float64 = 0.88 // this is +/- limit i found running perlin for an hour
 		res = MapRange(res, -rangeLimit, rangeLimit, 0, 1)
 
+		const standardDeviation = .13080357452271105
 		res = cdf(res, standardDeviation)
 		res = math.Min(math.Max(res, 0), 1)
 		res *= layer.Weight

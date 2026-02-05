@@ -29,7 +29,6 @@ func NewValueNoise(
 	offset mgl64.Vec2,
 	layer noise.LayerConfig,
 ) noise.Noise {
-	standardDeviation := standardDeviation(3, .522672)
 	return noise.NewNoise(func(coords mgl64.Vec2) float64 {
 		coords = coords.Add(offset)
 		coords = coords.Mul(1 / layer.CellSize)
@@ -51,6 +50,7 @@ func NewValueNoise(
 			uy,
 		)
 
+		const standardDeviation = .24567970381982313
 		res = cdf(res, standardDeviation)
 		res = math.Min(math.Max(res, 0), 1)
 		res *= layer.Weight

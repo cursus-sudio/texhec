@@ -54,12 +54,19 @@ func (f *factory) AddValue(layers ...noise.LayerConfig) noise.Factory {
 }
 
 func (f *factory) Build() noise.Noise {
+	var totalWeight float64
+	for _, layer := range f.Layers {
+		totalWeight += layer.Weight
+	}
+	multiplier := 1 / totalWeight
+
 	// manual way of calculating standard deviation
 	var totalVariance float64
 	for _, layer := range f.Layers {
 		// each noise variance is uniform so we use const
 		const noiseVariance = 1. / 12.
-		totalVariance += (layer.Multiplier * layer.Multiplier) * noiseVariance
+		value := layer.Weight * multiplier
+		totalVariance += value * value * noiseVariance
 	}
 	standardDeviation := math.Sqrt(totalVariance)
 	return noise.NewNoise(func(v mgl64.Vec2) float64 {
@@ -67,6 +74,7 @@ func (f *factory) Build() noise.Noise {
 		for _, noise := range f.Noises {
 			s += noise.Read(v)
 		}
+		s *= multiplier
 		s = cdf(s, standardDeviation)
 		return s
 	})

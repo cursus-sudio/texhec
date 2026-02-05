@@ -13,6 +13,7 @@ import (
 type factory struct {
 	Logger logger.Logger `inject:"1"`
 	Seed   seed.Seed
+	Layers []noise.LayerConfig
 	Noises []noise.Noise
 }
 
@@ -34,6 +35,7 @@ func (f *factory) Add(
 		mgl64.Vec2{math.Pi, math.Pi}.Mul(float64(i)),
 		layer,
 	)
+	f.Layers = append(f.Layers, layer)
 	f.Noises = append(f.Noises, noise)
 }
 
@@ -52,10 +54,11 @@ func (f *factory) AddValue(layers ...noise.LayerConfig) noise.Factory {
 }
 
 func (f *factory) Build() noise.Noise {
+	r := seed.New(0).SeededRand(seed.New(0))
 	n1 := noise.NewNoise(func(v mgl64.Vec2) float64 {
 		var s float64
-		for _, noise := range f.Noises {
-			s += noise.Read(v)
+		for _, layer := range f.Layers {
+			s += r.Float64() * layer.Multiplier
 		}
 		return s
 	})

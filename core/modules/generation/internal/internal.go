@@ -91,7 +91,6 @@ func (s *service) Generate(c generation.Config) batcher.Task {
 		//
 		// print(text.String())
 		// print("\n\n\n")
-		// s.Logger.Info(text.String())
 		s.Tile.Grid().Set(c.Entity, gridComponent)
 	})
 

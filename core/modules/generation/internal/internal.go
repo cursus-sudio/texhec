@@ -29,8 +29,8 @@ func NewService(c ioc.Dic) generation.Service {
 	s := ioc.GetServices[service](c)
 	s.types = []tile.Type{}
 	s.addChance(tile.TileWater, 35)
-	s.addChance(tile.TileSand, 10)
-	s.addChance(tile.TileGrass, 50)
+	s.addChance(tile.TileSand, 15)
+	s.addChance(tile.TileGrass, 45)
 	s.addChance(tile.TileMountain, 5)
 	s.tilesPerJob = 100
 	return &s
@@ -45,8 +45,7 @@ func MapRange(val, min, max float64) float64 { return min + (val * (max - min)) 
 func (s *service) Generate(c generation.Config) batcher.Task {
 	task := s.Batcher.NewTask()
 
-	// multiplier := 1. / 5
-	multiplier := 1.
+	multiplier := 1. / 4
 	noise := s.Noise.NewNoise(c.Seed).AddValue(
 		noise.NewLayer(100*multiplier, .10),
 		noise.NewLayer(100*multiplier, .10),
@@ -54,7 +53,7 @@ func (s *service) Generate(c generation.Config) batcher.Task {
 		noise.NewLayer(040*multiplier, .05),
 		noise.NewLayer(040*multiplier, .05),
 	).AddPerlin(
-		noise.NewLayer(500*multiplier, .30),
+		noise.NewLayer(500*multiplier, .50),
 		noise.NewLayer(100*multiplier, .20),
 		//
 		noise.NewLayer(040*multiplier, .05),
@@ -91,7 +90,6 @@ func (s *service) Generate(c generation.Config) batcher.Task {
 		//
 		// print(text.String())
 		// print("\n\n\n")
-		// s.Logger.Info(text.String())
 		s.Tile.Grid().Set(c.Entity, gridComponent)
 	})
 

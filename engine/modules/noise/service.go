@@ -7,19 +7,19 @@ import (
 )
 
 type Noise interface {
-	// returns normalized value <0, 1> with equal distribution
+	// returns normalized value <0, 1> with uniform distribution
 	Read(mgl64.Vec2) float64
 }
 
 type LayerConfig struct {
-	CellSize   float64 // default size is 1
-	Multiplier float64 // default value is 1
+	CellSize float64 // default size is 1
+	Weight   float64
 }
 
-func NewLayer(cellSize, multiplier float64) LayerConfig {
+func NewLayer(cellSize, weight float64) LayerConfig {
 	return LayerConfig{
-		CellSize:   cellSize,
-		Multiplier: multiplier,
+		CellSize: cellSize,
+		Weight:   weight,
 	}
 }
 

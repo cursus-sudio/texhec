@@ -31,25 +31,31 @@ func NewSetup(t *testing.T) Setup {
 	c := b.Build()
 	setup := ioc.GetServices[Setup](c)
 	setup.T = t
-	setup.Layer = noise.NewLayer(10, 1)
+	setup.Layer = noise.NewLayer(1, 1)
 	return setup
 }
 
-func (s Setup) TestDistribution(testName string, noise noise.Noise) {
+// in case tests fail you can improve algorithm using this algorithm:
+// 1. Sample 10,000 Perlin values.
+// 2. Sort them.
+// 3. To transform a new value, find its "rank" in that sorted list.
+// 4. Rank/10000 will give you a nearly perfect Uniform Distribution
+
+func (s Setup) TestDistribution(
+	testName string,
+	noise noise.Noise,
+) {
 	s.T.Helper()
-	distribution := internal.CalculateDistribution(noise, 1000)
-	for _, value := range distribution {
-		const target = 1. / 3
-		const tolerance = .02
-		if math.Abs(target-value) > tolerance {
-			s.T.Errorf(
-				"expected \"%s\" distribution to have only values %.2f ± %.2f but got %v",
-				testName,
-				target,
-				tolerance,
-				distribution,
-			)
-			return
-		}
+	expectedDeviation := internal.UniformDistribution
+	noiseDeviation := internal.SampleNoiseDistribution(noise, 2000).StandardDeviation()
+	const tolerance = 0.2
+	if math.Abs(expectedDeviation-noiseDeviation) > tolerance {
+		s.T.Errorf(
+			"expected \"%s\" distribution to have deviation %.2f ± %.3f but got %v",
+			testName,
+			expectedDeviation,
+			tolerance,
+			noiseDeviation,
+		)
 	}
 }

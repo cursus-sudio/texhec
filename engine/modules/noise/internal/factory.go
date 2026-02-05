@@ -13,6 +13,7 @@ import (
 type factory struct {
 	Logger logger.Logger `inject:"1"`
 	Seed   seed.Seed
+	Layers []noise.LayerConfig
 	Noises []noise.Noise
 }
 
@@ -34,6 +35,7 @@ func (f *factory) Add(
 		mgl64.Vec2{math.Pi, math.Pi}.Mul(float64(i)),
 		layer,
 	)
+	f.Layers = append(f.Layers, layer)
 	f.Noises = append(f.Noises, noise)
 }
 
@@ -52,21 +54,27 @@ func (f *factory) AddValue(layers ...noise.LayerConfig) noise.Factory {
 }
 
 func (f *factory) Build() noise.Noise {
-	n1 := noise.NewNoise(func(v mgl64.Vec2) float64 {
-		var s float64
-		for _, noise := range f.Noises {
-			s += noise.Read(v)
-		}
-		return s
-	})
+	var totalWeight float64
+	for _, layer := range f.Layers {
+		totalWeight += layer.Weight
+	}
+	multiplier := 1 / totalWeight
 
-	values := CalculateDistribution(n1, 1000)
-	standardDeviation := standardDeviation(3, values[1])
+	// manual way of calculating standard deviation
+	var totalVariance float64
+	for _, layer := range f.Layers {
+		// each noise variance is uniform so we use const
+		const noiseVariance = 1. / 12.
+		value := layer.Weight * multiplier
+		totalVariance += value * value * noiseVariance
+	}
+	standardDeviation := math.Sqrt(totalVariance)
 	return noise.NewNoise(func(v mgl64.Vec2) float64 {
 		var s float64
 		for _, noise := range f.Noises {
 			s += noise.Read(v)
 		}
+		s *= multiplier
 		s = cdf(s, standardDeviation)
 		return s
 	})

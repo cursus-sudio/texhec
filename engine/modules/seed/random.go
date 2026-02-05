@@ -22,6 +22,6 @@ func (s *Seed) Value() uint64 {
 	return seed
 }
 
-func (s1 *Seed) SeededRand(s2 Seed) *rand.Rand {
+func (s1 Seed) SeededRand(s2 Seed) *rand.Rand {
 	return rand.New(rand.NewPCG(s1.Value(), s2.Value()))
 }

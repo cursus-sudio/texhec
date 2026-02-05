@@ -54,19 +54,6 @@ func (f *factory) AddValue(layers ...noise.LayerConfig) noise.Factory {
 }
 
 func (f *factory) Build() noise.Noise {
-	// sampling way of calculating standard deviation
-	// r := seed.New(0).SeededRand(seed.New(0))
-	// n1 := noise.NewNoise(func(v mgl64.Vec2) float64 {
-	// 	var s float64
-	// 	for _, layer := range f.Layers {
-	// 		s += r.Float64() * layer.Multiplier
-	// 	}
-	// 	return s
-	// })
-	//
-	// values := CalculateDistribution(n1, 1000)
-	// standardDeviation := standardDeviation(3, values[1])
-
 	// manual way of calculating standard deviation
 	var totalVariance float64
 	for _, layer := range f.Layers {

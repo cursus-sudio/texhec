@@ -54,17 +54,27 @@ func (f *factory) AddValue(layers ...noise.LayerConfig) noise.Factory {
 }
 
 func (f *factory) Build() noise.Noise {
-	r := seed.New(0).SeededRand(seed.New(0))
-	n1 := noise.NewNoise(func(v mgl64.Vec2) float64 {
-		var s float64
-		for _, layer := range f.Layers {
-			s += r.Float64() * layer.Multiplier
-		}
-		return s
-	})
+	// sampling way of calculating standard deviation
+	// r := seed.New(0).SeededRand(seed.New(0))
+	// n1 := noise.NewNoise(func(v mgl64.Vec2) float64 {
+	// 	var s float64
+	// 	for _, layer := range f.Layers {
+	// 		s += r.Float64() * layer.Multiplier
+	// 	}
+	// 	return s
+	// })
+	//
+	// values := CalculateDistribution(n1, 1000)
+	// standardDeviation := standardDeviation(3, values[1])
 
-	values := CalculateDistribution(n1, 1000)
-	standardDeviation := standardDeviation(3, values[1])
+	// manual way of calculating standard deviation
+	var totalVariance float64
+	for _, layer := range f.Layers {
+		// each noise variance is uniform so we use const
+		const noiseVariance = 1. / 12.
+		totalVariance += (layer.Multiplier * layer.Multiplier) * noiseVariance
+	}
+	standardDeviation := math.Sqrt(totalVariance)
 	return noise.NewNoise(func(v mgl64.Vec2) float64 {
 		var s float64
 		for _, noise := range f.Noises {

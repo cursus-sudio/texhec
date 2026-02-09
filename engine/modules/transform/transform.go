@@ -34,6 +34,7 @@ type Service interface {
 type ParentFlag uint8
 
 const (
+	Absolute    ParentFlag = 0
 	RelativePos ParentFlag = 1 << iota
 	RelativeRotation
 	RelativeSizeX

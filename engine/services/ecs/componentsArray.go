@@ -56,7 +56,7 @@ type componentsArray[Component any] struct {
 	onRemove     []OnMod
 }
 
-func NewComponentsArray[Component any](entities entitiesInterface) *componentsArray[Component] {
+func newComponentsArray[Component any](entities entitiesInterface) *componentsArray[Component] {
 	equal := func(Component, Component) bool { return false }
 	if reflect.TypeFor[Component]().Comparable() {
 		equal = func(c1, c2 Component) bool { return any(c1) == any(c2) }

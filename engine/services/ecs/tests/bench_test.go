@@ -9,14 +9,14 @@ func BenchmarkGetComponent(b *testing.B) {
 	world := ecs.NewWorld()
 
 	otherEntitiesPresent := 100
-	for i := 0; i < otherEntitiesPresent; i++ {
+	for range otherEntitiesPresent {
 		world.NewEntity()
 	}
 
 	entitiesCount := min(b.N, 10000)
 	entities := make([]ecs.EntityID, entitiesCount)
 	arr := ecs.GetComponentsArray[Component](world)
-	for i := 0; i < entitiesCount; i++ {
+	for i := range entitiesCount {
 		entity := world.NewEntity()
 		arr.Set(entity, Component{})
 		entities[i] = entity

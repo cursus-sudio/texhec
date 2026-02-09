@@ -75,7 +75,7 @@ func (s *orthoSys) BeforeGet() {
 			limits.Max.Z(),
 		}
 
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			if minPos[i] > maxPos[i] {
 				center := (minPos[i] + maxPos[i]) / 2
 				minPos[i], maxPos[i] = center, center

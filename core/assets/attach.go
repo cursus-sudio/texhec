@@ -31,6 +31,7 @@ type GameAssets struct {
 
 type HudAssets struct {
 	Btn         assets.AssetID `path:"hud/btn.png"`
+	Cursor      assets.AssetID `path:"hud/cursor.png"`
 	Settings    assets.AssetID `path:"hud/settings.png"`
 	Background1 assets.AssetID `path:"hud/bg1.gif"`
 	Background2 assets.AssetID `path:"hud/bg2.gif"`

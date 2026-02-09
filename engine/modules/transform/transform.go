@@ -34,7 +34,6 @@ type Service interface {
 type ParentFlag uint8
 
 const (
-	Absolute    ParentFlag = 0
 	RelativePos ParentFlag = 1 << iota
 	RelativeRotation
 	RelativeSizeX
@@ -42,10 +41,12 @@ const (
 	RelativeSizeZ
 )
 const (
-	RelativeSizeXY  = RelativeSizeX | RelativeSizeY
-	RelativeSizeXZ  = RelativeSizeX | RelativeSizeZ
-	RelativeSizeXYZ = RelativeSizeX | RelativeSizeY | RelativeSizeZ
-	RelativeSizeYZ  = RelativeSizeY | RelativeSizeZ
+	RelativeSizeXY             = RelativeSizeX | RelativeSizeY
+	RelativeSizeXZ             = RelativeSizeX | RelativeSizeZ
+	RelativeSizeXYZ            = RelativeSizeX | RelativeSizeY | RelativeSizeZ
+	RelativeSizeYZ             = RelativeSizeY | RelativeSizeZ
+	Absolute        ParentFlag = 0
+	Relative                   = RelativePos | RelativeRotation | RelativeSizeXYZ
 )
 
 // aspect ratio

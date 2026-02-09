@@ -1,7 +1,7 @@
 package uiservice
 
 import (
-	gameassets "core/assets"
+	"core/modules/gameassets"
 	"core/modules/ui"
 	"engine"
 	"engine/modules/transform"
@@ -29,6 +29,7 @@ type service struct {
 	bgTimePerFrame time.Duration
 
 	uiCameraArray           ecs.ComponentsArray[ui.UiCameraComponent]
+	cursorCameraArray       ecs.ComponentsArray[ui.CursorCameraComponent]
 	animatedBackgroundArray ecs.ComponentsArray[ui.AnimatedBackgroundComponent]
 	*changing
 }
@@ -44,6 +45,7 @@ func NewService(
 
 	t.uiCameraArray = ecs.GetComponentsArray[ui.UiCameraComponent](t.World)
 	t.animatedBackgroundArray = ecs.GetComponentsArray[ui.AnimatedBackgroundComponent](t.World)
+	t.cursorCameraArray = ecs.GetComponentsArray[ui.CursorCameraComponent](t.World)
 	t.changing = &changing{}
 
 	t.Logger.Warn(t.Init())
@@ -68,6 +70,9 @@ func (t *service) ResetChildWrapper() error {
 func (t *service) UiCamera() ecs.ComponentsArray[ui.UiCameraComponent] { return t.uiCameraArray }
 func (t *service) AnimatedBackground() ecs.ComponentsArray[ui.AnimatedBackgroundComponent] {
 	return t.animatedBackgroundArray
+}
+func (s *service) CursorCamera() ecs.ComponentsArray[ui.CursorCameraComponent] {
+	return s.cursorCameraArray
 }
 
 func (t *service) Show() ecs.EntityID {

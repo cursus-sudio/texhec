@@ -1,7 +1,7 @@
-package updatebg
+package systems
 
 import (
-	gameassets "core/assets"
+	"core/modules/gameassets"
 	"core/modules/ui"
 	"engine"
 	"engine/modules/render"
@@ -39,6 +39,8 @@ func NewSystem(c ioc.Dic, bgTimePerFrame time.Duration) ui.System {
 		s.GameAssets.Hud.Background1,
 		s.GameAssets.Hud.Background1,
 		s.GameAssets.Hud.Background2,
+		s.GameAssets.Hud.Background2,
+		s.GameAssets.Hud.Background1,
 	}
 
 	return ecs.NewSystemRegister(func() error {
@@ -59,7 +61,7 @@ func (s *System) Init() error {
 	s.Ui.AnimatedBackground().AddDirtySet(dirtySet)
 
 	blueprint := s.NewEntity()
-	s.Ui.AnimatedBackground().Set(blueprint, ui.NewAnimatedBackground())
+	s.Ui.AnimatedBackground().Set(blueprint, ui.AnimatedBackgroundComponent{})
 
 	transitionArr := ecs.GetComponentsArray[transition.TransitionComponent[render.TextureFrameComponent]](s.World)
 

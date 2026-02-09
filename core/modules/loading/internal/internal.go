@@ -1,7 +1,7 @@
 package internal
 
 import (
-	gameassets "core/assets"
+	"core/modules/gameassets"
 	"core/modules/loading"
 	"core/modules/ui"
 	"engine"
@@ -54,7 +54,7 @@ func (s *system) Render(message string) {
 	s.World.Transform.Pos().Set(background, transform.NewPos(0, 0, 1))
 	s.World.Transform.PivotPoint().Set(background, transform.NewPivotPoint(.5, .5, 0))
 	s.World.Transform.ParentPivotPoint().Set(background, transform.NewParentPivotPoint(.5, .5, 0))
-	s.Ui.AnimatedBackground().Set(background, ui.NewAnimatedBackground())
+	s.Ui.AnimatedBackground().Set(background, ui.AnimatedBackgroundComponent{})
 
 	textEntity := s.World.NewEntity()
 	s.World.Hierarchy.SetParent(textEntity, cameraEntity)

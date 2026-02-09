@@ -37,7 +37,7 @@ func (t *service) Init() error {
 	t.Transform.PivotPoint().Set(menu, transform.NewPivotPoint(0, 1, .5))
 
 	t.Render.Color().Set(menu, render.NewColor(mgl32.Vec4{1, 1, 1, .5}))
-	t.AnimatedBackground().Set(menu, ui.NewAnimatedBackground())
+	t.AnimatedBackground().Set(menu, ui.AnimatedBackgroundComponent{})
 
 	t.Groups.Inherit().Set(menu, groups.InheritGroupsComponent{})
 	t.Collider.Component().Set(menu, collider.NewCollider(t.GameAssets.SquareCollider))

@@ -23,6 +23,7 @@ func NewButton(text string, event any) Button {
 type Service interface {
 	UiCamera() ecs.ComponentsArray[UiCameraComponent]
 	AnimatedBackground() ecs.ComponentsArray[AnimatedBackgroundComponent]
+	CursorCamera() ecs.ComponentsArray[CursorCameraComponent]
 	// returns parent to attach ui elements
 	// potentially with enter animation
 	Show() (parent ecs.EntityID)

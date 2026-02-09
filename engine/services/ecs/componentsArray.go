@@ -56,7 +56,7 @@ type componentsArray[Component any] struct {
 	onRemove     []OnMod
 }
 
-func NewComponentsArray[Component any](entities entitiesInterface) *componentsArray[Component] {
+func newComponentsArray[Component any](entities entitiesInterface) *componentsArray[Component] {
 	equal := func(Component, Component) bool { return false }
 	if reflect.TypeFor[Component]().Comparable() {
 		equal = func(c1, c2 Component) bool { return any(c1) == any(c2) }
@@ -109,7 +109,6 @@ func (c *componentsArray[Component]) SetEmpty(empty Component) {
 }
 
 func (c *componentsArray[Component]) Remove(entity EntityID) {
-	entities := []EntityID{entity}
 	if _, ok := c.components.Get(entity); !ok {
 		return
 	}
@@ -118,13 +117,11 @@ func (c *componentsArray[Component]) Remove(entity EntityID) {
 		onMod(entity)
 	}
 	for _, dirtySet := range c.dirtySets.Get() {
-		for _, entity := range entities {
-			if !dirtySet.Ok() {
-				c.dirtySets.RemoveElements(dirtySet)
-				continue
-			}
-			dirtySet.Dirty(entity)
+		if !dirtySet.Ok() {
+			c.dirtySets.RemoveElements(dirtySet)
+			continue
 		}
+		dirtySet.Dirty(entity)
 	}
 }
 

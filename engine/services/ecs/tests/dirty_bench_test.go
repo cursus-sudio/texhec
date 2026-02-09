@@ -97,7 +97,7 @@ func TestDependentDirtySet(t *testing.T) {
 func BenchmarkDirtySetDirty(b *testing.B) {
 	set := ecs.NewDirtySet()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for i := range b.N {
 		set.Dirty(ecs.EntityID(i))
 	}
 }
@@ -111,14 +111,14 @@ func BenchmarkDirtySetDirtyInversed(b *testing.B) {
 func BenchmarkDirtySetGet(b *testing.B) {
 	set := ecs.NewDirtySet()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		set.Get()
 	}
 }
 func BenchmarkDirtySetDirtyAndGet(b *testing.B) {
 	set := ecs.NewDirtySet()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for i := range b.N {
 		set.Dirty(ecs.EntityID(i))
 		set.Get()
 	}
@@ -126,7 +126,7 @@ func BenchmarkDirtySetDirtyAndGet(b *testing.B) {
 func BenchmarkDirtySetDirtyAnd1Get(b *testing.B) {
 	set := ecs.NewDirtySet()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for i := range b.N {
 		set.Dirty(ecs.EntityID(i))
 	}
 	set.Get()
@@ -165,8 +165,8 @@ func benchmarkNEntitiesSaveWith7Systems(b *testing.B, entitiesCount int) {
 	entity := world.NewEntity()
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		for j := 0; j < entitiesCount; j++ {
+	for range b.N {
+		for range entitiesCount {
 			arr1.Set(entity, Component1{})
 		}
 	}

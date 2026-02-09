@@ -32,6 +32,7 @@ func Package() ioc.Pkg {
 const (
 	UiGroup groups.Group = iota + 1
 	GameGroup
+	BgGroup
 )
 
 func addScene(
@@ -46,12 +47,45 @@ func addScene(
 	rows := 1000
 	cols := 1000
 
-	uiCamera := world.NewEntity()
-	world.Camera.Priority().Set(uiCamera, camera.NewPriority(1))
-	world.Hierarchy.SetParent(uiCamera, sceneParent)
-	world.Camera.Ortho().Set(uiCamera, camera.NewOrtho(-1000, +1000))
-	world.Groups.Component().Set(uiCamera, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
-	world.Ui.UiCamera().Set(uiCamera, ui.UiCameraComponent{})
+	{
+		uiCamera := world.NewEntity()
+		world.Hierarchy.SetParent(uiCamera, sceneParent)
+		world.Camera.Priority().Set(uiCamera, camera.NewPriority(1))
+		world.Camera.Ortho().Set(uiCamera, camera.NewOrtho(-1000, +1000))
+		world.Groups.Component().Set(uiCamera, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
+		world.Ui.UiCamera().Set(uiCamera, ui.UiCameraComponent{})
+		world.Ui.CursorCamera().Set(uiCamera, ui.CursorCameraComponent{})
+
+		settingsEntity := world.NewEntity()
+		world.Hierarchy.SetParent(settingsEntity, uiCamera)
+		world.Transform.Pos().Set(settingsEntity, transform.NewPos(10, -10, 0))
+		world.Transform.Size().Set(settingsEntity, transform.NewSize(50, 50, 1))
+		world.Transform.PivotPoint().Set(settingsEntity, transform.NewPivotPoint(0, 1, .5))
+		world.Transform.Parent().Set(settingsEntity, transform.NewParent(transform.RelativePos))
+		world.Transform.ParentPivotPoint().Set(settingsEntity, transform.NewParentPivotPoint(0, 1, .5))
+		world.Groups.Component().Set(settingsEntity, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
+
+		world.Render.Mesh().Set(settingsEntity, render.NewMesh(world.GameAssets.SquareMesh))
+		world.Render.Texture().Set(settingsEntity, render.NewTexture(world.GameAssets.Hud.Settings))
+
+		world.Inputs.LeftClick().Set(settingsEntity, inputs.NewLeftClick(settings.EnterSettingsEvent{}))
+		world.Inputs.KeepSelected().Set(settingsEntity, inputs.KeepSelectedComponent{})
+		world.Collider.Component().Set(settingsEntity, collider.NewCollider(world.GameAssets.SquareCollider))
+	}
+
+	{
+		bgCamera := world.NewEntity()
+		world.Hierarchy.SetParent(bgCamera, sceneParent)
+		world.Camera.Priority().Set(bgCamera, camera.NewPriority(-1))
+		world.Camera.Ortho().Set(bgCamera, camera.NewOrtho(-1000, +1000))
+		world.Groups.Component().Set(bgCamera, groups.EmptyGroups().Ptr().Enable(BgGroup).Val())
+
+		bg := world.NewEntity()
+		world.Hierarchy.SetParent(bg, bgCamera)
+		world.Transform.Parent().Set(bg, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
+		world.Groups.Inherit().Set(bg, groups.InheritGroupsComponent{})
+		world.Ui.AnimatedBackground().Set(bg, ui.AnimatedBackgroundComponent{})
+	}
 
 	gameCamera := world.NewEntity()
 	world.Hierarchy.SetParent(gameCamera, sceneParent)
@@ -63,22 +97,6 @@ func addScene(
 		mgl32.Vec3{50 * float32(-cols), 50 * float32(-rows), -1000},
 		mgl32.Vec3{50 * float32(cols), 50 * float32(rows), 1000},
 	))
-
-	settingsEntity := world.NewEntity()
-	world.Hierarchy.SetParent(settingsEntity, uiCamera)
-	world.Transform.Pos().Set(settingsEntity, transform.NewPos(10, -10, 0))
-	world.Transform.Size().Set(settingsEntity, transform.NewSize(50, 50, 1))
-	world.Transform.PivotPoint().Set(settingsEntity, transform.NewPivotPoint(0, 1, .5))
-	world.Transform.Parent().Set(settingsEntity, transform.NewParent(transform.RelativePos))
-	world.Transform.ParentPivotPoint().Set(settingsEntity, transform.NewParentPivotPoint(0, 1, .5))
-	world.Groups.Component().Set(settingsEntity, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
-
-	world.Render.Mesh().Set(settingsEntity, render.NewMesh(world.GameAssets.SquareMesh))
-	world.Render.Texture().Set(settingsEntity, render.NewTexture(world.GameAssets.Hud.Settings))
-
-	world.Inputs.LeftClick().Set(settingsEntity, inputs.NewLeftClick(settings.EnterSettingsEvent{}))
-	world.Inputs.KeepSelected().Set(settingsEntity, inputs.KeepSelectedComponent{})
-	world.Collider.Component().Set(settingsEntity, collider.NewCollider(world.GameAssets.SquareCollider))
 
 	if isServer {
 		gridEntity := world.NewEntity()

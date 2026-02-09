@@ -1,8 +1,8 @@
 package gamescenes
 
 import (
-	gameassets "core/assets"
 	"core/modules/fpslogger"
+	"core/modules/gameassets"
 	"core/modules/generation"
 	"core/modules/loading"
 	"core/modules/settings"

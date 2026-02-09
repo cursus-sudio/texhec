@@ -41,10 +41,12 @@ const (
 	RelativeSizeZ
 )
 const (
-	RelativeSizeXY  = RelativeSizeX | RelativeSizeY
-	RelativeSizeXZ  = RelativeSizeX | RelativeSizeZ
-	RelativeSizeXYZ = RelativeSizeX | RelativeSizeY | RelativeSizeZ
-	RelativeSizeYZ  = RelativeSizeY | RelativeSizeZ
+	RelativeSizeXY             = RelativeSizeX | RelativeSizeY
+	RelativeSizeXZ             = RelativeSizeX | RelativeSizeZ
+	RelativeSizeXYZ            = RelativeSizeX | RelativeSizeY | RelativeSizeZ
+	RelativeSizeYZ             = RelativeSizeY | RelativeSizeZ
+	Absolute        ParentFlag = 0
+	Relative                   = RelativePos | RelativeRotation | RelativeSizeXYZ
 )
 
 // aspect ratio

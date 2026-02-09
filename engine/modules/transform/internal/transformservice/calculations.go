@@ -137,7 +137,7 @@ func (t *service) ApplyAspectRatio(entity ecs.EntityID, size *transform.SizeComp
 	}
 	sizeRatio := t.getAspectRatio(*size, ratio)
 	if maxSize, ok := t.MaxSizeArray.Get(entity); ok {
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			if maxSize.Size[i] == 0 {
 				maxSize.Size[i] = sizeRatio.Size[i]
 			}
@@ -145,7 +145,7 @@ func (t *service) ApplyAspectRatio(entity ecs.EntityID, size *transform.SizeComp
 		maxSizeRatio := ratio
 
 		primaryAxisIndex := -1
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			if maxSize.Size[i] != 0 && maxSizeRatio.AspectRatio[i] != 0 &&
 				(primaryAxisIndex == -1 || maxSizeRatio.AspectRatio[primaryAxisIndex] > maxSizeRatio.AspectRatio[i]) {
 				primaryAxisIndex = i
@@ -156,7 +156,7 @@ func (t *service) ApplyAspectRatio(entity ecs.EntityID, size *transform.SizeComp
 			maxSize = transform.MaxSizeComponent(
 				t.getAspectRatio(transform.SizeComponent(maxSize), maxSizeRatio),
 			)
-			for i := 0; i < 3; i++ {
+			for i := range 3 {
 				if maxSize.Size[i] >= sizeRatio.Size[i] {
 					continue
 				}
@@ -169,7 +169,7 @@ func (t *service) ApplyAspectRatio(entity ecs.EntityID, size *transform.SizeComp
 		minSizeRatio := ratio
 
 		primaryAxisIndex := -1
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			if minSize.Size[i] != 0 && minSizeRatio.AspectRatio[i] != 0 &&
 				(primaryAxisIndex == -1 || minSizeRatio.AspectRatio[primaryAxisIndex] < minSizeRatio.AspectRatio[i]) {
 				primaryAxisIndex = i
@@ -180,7 +180,7 @@ func (t *service) ApplyAspectRatio(entity ecs.EntityID, size *transform.SizeComp
 			minSize = transform.MinSizeComponent(
 				t.getAspectRatio(transform.SizeComponent(minSize), minSizeRatio),
 			)
-			for i := 0; i < 3; i++ {
+			for i := range 3 {
 				if minSize.Size[i] <= sizeRatio.Size[i] {
 					continue
 				}

@@ -133,7 +133,6 @@ func getDic() ioc.Dic {
 		}),
 		console.Package(),
 		media.Package(window, ctx),
-		// ecs.Package(), // scenes register world so ecs package isn't registered
 		frames.Package(1, 60),
 		// frames.Package(1, 10000),
 		scenepkg.Package(),
@@ -144,7 +143,7 @@ func getDic() ioc.Dic {
 		generationpkg.Package(),
 		uipkg.Package(
 			time.Millisecond*300, // animation duration
-			time.Millisecond*100, // bgTimePerFrame
+			time.Second/12,       // bgTimePerFrame
 		),
 		settingspkg.Package(),
 
@@ -164,7 +163,6 @@ func getDic() ioc.Dic {
 				return text.FontFamilyComponent{FontFamily: asset}
 			},
 			text.FontSizeComponent{FontSize: 16},
-			// text.Overflow{Visible: false},
 			text.BreakComponent{Break: text.BreakWord},
 			text.TextAlignComponent{Vertical: 0, Horizontal: 0},
 			text.TextColorComponent{Color: mgl32.Vec4{1, 1, 1, 1}},

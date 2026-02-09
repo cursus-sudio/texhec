@@ -54,6 +54,7 @@ func addScene(
 		world.Camera.Ortho().Set(uiCamera, camera.NewOrtho(-1000, +1000))
 		world.Groups.Component().Set(uiCamera, groups.EmptyGroups().Ptr().Enable(UiGroup).Val())
 		world.Ui.UiCamera().Set(uiCamera, ui.UiCameraComponent{})
+		world.Ui.CursorCamera().Set(uiCamera, ui.CursorCameraComponent{})
 
 		settingsEntity := world.NewEntity()
 		world.Hierarchy.SetParent(settingsEntity, uiCamera)
@@ -83,7 +84,7 @@ func addScene(
 		world.Hierarchy.SetParent(bg, bgCamera)
 		world.Transform.Parent().Set(bg, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
 		world.Groups.Inherit().Set(bg, groups.InheritGroupsComponent{})
-		world.Ui.AnimatedBackground().Set(bg, ui.NewAnimatedBackground())
+		world.Ui.AnimatedBackground().Set(bg, ui.AnimatedBackgroundComponent{})
 	}
 
 	gameCamera := world.NewEntity()

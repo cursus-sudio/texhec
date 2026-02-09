@@ -2,8 +2,8 @@ package uipkg
 
 import (
 	"core/modules/ui"
+	"core/modules/ui/internal/systems"
 	"core/modules/ui/internal/uiservice"
-	"core/modules/ui/internal/updatebg"
 	"engine/services/codec"
 	"engine/services/ecs"
 	"time"
@@ -43,8 +43,12 @@ func (pkg pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) ui.System {
 		eventsBuilder := ioc.Get[events.Builder](c)
 		return ecs.NewSystemRegister(func() error {
-			if err := updatebg.NewSystem(c, pkg.bgTimePerFrame).Register(); err != nil {
-				return err
+			errs := ecs.RegisterSystems(
+				systems.NewSystem(c, pkg.bgTimePerFrame),
+				systems.NewCursorSystem(c),
+			)
+			if len(errs) != 0 {
+				return errs[0]
 			}
 
 			events.Listen(eventsBuilder, func(e sdl.MouseButtonEvent) {

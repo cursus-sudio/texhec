@@ -27,6 +27,7 @@ func (pkg) Register(b ioc.Builder) {
 			cameraEntity := world.NewEntity()
 			world.Hierarchy.SetParent(cameraEntity, sceneParent)
 			world.Camera.Ortho().Set(cameraEntity, camera.NewOrtho(-1000, +1000))
+			world.Ui.CursorCamera().Set(cameraEntity, ui.CursorCameraComponent{})
 
 			signature := world.NewEntity()
 			world.Hierarchy.SetParent(signature, cameraEntity)
@@ -42,7 +43,7 @@ func (pkg) Register(b ioc.Builder) {
 
 			background := world.NewEntity()
 			world.Hierarchy.SetParent(background, cameraEntity)
-			world.Ui.AnimatedBackground().Set(background, ui.NewAnimatedBackground())
+			world.Ui.AnimatedBackground().Set(background, ui.AnimatedBackgroundComponent{})
 
 			buttonArea := world.NewEntity()
 			world.Transform.Size().Set(buttonArea, transform.NewSize(500, 200, 1))

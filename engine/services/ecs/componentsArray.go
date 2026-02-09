@@ -109,7 +109,6 @@ func (c *componentsArray[Component]) SetEmpty(empty Component) {
 }
 
 func (c *componentsArray[Component]) Remove(entity EntityID) {
-	entities := []EntityID{entity}
 	if _, ok := c.components.Get(entity); !ok {
 		return
 	}
@@ -118,13 +117,11 @@ func (c *componentsArray[Component]) Remove(entity EntityID) {
 		onMod(entity)
 	}
 	for _, dirtySet := range c.dirtySets.Get() {
-		for _, entity := range entities {
-			if !dirtySet.Ok() {
-				c.dirtySets.RemoveElements(dirtySet)
-				continue
-			}
-			dirtySet.Dirty(entity)
+		if !dirtySet.Ok() {
+			c.dirtySets.RemoveElements(dirtySet)
+			continue
 		}
+		dirtySet.Dirty(entity)
 	}
 }
 

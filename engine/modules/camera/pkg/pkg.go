@@ -159,6 +159,9 @@ func (pkg pkg) Register(b ioc.Builder) {
 					cameraArray.BeforeGet(func() {
 						entities := orthoDirtySet.Get()
 						for _, entity := range entities {
+							if !w.EntityExists(entity) {
+								continue
+							}
 							cameraArray.Set(entity, camera.NewCamera[camera.OrthoComponent]())
 						}
 					})
@@ -169,6 +172,9 @@ func (pkg pkg) Register(b ioc.Builder) {
 					cameraArray.BeforeGet(func() {
 						entities := perspectiveDirtySet.Get()
 						for _, entity := range entities {
+							if !w.EntityExists(entity) {
+								continue
+							}
 							cameraArray.Set(entity, camera.NewCamera[camera.PerspectiveComponent]())
 						}
 					})

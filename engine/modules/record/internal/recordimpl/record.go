@@ -140,6 +140,7 @@ func (t *service) synchronizeArrayState(
 	// apply in world
 	for _, entity := range entities {
 		if component, ok := worldArray.GetAny(entity); ok {
+			t.worldCopy.EnsureExists(entity)
 			err := worldCopyArray.SetAny(entity, component)
 			t.Logger.Warn(err)
 			continue

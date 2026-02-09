@@ -109,6 +109,9 @@ func (t *service) BeforeGet() {
 		}
 		entity := entities[0]
 		entities = entities[1:]
+		if !t.World.EntityExists(entity) {
+			continue
+		}
 
 		pos, rot, size := t.CalculateAbsolute(entity)
 		save := save{

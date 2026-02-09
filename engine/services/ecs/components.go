@@ -20,7 +20,7 @@ func newComponentType(t reflect.Type) componentType {
 
 //
 
-type Component interface{}
+type Component any
 
 func getComponentType(component Component) componentType {
 	typeOfComponent := reflect.TypeOf(component)

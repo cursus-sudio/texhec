@@ -1,8 +1,9 @@
 package main
 
 import (
-	gameassets "core/assets"
 	"core/modules/fpslogger/pkg"
+	"core/modules/gameassets"
+	"core/modules/gameassets/pkg"
 	"core/modules/generation/pkg"
 	"core/modules/loading/pkg"
 	"core/modules/settings"
@@ -127,7 +128,7 @@ func getDic() ioc.Dic {
 		codec.Package(),
 		appruntime.Package(),
 
-		assets.Package("assets/files/"),
+		assets.Package("assets/"),
 		logger.Package(true, func(c ioc.Dic, message string) {
 			ioc.Get[console.Console](c).PrintPermanent(message)
 		}),
@@ -244,7 +245,7 @@ func getDic() ioc.Dic {
 		fpsloggerpkg.Package(),
 
 		gamescenes.Package(),
-		gameassets.Package(),
+		gameassetspkg.Package(),
 
 		creditsscene.Package(),
 		gamescene.Package(),

@@ -1,6 +1,7 @@
-package gameassets
+package gameassetspkg
 
 import (
+	"core/modules/gameassets"
 	"core/modules/tile"
 	"engine/modules/collider"
 	"engine/modules/render"
@@ -18,44 +19,16 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
-type GameAssets struct {
-	Tiles        TileAssets
-	Hud          HudAssets
-	ExampleAudio assets.AssetID `path:"audio.wav"`
-
-	Blank          assets.AssetID `path:"blank texture"`
-	SquareMesh     assets.AssetID `path:"square mesh"`
-	SquareCollider assets.AssetID `path:"square collider"`
-	FontAsset      assets.AssetID `path:"font1.ttf"`
-}
-
-type HudAssets struct {
-	Btn         assets.AssetID `path:"hud/btn.png"`
-	Cursor      assets.AssetID `path:"hud/cursor.png"`
-	Settings    assets.AssetID `path:"hud/settings.png"`
-	Background1 assets.AssetID `path:"hud/bg1.gif"`
-	Background2 assets.AssetID `path:"hud/bg2.gif"`
-}
-
-type TileAssets struct {
-	Grass    assets.AssetID `path:"tiles/grass.biom"`
-	Sand     assets.AssetID `path:"tiles/sand.biom"`
-	Mountain assets.AssetID `path:"tiles/mountain.biom"`
-	Water    assets.AssetID `path:"tiles/water.biom"`
-
-	Unit assets.AssetID `path:"tiles/u1.png"`
-}
-
 type pkg struct{}
 
 func Package() ioc.Pkg {
 	return pkg{}
 }
 
-func (pkg) Assets(b ioc.Builder) {
+func (pkg) Register(b ioc.Builder) {
 	// register specific files
 	ioc.WrapService(b, func(c ioc.Dic, b assets.AssetsStorageBuilder) {
-		gameAssets := ioc.Get[GameAssets](c)
+		gameAssets := ioc.Get[gameassets.GameAssets](c)
 		b.RegisterAsset(gameAssets.Blank, func() (any, error) {
 			img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 			white := color.RGBA{255, 255, 255, 255}
@@ -92,17 +65,17 @@ func (pkg) Assets(b ioc.Builder) {
 	})
 
 	// register assets
-	ioc.RegisterSingleton(b, func(c ioc.Dic) GameAssets {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) gameassets.GameAssets {
 		logger := ioc.Get[logger.Logger](c)
 		assetsService := ioc.Get[assets.AssetModule](c)
 
-		gameAssets := GameAssets{}
+		gameAssets := gameassets.GameAssets{}
 		logger.Warn(assetsService.InitializeProperties(&gameAssets))
 		return gameAssets
 	})
 
 	ioc.WrapService(b, func(c ioc.Dic, s tile.TileAssets) {
-		gameAssets := ioc.Get[GameAssets](c)
+		gameAssets := ioc.Get[gameassets.GameAssets](c)
 		assets := datastructures.NewSparseArray[tile.Type, assets.AssetID]()
 		assets.Set(tile.TileSand, gameAssets.Tiles.Sand)
 		assets.Set(tile.TileMountain, gameAssets.Tiles.Mountain)
@@ -110,25 +83,18 @@ func (pkg) Assets(b ioc.Builder) {
 		assets.Set(tile.TileWater, gameAssets.Tiles.Water)
 		s.AddType(assets)
 	})
-}
 
-//
-//
-//
+	//
+	//
+	//
 
-const (
-	_ transition.EasingID = iota
-	LinearEasingFunction
-	MyEasingFunction
-	EaseOutElastic
-)
+	// animations
 
-func (pkg) Animations(b ioc.Builder) {
 	ioc.WrapService(b, func(c ioc.Dic, b transition.EasingService) {
-		b.Set(LinearEasingFunction, func(t transition.Progress) transition.Progress {
+		b.Set(gameassets.LinearEasingFunction, func(t transition.Progress) transition.Progress {
 			return t
 		})
-		b.Set(MyEasingFunction, func(t transition.Progress) transition.Progress {
+		b.Set(gameassets.MyEasingFunction, func(t transition.Progress) transition.Progress {
 			const n1 = 7.5625
 			const d1 = 2.75
 
@@ -145,7 +111,7 @@ func (pkg) Animations(b ioc.Builder) {
 				return n1*t*t + 0.984375
 			}
 		})
-		b.Set(EaseOutElastic, func(t transition.Progress) transition.Progress {
+		b.Set(gameassets.EaseOutElastic, func(t transition.Progress) transition.Progress {
 			const c1 float64 = 10
 			const c2 float64 = .75
 			const c3 float64 = (2 * math.Pi) / 3
@@ -162,9 +128,4 @@ func (pkg) Animations(b ioc.Builder) {
 			return transition.Progress(x)
 		})
 	})
-}
-
-func (pkg pkg) Register(b ioc.Builder) {
-	pkg.Assets(b)
-	pkg.Animations(b)
 }

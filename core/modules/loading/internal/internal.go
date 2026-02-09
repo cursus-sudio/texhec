@@ -1,7 +1,7 @@
 package internal
 
 import (
-	gameassets "core/assets"
+	"core/modules/gameassets"
 	"core/modules/loading"
 	"core/modules/ui"
 	"engine"

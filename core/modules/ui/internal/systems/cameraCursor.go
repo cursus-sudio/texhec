@@ -1,7 +1,7 @@
 package systems
 
 import (
-	gameassets "core/assets"
+	"core/modules/gameassets"
 	"core/modules/ui"
 	"engine/modules/camera"
 	"engine/modules/groups"

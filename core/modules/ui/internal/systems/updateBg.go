@@ -35,26 +35,26 @@ type System struct {
 }
 
 func NewSystem(c ioc.Dic, bgTimePerFrame time.Duration) ui.System {
-	s := ioc.GetServices[*System](c)
-
-	s.blueprint = s.NewEntity()
-	s.Ui.AnimatedBackground().Set(s.blueprint, ui.AnimatedBackgroundComponent{})
-
-	s.bgDirtySet = ecs.NewDirtySet()
-	s.Ui.AnimatedBackground().AddDirtySet(s.bgDirtySet)
-
-	s.transitionArr = ecs.GetComponentsArray[transition.TransitionComponent[render.TextureFrameComponent]](s.World)
-	s.bgTimePerFrame = bgTimePerFrame
-	s.bgTexture = 0
-
-	s.backgrounds = []assets.AssetID{
-		s.GameAssets.Hud.Background2,
-		s.GameAssets.Hud.Background1,
-		s.GameAssets.Hud.Background1,
-		s.GameAssets.Hud.Background1,
-	}
-
 	return ecs.NewSystemRegister(func() error {
+		s := ioc.GetServices[*System](c)
+
+		s.blueprint = s.NewEntity()
+		s.Ui.AnimatedBackground().Set(s.blueprint, ui.AnimatedBackgroundComponent{})
+
+		s.bgDirtySet = ecs.NewDirtySet()
+		s.Ui.AnimatedBackground().AddDirtySet(s.bgDirtySet)
+
+		s.transitionArr = ecs.GetComponentsArray[transition.TransitionComponent[render.TextureFrameComponent]](s.World)
+		s.bgTimePerFrame = bgTimePerFrame
+		s.bgTexture = 0
+
+		s.backgrounds = []assets.AssetID{
+			s.GameAssets.Hud.Background2,
+			s.GameAssets.Hud.Background1,
+			s.GameAssets.Hud.Background1,
+			s.GameAssets.Hud.Background1,
+		}
+
 		s.backgroundsFrames = make([]int, 0, len(s.backgrounds))
 		for _, bg := range s.backgrounds {
 			texture, err := assets.GetAsset[render.TextureAsset](s.Assets, bg)

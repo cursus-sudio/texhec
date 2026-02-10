@@ -107,6 +107,9 @@ func (s *buffer[Stored]) Flush() {
 			size += 1
 			continue
 		}
+		if offset+size > len(arr) {
+			return
+		}
 		gl.BufferSubData(s.target, offset*s.elementSize, size*s.elementSize, gl.Ptr(arr[offset:offset+size]))
 		offset = changed.Index
 		size = 1

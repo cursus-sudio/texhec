@@ -4,7 +4,6 @@ import (
 	"engine/services/media/audio"
 	"engine/services/media/inputs"
 	"engine/services/media/window"
-	"engine/services/runtime"
 
 	"github.com/ogiusek/ioc/v2"
 	"github.com/veandco/go-sdl2/sdl"
@@ -38,11 +37,5 @@ func (pkg pkg) Register(b ioc.Builder) {
 			ioc.Get[window.Api](c),
 			ioc.Get[audio.Api](c),
 		)
-	})
-
-	ioc.WrapServiceInOrder(b, runtime.OrderCleanUp, func(c ioc.Dic, b runtime.Builder) {
-		b.OnStop(func(r runtime.Runtime) {
-			sdl.Quit()
-		})
 	})
 }

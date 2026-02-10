@@ -94,7 +94,9 @@ func (s *System) BeforeGet() {
 			continue
 		}
 		s.Transform.Parent().Set(entity, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
-		s.Render.Mesh().Set(entity, render.NewMesh(s.GameAssets.SquareMesh))
+		if entity != s.blueprint {
+			s.Render.Mesh().Set(entity, render.NewMesh(s.GameAssets.SquareMesh))
+		}
 		s.Render.Texture().Set(entity, texture)
 		s.transitionArr.Set(entity, transitionComp)
 	}
@@ -111,7 +113,9 @@ func (s *System) ListenUpdateBg(event UpdateBgEvent) {
 
 	for _, entity := range s.Ui.AnimatedBackground().GetEntities() {
 		s.Transform.Parent().Set(entity, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
-		s.Render.Mesh().Set(entity, render.NewMesh(s.GameAssets.SquareMesh))
+		if entity != s.blueprint {
+			s.Render.Mesh().Set(entity, render.NewMesh(s.GameAssets.SquareMesh))
+		}
 		s.Render.Texture().Set(entity, render.NewTexture(bg))
 		s.transitionArr.Set(entity, transition.NewTransition(
 			render.NewTextureFrame(0),

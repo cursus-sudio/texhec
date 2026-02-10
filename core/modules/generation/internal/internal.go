@@ -32,6 +32,7 @@ func NewService(c ioc.Dic) generation.Service {
 	s.addChance(tile.TileSand, 15)
 	s.addChance(tile.TileGrass, 45)
 	s.addChance(tile.TileMountain, 5)
+
 	s.tilesPerJob = 100
 	return &s
 }
@@ -46,6 +47,7 @@ func (s *service) Generate(c generation.Config) batcher.Task {
 	task := s.Batcher.NewTask()
 
 	multiplier := 1. / 4
+
 	noise := s.Noise.NewNoise(c.Seed).AddValue(
 		noise.NewLayer(100*multiplier, .10),
 		noise.NewLayer(100*multiplier, .10),
@@ -53,6 +55,12 @@ func (s *service) Generate(c generation.Config) batcher.Task {
 		noise.NewLayer(040*multiplier, .05),
 		noise.NewLayer(040*multiplier, .05),
 	).AddPerlin(
+		noise.NewLayer(500*multiplier, .50),
+		noise.NewLayer(500*multiplier, .50),
+		noise.NewLayer(500*multiplier, .50),
+		noise.NewLayer(500*multiplier, .50),
+		noise.NewLayer(500*multiplier, .50),
+		noise.NewLayer(500*multiplier, .50),
 		noise.NewLayer(500*multiplier, .50),
 		noise.NewLayer(100*multiplier, .20),
 		//

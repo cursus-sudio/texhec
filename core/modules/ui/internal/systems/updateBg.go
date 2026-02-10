@@ -9,6 +9,7 @@ import (
 	"engine/modules/transition"
 	"engine/services/assets"
 	"engine/services/ecs"
+	"engine/services/frames"
 	"time"
 
 	"github.com/ogiusek/events"
@@ -22,6 +23,10 @@ type System struct {
 	engine.World `inject:"1"`
 	Ui           ui.Service `inject:"1"`
 
+	blueprint     ecs.EntityID
+	bgDirtySet    ecs.DirtySet
+	transitionArr ecs.ComponentsArray[transition.TransitionComponent[render.TextureFrameComponent]]
+
 	bgTimePerFrame time.Duration
 	bgTexture      int
 
@@ -31,15 +36,21 @@ type System struct {
 
 func NewSystem(c ioc.Dic, bgTimePerFrame time.Duration) ui.System {
 	s := ioc.GetServices[*System](c)
+
+	s.blueprint = s.NewEntity()
+	s.Ui.AnimatedBackground().Set(s.blueprint, ui.AnimatedBackgroundComponent{})
+
+	s.bgDirtySet = ecs.NewDirtySet()
+	s.Ui.AnimatedBackground().AddDirtySet(s.bgDirtySet)
+
+	s.transitionArr = ecs.GetComponentsArray[transition.TransitionComponent[render.TextureFrameComponent]](s.World)
 	s.bgTimePerFrame = bgTimePerFrame
 	s.bgTexture = 0
 
 	s.backgrounds = []assets.AssetID{
-		s.GameAssets.Hud.Background1,
-		s.GameAssets.Hud.Background1,
-		s.GameAssets.Hud.Background1,
 		s.GameAssets.Hud.Background2,
-		s.GameAssets.Hud.Background2,
+		s.GameAssets.Hud.Background1,
+		s.GameAssets.Hud.Background1,
 		s.GameAssets.Hud.Background1,
 	}
 
@@ -52,74 +63,63 @@ func NewSystem(c ioc.Dic, bgTimePerFrame time.Duration) ui.System {
 			}
 			s.backgroundsFrames = append(s.backgroundsFrames, len(texture.Images()))
 		}
-		return s.Init()
+
+		s.Transform.Parent().BeforeGet(s.BeforeGet)
+		s.Render.Mesh().BeforeGet(s.BeforeGet)
+		s.Render.Texture().BeforeGet(s.BeforeGet)
+		s.Render.TextureFrame().BeforeGet(s.BeforeGet)
+
+		events.Listen(s.EventsBuilder, s.ListenUpdateBg)
+		events.Emit(s.Events, UpdateBgEvent{})
+		return nil
 	})
 }
 
-func (s *System) Init() error {
-	dirtySet := ecs.NewDirtySet()
-	s.Ui.AnimatedBackground().AddDirtySet(dirtySet)
-
-	blueprint := s.NewEntity()
-	s.Ui.AnimatedBackground().Set(blueprint, ui.AnimatedBackgroundComponent{})
-
-	transitionArr := ecs.GetComponentsArray[transition.TransitionComponent[render.TextureFrameComponent]](s.World)
-
-	beforeGet := func() {
-		entities := dirtySet.Get()
-		if len(entities) == 0 {
-			return
-		}
-
-		texture, _ := s.Render.Texture().Get(blueprint)
-		transitionComp, _ := transitionArr.Get(blueprint)
-		for _, entity := range entities {
-			if entity == blueprint {
-				continue
-			}
-			if _, ok := s.Ui.AnimatedBackground().Get(entity); !ok {
-				continue
-			}
-			if _, ok := transitionArr.Get(entity); ok {
-				continue
-			}
-			s.Transform.Parent().Set(entity, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
-			s.Render.Mesh().Set(entity, render.NewMesh(s.GameAssets.SquareMesh))
-			s.Render.Texture().Set(entity, texture)
-			s.Transition.Easing().Set(entity, transition.NewEasing(gameassets.MyEasingFunction))
-			transitionArr.Set(entity, transitionComp)
-		}
+func (s *System) BeforeGet() {
+	entities := s.bgDirtySet.Get()
+	if len(entities) == 0 {
+		return
 	}
 
-	s.Transform.Parent().BeforeGet(beforeGet)
-	s.Render.Mesh().BeforeGet(beforeGet)
-	s.Render.Texture().BeforeGet(beforeGet)
-	s.Render.TextureFrame().BeforeGet(beforeGet)
-
-	//
-
-	events.Listen(s.EventsBuilder, func(u UpdateBgEvent) {
-		i := s.bgTexture % len(s.backgrounds)
-		s.bgTexture = i
-		bg, size := s.backgrounds[i], s.backgroundsFrames[i]
-		duration := s.bgTimePerFrame * time.Duration(size)
-
-		for _, entity := range s.Ui.AnimatedBackground().GetEntities() {
-			s.Transform.Parent().Set(entity, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
-			s.Render.Mesh().Set(entity, render.NewMesh(s.GameAssets.SquareMesh))
-			s.Render.Texture().Set(entity, render.NewTexture(bg))
-			s.Transition.Easing().Set(entity, transition.NewEasing(gameassets.MyEasingFunction))
-			transitionArr.Set(entity, transition.NewTransition(
-				render.NewTextureFrame(0),
-				render.NewTextureFrame(1),
-				duration,
-			))
+	texture, _ := s.Render.Texture().Get(s.blueprint)
+	transitionComp, _ := s.transitionArr.Get(s.blueprint)
+	for _, entity := range entities {
+		if entity == s.blueprint {
+			continue
 		}
+		if _, ok := s.Ui.AnimatedBackground().Get(entity); !ok {
+			continue
+		}
+		if _, ok := s.transitionArr.Get(entity); ok {
+			continue
+		}
+		s.Transform.Parent().Set(entity, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
+		s.Render.Mesh().Set(entity, render.NewMesh(s.GameAssets.SquareMesh))
+		s.Render.Texture().Set(entity, texture)
+		s.transitionArr.Set(entity, transitionComp)
+	}
+}
 
-		events.Emit(s.Events, transition.NewDelayedEvent(UpdateBgEvent{}, duration))
-		s.bgTexture += 1
-	})
+func (s *System) ListenFrame(e frames.FrameEvent) {
+}
 
-	events.Emit(s.Events, UpdateBgEvent{})
-	return nil
+func (s *System) ListenUpdateBg(event UpdateBgEvent) {
+	i := s.bgTexture % len(s.backgrounds)
+	s.bgTexture = i
+	bg, size := s.backgrounds[i], s.backgroundsFrames[i]
+	duration := s.bgTimePerFrame * time.Duration(size)
+
+	for _, entity := range s.Ui.AnimatedBackground().GetEntities() {
+		s.Transform.Parent().Set(entity, transform.NewParent(transform.RelativePos|transform.RelativeSizeXY))
+		s.Render.Mesh().Set(entity, render.NewMesh(s.GameAssets.SquareMesh))
+		s.Render.Texture().Set(entity, render.NewTexture(bg))
+		s.transitionArr.Set(entity, transition.NewTransition(
+			render.NewTextureFrame(0),
+			render.NewTextureFrame(1),
+			duration,
+		))
+	}
+
+	events.Emit(s.Events, transition.NewDelayedEvent(UpdateBgEvent{}, duration))
+	s.bgTexture += 1
 }

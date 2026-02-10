@@ -5,6 +5,7 @@ import (
 	"engine/modules/transform"
 	"engine/services/ecs"
 	"engine/services/logger"
+	"slices"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
@@ -91,6 +92,9 @@ func (t *service) BeforeGet() {
 		return
 	}
 	children := []ecs.EntityID{}
+	entities = slices.DeleteFunc(entities, func(entity ecs.EntityID) bool {
+		return !t.World.EntityExists(entity)
+	})
 
 	saves := []save{}
 
@@ -109,10 +113,6 @@ func (t *service) BeforeGet() {
 		}
 		entity := entities[0]
 		entities = entities[1:]
-
-		if !t.World.EntityExists(entity) {
-			continue
-		}
 
 		pos, rot, size := t.CalculateAbsolute(entity)
 		save := save{

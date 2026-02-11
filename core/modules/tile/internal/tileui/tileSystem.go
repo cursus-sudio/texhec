@@ -35,15 +35,16 @@ func NewSystem(c ioc.Dic) tile.System {
 			if !ok {
 				return
 			}
-			p := s.Ui.Show()
-			entity := s.NewEntity()
-			s.Hierarchy.SetParent(entity, p)
-			s.Transform.Parent().Set(entity, transform.NewParent(transform.RelativePos|transform.RelativeSizeXYZ))
-			inheritGroupsArray.Set(entity, groups.InheritGroupsComponent{})
+			for _, p := range s.Ui.Show() {
+				entity := s.NewEntity()
+				s.Hierarchy.SetParent(entity, p)
+				s.Transform.Parent().Set(entity, transform.NewParent(transform.RelativePos|transform.RelativeSizeXYZ))
+				inheritGroupsArray.Set(entity, groups.InheritGroupsComponent{})
 
-			s.Text.Content().Set(entity, text.TextComponent{Text: fmt.Sprintf("TILE: %v", coords)})
-			s.Text.FontSize().Set(entity, text.FontSizeComponent{FontSize: 25})
-			s.Text.Align().Set(entity, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+				s.Text.Content().Set(entity, text.TextComponent{Text: fmt.Sprintf("TILE: %v", coords)})
+				s.Text.FontSize().Set(entity, text.FontSizeComponent{FontSize: 25})
+				s.Text.Align().Set(entity, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
+			}
 		})
 		return nil
 	})

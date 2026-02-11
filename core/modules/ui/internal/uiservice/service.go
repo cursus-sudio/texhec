@@ -13,12 +13,10 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
-type changing struct {
-	isInitialized bool
-	active        bool
-	menu          ecs.EntityID
-	childWrapper  ecs.EntityID
+type menuComponent struct {
+	Visible bool
 }
+type childrenComponent struct{}
 
 type service struct {
 	GameAssets   gameassets.GameAssets `inject:"1"`
@@ -31,7 +29,8 @@ type service struct {
 	uiCameraArray           ecs.ComponentsArray[ui.UiCameraComponent]
 	cursorCameraArray       ecs.ComponentsArray[ui.CursorCameraComponent]
 	animatedBackgroundArray ecs.ComponentsArray[ui.AnimatedBackgroundComponent]
-	*changing
+	menuArray               ecs.ComponentsArray[menuComponent]
+	childrenWrapperArray    ecs.ComponentsArray[childrenComponent]
 }
 
 func NewService(
@@ -44,27 +43,28 @@ func NewService(
 	t.bgTimePerFrame = bgTimePerFrame
 
 	t.uiCameraArray = ecs.GetComponentsArray[ui.UiCameraComponent](t.World)
-	t.animatedBackgroundArray = ecs.GetComponentsArray[ui.AnimatedBackgroundComponent](t.World)
 	t.cursorCameraArray = ecs.GetComponentsArray[ui.CursorCameraComponent](t.World)
-	t.changing = &changing{}
+	t.animatedBackgroundArray = ecs.GetComponentsArray[ui.AnimatedBackgroundComponent](t.World)
+	t.menuArray = ecs.GetComponentsArray[menuComponent](t.World)
+	t.childrenWrapperArray = ecs.GetComponentsArray[childrenComponent](t.World)
 
-	t.Logger.Warn(t.Init())
+	events.Listen(t.EventsBuilder, func(e ui.HideUiEvent) {
+		t.Hide()
+	})
+
+	t.EnsureExists()
 
 	return t
 }
 
-func (t *service) ResetChildWrapper() error {
-	if !t.isInitialized {
-		err := t.Init()
-		if err != nil {
-			return err
+func (t *service) ResetChildWrapper() {
+	t.EnsureExists()
+
+	for _, childWrapper := range t.childrenWrapperArray.GetEntities() {
+		for _, child := range t.Hierarchy.Children(childWrapper).GetIndices() {
+			t.RemoveEntity(child)
 		}
 	}
-
-	for _, child := range t.Hierarchy.Children(t.childWrapper).GetIndices() {
-		t.RemoveEntity(child)
-	}
-	return nil
 }
 
 func (t *service) UiCamera() ecs.ComponentsArray[ui.UiCameraComponent] { return t.uiCameraArray }
@@ -75,28 +75,35 @@ func (s *service) CursorCamera() ecs.ComponentsArray[ui.CursorCameraComponent] {
 	return s.cursorCameraArray
 }
 
-func (t *service) Show() ecs.EntityID {
-	t.Logger.Warn(t.ResetChildWrapper())
-	if !t.active {
-		t.active = true
-		events.Emit(t.Events, transition.NewTransitionEvent(
-			t.menu,
-			transform.NewPivotPoint(0, 1, .5),
-			transform.NewPivotPoint(1, 1, .5),
-			t.animationDuration,
-		))
+func (t *service) Show() []ecs.EntityID {
+	t.ResetChildWrapper()
+
+	for _, menu := range t.menuArray.GetEntities() {
+		if component, _ := t.menuArray.Get(menu); !component.Visible {
+			t.menuArray.Set(menu, menuComponent{true})
+			events.Emit(t.Events, transition.NewTransitionEvent(
+				menu,
+				transform.NewPivotPoint(0, 1, .5),
+				transform.NewPivotPoint(1, 1, .5),
+				t.animationDuration,
+			))
+		}
 	}
-	return t.childWrapper
+	return t.childrenWrapperArray.GetEntities()
 }
 
 func (t *service) Hide() {
-	if t.active {
-		t.active = false
-		events.Emit(t.Events, transition.NewTransitionEvent(
-			t.menu,
-			transform.NewPivotPoint(1, 1, .5),
-			transform.NewPivotPoint(0, 1, .5),
-			t.animationDuration,
-		))
+	t.EnsureExists()
+
+	for _, menu := range t.menuArray.GetEntities() {
+		if component, _ := t.menuArray.Get(menu); component.Visible {
+			t.menuArray.Set(menu, menuComponent{false})
+			events.Emit(t.Events, transition.NewTransitionEvent(
+				menu,
+				transform.NewPivotPoint(1, 1, .5),
+				transform.NewPivotPoint(0, 1, .5),
+				t.animationDuration,
+			))
+		}
 	}
 }

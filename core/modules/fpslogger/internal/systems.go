@@ -46,7 +46,7 @@ func (system *logsSystem) Listen(args frames.FrameEvent) {
 
 	text := "----------------------------------------------------------------\n"
 	text += fmt.Sprintf("now %s\n", time.Now().Format(format))
-	text += fmt.Sprintf("fps %d\n", len(system.frames))
+	text += fmt.Sprintf("fps %d, entities %d\n", len(system.frames), len(system.World.GetEntities()))
 
 	system.Console.Print(text)
 	system.Console.Flush()

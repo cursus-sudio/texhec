@@ -66,11 +66,13 @@ func (s *cursorSystem) Listen(frames.FrameEvent) {
 	}
 	camera := cameras[0]
 	// hide cursor
-	_, _ = sdl.ShowCursor(sdl.DISABLE)
 	var cursor ecs.EntityID
 	if entities := s.CursorComponent.GetEntities(); len(entities) == 1 {
 		cursor = entities[0]
 	} else if len(entities) == 0 {
+		for _, cursor := range s.CursorComponent.GetEntities() {
+			s.World.RemoveEntity(cursor)
+		}
 		cursor = s.World.NewEntity()
 		s.CursorComponent.Set(cursor, CursorComponent{})
 	}
@@ -85,4 +87,5 @@ func (s *cursorSystem) Listen(frames.FrameEvent) {
 	s.Render.Texture().Set(cursor, render.NewTexture(s.GameAssets.Hud.Cursor))
 	s.Groups.Inherit().Set(cursor, groups.InheritGroupsComponent{})
 	s.Transform.Size().Set(cursor, transform.NewSize(50, 50, 1))
+	_, _ = sdl.ShowCursor(sdl.DISABLE)
 }

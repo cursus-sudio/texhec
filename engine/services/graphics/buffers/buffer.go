@@ -3,7 +3,6 @@ package buffers
 import (
 	"engine/services/datastructures"
 	"reflect"
-	"sort"
 	"sync"
 	"unsafe"
 
@@ -88,28 +87,39 @@ func (s *buffer[Stored]) Flush() {
 	defer gl.BindBuffer(s.target, 0)
 
 	arr := s.Get()
-	if resized := s.CheckBufferSize(); resized {
-		var ptr unsafe.Pointer
-		if s.bufferLen != 0 {
-			ptr = gl.Ptr(arr)
-		}
-		gl.BufferData(s.target, s.bufferLen*s.elementSize, ptr, s.usage)
-		return
+
+	var ptr unsafe.Pointer
+	if len(arr) != 0 {
+		ptr = gl.Ptr(arr)
 	}
-
-	sort.Slice(changes, func(i, j int) bool { return changes[i].Index > changes[j].Index })
-
-	var offset = changes[0].Index
-	var size = 1
-
-	for _, changed := range changes[1:] {
-		if changed.Index == offset+size {
-			size += 1
-			continue
-		}
-		gl.BufferSubData(s.target, offset*s.elementSize, size*s.elementSize, gl.Ptr(arr[offset:offset+size]))
-		offset = changed.Index
-		size = 1
-	}
-	gl.BufferSubData(s.target, offset*s.elementSize, size*s.elementSize, gl.Ptr(arr[offset:offset+size]))
+	gl.BufferData(s.target, len(arr)*s.elementSize, ptr, s.usage)
+	// we should stop using tracking array because
+	// everything below even thou better in theory is worse using tracking array
+	// if resized := s.CheckBufferSize(); resized {
+	// 	var ptr unsafe.Pointer
+	// 	if s.bufferLen != 0 {
+	// 		ptr = gl.Ptr(arr)
+	// 	}
+	// 	gl.BufferData(s.target, s.bufferLen*s.elementSize, ptr, s.usage)
+	// 	return
+	// }
+	//
+	// sort.Slice(changes, func(i, j int) bool { return changes[i].Index > changes[j].Index })
+	//
+	// var offset = changes[0].Index
+	// var size = 1
+	//
+	// for _, changed := range changes[1:] {
+	// 	if changed.Index == offset+size {
+	// 		size += 1
+	// 		continue
+	// 	}
+	// 	if offset+size > len(arr) {
+	// 		return
+	// 	}
+	// 	gl.BufferSubData(s.target, offset*s.elementSize, size*s.elementSize, gl.Ptr(arr[offset:offset+size]))
+	// 	offset = changed.Index
+	// 	size = 1
+	// }
+	// gl.BufferSubData(s.target, offset*s.elementSize, size*s.elementSize, gl.Ptr(arr[offset:offset+size]))
 }

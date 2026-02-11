@@ -2,13 +2,11 @@ package systems
 
 import (
 	"engine/modules/render"
-	"engine/modules/render/internal/service"
 	"engine/services/ecs"
 	"engine/services/frames"
 	"engine/services/logger"
 	"fmt"
 
-	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/ogiusek/events"
 	"github.com/ogiusek/ioc/v2"
 )
@@ -28,7 +26,7 @@ func NewErrorLogger(c ioc.Dic) render.System {
 }
 
 func (logger *errorLogger) Listen(args frames.FrameEvent) {
-	if glErr := gl.GetError(); glErr != gl.NO_ERROR {
-		logger.Logger.Warn(fmt.Errorf("opengl error: %x %s", glErr, service.GlErrorStrings[glErr]))
+	if err := logger.Render.Error(); err != nil {
+		logger.Logger.Warn(fmt.Errorf("opengl error: %s", err))
 	}
 }

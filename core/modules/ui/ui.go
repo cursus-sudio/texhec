@@ -26,7 +26,7 @@ type Service interface {
 	CursorCamera() ecs.ComponentsArray[CursorCameraComponent]
 	// returns parent to attach ui elements
 	// potentially with enter animation
-	Show() (parent ecs.EntityID)
+	Show() (parents []ecs.EntityID)
 	// removes all children
 	Hide()
 

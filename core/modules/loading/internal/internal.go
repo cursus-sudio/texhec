@@ -16,17 +16,22 @@ import (
 	"github.com/ogiusek/ioc/v2"
 )
 
+type CamComp struct{}
+type TextComp struct{}
+
 type system struct {
 	World      engine.World          `inject:"1"`
 	GameAssets gameassets.GameAssets `inject:"1"`
 	Ui         ui.Service            `inject:"1"`
 
-	Camera *ecs.EntityID
-	Text   ecs.EntityID
+	CamArr  ecs.ComponentsArray[CamComp]
+	TextArr ecs.ComponentsArray[TextComp]
 }
 
 func NewSystem(c ioc.Dic) loading.System {
 	s := ioc.GetServices[*system](c)
+	s.CamArr = ecs.GetComponentsArray[CamComp](s.World)
+	s.TextArr = ecs.GetComponentsArray[TextComp](s.World)
 	return ecs.NewSystemRegister(func() error {
 		events.Listen(s.World.EventsBuilder, s.Listen)
 		return nil
@@ -34,20 +39,24 @@ func NewSystem(c ioc.Dic) loading.System {
 }
 
 func (s *system) Hide() {
-	if s.Camera == nil {
-		return
+	for _, e := range s.CamArr.GetEntities() {
+		s.World.RemoveEntity(e)
 	}
-	s.World.RemoveEntity(*s.Camera)
+	for _, e := range s.TextArr.GetEntities() {
+		s.World.RemoveEntity(e)
+	}
 }
 
 func (s *system) Render(message string) {
-	if s.Camera != nil {
-		s.World.Text.Content().Set(s.Text, text.TextComponent{Text: message})
+	if len(s.TextArr.GetEntities()) == 1 {
+		textEntity := s.TextArr.GetEntities()[0]
+		s.World.Text.Content().Set(textEntity, text.TextComponent{Text: message})
 		return
 	}
 
 	cameraEntity := s.World.NewEntity()
 	s.World.Camera.Ortho().Set(cameraEntity, camera.NewOrtho(-5, 5))
+	s.CamArr.Set(cameraEntity, CamComp{})
 
 	background := s.World.NewEntity()
 	s.World.Hierarchy.SetParent(background, cameraEntity)
@@ -57,6 +66,7 @@ func (s *system) Render(message string) {
 	s.Ui.AnimatedBackground().Set(background, ui.AnimatedBackgroundComponent{})
 
 	textEntity := s.World.NewEntity()
+	s.TextArr.Set(textEntity, TextComp{})
 	s.World.Hierarchy.SetParent(textEntity, cameraEntity)
 	s.World.Transform.Pos().Set(textEntity, transform.NewPos(0, 0, 2))
 	s.World.Transform.Parent().Set(textEntity, transform.NewParent(transform.RelativePos))
@@ -65,9 +75,6 @@ func (s *system) Render(message string) {
 	s.World.Text.FontSize().Set(textEntity, text.FontSizeComponent{FontSize: 32})
 	s.World.Text.Break().Set(textEntity, text.BreakComponent{Break: text.BreakNone})
 	s.World.Text.Align().Set(textEntity, text.TextAlignComponent{Vertical: .5, Horizontal: .5})
-
-	s.Camera = &cameraEntity
-	s.Text = textEntity
 }
 
 func (s *system) Listen(frames.FrameEvent) {

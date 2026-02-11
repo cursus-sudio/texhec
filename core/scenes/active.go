@@ -32,11 +32,10 @@ import (
 )
 
 var (
-	MenuID       = scene.NewSceneId("menu")
-	GameID       = scene.NewSceneId("game")
-	GameClientID = scene.NewSceneId("game client")
-	SettingsID   = scene.NewSceneId("settings")
-	CreditsID    = scene.NewSceneId("credits")
+	MenuID     = scene.NewSceneId("menu")
+	GameID     = scene.NewSceneId("game")
+	SettingsID = scene.NewSceneId("settings")
+	CreditsID  = scene.NewSceneId("credits")
 )
 
 const (
@@ -56,7 +55,6 @@ type World struct {
 
 type MenuBuilder scene.Scene
 type GameBuilder scene.Scene
-type GameClientBuilder scene.Scene
 type SettingsBuilder scene.Scene
 type CreditsBuilder scene.Scene
 
@@ -70,7 +68,6 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, func(c ioc.Dic, b scene.Service) {
 		b.SetScene(MenuID, scene.Scene(ioc.Get[MenuBuilder](c)))
 		b.SetScene(GameID, scene.Scene(ioc.Get[GameBuilder](c)))
-		b.SetScene(GameClientID, scene.Scene(ioc.Get[GameClientBuilder](c)))
 		b.SetScene(SettingsID, scene.Scene(ioc.Get[SettingsBuilder](c)))
 		b.SetScene(CreditsID, scene.Scene(ioc.Get[CreditsBuilder](c)))
 	})

@@ -7,17 +7,14 @@ import (
 	gamescenes "core/scenes"
 	"engine/modules/camera"
 	"engine/modules/collider"
-	"engine/modules/connection"
 	"engine/modules/grid"
 	"engine/modules/groups"
 	"engine/modules/inputs"
-	"engine/modules/netsync"
 	"engine/modules/render"
 	"engine/modules/seed"
 	"engine/modules/transform"
 	"engine/modules/uuid"
 	"engine/services/ecs"
-	"errors"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/ogiusek/ioc/v2"
@@ -116,33 +113,6 @@ func addScene(
 		))
 		world.Batcher.Queue(task)
 	}
-
-	if isServer {
-		if true {
-			return
-		}
-		listenerEntity := world.NewEntity()
-		world.Hierarchy.SetParent(listenerEntity, sceneParent)
-		listener, err := world.Connection.Host(":8000", func(cc connection.ConnectionComponent) {
-			entity := world.NewEntity()
-			world.NetSync.Client().Set(entity, netsync.ClientComponent{})
-			world.Connection.Component().Set(entity, cc)
-		})
-		if err != nil {
-			world.Logger.Warn(err)
-			return
-		}
-		world.Connection.Listener().Set(listenerEntity, listener)
-	} else {
-		comp, err := world.Connection.Connect(":8000")
-		if err != nil {
-			world.Logger.Warn(errors.New("there is no server"))
-		}
-		entity := world.NewEntity()
-		world.Hierarchy.SetParent(entity, sceneParent)
-		world.NetSync.Server().Set(entity, netsync.ServerComponent{})
-		world.Connection.Component().Set(entity, comp)
-	}
 }
 
 func (pkg) Register(b ioc.Builder) {
@@ -153,16 +123,6 @@ func (pkg) Register(b ioc.Builder) {
 				world,
 				sceneParent,
 				true, // is server
-			)
-		}
-	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) gamescenes.GameClientBuilder {
-		return func(sceneParent ecs.EntityID) {
-			world := ioc.GetServices[gamescenes.World](c)
-			addScene(
-				world,
-				sceneParent,
-				false, // is server
 			)
 		}
 	})

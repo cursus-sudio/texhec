@@ -44,11 +44,12 @@ type system struct {
 	engine.World `inject:"1"`
 	Tile         tile.Service `inject:"1"`
 
-	program        program.Program
-	locations      locations
-	ids            datastructures.SparseArray[tile.Type, uint32]
-	textureArray   texturearray.TextureArray
-	texturesBuffer buffers.Buffer[mgl32.Vec2] // [index, amount]
+	program   program.Program
+	locations locations
+	ids       datastructures.SparseArray[tile.Type, uint32]
+	// lod shrinks
+	lodTextureArrays []texturearray.TextureArray
+	texturesBuffer   buffers.Buffer[mgl32.Vec2] // [index, amount]
 	// texturesSizeBuffer buffers.Buffer[int32]
 	vao vao.VAO
 
@@ -103,7 +104,11 @@ func (s *system) ListenRender(render render.RenderEvent) {
 
 	s.program.Bind()
 	s.vao.Bind()
-	s.textureArray.Bind()
+	var lod int
+	if ortho, ok := s.Camera.Ortho().Get(render.Camera); ok && ortho.Zoom < .25 {
+		lod = 1
+	}
+	s.lodTextureArrays[lod].Bind()
 
 	cameraGroups, _ := s.Groups.Component().Get(render.Camera)
 	cameraMatrix := s.Camera.Mat4(render.Camera)
@@ -129,7 +134,6 @@ func (s *system) ListenRender(render render.RenderEvent) {
 		gl.UniformMatrix4fv(s.locations.Mvp, 1, false, &mvp[0])
 
 		verticesCount := (grid.Width() + 1) * (grid.Height() + 1)
-		// verticesCount := grid.Width() * grid.Height()
 		gl.DrawArrays(gl.POINTS, 0, int32(verticesCount))
 	}
 }

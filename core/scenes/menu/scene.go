@@ -67,7 +67,6 @@ func (pkg) Register(b ioc.Builder) {
 			}
 			buttons := []Button{
 				{Text: "play", OnClick: scene.NewChangeSceneEvent(gamescenes.GameID)},
-				{Text: "connect", OnClick: scene.NewChangeSceneEvent(gamescenes.GameClientID)},
 				{Text: "settings", OnClick: scene.NewChangeSceneEvent(gamescenes.SettingsID)},
 				{Text: "credits", OnClick: scene.NewChangeSceneEvent(gamescenes.CreditsID)},
 				{Text: "exit", OnClick: inputs.QuitEvent{}},

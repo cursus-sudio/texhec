@@ -261,22 +261,24 @@ func getDic() ioc.Dic {
 	ioc.WrapService(b, func(c ioc.Dic, f gtexture.Factory) {
 		f.Wrap(func(t gtexture.Texture) {
 			t.Bind()
-			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+			defer gl.BindTexture(gl.TEXTURE_2D, 0)
+
 			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-			gl.BindTexture(gl.TEXTURE_2D, 0)
+			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 		})
 	})
 
 	ioc.WrapService(b, func(c ioc.Dic, f texturearray.Factory) {
 		f.Wrap(func(ta texturearray.TextureArray) {
 			ta.Bind()
-			gl.TexParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-			gl.TexParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+			defer gl.BindTexture(gl.TEXTURE_2D_ARRAY, 0)
+
 			gl.TexParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 			gl.TexParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-			gl.BindTexture(gl.TEXTURE_2D_ARRAY, 0)
+			gl.TexParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+			gl.TexParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 		})
 	})
 

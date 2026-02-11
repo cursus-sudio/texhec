@@ -9,6 +9,7 @@ import (
 	"engine/services/graphics/buffers"
 	"engine/services/graphics/program"
 	"engine/services/graphics/shader"
+	gtexture "engine/services/graphics/texture"
 	"engine/services/graphics/texturearray"
 	"engine/services/graphics/vao"
 	"image"
@@ -100,7 +101,18 @@ func (factory *TileRenderSystemRegister) Register() error {
 		return err
 	}
 
-	textureArray, err := factory.TextureArrayFactory.New(factory.textures)
+	highLodTextureArray, err := factory.TextureArrayFactory.New(factory.textures)
+	if err != nil {
+		return err
+	}
+
+	lowLodTextures := datastructures.NewSparseArray[uint32, image.Image]()
+	for _, texture := range factory.textures.GetIndices() {
+		img, _ := factory.textures.Get(texture)
+		img = gtexture.NewImage(img).Scale(2, 2).Opaque().Image()
+		lowLodTextures.Set(texture, img)
+	}
+	lowLodTextureArray, err := factory.TextureArrayFactory.New(lowLodTextures)
 	if err != nil {
 		return err
 	}
@@ -114,7 +126,10 @@ func (factory *TileRenderSystemRegister) Register() error {
 	s.vao = vao.NewVAO(nil, nil)
 	s.locations = locations
 	s.ids = factory.ids
-	s.textureArray = textureArray
+	s.lodTextureArrays = []texturearray.TextureArray{
+		highLodTextureArray,
+		lowLodTextureArray,
+	}
 
 	s.texturesBuffer = buffers.NewBuffer[mgl32.Vec2](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, 1)
 	for _, id := range factory.tileTextures.GetIndices() {

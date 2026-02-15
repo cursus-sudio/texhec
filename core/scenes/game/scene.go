@@ -112,11 +112,11 @@ func addScene(
 		world.Batcher.Queue(task)
 
 		tank := world.NewEntity()
-		world.Hierarchy.SetParent(tank, sceneParent)
+		world.Hierarchy.SetParent(tank, gridEntity)
 		world.Groups.Component().Set(tank, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 
 		world.Construct.ID().Set(tank, construct.NewID(registry.ConstructTank))
-		world.Construct.Coords().Set(tank, construct.NewCoords(grid.NewCoords(0, 0)))
+		world.Construct.Coords().Set(tank, construct.NewCoords(grid.NewCoords(499, 500)))
 	}
 }
 

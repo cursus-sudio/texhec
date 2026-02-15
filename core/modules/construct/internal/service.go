@@ -6,6 +6,7 @@ import (
 	"core/modules/tile"
 	"engine"
 	"engine/modules/render"
+	"engine/modules/transform"
 	"engine/services/datastructures"
 	"engine/services/ecs"
 	"fmt"
@@ -72,8 +73,11 @@ func (s *service) BeforeGet() {
 		pos.Pos[2] += 1
 		s.Render.Mesh().Set(entity, render.NewMesh(s.GameAssets.SquareMesh))
 		s.Render.Texture().Set(entity, render.NewTexture(blueprint.Texture))
+
+		s.Transform.ParentPivotPoint().Set(entity, transform.NewParentPivotPoint(0, 0, .5))
 		s.Transform.Pos().Set(entity, pos)
 		s.Transform.Size().Set(entity, s.Tile.GetTileSize())
+
 	}
 }
 

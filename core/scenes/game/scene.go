@@ -1,6 +1,8 @@
 package gamescene
 
 import (
+	"core/modules/construct"
+	"core/modules/gameassets"
 	"core/modules/generation"
 	"core/modules/settings"
 	"core/modules/ui"
@@ -99,11 +101,7 @@ func addScene(
 		gridEntity := world.NewEntity()
 
 		world.Hierarchy.SetParent(gridEntity, sceneParent)
-		world.Transform.Size().Set(gridEntity, transform.NewSize(float32(cols)*100, float32(rows)*100, 1))
 		world.Groups.Component().Set(gridEntity, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
-
-		world.Collider.Component().Set(gridEntity, collider.NewCollider(world.GameAssets.SquareCollider))
-		world.Inputs.Stack().Set(gridEntity, inputs.StackComponent{})
 
 		task := world.Generation.Generate(generation.NewConfig(
 			gridEntity,
@@ -112,6 +110,13 @@ func addScene(
 			grid.NewCoords(cols, rows),
 		))
 		world.Batcher.Queue(task)
+
+		tank := world.NewEntity()
+		world.Hierarchy.SetParent(tank, sceneParent)
+		world.Groups.Component().Set(tank, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
+
+		world.Construct.ID().Set(tank, construct.NewID(gameassets.ConstructTank))
+		world.Construct.Coords().Set(tank, construct.NewCoords(grid.NewCoords(0, 0)))
 	}
 }
 

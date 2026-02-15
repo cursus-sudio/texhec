@@ -1,13 +1,17 @@
 package gameassets
 
 import (
+	"core/modules/construct"
+	"core/modules/tile"
 	"engine/modules/transition"
 	"engine/services/assets"
 )
 
 type GameAssets struct {
-	Tiles        TileAssets
-	Hud          HudAssets
+	Hud   HudAssets
+	Tiles TileAssets
+	Units UnitAssets
+
 	ExampleAudio assets.AssetID `path:"audio.wav"`
 
 	Blank          assets.AssetID `path:"blank texture"`
@@ -29,8 +33,10 @@ type TileAssets struct {
 	Sand     assets.AssetID `path:"tiles/sand.biom"`
 	Mountain assets.AssetID `path:"tiles/mountain.biom"`
 	Water    assets.AssetID `path:"tiles/water.biom"`
+}
 
-	Unit assets.AssetID `path:"tiles/u1.png"`
+type UnitAssets struct {
+	Unit assets.AssetID `path:"units/tank.png"`
 }
 
 //
@@ -42,4 +48,17 @@ const (
 	LinearEasingFunction
 	MyEasingFunction
 	EaseOutElastic
+)
+
+const (
+	_ tile.Type = iota
+	TileWater
+	TileSand
+	TileGrass
+	TileMountain
+)
+
+const (
+	_ construct.ID = iota
+	ConstructTank
 )

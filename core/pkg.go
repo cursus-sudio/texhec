@@ -1,6 +1,7 @@
 package main
 
 import (
+	constructpkg "core/modules/construct/pkg"
 	"core/modules/fpslogger/pkg"
 	"core/modules/gameassets"
 	"core/modules/gameassets/pkg"
@@ -141,6 +142,7 @@ func getDic() ioc.Dic {
 		gtexture.Package(),
 		texturearray.Package(),
 		tilepkg.Package(),
+		constructpkg.Package(),
 		generationpkg.Package(),
 		uipkg.Package(
 			time.Millisecond*300, // animation duration

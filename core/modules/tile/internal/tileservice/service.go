@@ -3,6 +3,7 @@ package tileservice
 import (
 	"core/modules/tile"
 	"engine/modules/grid"
+	"engine/modules/transform"
 	"engine/services/ecs"
 
 	"github.com/ogiusek/ioc/v2"
@@ -19,4 +20,16 @@ func NewService(c ioc.Dic) tile.Service {
 
 func (t *service) Grid() ecs.ComponentsArray[grid.SquareGridComponent[tile.Type]] {
 	return t.Component()
+}
+
+func (t *service) GetPos(coords grid.Coords) transform.PosComponent {
+	size := t.GetTileSize().Size
+	return transform.NewPos(
+		size.X()*(float32(coords.X)+.5),
+		size.Y()*(float32(coords.Y)+.5),
+		size.Z(),
+	)
+}
+func (t *service) GetTileSize() transform.SizeComponent {
+	return transform.NewSize(100, 100, 1)
 }

@@ -1,6 +1,7 @@
 package gamescenes
 
 import (
+	"core/modules/construct"
 	"core/modules/fpslogger"
 	"core/modules/gameassets"
 	"core/modules/generation"
@@ -47,6 +48,7 @@ type World struct {
 	engine.World `inject:"1"`
 
 	// game
+	Construct  construct.Service     `inject:"1"`
 	GameAssets gameassets.GameAssets `inject:"1"`
 	Tile       tile.Service          `inject:"1"`
 	Generation generation.Service    `inject:"1"`

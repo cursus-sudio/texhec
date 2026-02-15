@@ -1,6 +1,7 @@
 package gameassetspkg
 
 import (
+	"core/modules/construct"
 	"core/modules/gameassets"
 	"core/modules/tile"
 	"engine/modules/collider"
@@ -77,11 +78,16 @@ func (pkg) Register(b ioc.Builder) {
 	ioc.WrapService(b, func(c ioc.Dic, s tile.TileAssets) {
 		gameAssets := ioc.Get[gameassets.GameAssets](c)
 		assets := datastructures.NewSparseArray[tile.Type, assets.AssetID]()
-		assets.Set(tile.TileSand, gameAssets.Tiles.Sand)
-		assets.Set(tile.TileMountain, gameAssets.Tiles.Mountain)
-		assets.Set(tile.TileGrass, gameAssets.Tiles.Grass)
-		assets.Set(tile.TileWater, gameAssets.Tiles.Water)
+		assets.Set(gameassets.TileSand, gameAssets.Tiles.Sand)
+		assets.Set(gameassets.TileMountain, gameAssets.Tiles.Mountain)
+		assets.Set(gameassets.TileGrass, gameAssets.Tiles.Grass)
+		assets.Set(gameassets.TileWater, gameAssets.Tiles.Water)
 		s.AddType(assets)
+	})
+
+	ioc.WrapService(b, func(c ioc.Dic, s construct.Service) {
+		gameAssets := ioc.Get[gameassets.GameAssets](c)
+		s.RegisterConstruct(gameassets.ConstructTank, construct.NewBlueprint(gameAssets.Units.Unit))
 	})
 
 	//

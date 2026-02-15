@@ -1,11 +1,14 @@
 package internal
 
 import (
+	"core/modules/gameassets"
 	"core/modules/generation"
 	"core/modules/tile"
 	"engine"
 	"engine/modules/batcher"
+	"engine/modules/collider"
 	"engine/modules/grid"
+	"engine/modules/inputs"
 	"engine/modules/noise"
 	"slices"
 
@@ -20,7 +23,8 @@ type config struct {
 
 type service struct {
 	engine.World `inject:"1"`
-	Tile         tile.Service `inject:"1"`
+	GameAssets   gameassets.GameAssets `inject:"1"`
+	Tile         tile.Service          `inject:"1"`
 
 	config
 }
@@ -28,10 +32,10 @@ type service struct {
 func NewService(c ioc.Dic) generation.Service {
 	s := ioc.GetServices[service](c)
 	s.types = []tile.Type{}
-	s.addChance(tile.TileWater, 35)
-	s.addChance(tile.TileSand, 15)
-	s.addChance(tile.TileGrass, 45)
-	s.addChance(tile.TileMountain, 5)
+	s.addChance(gameassets.TileWater, 35)
+	s.addChance(gameassets.TileSand, 15)
+	s.addChance(gameassets.TileGrass, 45)
+	s.addChance(gameassets.TileMountain, 5)
 
 	s.tilesPerJob = 100
 	return &s
@@ -98,6 +102,15 @@ func (s *service) Generate(c generation.Config) batcher.Task {
 		//
 		// print(text.String())
 		// print("\n\n\n")
+
+		size := s.Tile.GetTileSize()
+		size.Size[0] *= float32(c.Size.X)
+		size.Size[1] *= float32(c.Size.Y)
+
+		s.Transform.Size().Set(c.Entity, size)
+
+		s.Collider.Component().Set(c.Entity, collider.NewCollider(s.GameAssets.SquareCollider))
+		s.Inputs.Stack().Set(c.Entity, inputs.StackComponent{})
 		s.Tile.Grid().Set(c.Entity, gridComponent)
 	})
 

@@ -1,10 +1,10 @@
 package collisions
 
 import (
+	"engine/modules/assets"
 	"engine/modules/collider"
 	"engine/modules/groups"
 	"engine/modules/transform"
-	"engine/services/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/logger"
@@ -21,7 +21,7 @@ type service struct {
 	World     ecs.World         `inject:"1"`
 	Groups    groups.Service    `inject:"1"`
 	Transform transform.Service `inject:"1"`
-	Assets    assets.Assets     `inject:"1"`
+	Assets    assets.Service    `inject:"1"`
 
 	colliderArray ecs.ComponentsArray[collider.Component]
 

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"engine/modules/assets"
 	"engine/modules/audio"
 	"engine/modules/batcher"
 	"engine/modules/camera"
@@ -18,7 +19,6 @@ import (
 	"engine/modules/transform"
 	"engine/modules/transition"
 	"engine/modules/uuid"
-	"engine/services/assets"
 	"engine/services/clock"
 	"engine/services/ecs"
 	"engine/services/logger"
@@ -29,6 +29,7 @@ import (
 
 type World struct {
 	ecs.World  `inject:"1"`
+	Assets     assets.Service     `inject:"1"`
 	Audio      audio.Service      `inject:"1"`
 	Batcher    batcher.Service    `inject:"1"`
 	Camera     camera.Service     `inject:"1"`
@@ -52,10 +53,6 @@ type World struct {
 
 	EventsBuilder events.Builder `inject:"1"`
 	Events        events.Events  `inject:"1"`
-
-	Assets        assets.Assets        `inject:"1"`
-	AssetsStorage assets.AssetsStorage `inject:"1"`
-	AssetsCache   assets.AssetsCache   `inject:"1"`
 
 	Window window.Api `inject:"1"`
 }

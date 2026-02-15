@@ -2,12 +2,12 @@ package renderpkg
 
 import (
 	"bytes"
+	"engine/modules/assets"
 	"engine/modules/render"
 	"engine/modules/render/internal/instancing"
 	"engine/modules/render/internal/service"
 	"engine/modules/render/internal/systems"
 	transitionpkg "engine/modules/transition/pkg"
-	"engine/services/assets"
 	"engine/services/ecs"
 	gtexture "engine/services/graphics/texture"
 	"engine/services/graphics/vao/vbo"
@@ -81,8 +81,8 @@ func (pkg) Register(b ioc.Builder) {
 		})
 	})
 
-	ioc.WrapService(b, func(c ioc.Dic, b assets.AssetsStorageBuilder) {
-		imageHandler := func(id assets.AssetID) (any, error) {
+	ioc.WrapService(b, func(c ioc.Dic, b assets.Extensions) {
+		imageHandler := func(id assets.Path) (any, error) {
 			source, err := os.ReadFile(string(id))
 			if err != nil {
 				return nil, err
@@ -96,7 +96,7 @@ func (pkg) Register(b ioc.Builder) {
 			img = gtexture.NewImage(img).FlipV().Image()
 			return render.NewTextureAsset(img)
 		}
-		trimImageHandler := func(id assets.AssetID) (any, error) {
+		trimImageHandler := func(id assets.Path) (any, error) {
 			source, err := os.ReadFile(strings.TrimSuffix(string(id), "-trim"))
 			if err != nil {
 				return nil, err
@@ -110,15 +110,15 @@ func (pkg) Register(b ioc.Builder) {
 			img = gtexture.NewImage(img).FlipV().TrimTransparentBackground().Image()
 			return render.NewTextureAsset(img)
 		}
-		b.RegisterExtension("png", imageHandler)
-		b.RegisterExtension("jpg", imageHandler)
-		b.RegisterExtension("jpeg", imageHandler)
+		b.Register("png", imageHandler)
+		b.Register("jpg", imageHandler)
+		b.Register("jpeg", imageHandler)
 
-		b.RegisterExtension("png-trim", trimImageHandler)
-		b.RegisterExtension("jpg-trim", trimImageHandler)
-		b.RegisterExtension("jpeg-trim", trimImageHandler)
+		b.Register("png-trim", trimImageHandler)
+		b.Register("jpg-trim", trimImageHandler)
+		b.Register("jpeg-trim", trimImageHandler)
 
-		gifHandler := func(id assets.AssetID) (any, error) {
+		gifHandler := func(id assets.Path) (any, error) {
 			source, err := os.ReadFile(string(id))
 			if err != nil {
 				return nil, err
@@ -138,7 +138,7 @@ func (pkg) Register(b ioc.Builder) {
 			return render.NewTextureAsset(images...)
 		}
 
-		gifTrimHandler := func(id assets.AssetID) (any, error) {
+		gifTrimHandler := func(id assets.Path) (any, error) {
 			source, err := os.ReadFile(strings.TrimSuffix(string(id), "-trim"))
 			if err != nil {
 				return nil, err
@@ -158,7 +158,7 @@ func (pkg) Register(b ioc.Builder) {
 			return render.NewTextureAsset(images...)
 		}
 
-		b.RegisterExtension("gif", gifHandler)
-		b.RegisterExtension("gif-trim", gifTrimHandler)
+		b.Register("gif", gifHandler)
+		b.Register("gif-trim", gifTrimHandler)
 	})
 }

@@ -1,9 +1,9 @@
 package tile
 
 import (
+	"engine/modules/assets"
 	"engine/modules/grid"
 	"engine/modules/transform"
-	"engine/services/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
 )
@@ -23,7 +23,7 @@ type Service interface {
 }
 
 type TileAssets interface {
-	AddType(addedAssets datastructures.SparseArray[ID, assets.AssetID])
+	AddType(addedAssets datastructures.SparseArray[ID, assets.ID])
 }
 
 //

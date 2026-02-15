@@ -6,6 +6,7 @@ import (
 	"core/modules/ui"
 	gamescenes "core/scenes"
 	"engine"
+	"engine/modules/assets"
 	"engine/modules/audio"
 	"engine/modules/collider"
 	"engine/modules/groups"
@@ -14,7 +15,6 @@ import (
 	"engine/modules/scene"
 	"engine/modules/text"
 	"engine/modules/transform"
-	"engine/services/assets"
 	"engine/services/ecs"
 	"engine/services/frames"
 

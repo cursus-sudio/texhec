@@ -6,8 +6,8 @@ import (
 	"core/modules/tile/internal/tilerenderer"
 	"core/modules/tile/internal/tileservice"
 	"core/modules/tile/internal/tileui"
+	"engine/modules/assets"
 	gridpkg "engine/modules/grid/pkg"
-	"engine/services/assets"
 	"engine/services/codec"
 	"engine/services/ecs"
 	gtexture "engine/services/graphics/texture"
@@ -58,10 +58,10 @@ func (pkg pkg) Register(b ioc.Builder) {
 		})
 	})
 
-	ioc.WrapService(b, func(c ioc.Dic, b assets.AssetsStorageBuilder) {
-		b.RegisterExtension("biom", func(id assets.AssetID) (any, error) {
+	ioc.WrapService(b, func(c ioc.Dic, b assets.Extensions) {
+		b.Register("biom", func(path assets.Path) (any, error) {
 			images := [6][]image.Image{}
-			directory, _ := strings.CutSuffix(string(id), ".biom")
+			directory, _ := strings.CutSuffix(string(path), ".biom")
 
 			for i := range 6 {
 				tileDir := fmt.Sprintf("%v/%v", directory, i+1)

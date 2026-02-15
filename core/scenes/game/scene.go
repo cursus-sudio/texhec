@@ -105,8 +105,8 @@ func addScene(
 
 		task := world.Generation.Generate(generation.NewConfig(
 			gridEntity,
-			// seed.New(world.Clock.Now().Unix()),
-			seed.New(21377137),
+			seed.New(world.Clock.Now().Unix()),
+			// seed.New(21377137),
 			grid.NewCoords(cols, rows),
 		))
 		world.Batcher.Queue(task)

@@ -4,10 +4,10 @@ import (
 	"core/modules/construct"
 	"core/modules/registry"
 	"core/modules/tile"
+	"engine/modules/assets"
 	"engine/modules/collider"
 	"engine/modules/render"
 	"engine/modules/transition"
-	"engine/services/assets"
 	"engine/services/datastructures"
 	"engine/services/graphics/vao/ebo"
 	"engine/services/logger"
@@ -28,16 +28,15 @@ func Package() ioc.Pkg {
 
 func (pkg) Register(b ioc.Builder) {
 	// register specific files
-	ioc.WrapService(b, func(c ioc.Dic, b assets.AssetsStorageBuilder) {
-		gameAssets := ioc.Get[registry.Assets](c)
-		b.RegisterAsset(gameAssets.Blank, func() (any, error) {
+	ioc.WrapService(b, func(c ioc.Dic, b assets.Extensions) {
+		b.Register("blank-texture", func(_ assets.Path) (any, error) {
 			img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 			white := color.RGBA{255, 255, 255, 255}
 			img.Set(0, 0, white)
 			asset, err := render.NewTextureAsset(img)
 			return asset, err
 		})
-		b.RegisterAsset(gameAssets.SquareMesh, func() (any, error) {
+		b.Register("square-mesh", func(_ assets.Path) (any, error) {
 			vertices := []render.Vertex{
 				{Pos: [3]float32{1, 1, 1}, TexturePos: [2]float32{1, 1}},
 				{Pos: [3]float32{1, -1, 1}, TexturePos: [2]float32{1, 0}},
@@ -53,7 +52,7 @@ func (pkg) Register(b ioc.Builder) {
 			return asset, nil
 		})
 
-		b.RegisterAsset(gameAssets.SquareCollider, func() (any, error) {
+		b.Register("square-collider", func(_ assets.Path) (any, error) {
 			asset := collider.NewColliderAsset(
 				[]collider.AABB{collider.NewAABB(mgl32.Vec3{-1, -1}, mgl32.Vec3{1, 1})},
 				[]collider.Range{collider.NewRange(collider.Leaf, 0, 2)},
@@ -68,7 +67,7 @@ func (pkg) Register(b ioc.Builder) {
 	// register assets
 	ioc.RegisterSingleton(b, func(c ioc.Dic) registry.Assets {
 		logger := ioc.Get[logger.Logger](c)
-		assetsService := ioc.Get[assets.AssetModule](c)
+		assetsService := ioc.Get[assets.Service](c)
 
 		gameAssets := registry.Assets{}
 		logger.Warn(assetsService.InitializeProperties(&gameAssets))
@@ -77,7 +76,7 @@ func (pkg) Register(b ioc.Builder) {
 
 	ioc.WrapService(b, func(c ioc.Dic, s tile.TileAssets) {
 		gameAssets := ioc.Get[registry.Assets](c)
-		assets := datastructures.NewSparseArray[tile.ID, assets.AssetID]()
+		assets := datastructures.NewSparseArray[tile.ID, assets.ID]()
 		assets.Set(registry.TileSand, gameAssets.Tiles.Sand)
 		assets.Set(registry.TileMountain, gameAssets.Tiles.Mountain)
 		assets.Set(registry.TileGrass, gameAssets.Tiles.Grass)

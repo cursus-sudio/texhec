@@ -1,7 +1,7 @@
 package collider
 
 import (
-	"engine/services/assets"
+	"engine/modules/assets"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -30,7 +30,7 @@ func NewPolygon(a, b, c mgl32.Vec3) Polygon {
 }
 
 type ColliderAsset interface {
-	assets.GoAsset
+	assets.Asset
 	// first aabb is the entry point
 	AABBs() []AABB
 	// []Range element index corresponds to []AABB element index

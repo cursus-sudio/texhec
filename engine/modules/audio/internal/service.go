@@ -1,8 +1,8 @@
 package internal
 
 import (
+	"engine/modules/assets"
 	"engine/modules/audio"
-	"engine/services/assets"
 	"engine/services/datastructures"
 	"sync"
 
@@ -16,7 +16,7 @@ type Service interface {
 }
 
 type audioService struct {
-	assets assets.Assets
+	assets assets.Service
 
 	mutex *sync.Mutex
 
@@ -26,7 +26,7 @@ type audioService struct {
 
 func NewService(c ioc.Dic) Service {
 	return &audioService{
-		assets: ioc.Get[assets.Assets](c),
+		assets: ioc.Get[assets.Service](c),
 
 		mutex:           &sync.Mutex{},
 		masterVolume:    1,
@@ -39,7 +39,7 @@ func (s *audioService) Stop(channel audio.Channel) error {
 	return nil
 }
 
-func (s *audioService) Play(channel audio.Channel, asset assets.AssetID) error {
+func (s *audioService) Play(channel audio.Channel, asset assets.ID) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -52,7 +52,7 @@ func (s *audioService) Play(channel audio.Channel, asset assets.AssetID) error {
 	}
 	return nil
 }
-func (s *audioService) QueueEndless(channel audio.Channel, asset assets.AssetID) error {
+func (s *audioService) QueueEndless(channel audio.Channel, asset assets.ID) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -65,7 +65,7 @@ func (s *audioService) QueueEndless(channel audio.Channel, asset assets.AssetID)
 	}
 	return nil
 }
-func (s *audioService) Queue(channel audio.Channel, asset assets.AssetID) error {
+func (s *audioService) Queue(channel audio.Channel, asset assets.ID) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 

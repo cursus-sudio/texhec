@@ -18,6 +18,7 @@ import (
 	gamescene "core/scenes/game"
 	menuscene "core/scenes/menu"
 	settingsscene "core/scenes/settings"
+	"engine/modules/assets/pkg"
 	"engine/modules/audio/pkg"
 	"engine/modules/batcher/pkg"
 	"engine/modules/camera"
@@ -46,7 +47,6 @@ import (
 	"engine/modules/transform/pkg"
 	"engine/modules/transition/pkg"
 	"engine/modules/uuid/pkg"
-	"engine/services/assets"
 	"engine/services/clock"
 	"engine/services/codec"
 	"engine/services/console"
@@ -129,7 +129,7 @@ func getDic() ioc.Dic {
 		codec.Package(),
 		appruntime.Package(),
 
-		assets.Package("assets/"),
+		assetspkg.Package("assets/"),
 		logger.Package(true, func(c ioc.Dic, message string) {
 			ioc.Get[console.Console](c).PrintPermanent(message)
 		}),

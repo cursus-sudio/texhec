@@ -3,7 +3,7 @@ package tilerenderer
 import (
 	"core/modules/tile"
 	"engine"
-	"engine/services/assets"
+	"engine/modules/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/graphics/buffers"
@@ -42,7 +42,7 @@ func NewTileRenderSystemRegister(c ioc.Dic) *TileRenderSystemRegister {
 	return s
 }
 
-func (service *TileRenderSystemRegister) AddType(addedAssets datastructures.SparseArray[tile.ID, assets.AssetID]) {
+func (service *TileRenderSystemRegister) AddType(addedAssets datastructures.SparseArray[tile.ID, assets.ID]) {
 	for _, assetIndex := range addedAssets.GetIndices() {
 		id := uint32(service.ids.Size())
 		service.ids.Set(assetIndex, id)

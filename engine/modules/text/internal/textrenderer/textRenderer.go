@@ -1,10 +1,10 @@
 package textrenderer
 
 import (
+	"engine/modules/assets"
 	"engine/modules/groups"
 	rendersys "engine/modules/render"
 	"engine/modules/text"
-	"engine/services/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/graphics/program"
@@ -33,7 +33,7 @@ type textRenderer struct {
 	layoutsBatches datastructures.SparseArray[ecs.EntityID, layoutBatch]
 }
 
-func (s *textRenderer) ensureFontExists(asset assets.AssetID) error {
+func (s *textRenderer) ensureFontExists(asset assets.ID) error {
 	key := s.FontsKeys.GetKey(asset)
 	if _, ok := s.fontsBatches.Get(key); ok {
 		return nil
@@ -55,7 +55,7 @@ func (s *textRenderer) ListenRender(render rendersys.RenderEvent) {
 	if dirtyEntities := s.dirtyEntities.Get(); len(dirtyEntities) != 0 {
 		// ensure fonts exist
 		// get used fonts
-		fonts := datastructures.NewSparseArray[FontKey, assets.AssetID]()
+		fonts := datastructures.NewSparseArray[FontKey, assets.ID]()
 		fonts.Set(s.FontsKeys.GetKey(s.defaultTextAsset), s.defaultTextAsset)
 		for _, font := range s.Text.FontFamily().GetEntities() {
 			family, ok := s.Text.FontFamily().Get(font)

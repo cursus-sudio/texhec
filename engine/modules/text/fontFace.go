@@ -1,22 +1,32 @@
 package text
 
 import (
+	"engine/services/datastructures"
+	"image"
+
 	"golang.org/x/image/font/opentype"
 )
 
+type Glyphs struct {
+	GlyphsWidth datastructures.SparseArray[uint32, float32]
+	Images      datastructures.SparseArray[uint32, image.Image]
+}
+
 type FontFaceAsset interface {
 	Font() *opentype.Font
+	Glyphs() Glyphs
 	Release()
 }
 
-type fontFaceAsset struct {
-	font opentype.Font
+type fontAsset struct {
+	font   opentype.Font
+	glyphs Glyphs
 }
 
-func (face fontFaceAsset) Font() *opentype.Font { return &face.font }
+func (f fontAsset) Font() *opentype.Font { return &f.font }
+func (f fontAsset) Glyphs() Glyphs       { return f.glyphs }
+func (f fontAsset) Release()             {}
 
-func (face fontFaceAsset) Release() {}
-
-func NewFontFaceAsset(raw opentype.Font) FontFaceAsset {
-	return fontFaceAsset{raw}
+func NewFontAsset(raw opentype.Font, glyphs Glyphs) FontFaceAsset {
+	return fontAsset{raw, glyphs}
 }

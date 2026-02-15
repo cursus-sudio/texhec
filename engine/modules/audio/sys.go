@@ -1,7 +1,7 @@
 package audio
 
 import (
-	"engine/services/assets"
+	"engine/modules/assets"
 	"engine/services/ecs"
 )
 
@@ -19,10 +19,10 @@ func NewStopEvent(channel Channel) StopEvent {
 
 type PlayEvent struct {
 	Channel Channel
-	Asset   assets.AssetID
+	Asset   assets.ID
 }
 
-func NewPlayEvent(channel Channel, assetID assets.AssetID) PlayEvent {
+func NewPlayEvent(channel Channel, assetID assets.ID) PlayEvent {
 	return PlayEvent{
 		Channel: channel,
 		Asset:   assetID,
@@ -33,10 +33,10 @@ func NewPlayEvent(channel Channel, assetID assets.AssetID) PlayEvent {
 
 type QueueEvent struct {
 	Channel Channel
-	Asset   assets.AssetID
+	Asset   assets.ID
 }
 
-func NewQueueEvent(channel Channel, assetID assets.AssetID) QueueEvent {
+func NewQueueEvent(channel Channel, assetID assets.ID) QueueEvent {
 	return QueueEvent{
 		Channel: channel,
 		Asset:   assetID,
@@ -47,10 +47,10 @@ func NewQueueEvent(channel Channel, assetID assets.AssetID) QueueEvent {
 
 type QueueEndlessEvent struct {
 	Channel Channel
-	Asset   assets.AssetID
+	Asset   assets.ID
 }
 
-func NewQueueEndlessEvent(channel Channel, assetID assets.AssetID) QueueEndlessEvent {
+func NewQueueEndlessEvent(channel Channel, assetID assets.ID) QueueEndlessEvent {
 	return QueueEndlessEvent{
 		Channel: channel,
 		Asset:   assetID,

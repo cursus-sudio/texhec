@@ -3,6 +3,7 @@ package creditsscene
 import (
 	"core/modules/ui"
 	gamescenes "core/scenes"
+	"engine/modules/assets"
 	"engine/modules/camera"
 	"engine/modules/collider"
 	"engine/modules/drag"
@@ -11,7 +12,6 @@ import (
 	"engine/modules/scene"
 	"engine/modules/text"
 	"engine/modules/transform"
-	"engine/services/assets"
 	"engine/services/ecs"
 	"strings"
 
@@ -27,7 +27,7 @@ func Package() ioc.Pkg {
 
 func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterSingleton(b, func(c ioc.Dic) gamescenes.CreditsBuilder {
-		assetsService := ioc.Get[assets.Assets](c)
+		assetsService := ioc.Get[assets.Service](c)
 		return func(sceneParent ecs.EntityID) {
 			world := ioc.GetServices[gamescenes.World](c)
 			cameraEntity := world.NewEntity()

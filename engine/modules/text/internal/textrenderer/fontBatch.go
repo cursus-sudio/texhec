@@ -1,6 +1,7 @@
 package textrenderer
 
 import (
+	"engine/modules/text"
 	"engine/services/graphics/buffers"
 	"engine/services/graphics/texturearray"
 
@@ -11,12 +12,12 @@ type fontBatch struct {
 	glyphsWidth buffers.Buffer[float32]
 	textures    texturearray.TextureArray
 
-	font Font
+	font text.Glyphs
 }
 
 func NewFontBatch(
 	textureArrayFactory texturearray.Factory,
-	font Font,
+	font text.Glyphs,
 ) (fontBatch, error) {
 	textureArray, err := textureArrayFactory.New(font.Images)
 	if err != nil {

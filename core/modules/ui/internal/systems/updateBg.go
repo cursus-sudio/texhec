@@ -4,10 +4,10 @@ import (
 	"core/modules/registry"
 	"core/modules/ui"
 	"engine"
+	"engine/modules/assets"
 	"engine/modules/render"
 	"engine/modules/transform"
 	"engine/modules/transition"
-	"engine/services/assets"
 	"engine/services/ecs"
 	"engine/services/frames"
 	"time"
@@ -30,7 +30,7 @@ type System struct {
 	bgTimePerFrame time.Duration
 	bgTexture      int
 
-	backgrounds       []assets.AssetID
+	backgrounds       []assets.ID
 	backgroundsFrames []int
 }
 
@@ -48,7 +48,7 @@ func NewSystem(c ioc.Dic, bgTimePerFrame time.Duration) ui.System {
 		s.bgTimePerFrame = bgTimePerFrame
 		s.bgTexture = 0
 
-		s.backgrounds = []assets.AssetID{
+		s.backgrounds = []assets.ID{
 			s.GameAssets.Hud.Background2,
 			s.GameAssets.Hud.Background1,
 			s.GameAssets.Hud.Background1,

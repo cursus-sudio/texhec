@@ -1,61 +1,52 @@
 package test
 
 import (
-	"engine/services/assets"
-	"errors"
+	"engine/modules/assets"
 	"testing"
 )
 
-type storageAsset struct{}
+type asset struct{ released bool }
 
-func (a *storageAsset) Cache() (assets.CachedAsset, error) { return &cachedAsset{released: false}, nil }
-
-//
-
-type cachedAsset struct{ released bool }
-
-func (a *cachedAsset) Release() { a.released = true }
+func (a *asset) Release() { a.released = true }
 
 //
 
-const assetID = "asset"
+const assetPath = "asset.png"
 
 func TestAssets(t *testing.T) {
-	storageBuilder := assets.NewAssetsStorageBuilder("")
+	setup := NewSetup()
 	fetched := false
-	storageBuilder.RegisterAsset(assetID, func() (any, error) {
+	setup.Extensions.Register("png", func(path assets.Path) (any, error) {
 		fetched = true
-		return &storageAsset{}, nil
+		return &asset{}, nil
 	})
-	storage, errs := storageBuilder.Build()
-	if len(errs) != 0 {
-		err := errors.Join(errs...)
-		t.Error(err)
+	assetID, ok := setup.Assets.PathID(assetPath)
+	if !ok {
+		t.Error("registered path extension yet it wan't detected")
 		return
 	}
 	if fetched {
-		t.Error("fetched asset on build instead of on get")
+		t.Error("fetched asset prematurely")
 		return
 	}
 
-	cache := assets.NewCachedAssets()
-	assets := assets.NewAssets(storage, cache)
-
-	rawAsset, err := assets.Get(assetID)
-
+	asset, err := assets.GetAsset[*asset](setup.Assets, assetID)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	asset := rawAsset.(*cachedAsset)
+	if !fetched {
+		t.Error("didn't fetch asset using extension dispatcher")
+		return
+	}
 
 	if asset.released {
 		t.Error("prematurely released asset")
 		return
 	}
 
-	assets.Release(assetID)
+	setup.Assets.Release(assetID)
 
 	if !asset.released {
 		t.Error("assets wasn't released")

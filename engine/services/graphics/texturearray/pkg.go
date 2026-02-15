@@ -1,7 +1,6 @@
 package texturearray
 
 import (
-	"engine/services/assets"
 	"github.com/ogiusek/ioc/v2"
 )
 
@@ -15,7 +14,6 @@ func Package() ioc.Pkg {
 func (pkg) Register(b ioc.Builder) {
 	ioc.RegisterTransient(b, func(c ioc.Dic) Factory {
 		return &factory{
-			ioc.Get[assets.AssetsStorage](c),
 			make([]func(TextureArray), 0),
 		}
 	})

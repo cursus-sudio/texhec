@@ -1,32 +1,32 @@
 package textrenderer
 
 import (
-	"engine/services/assets"
+	"engine/modules/assets"
 	"sync"
 )
 
 type FontKeys interface {
-	GetKey(assets.AssetID) FontKey
-	GetAsset(FontKey) (assets.AssetID, bool)
+	GetKey(assets.ID) FontKey
+	GetAsset(FontKey) (assets.ID, bool)
 }
 
 type fontKeys struct {
-	fontsKeys map[assets.AssetID]FontKey
-	keysFonts []*assets.AssetID
+	fontsKeys map[assets.ID]FontKey
+	keysFonts []*assets.ID
 	mutex     sync.Mutex
 	i         FontKey
 }
 
 func NewFontKeys() FontKeys {
 	return &fontKeys{
-		fontsKeys: make(map[assets.AssetID]FontKey),
-		keysFonts: make([]*assets.AssetID, 0),
+		fontsKeys: make(map[assets.ID]FontKey),
+		keysFonts: make([]*assets.ID, 0),
 		mutex:     sync.Mutex{},
 		i:         FontKey(0),
 	}
 }
 
-func (k *fontKeys) GetKey(asset assets.AssetID) FontKey {
+func (k *fontKeys) GetKey(asset assets.ID) FontKey {
 	k.mutex.Lock()
 	defer k.mutex.Unlock()
 	fontKey, ok := k.fontsKeys[asset]
@@ -46,13 +46,13 @@ func (k *fontKeys) GetKey(asset assets.AssetID) FontKey {
 	return fontKey
 }
 
-func (k *fontKeys) GetAsset(key FontKey) (assets.AssetID, bool) {
+func (k *fontKeys) GetAsset(key FontKey) (assets.ID, bool) {
 	if int(key) >= len(k.keysFonts) {
-		return assets.AssetID(""), false
+		return 0, false
 	}
 	asset := k.keysFonts[key]
 	if asset == nil {
-		return assets.AssetID(""), false
+		return 0, false
 	}
 
 	return *asset, true

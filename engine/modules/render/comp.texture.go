@@ -1,16 +1,16 @@
 package render
 
 import (
-	"engine/services/assets"
+	"engine/modules/assets"
 	"errors"
 	"image"
 )
 
 type TextureComponent struct {
-	Asset assets.AssetID
+	Asset assets.ID
 }
 
-func NewTexture(asset assets.AssetID) TextureComponent {
+func NewTexture(asset assets.ID) TextureComponent {
 	return TextureComponent{Asset: asset}
 }
 

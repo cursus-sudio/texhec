@@ -1,8 +1,8 @@
 package instancing
 
 import (
+	"engine/modules/assets"
 	"engine/modules/render"
-	"engine/services/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/graphics/buffers"

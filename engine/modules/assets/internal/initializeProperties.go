@@ -1,23 +1,13 @@
-package assets
+package internal
 
 import (
+	"engine/modules/assets"
 	"errors"
+	"fmt"
 	"reflect"
 )
 
-type AssetModule interface {
-	// takes asset struct pointer
-	// for each [AssetID] property sets its value to its `path` struct tag value
-	InitializeProperties(pointerToStruct any) error
-}
-
-type assetModule struct{}
-
-func newAssetModule() AssetModule {
-	return &assetModule{}
-}
-
-func (a *assetModule) InitializeProperties(pointer any) error {
+func (a *service) InitializeProperties(pointer any) error {
 	pointerValue := reflect.ValueOf(pointer)
 	pointerType := pointerValue.Type()
 	if pointerType.Kind() != reflect.Pointer {
@@ -39,15 +29,22 @@ func (a *assetModule) InitializeProperties(pointer any) error {
 			continue
 		}
 
-		if fieldType.Type != reflect.TypeFor[AssetID]() {
+		if fieldType.Type != reflect.TypeFor[assets.ID]() {
 			continue
 		}
-		path := fieldType.Tag.Get("path")
-		if path == "" {
+		pathString := fieldType.Tag.Get("path")
+		if pathString == "" {
 			continue
 		}
 
-		fieldValue.Set(reflect.ValueOf(AssetID(path)))
+		path := assets.Path(pathString)
+		id, ok := a.PathID(path)
+		if !ok {
+			extension := a.Extensions.PathExntesion(path)
+			return fmt.Errorf("extension \"%v\" isn't registered", extension)
+		}
+
+		fieldValue.Set(reflect.ValueOf(id))
 	}
 	return nil
 }

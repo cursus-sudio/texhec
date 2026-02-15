@@ -2,11 +2,11 @@ package instancing
 
 import (
 	_ "embed"
+	"engine/modules/assets"
 	"engine/modules/camera"
 	"engine/modules/groups"
 	"engine/modules/render"
 	"engine/modules/transform"
-	"engine/services/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/graphics/program"
@@ -43,9 +43,8 @@ type system struct {
 	Groups        groups.Service    `inject:"1"`
 	Transform     transform.Service `inject:"1"`
 
-	Assets              assets.Assets                 `inject:"1"`
+	Assets              assets.Service                `inject:"1"`
 	Window              window.Api                    `inject:"1"`
-	AssetsStorage       assets.AssetsStorage          `inject:"1"`
 	Logger              logger.Logger                 `inject:"1"`
 	VboFactory          vbo.VBOFactory[render.Vertex] `inject:"1"`
 	TextureArrayFactory texturearray.Factory          `inject:"1"`
@@ -55,8 +54,8 @@ type system struct {
 	entitiesBatches datastructures.SparseArray[ecs.EntityID, batchKey]
 	batches         map[batchKey]*batch
 
-	meshes   map[assets.AssetID]vao.VAO
-	textures map[assets.AssetID]texturearray.TextureArray
+	meshes   map[assets.ID]vao.VAO
+	textures map[assets.ID]texturearray.TextureArray
 
 	program   program.Program
 	locations locations
@@ -96,8 +95,8 @@ func NewSystem(c ioc.Dic) render.SystemRenderer {
 		s.entitiesBatches = datastructures.NewSparseArray[ecs.EntityID, batchKey]()
 		s.batches = make(map[batchKey]*batch)
 
-		s.meshes = make(map[assets.AssetID]vao.VAO)
-		s.textures = make(map[assets.AssetID]texturearray.TextureArray)
+		s.meshes = make(map[assets.ID]vao.VAO)
+		s.textures = make(map[assets.ID]texturearray.TextureArray)
 
 		s.program = p
 		s.locations = locations

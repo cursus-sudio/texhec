@@ -1,7 +1,6 @@
 package texturearray
 
 import (
-	"engine/services/assets"
 	"engine/services/datastructures"
 	"errors"
 	"image"
@@ -29,8 +28,7 @@ type Factory interface {
 }
 
 type factory struct {
-	assetsStorage assets.AssetsStorage
-	wrappers      []func(TextureArray)
+	wrappers []func(TextureArray)
 }
 
 var (

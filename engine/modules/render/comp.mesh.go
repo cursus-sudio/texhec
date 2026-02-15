@@ -1,15 +1,15 @@
 package render
 
 import (
-	"engine/services/assets"
+	"engine/modules/assets"
 	"engine/services/graphics/vao/ebo"
 )
 
 type MeshComponent struct {
-	ID assets.AssetID
+	ID assets.ID
 }
 
-func NewMesh(id assets.AssetID) MeshComponent {
+func NewMesh(id assets.ID) MeshComponent {
 	return MeshComponent{ID: id}
 }
 

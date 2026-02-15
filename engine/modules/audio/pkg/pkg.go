@@ -1,9 +1,9 @@
 package audiopkg
 
 import (
+	"engine/modules/assets"
 	"engine/modules/audio"
 	"engine/modules/audio/internal"
-	"engine/services/assets"
 	"engine/services/codec"
 	"os"
 
@@ -37,8 +37,8 @@ func (pkg) Register(b ioc.Builder) {
 		return internal.NewSystem(c)
 	})
 
-	ioc.WrapService(b, func(c ioc.Dic, b assets.AssetsStorageBuilder) {
-		b.RegisterExtension("wav", func(id assets.AssetID) (any, error) {
+	ioc.WrapService(b, func(c ioc.Dic, b assets.Extensions) {
+		b.Register("wav", func(id assets.Path) (any, error) {
 			source, err := os.ReadFile(string(id))
 			if err != nil {
 				return nil, err

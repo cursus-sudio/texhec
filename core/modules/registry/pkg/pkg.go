@@ -77,7 +77,7 @@ func (pkg) Register(b ioc.Builder) {
 
 	ioc.WrapService(b, func(c ioc.Dic, s tile.TileAssets) {
 		gameAssets := ioc.Get[registry.Assets](c)
-		assets := datastructures.NewSparseArray[tile.Type, assets.AssetID]()
+		assets := datastructures.NewSparseArray[tile.ID, assets.AssetID]()
 		assets.Set(registry.TileSand, gameAssets.Tiles.Sand)
 		assets.Set(registry.TileMountain, gameAssets.Tiles.Mountain)
 		assets.Set(registry.TileGrass, gameAssets.Tiles.Grass)

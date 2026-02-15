@@ -10,7 +10,7 @@ import (
 )
 
 type service struct {
-	grid.Service[tile.Type] `inject:"1"`
+	grid.Service[tile.ID] `inject:"1"`
 }
 
 func NewService(c ioc.Dic) tile.Service {
@@ -18,7 +18,7 @@ func NewService(c ioc.Dic) tile.Service {
 	return s
 }
 
-func (t *service) Grid() ecs.ComponentsArray[grid.SquareGridComponent[tile.Type]] {
+func (t *service) Grid() ecs.ComponentsArray[grid.SquareGridComponent[tile.ID]] {
 	return t.Component()
 }
 

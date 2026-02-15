@@ -46,7 +46,7 @@ type system struct {
 
 	program   program.Program
 	locations locations
-	ids       datastructures.SparseArray[tile.Type, uint32]
+	ids       datastructures.SparseArray[tile.ID, uint32]
 	// lod shrinks
 	lodTextureArrays []texturearray.TextureArray
 	texturesBuffer   buffers.Buffer[mgl32.Vec2] // [index, amount]

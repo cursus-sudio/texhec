@@ -3,7 +3,7 @@ package registry
 import "core/modules/tile"
 
 const (
-	_ tile.Type = iota
+	_ tile.ID = iota
 	TileWater
 	TileSand
 	TileGrass

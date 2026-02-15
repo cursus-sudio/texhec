@@ -30,13 +30,13 @@ func (pkg pkg) Register(b ioc.Builder) {
 		return ioc.Get[*TileRenderSystemRegister](c)
 	})
 
-	ioc.RegisterSingleton(b, func(c ioc.Dic) vbo.VBOFactory[tile.Type] {
-		return func() vbo.VBOSetter[tile.Type] {
-			vbo := vbo.NewVBO[tile.Type](func() {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) vbo.VBOFactory[tile.ID] {
+		return func() vbo.VBOSetter[tile.ID] {
+			vbo := vbo.NewVBO[tile.ID](func() {
 				var i uint32 = 0
 
 				gl.VertexAttribIPointerWithOffset(i, 1, gl.UNSIGNED_BYTE,
-					int32(unsafe.Sizeof(tile.Type(0))), uintptr(0))
+					int32(unsafe.Sizeof(tile.ID(0))), uintptr(0))
 				gl.EnableVertexAttribArray(i)
 			})
 			return vbo

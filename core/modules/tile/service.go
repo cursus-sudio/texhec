@@ -8,22 +8,22 @@ import (
 	"engine/services/ecs"
 )
 
-type Type uint8
+type ID uint8
 
-func NewGrid(w, h grid.Coord) grid.SquareGridComponent[Type] {
-	return grid.NewSquareGrid[Type](w, h)
+func NewGrid(w, h grid.Coord) grid.SquareGridComponent[ID] {
+	return grid.NewSquareGrid[ID](w, h)
 }
 
 //
 
 type Service interface {
-	Grid() ecs.ComponentsArray[grid.SquareGridComponent[Type]]
+	Grid() ecs.ComponentsArray[grid.SquareGridComponent[ID]]
 	GetPos(grid.Coords) transform.PosComponent
 	GetTileSize() transform.SizeComponent
 }
 
 type TileAssets interface {
-	AddType(addedAssets datastructures.SparseArray[Type, assets.AssetID])
+	AddType(addedAssets datastructures.SparseArray[ID, assets.AssetID])
 }
 
 //

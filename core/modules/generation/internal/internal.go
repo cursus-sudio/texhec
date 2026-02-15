@@ -17,7 +17,7 @@ import (
 )
 
 type config struct {
-	types       []tile.Type
+	types       []tile.ID
 	tilesPerJob int
 }
 
@@ -31,7 +31,7 @@ type service struct {
 
 func NewService(c ioc.Dic) generation.Service {
 	s := ioc.GetServices[service](c)
-	s.types = []tile.Type{}
+	s.types = []tile.ID{}
 	s.addChance(registry.TileWater, 35)
 	s.addChance(registry.TileSand, 15)
 	s.addChance(registry.TileGrass, 45)
@@ -41,8 +41,8 @@ func NewService(c ioc.Dic) generation.Service {
 	return &s
 }
 
-func (s *service) addChance(tileType tile.Type, chance int) {
-	s.types = append(s.types, slices.Repeat([]tile.Type{tileType}, chance)...)
+func (s *service) addChance(tileType tile.ID, chance int) {
+	s.types = append(s.types, slices.Repeat([]tile.ID{tileType}, chance)...)
 }
 
 func MapRange(val, min, max float64) float64 { return min + (val * (max - min)) }
@@ -121,7 +121,7 @@ func (s *service) Generate(c generation.Config) batcher.Task {
 }
 
 func (s *service) SetTile(
-	grid grid.SquareGridComponent[tile.Type],
+	grid grid.SquareGridComponent[tile.ID],
 	index grid.Index,
 	noise noise.Noise,
 ) {

@@ -1,13 +1,8 @@
-package gameassets
+package registry
 
-import (
-	"core/modules/construct"
-	"core/modules/tile"
-	"engine/modules/transition"
-	"engine/services/assets"
-)
+import "engine/services/assets"
 
-type GameAssets struct {
+type Assets struct {
 	Hud   HudAssets
 	Tiles TileAssets
 	Units UnitAssets
@@ -38,27 +33,3 @@ type TileAssets struct {
 type UnitAssets struct {
 	Unit assets.AssetID `path:"units/tank.png"`
 }
-
-//
-//
-//
-
-const (
-	_ transition.EasingID = iota
-	LinearEasingFunction
-	MyEasingFunction
-	EaseOutElastic
-)
-
-const (
-	_ tile.Type = iota
-	TileWater
-	TileSand
-	TileGrass
-	TileMountain
-)
-
-const (
-	_ construct.ID = iota
-	ConstructTank
-)

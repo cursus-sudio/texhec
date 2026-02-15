@@ -2,8 +2,8 @@ package gamescene
 
 import (
 	"core/modules/construct"
-	"core/modules/gameassets"
 	"core/modules/generation"
+	"core/modules/registry"
 	"core/modules/settings"
 	"core/modules/ui"
 	gamescenes "core/scenes"
@@ -115,7 +115,7 @@ func addScene(
 		world.Hierarchy.SetParent(tank, sceneParent)
 		world.Groups.Component().Set(tank, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 
-		world.Construct.ID().Set(tank, construct.NewID(gameassets.ConstructTank))
+		world.Construct.ID().Set(tank, construct.NewID(registry.ConstructTank))
 		world.Construct.Coords().Set(tank, construct.NewCoords(grid.NewCoords(0, 0)))
 	}
 }

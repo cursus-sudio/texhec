@@ -1,8 +1,8 @@
 package internal
 
 import (
-	"core/modules/gameassets"
 	"core/modules/generation"
+	"core/modules/registry"
 	"core/modules/tile"
 	"engine"
 	"engine/modules/batcher"
@@ -23,8 +23,8 @@ type config struct {
 
 type service struct {
 	engine.World `inject:"1"`
-	GameAssets   gameassets.GameAssets `inject:"1"`
-	Tile         tile.Service          `inject:"1"`
+	GameAssets   registry.Assets `inject:"1"`
+	Tile         tile.Service    `inject:"1"`
 
 	config
 }
@@ -32,10 +32,10 @@ type service struct {
 func NewService(c ioc.Dic) generation.Service {
 	s := ioc.GetServices[service](c)
 	s.types = []tile.Type{}
-	s.addChance(gameassets.TileWater, 35)
-	s.addChance(gameassets.TileSand, 15)
-	s.addChance(gameassets.TileGrass, 45)
-	s.addChance(gameassets.TileMountain, 5)
+	s.addChance(registry.TileWater, 35)
+	s.addChance(registry.TileSand, 15)
+	s.addChance(registry.TileGrass, 45)
+	s.addChance(registry.TileMountain, 5)
 
 	s.tilesPerJob = 100
 	return &s

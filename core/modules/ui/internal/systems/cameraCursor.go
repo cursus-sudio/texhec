@@ -1,7 +1,7 @@
 package systems
 
 import (
-	"core/modules/gameassets"
+	"core/modules/registry"
 	"core/modules/ui"
 	"engine/modules/camera"
 	"engine/modules/groups"
@@ -23,18 +23,18 @@ import (
 type CursorComponent struct{}
 
 type cursorSystem struct {
-	EventsBuilder events.Builder        `inject:"1"`
-	Window        window.Api            `inject:"1"`
-	Logger        logger.Logger         `inject:"1"`
-	World         ecs.World             `inject:"1"`
-	GameAssets    gameassets.GameAssets `inject:"1"`
-	Ui            ui.Service            `inject:"1"`
-	Transform     transform.Service     `inject:"1"`
-	Groups        groups.Service        `inject:"1"`
-	Hierarchy     hierarchy.Service     `inject:"1"`
-	Inputs        inputs.Service        `inject:"1"`
-	Camera        camera.Service        `inject:"1"`
-	Render        render.Service        `inject:"1"`
+	EventsBuilder events.Builder    `inject:"1"`
+	Window        window.Api        `inject:"1"`
+	Logger        logger.Logger     `inject:"1"`
+	World         ecs.World         `inject:"1"`
+	GameAssets    registry.Assets   `inject:"1"`
+	Ui            ui.Service        `inject:"1"`
+	Transform     transform.Service `inject:"1"`
+	Groups        groups.Service    `inject:"1"`
+	Hierarchy     hierarchy.Service `inject:"1"`
+	Inputs        inputs.Service    `inject:"1"`
+	Camera        camera.Service    `inject:"1"`
+	Render        render.Service    `inject:"1"`
 
 	CursorComponent ecs.ComponentsArray[CursorComponent]
 }

@@ -16,11 +16,11 @@ type Assets struct {
 }
 
 type HudAssets struct {
-	Btn         assets.AssetID `path:"hud/btn.png"`
-	Cursor      assets.AssetID `path:"hud/cursor.png"`
-	Settings    assets.AssetID `path:"hud/settings.png"`
-	Background1 assets.AssetID `path:"hud/bg1.gif"`
-	Background2 assets.AssetID `path:"hud/bg2.gif"`
+	Btn         assets.AssetID `path:"hud/btn.png-trim"`
+	Cursor      assets.AssetID `path:"hud/cursor.png-trim"`
+	Settings    assets.AssetID `path:"hud/settings.png-trim"`
+	Background1 assets.AssetID `path:"hud/bg1.gif-trim"`
+	Background2 assets.AssetID `path:"hud/bg2.gif-trim"`
 }
 
 type TileAssets struct {

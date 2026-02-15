@@ -1,8 +1,8 @@
 package internal
 
 import (
-	"core/modules/gameassets"
 	"core/modules/loading"
+	"core/modules/registry"
 	"core/modules/ui"
 	"engine"
 	"engine/modules/camera"
@@ -20,9 +20,9 @@ type CamComp struct{}
 type TextComp struct{}
 
 type system struct {
-	World      engine.World          `inject:"1"`
-	GameAssets gameassets.GameAssets `inject:"1"`
-	Ui         ui.Service            `inject:"1"`
+	World      engine.World    `inject:"1"`
+	GameAssets registry.Assets `inject:"1"`
+	Ui         ui.Service      `inject:"1"`
 
 	CamArr  ecs.ComponentsArray[CamComp]
 	TextArr ecs.ComponentsArray[TextComp]

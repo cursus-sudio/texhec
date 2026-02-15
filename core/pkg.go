@@ -1,11 +1,12 @@
 package main
 
 import (
+	constructpkg "core/modules/construct/pkg"
 	"core/modules/fpslogger/pkg"
-	"core/modules/gameassets"
-	"core/modules/gameassets/pkg"
 	"core/modules/generation/pkg"
 	"core/modules/loading/pkg"
+	"core/modules/registry"
+	"core/modules/registry/pkg"
 	"core/modules/settings"
 	"core/modules/settings/pkg"
 	"core/modules/tile"
@@ -141,6 +142,7 @@ func getDic() ioc.Dic {
 		gtexture.Package(),
 		texturearray.Package(),
 		tilepkg.Package(),
+		constructpkg.Package(),
 		generationpkg.Package(),
 		uipkg.Package(
 			time.Millisecond*300, // animation duration
@@ -160,7 +162,7 @@ func getDic() ioc.Dic {
 		renderpkg.Package(),
 		textpkg.Package(
 			func(c ioc.Dic) text.FontFamilyComponent {
-				asset := ioc.Get[gameassets.GameAssets](c).FontAsset
+				asset := ioc.Get[registry.Assets](c).FontAsset
 				return text.FontFamilyComponent{FontFamily: asset}
 			},
 			text.FontSizeComponent{FontSize: 16},
@@ -209,7 +211,7 @@ func getDic() ioc.Dic {
 			)
 			record.AddToConfig[transform.PosComponent](config.RecordConfig())
 			record.AddToConfig[camera.OrthoComponent](config.RecordConfig())
-			record.AddToConfig[grid.SquareGridComponent[tile.Type]](config.RecordConfig())
+			record.AddToConfig[grid.SquareGridComponent[tile.ID]](config.RecordConfig())
 			// netsyncpkg.AddComponent[transform.PosComponent](config)
 			// netsyncpkg.AddComponent[camera.OrthoComponent](config)
 			// netsyncpkg.AddComponent[definition.DefinitionLinkComponent](config)
@@ -245,7 +247,7 @@ func getDic() ioc.Dic {
 		fpsloggerpkg.Package(),
 
 		gamescenes.Package(),
-		gameassetspkg.Package(),
+		registrypkg.Package(),
 
 		creditsscene.Package(),
 		gamescene.Package(),

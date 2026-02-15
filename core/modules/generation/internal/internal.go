@@ -2,10 +2,13 @@ package internal
 
 import (
 	"core/modules/generation"
+	"core/modules/registry"
 	"core/modules/tile"
 	"engine"
 	"engine/modules/batcher"
+	"engine/modules/collider"
 	"engine/modules/grid"
+	"engine/modules/inputs"
 	"engine/modules/noise"
 	"slices"
 
@@ -14,31 +17,32 @@ import (
 )
 
 type config struct {
-	types       []tile.Type
+	types       []tile.ID
 	tilesPerJob int
 }
 
 type service struct {
 	engine.World `inject:"1"`
-	Tile         tile.Service `inject:"1"`
+	GameAssets   registry.Assets `inject:"1"`
+	Tile         tile.Service    `inject:"1"`
 
 	config
 }
 
 func NewService(c ioc.Dic) generation.Service {
 	s := ioc.GetServices[service](c)
-	s.types = []tile.Type{}
-	s.addChance(tile.TileWater, 35)
-	s.addChance(tile.TileSand, 15)
-	s.addChance(tile.TileGrass, 45)
-	s.addChance(tile.TileMountain, 5)
+	s.types = []tile.ID{}
+	s.addChance(registry.TileWater, 35)
+	s.addChance(registry.TileSand, 15)
+	s.addChance(registry.TileGrass, 45)
+	s.addChance(registry.TileMountain, 5)
 
 	s.tilesPerJob = 100
 	return &s
 }
 
-func (s *service) addChance(tileType tile.Type, chance int) {
-	s.types = append(s.types, slices.Repeat([]tile.Type{tileType}, chance)...)
+func (s *service) addChance(tileType tile.ID, chance int) {
+	s.types = append(s.types, slices.Repeat([]tile.ID{tileType}, chance)...)
 }
 
 func MapRange(val, min, max float64) float64 { return min + (val * (max - min)) }
@@ -98,6 +102,15 @@ func (s *service) Generate(c generation.Config) batcher.Task {
 		//
 		// print(text.String())
 		// print("\n\n\n")
+
+		size := s.Tile.GetTileSize()
+		size.Size[0] *= float32(c.Size.X)
+		size.Size[1] *= float32(c.Size.Y)
+
+		s.Transform.Size().Set(c.Entity, size)
+
+		s.Collider.Component().Set(c.Entity, collider.NewCollider(s.GameAssets.SquareCollider))
+		s.Inputs.Stack().Set(c.Entity, inputs.StackComponent{})
 		s.Tile.Grid().Set(c.Entity, gridComponent)
 	})
 
@@ -108,7 +121,7 @@ func (s *service) Generate(c generation.Config) batcher.Task {
 }
 
 func (s *service) SetTile(
-	grid grid.SquareGridComponent[tile.Type],
+	grid grid.SquareGridComponent[tile.ID],
 	index grid.Index,
 	noise noise.Noise,
 ) {

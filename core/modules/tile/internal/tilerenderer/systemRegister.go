@@ -28,7 +28,7 @@ type TileRenderSystemRegister struct {
 	Tile                tile.Service `inject:"1"`
 
 	C            ioc.Dic
-	ids          datastructures.SparseArray[tile.Type, uint32]
+	ids          datastructures.SparseArray[tile.ID, uint32]
 	tileTextures datastructures.SparseArray[uint32, mgl32.Vec2]
 	textures     datastructures.SparseArray[uint32, image.Image]
 }
@@ -36,13 +36,13 @@ type TileRenderSystemRegister struct {
 func NewTileRenderSystemRegister(c ioc.Dic) *TileRenderSystemRegister {
 	s := ioc.GetServices[*TileRenderSystemRegister](c)
 	s.C = c
-	s.ids = datastructures.NewSparseArray[tile.Type, uint32]()
+	s.ids = datastructures.NewSparseArray[tile.ID, uint32]()
 	s.tileTextures = datastructures.NewSparseArray[uint32, mgl32.Vec2]()
 	s.textures = datastructures.NewSparseArray[uint32, image.Image]()
 	return s
 }
 
-func (service *TileRenderSystemRegister) AddType(addedAssets datastructures.SparseArray[tile.Type, assets.AssetID]) {
+func (service *TileRenderSystemRegister) AddType(addedAssets datastructures.SparseArray[tile.ID, assets.AssetID]) {
 	for _, assetIndex := range addedAssets.GetIndices() {
 		id := uint32(service.ids.Size())
 		service.ids.Set(assetIndex, id)

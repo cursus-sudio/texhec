@@ -1,7 +1,8 @@
-package gameassetspkg
+package registrypkg
 
 import (
-	"core/modules/gameassets"
+	"core/modules/construct"
+	"core/modules/registry"
 	"core/modules/tile"
 	"engine/modules/collider"
 	"engine/modules/render"
@@ -28,7 +29,7 @@ func Package() ioc.Pkg {
 func (pkg) Register(b ioc.Builder) {
 	// register specific files
 	ioc.WrapService(b, func(c ioc.Dic, b assets.AssetsStorageBuilder) {
-		gameAssets := ioc.Get[gameassets.GameAssets](c)
+		gameAssets := ioc.Get[registry.Assets](c)
 		b.RegisterAsset(gameAssets.Blank, func() (any, error) {
 			img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 			white := color.RGBA{255, 255, 255, 255}
@@ -65,23 +66,28 @@ func (pkg) Register(b ioc.Builder) {
 	})
 
 	// register assets
-	ioc.RegisterSingleton(b, func(c ioc.Dic) gameassets.GameAssets {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) registry.Assets {
 		logger := ioc.Get[logger.Logger](c)
 		assetsService := ioc.Get[assets.AssetModule](c)
 
-		gameAssets := gameassets.GameAssets{}
+		gameAssets := registry.Assets{}
 		logger.Warn(assetsService.InitializeProperties(&gameAssets))
 		return gameAssets
 	})
 
 	ioc.WrapService(b, func(c ioc.Dic, s tile.TileAssets) {
-		gameAssets := ioc.Get[gameassets.GameAssets](c)
-		assets := datastructures.NewSparseArray[tile.Type, assets.AssetID]()
-		assets.Set(tile.TileSand, gameAssets.Tiles.Sand)
-		assets.Set(tile.TileMountain, gameAssets.Tiles.Mountain)
-		assets.Set(tile.TileGrass, gameAssets.Tiles.Grass)
-		assets.Set(tile.TileWater, gameAssets.Tiles.Water)
+		gameAssets := ioc.Get[registry.Assets](c)
+		assets := datastructures.NewSparseArray[tile.ID, assets.AssetID]()
+		assets.Set(registry.TileSand, gameAssets.Tiles.Sand)
+		assets.Set(registry.TileMountain, gameAssets.Tiles.Mountain)
+		assets.Set(registry.TileGrass, gameAssets.Tiles.Grass)
+		assets.Set(registry.TileWater, gameAssets.Tiles.Water)
 		s.AddType(assets)
+	})
+
+	ioc.WrapService(b, func(c ioc.Dic, s construct.Service) {
+		gameAssets := ioc.Get[registry.Assets](c)
+		s.RegisterConstruct(registry.ConstructTank, construct.NewBlueprint(gameAssets.Units.Unit))
 	})
 
 	//
@@ -91,10 +97,10 @@ func (pkg) Register(b ioc.Builder) {
 	// animations
 
 	ioc.WrapService(b, func(c ioc.Dic, b transition.EasingService) {
-		b.Set(gameassets.LinearEasingFunction, func(t transition.Progress) transition.Progress {
+		b.Set(registry.LinearEasingFunction, func(t transition.Progress) transition.Progress {
 			return t
 		})
-		b.Set(gameassets.MyEasingFunction, func(t transition.Progress) transition.Progress {
+		b.Set(registry.MyEasingFunction, func(t transition.Progress) transition.Progress {
 			const n1 = 7.5625
 			const d1 = 2.75
 
@@ -111,7 +117,7 @@ func (pkg) Register(b ioc.Builder) {
 				return n1*t*t + 0.984375
 			}
 		})
-		b.Set(gameassets.EaseOutElastic, func(t transition.Progress) transition.Progress {
+		b.Set(registry.EaseOutElastic, func(t transition.Progress) transition.Progress {
 			const c1 float64 = 10
 			const c2 float64 = .75
 			const c3 float64 = (2 * math.Pi) / 3

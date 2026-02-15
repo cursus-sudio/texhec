@@ -16,6 +16,7 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"os"
+	"strings"
 	"unsafe"
 
 	"github.com/go-gl/gl/v4.5-core/gl"
@@ -92,6 +93,20 @@ func (pkg) Register(b ioc.Builder) {
 				return nil, err
 			}
 
+			img = gtexture.NewImage(img).FlipV().Image()
+			return render.NewTextureAsset(img)
+		}
+		trimImageHandler := func(id assets.AssetID) (any, error) {
+			source, err := os.ReadFile(strings.TrimSuffix(string(id), "-trim"))
+			if err != nil {
+				return nil, err
+			}
+			imgFile := bytes.NewBuffer(source)
+			img, _, err := image.Decode(imgFile)
+			if err != nil {
+				return nil, err
+			}
+
 			img = gtexture.NewImage(img).FlipV().TrimTransparentBackground().Image()
 			return render.NewTextureAsset(img)
 		}
@@ -99,8 +114,32 @@ func (pkg) Register(b ioc.Builder) {
 		b.RegisterExtension("jpg", imageHandler)
 		b.RegisterExtension("jpeg", imageHandler)
 
-		b.RegisterExtension("gif", func(id assets.AssetID) (any, error) {
+		b.RegisterExtension("png-trim", trimImageHandler)
+		b.RegisterExtension("jpg-trim", trimImageHandler)
+		b.RegisterExtension("jpeg-trim", trimImageHandler)
+
+		gifHandler := func(id assets.AssetID) (any, error) {
 			source, err := os.ReadFile(string(id))
+			if err != nil {
+				return nil, err
+			}
+			imgFile := bytes.NewBuffer(source)
+			gif, err := gif.DecodeAll(imgFile)
+			if err != nil {
+				return nil, err
+			}
+
+			images := make([]image.Image, 0, len(gif.Image))
+			for _, img := range gif.Image {
+				finalImg := gtexture.NewImage(img).FlipV().Image()
+				images = append(images, finalImg)
+			}
+
+			return render.NewTextureAsset(images...)
+		}
+
+		gifTrimHandler := func(id assets.AssetID) (any, error) {
+			source, err := os.ReadFile(strings.TrimSuffix(string(id), "-trim"))
 			if err != nil {
 				return nil, err
 			}
@@ -117,6 +156,9 @@ func (pkg) Register(b ioc.Builder) {
 			}
 
 			return render.NewTextureAsset(images...)
-		})
+		}
+
+		b.RegisterExtension("gif", gifHandler)
+		b.RegisterExtension("gif-trim", gifTrimHandler)
 	})
 }

@@ -87,7 +87,7 @@ func (pkg) Register(b ioc.Builder) {
 
 	ioc.WrapService(b, func(c ioc.Dic, s construct.Service) {
 		gameAssets := ioc.Get[registry.Assets](c)
-		s.RegisterConstruct(registry.ConstructTank, construct.NewBlueprint(gameAssets.Units.Unit))
+		s.RegisterConstruct(registry.ConstructFarm, construct.NewBlueprint(gameAssets.Constructs.Farm))
 	})
 
 	//

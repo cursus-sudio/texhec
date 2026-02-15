@@ -3,9 +3,10 @@ package registry
 import "engine/services/assets"
 
 type Assets struct {
-	Hud   HudAssets
-	Tiles TileAssets
-	Units UnitAssets
+	Hud        HudAssets
+	Tiles      TileAssets
+	Constructs ConstructAssets
+	Units      UnitAssets
 
 	ExampleAudio assets.AssetID `path:"audio.wav"`
 
@@ -30,6 +31,10 @@ type TileAssets struct {
 	Water    assets.AssetID `path:"tiles/water.biom"`
 }
 
+type ConstructAssets struct {
+	Farm assets.AssetID `path:"constructs/farm.png"`
+}
+
 type UnitAssets struct {
-	Unit assets.AssetID `path:"units/tank.png"`
+	Tank assets.AssetID `path:"units/tank.png"`
 }

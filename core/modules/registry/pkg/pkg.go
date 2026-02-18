@@ -29,14 +29,14 @@ func Package() ioc.Pkg {
 func (pkg) Register(b ioc.Builder) {
 	// register specific files
 	ioc.WrapService(b, func(c ioc.Dic, b assets.Extensions) {
-		b.Register("blank-texture", func(_ assets.Path) (any, error) {
+		b.Register("blank texture", func(_ assets.Path) (any, error) {
 			img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 			white := color.RGBA{255, 255, 255, 255}
 			img.Set(0, 0, white)
 			asset, err := render.NewTextureAsset(img)
 			return asset, err
 		})
-		b.Register("square-mesh", func(_ assets.Path) (any, error) {
+		b.Register("square mesh", func(_ assets.Path) (any, error) {
 			vertices := []render.Vertex{
 				{Pos: [3]float32{1, 1, 1}, TexturePos: [2]float32{1, 1}},
 				{Pos: [3]float32{1, -1, 1}, TexturePos: [2]float32{1, 0}},
@@ -52,7 +52,7 @@ func (pkg) Register(b ioc.Builder) {
 			return asset, nil
 		})
 
-		b.Register("square-collider", func(_ assets.Path) (any, error) {
+		b.Register("square collider", func(_ assets.Path) (any, error) {
 			asset := collider.NewColliderAsset(
 				[]collider.AABB{collider.NewAABB(mgl32.Vec3{-1, -1}, mgl32.Vec3{1, 1})},
 				[]collider.Range{collider.NewRange(collider.Leaf, 0, 2)},

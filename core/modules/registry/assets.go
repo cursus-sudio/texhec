@@ -13,9 +13,9 @@ type Assets struct {
 
 	ExampleAudio assets.ID `path:"audio.wav"`
 
-	Blank          assets.ID `path:"_.blank-texture"`
-	SquareMesh     assets.ID `path:"_.square-mesh"`
-	SquareCollider assets.ID `path:"_.square-collider"`
+	Blank          assets.ID `path:"blank texture"`
+	SquareMesh     assets.ID `path:"square mesh"`
+	SquareCollider assets.ID `path:"square collider"`
 	FontAsset      assets.ID `path:"font1.ttf"`
 }
 

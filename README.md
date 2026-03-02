@@ -25,6 +25,11 @@ Engine modules written:
 
 And more engine and game modules you can find in `engine/modules` and `core/modules`
 
+Example map generated in a matter of seconds and rendered in less than 6ms\
+using 5 years old Intel® Core™ i5-8350U × 8 Intel® UHD Graphics 620 (KBL GT2):
+![Whole map](readme/whole_map.png)
+![Botton right map corner](readme/bottom_right.png)
+
 ### What is next
 Next in list:
 - units

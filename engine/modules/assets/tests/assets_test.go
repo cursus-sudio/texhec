@@ -20,7 +20,7 @@ type Definitions struct {
 func TestAssets(t *testing.T) {
 	setup := NewSetup()
 	fetched := false
-	setup.Extensions.Register("png", func(path assets.PathComponent) (assets.Asset, error) {
+	setup.Assets.Register("png", func(path assets.PathComponent) (assets.Asset, error) {
 		fetched = true
 		return &asset{}, nil
 	})

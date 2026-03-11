@@ -58,7 +58,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 		})
 	})
 
-	ioc.WrapService(b, func(c ioc.Dic, b assets.Extensions) {
+	ioc.WrapService(b, func(c ioc.Dic, b assets.Service) {
 		b.Register("biom", func(path assets.PathComponent) (assets.Asset, error) {
 			images := [6][]image.Image{}
 			directory, _ := strings.CutSuffix(path.Path, ".biom")

@@ -14,8 +14,7 @@ import (
 )
 
 type setup struct {
-	Extensions assets.Extensions `inject:"1"`
-	Assets     assets.Service    `inject:"1"`
+	Assets assets.Service `inject:"1"`
 
 	Registry registry.Service `inject:"1"`
 }

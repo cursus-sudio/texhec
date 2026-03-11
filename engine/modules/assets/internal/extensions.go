@@ -14,7 +14,7 @@ type extensions struct {
 	extensions map[string]func(assets.PathComponent) (assets.Asset, error)
 }
 
-func NewExtensions(c ioc.Dic) assets.Extensions {
+func NewExtensions(c ioc.Dic) *extensions {
 	e := ioc.GetServices[*extensions](c)
 	e.extensions = make(map[string]func(assets.PathComponent) (assets.Asset, error))
 	return e

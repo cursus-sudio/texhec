@@ -125,7 +125,7 @@ func (pkg pkg) Register(b ioc.Builder) {
 		}
 	})
 
-	ioc.WrapService(b, func(c ioc.Dic, b assets.Extensions) {
+	ioc.WrapService(b, func(c ioc.Dic, b assets.Service) {
 		getLetterImage := func(drawer font.Drawer, letter rune) *image.RGBA {
 			var text = string(letter)
 			textBounds, _ := drawer.BoundString(text)

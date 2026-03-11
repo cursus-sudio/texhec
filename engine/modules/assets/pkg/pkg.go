@@ -21,9 +21,6 @@ func Package(parentDirectory string) ioc.Pkg {
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) assets.Extensions {
-		return internal.NewExtensions(c)
-	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) assets.Service {
 		return internal.NewService(c)
 	})

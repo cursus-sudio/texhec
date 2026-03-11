@@ -12,10 +12,10 @@ import (
 //
 
 type assetsService struct {
-	Extensions assets.Extensions `inject:"1"`
-	Registry   registry.Service  `inject:"1"`
-	World      ecs.World         `inject:"1"`
+	Registry registry.Service `inject:"1"`
+	World    ecs.World        `inject:"1"`
 
+	*extensions
 	path  ecs.ComponentsArray[assets.PathComponent]
 	cache ecs.ComponentsArray[assets.CacheComponent]
 }
@@ -23,6 +23,7 @@ type assetsService struct {
 func NewService(c ioc.Dic) assets.Service {
 	s := ioc.GetServices[*assetsService](c)
 
+	s.extensions = NewExtensions(c)
 	s.path = ecs.GetComponentsArray[assets.PathComponent](s.World)
 	s.cache = ecs.GetComponentsArray[assets.CacheComponent](s.World)
 
@@ -42,8 +43,8 @@ func (s *assetsService) Get(entity ecs.EntityID) (assets.Asset, error) {
 		return nil, assets.ErrAssetNotFound
 	}
 
-	ext := s.Extensions.PathExntesion(path)
-	dispatcher, ok := s.Extensions.ExtensionDispatcher(ext)
+	ext := s.PathExntesion(path)
+	dispatcher, ok := s.ExtensionDispatcher(ext)
 	if !ok {
 		fmt.Printf("\"%v\" path.\n", path)
 		return nil, assets.ErrAssetNotFound

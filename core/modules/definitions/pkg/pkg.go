@@ -30,7 +30,7 @@ func Package() ioc.Pkg {
 
 func (pkg) Register(b ioc.Builder) {
 	// register specific files
-	ioc.WrapService(b, func(c ioc.Dic, b assets.Extensions) {
+	ioc.WrapService(b, func(c ioc.Dic, b assets.Service) {
 		b.Register("blank texture", func(_ assets.PathComponent) (assets.Asset, error) {
 			img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 			white := color.RGBA{255, 255, 255, 255}

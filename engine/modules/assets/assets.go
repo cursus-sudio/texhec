@@ -20,18 +20,14 @@ func NewCache(cache Asset) CacheComponent { return CacheComponent{cache} }
 
 // add asset struct
 
-type Extensions interface {
+type Service interface {
+	Path() ecs.ComponentsArray[PathComponent]
+	Cache() ecs.ComponentsArray[CacheComponent]
+
 	Register(
 		/* shouldn't have dots and be after dots in asset */ extension string,
 		dispatcher func(path PathComponent) (Asset, error),
 	)
-	PathExntesion(PathComponent) string
-	ExtensionDispatcher(extension string) (func(PathComponent) (Asset, error), bool)
-}
-
-type Service interface {
-	Path() ecs.ComponentsArray[PathComponent]
-	Cache() ecs.ComponentsArray[CacheComponent]
 
 	// get also caches asset
 	Get(ecs.EntityID) (Asset, error)

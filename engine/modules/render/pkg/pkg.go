@@ -81,7 +81,7 @@ func (pkg) Register(b ioc.Builder) {
 		})
 	})
 
-	ioc.WrapService(b, func(c ioc.Dic, b assets.Extensions) {
+	ioc.WrapService(b, func(c ioc.Dic, b assets.Service) {
 		imageHandler := func(id assets.PathComponent) (assets.Asset, error) {
 			source, err := os.ReadFile(id.Path)
 			if err != nil {

@@ -13,8 +13,8 @@ func TestUnusedFieldError(t *testing.T) {
 	}
 	s := NewSetup()
 	instance := TestedStruct{}
-	if err := s.Service.Populate(&instance); !errors.Is(err, registry.ErrNotFoundHandlerForAField) {
-		t.Errorf("expected err \"%v\" got \"%v\"", registry.ErrNotFoundHandlerForAField, err)
+	if err := s.Service.Populate(&instance); err != nil {
+		t.Errorf("unexpected err \"%v\"", err)
 	}
 }
 

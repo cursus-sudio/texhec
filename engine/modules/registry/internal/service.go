@@ -45,7 +45,6 @@ func (s *service) populateValue(v reflect.Value) error {
 	t := v.Type()
 	var err error
 
-fieldLoop:
 	for i := range t.NumField() {
 		fieldValue := v.Field(i)
 		fieldType := t.Field(i)
@@ -65,9 +64,7 @@ fieldLoop:
 			tagHandler := s.handlers[tagIndex]
 			entity := tagHandler(tagValue)
 			fieldValue.Set(reflect.ValueOf(entity))
-			continue fieldLoop
 		}
-		err = registry.ErrNotFoundHandlerForAField
 	}
 
 	return err

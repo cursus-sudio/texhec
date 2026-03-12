@@ -3,7 +3,6 @@ package gamescene
 import (
 	"core/modules/construct"
 	"core/modules/generation"
-	"core/modules/registry"
 	"core/modules/settings"
 	"core/modules/ui"
 	gamescenes "core/scenes"
@@ -115,7 +114,7 @@ func addScene(
 		world.Hierarchy.SetParent(farm, gridEntity)
 		world.Groups.Component().Set(farm, groups.EmptyGroups().Ptr().Enable(GameGroup).Val())
 
-		world.Construct.ID().Set(farm, construct.NewID(registry.ConstructFarm))
+		world.Construct.Construct().Set(farm, construct.NewConstruct(world.GameAssets.Constructs.Farm))
 		world.Construct.Coords().Set(farm, construct.NewCoords(grid.NewCoords(499, 500)))
 	}
 }

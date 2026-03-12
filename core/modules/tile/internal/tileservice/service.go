@@ -10,14 +10,21 @@ import (
 )
 
 type service struct {
+	World                 ecs.World `inject:"1"`
 	grid.Service[tile.ID] `inject:"1"`
+
+	tile ecs.ComponentsArray[tile.Component]
 }
 
 func NewService(c ioc.Dic) tile.Service {
 	s := ioc.GetServices[*service](c)
+	s.tile = ecs.GetComponentsArray[tile.Component](s.World)
 	return s
 }
 
+func (t *service) Tile() ecs.ComponentsArray[tile.Component] {
+	return t.tile
+}
 func (t *service) Grid() ecs.ComponentsArray[grid.SquareGridComponent[tile.ID]] {
 	return t.Component()
 }

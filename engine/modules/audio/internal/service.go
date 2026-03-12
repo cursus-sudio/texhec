@@ -4,6 +4,7 @@ import (
 	"engine/modules/assets"
 	"engine/modules/audio"
 	"engine/services/datastructures"
+	"engine/services/ecs"
 	"sync"
 
 	"github.com/ogiusek/ioc/v2"
@@ -39,7 +40,7 @@ func (s *audioService) Stop(channel audio.Channel) error {
 	return nil
 }
 
-func (s *audioService) Play(channel audio.Channel, asset assets.ID) error {
+func (s *audioService) Play(channel audio.Channel, asset ecs.EntityID) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -52,7 +53,7 @@ func (s *audioService) Play(channel audio.Channel, asset assets.ID) error {
 	}
 	return nil
 }
-func (s *audioService) QueueEndless(channel audio.Channel, asset assets.ID) error {
+func (s *audioService) QueueEndless(channel audio.Channel, asset ecs.EntityID) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -65,7 +66,7 @@ func (s *audioService) QueueEndless(channel audio.Channel, asset assets.ID) erro
 	}
 	return nil
 }
-func (s *audioService) Queue(channel audio.Channel, asset assets.ID) error {
+func (s *audioService) Queue(channel audio.Channel, asset ecs.EntityID) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 

@@ -1,7 +1,7 @@
 package systems
 
 import (
-	"core/modules/registry"
+	"core/modules/definitions"
 	"core/modules/ui"
 	"engine"
 	"engine/modules/assets"
@@ -19,7 +19,7 @@ import (
 type UpdateBgEvent struct{}
 
 type System struct {
-	GameAssets   registry.Assets `inject:"1"`
+	GameAssets   definitions.Definitions `inject:"1"`
 	engine.World `inject:"1"`
 	Ui           ui.Service `inject:"1"`
 
@@ -30,7 +30,7 @@ type System struct {
 	bgTimePerFrame time.Duration
 	bgTexture      int
 
-	backgrounds       []assets.ID
+	backgrounds       []ecs.EntityID
 	backgroundsFrames []int
 }
 
@@ -48,7 +48,7 @@ func NewSystem(c ioc.Dic, bgTimePerFrame time.Duration) ui.System {
 		s.bgTimePerFrame = bgTimePerFrame
 		s.bgTexture = 0
 
-		s.backgrounds = []assets.ID{
+		s.backgrounds = []ecs.EntityID{
 			s.GameAssets.Hud.Background2,
 			s.GameAssets.Hud.Background1,
 			s.GameAssets.Hud.Background1,

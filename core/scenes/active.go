@@ -2,10 +2,10 @@ package gamescenes
 
 import (
 	"core/modules/construct"
+	"core/modules/definitions"
 	"core/modules/fpslogger"
 	"core/modules/generation"
 	"core/modules/loading"
-	"core/modules/registry"
 	"core/modules/settings"
 	"core/modules/tile"
 	"core/modules/ui"
@@ -48,11 +48,11 @@ type World struct {
 	engine.World `inject:"1"`
 
 	// game
-	Construct  construct.Service  `inject:"1"`
-	GameAssets registry.Assets    `inject:"1"`
-	Tile       tile.Service       `inject:"1"`
-	Generation generation.Service `inject:"1"`
-	Ui         ui.Service         `inject:"1"`
+	Construct  construct.Service       `inject:"1"`
+	GameAssets definitions.Definitions `inject:"1"`
+	Tile       tile.Service            `inject:"1"`
+	Generation generation.Service      `inject:"1"`
+	Ui         ui.Service              `inject:"1"`
 }
 
 type MenuBuilder scene.Scene

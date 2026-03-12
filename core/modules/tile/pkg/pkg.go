@@ -8,6 +8,7 @@ import (
 	"core/modules/tile/internal/tileui"
 	"engine/modules/assets"
 	gridpkg "engine/modules/grid/pkg"
+	"engine/modules/registry"
 	"engine/services/codec"
 	"engine/services/ecs"
 	gtexture "engine/services/graphics/texture"
@@ -58,10 +59,19 @@ func (pkg pkg) Register(b ioc.Builder) {
 		})
 	})
 
-	ioc.WrapService(b, func(c ioc.Dic, b assets.Extensions) {
-		b.Register("biom", func(path assets.Path) (any, error) {
+	ioc.WrapService(b, func(c ioc.Dic, registry registry.Service) {
+		var counter tile.ID
+		registry.Register("tile", func(entity ecs.EntityID, structTagValue string) {
+			counter++
+			tileService := ioc.Get[tile.Service](c)
+			tileService.Tile().Set(entity, tile.NewTile(counter))
+		})
+	})
+
+	ioc.WrapService(b, func(c ioc.Dic, b assets.Service) {
+		b.Register("biom", func(path assets.PathComponent) (assets.Asset, error) {
 			images := [6][]image.Image{}
-			directory, _ := strings.CutSuffix(string(path), ".biom")
+			directory, _ := strings.CutSuffix(path.Path, ".biom")
 
 			for i := range 6 {
 				tileDir := fmt.Sprintf("%v/%v", directory, i+1)

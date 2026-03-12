@@ -11,18 +11,18 @@ import (
 
 type extensions struct {
 	Logger     logger.Logger `inject:"1"`
-	extensions map[string]func(assets.Path) (any, error)
+	extensions map[string]func(assets.PathComponent) (assets.Asset, error)
 }
 
-func NewExtensions(c ioc.Dic) assets.Extensions {
+func NewExtensions(c ioc.Dic) *extensions {
 	e := ioc.GetServices[*extensions](c)
-	e.extensions = make(map[string]func(assets.Path) (any, error))
+	e.extensions = make(map[string]func(assets.PathComponent) (assets.Asset, error))
 	return e
 }
 
 func (s *extensions) Register(
 	/* shouldn't have dots and be after dots in asset */ extension string,
-	dispatcher func(path assets.Path) (any, error),
+	dispatcher func(path assets.PathComponent) (assets.Asset, error),
 ) {
 	extension = strings.Trim(extension, ".")
 	if _, ok := s.extensions[extension]; ok {
@@ -32,12 +32,13 @@ func (s *extensions) Register(
 	s.extensions[extension] = dispatcher
 }
 
-func (s *extensions) PathExntesion(path assets.Path) string {
-	parts := strings.Split(string(path), ".")
+func (s *extensions) PathExntesion(path assets.PathComponent) string {
+	parts := strings.Split(path.Path, ".")
+	parts = strings.Split(parts[len(parts)-1], "/")
 	return parts[len(parts)-1]
 }
 
-func (s *extensions) ExtensionDispatcher(extension string) (func(assets.Path) (any, error), bool) {
+func (s *extensions) ExtensionDispatcher(extension string) (func(assets.PathComponent) (assets.Asset, error), bool) {
 	extension = strings.Trim(extension, ".")
 	dispatcher, ok := s.extensions[extension]
 	return dispatcher, ok

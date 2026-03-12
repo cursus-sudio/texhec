@@ -1,15 +1,15 @@
 package render
 
 import (
-	"engine/modules/assets"
+	"engine/services/ecs"
 	"engine/services/graphics/vao/ebo"
 )
 
 type MeshComponent struct {
-	ID assets.ID
+	ID ecs.EntityID
 }
 
-func NewMesh(id assets.ID) MeshComponent {
+func NewMesh(id ecs.EntityID) MeshComponent {
 	return MeshComponent{ID: id}
 }
 
@@ -28,6 +28,7 @@ type Vertex struct {
 type MeshAsset interface {
 	Vertices() []Vertex
 	Indices() []ebo.Index
+	Release()
 }
 
 type meshAsset struct {

@@ -1,7 +1,7 @@
 package text
 
 import (
-	"engine/modules/assets"
+	"engine/services/ecs"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -22,7 +22,7 @@ type TextColorComponent struct {
 }
 
 type FontFamilyComponent struct {
-	FontFamily assets.ID
+	FontFamily ecs.EntityID
 }
 
 type FontSizeComponent struct {

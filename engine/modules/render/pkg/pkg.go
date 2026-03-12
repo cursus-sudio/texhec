@@ -81,9 +81,9 @@ func (pkg) Register(b ioc.Builder) {
 		})
 	})
 
-	ioc.WrapService(b, func(c ioc.Dic, b assets.Extensions) {
-		imageHandler := func(id assets.Path) (any, error) {
-			source, err := os.ReadFile(string(id))
+	ioc.WrapService(b, func(c ioc.Dic, b assets.Service) {
+		imageHandler := func(id assets.PathComponent) (assets.Asset, error) {
+			source, err := os.ReadFile(id.Path)
 			if err != nil {
 				return nil, err
 			}
@@ -96,8 +96,8 @@ func (pkg) Register(b ioc.Builder) {
 			img = gtexture.NewImage(img).FlipV().Image()
 			return render.NewTextureAsset(img)
 		}
-		trimImageHandler := func(id assets.Path) (any, error) {
-			source, err := os.ReadFile(strings.TrimSuffix(string(id), "-trim"))
+		trimImageHandler := func(id assets.PathComponent) (assets.Asset, error) {
+			source, err := os.ReadFile(strings.TrimSuffix(id.Path, "-trim"))
 			if err != nil {
 				return nil, err
 			}
@@ -118,8 +118,8 @@ func (pkg) Register(b ioc.Builder) {
 		b.Register("jpg-trim", trimImageHandler)
 		b.Register("jpeg-trim", trimImageHandler)
 
-		gifHandler := func(id assets.Path) (any, error) {
-			source, err := os.ReadFile(string(id))
+		gifHandler := func(id assets.PathComponent) (assets.Asset, error) {
+			source, err := os.ReadFile(id.Path)
 			if err != nil {
 				return nil, err
 			}
@@ -138,8 +138,8 @@ func (pkg) Register(b ioc.Builder) {
 			return render.NewTextureAsset(images...)
 		}
 
-		gifTrimHandler := func(id assets.Path) (any, error) {
-			source, err := os.ReadFile(strings.TrimSuffix(string(id), "-trim"))
+		gifTrimHandler := func(id assets.PathComponent) (assets.Asset, error) {
+			source, err := os.ReadFile(strings.TrimSuffix(id.Path, "-trim"))
 			if err != nil {
 				return nil, err
 			}

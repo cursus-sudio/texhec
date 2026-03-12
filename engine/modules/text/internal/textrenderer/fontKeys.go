@@ -1,32 +1,32 @@
 package textrenderer
 
 import (
-	"engine/modules/assets"
+	"engine/services/ecs"
 	"sync"
 )
 
 type FontKeys interface {
-	GetKey(assets.ID) FontKey
-	GetAsset(FontKey) (assets.ID, bool)
+	GetKey(ecs.EntityID) FontKey
+	GetAsset(FontKey) (ecs.EntityID, bool)
 }
 
 type fontKeys struct {
-	fontsKeys map[assets.ID]FontKey
-	keysFonts []*assets.ID
+	fontsKeys map[ecs.EntityID]FontKey
+	keysFonts []*ecs.EntityID
 	mutex     sync.Mutex
 	i         FontKey
 }
 
 func NewFontKeys() FontKeys {
 	return &fontKeys{
-		fontsKeys: make(map[assets.ID]FontKey),
-		keysFonts: make([]*assets.ID, 0),
+		fontsKeys: make(map[ecs.EntityID]FontKey),
+		keysFonts: make([]*ecs.EntityID, 0),
 		mutex:     sync.Mutex{},
 		i:         FontKey(0),
 	}
 }
 
-func (k *fontKeys) GetKey(asset assets.ID) FontKey {
+func (k *fontKeys) GetKey(asset ecs.EntityID) FontKey {
 	k.mutex.Lock()
 	defer k.mutex.Unlock()
 	fontKey, ok := k.fontsKeys[asset]
@@ -46,7 +46,7 @@ func (k *fontKeys) GetKey(asset assets.ID) FontKey {
 	return fontKey
 }
 
-func (k *fontKeys) GetAsset(key FontKey) (assets.ID, bool) {
+func (k *fontKeys) GetAsset(key FontKey) (ecs.EntityID, bool) {
 	if int(key) >= len(k.keysFonts) {
 		return 0, false
 	}

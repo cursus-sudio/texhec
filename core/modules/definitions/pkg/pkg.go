@@ -1,14 +1,13 @@
-package registrypkg
+package definitionspkg
 
 import (
-	"core/modules/construct"
-	"core/modules/registry"
-	"core/modules/tile"
+	"core/modules/definitions"
 	"engine/modules/assets"
 	"engine/modules/collider"
+	"engine/modules/registry"
 	"engine/modules/render"
 	"engine/modules/transition"
-	"engine/services/datastructures"
+	"engine/services/ecs"
 	"engine/services/graphics/vao/ebo"
 	"engine/services/logger"
 	"image"
@@ -28,15 +27,15 @@ func Package() ioc.Pkg {
 
 func (pkg) Register(b ioc.Builder) {
 	// register specific files
-	ioc.WrapService(b, func(c ioc.Dic, b assets.Extensions) {
-		b.Register("blank texture", func(_ assets.Path) (any, error) {
+	ioc.WrapService(b, func(c ioc.Dic, b assets.Service) {
+		b.Register("blank texture", func(_ assets.PathComponent) (assets.Asset, error) {
 			img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 			white := color.RGBA{255, 255, 255, 255}
 			img.Set(0, 0, white)
 			asset, err := render.NewTextureAsset(img)
 			return asset, err
 		})
-		b.Register("square mesh", func(_ assets.Path) (any, error) {
+		b.Register("square mesh", func(_ assets.PathComponent) (assets.Asset, error) {
 			vertices := []render.Vertex{
 				{Pos: [3]float32{1, 1, 1}, TexturePos: [2]float32{1, 1}},
 				{Pos: [3]float32{1, -1, 1}, TexturePos: [2]float32{1, 0}},
@@ -52,7 +51,7 @@ func (pkg) Register(b ioc.Builder) {
 			return asset, nil
 		})
 
-		b.Register("square collider", func(_ assets.Path) (any, error) {
+		b.Register("square collider", func(_ assets.PathComponent) (assets.Asset, error) {
 			asset := collider.NewColliderAsset(
 				[]collider.AABB{collider.NewAABB(mgl32.Vec3{-1, -1}, mgl32.Vec3{1, 1})},
 				[]collider.Range{collider.NewRange(collider.Leaf, 0, 2)},
@@ -65,28 +64,13 @@ func (pkg) Register(b ioc.Builder) {
 	})
 
 	// register assets
-	ioc.RegisterSingleton(b, func(c ioc.Dic) registry.Assets {
+	ioc.RegisterSingleton(b, func(c ioc.Dic) definitions.Definitions {
 		logger := ioc.Get[logger.Logger](c)
-		assetsService := ioc.Get[assets.Service](c)
+		registryService := ioc.Get[registry.Service](c)
 
-		gameAssets := registry.Assets{}
-		logger.Warn(assetsService.InitializeProperties(&gameAssets))
+		gameAssets, err := registry.GetRegistry[definitions.Definitions](registryService)
+		logger.Warn(err)
 		return gameAssets
-	})
-
-	ioc.WrapService(b, func(c ioc.Dic, s tile.TileAssets) {
-		gameAssets := ioc.Get[registry.Assets](c)
-		assets := datastructures.NewSparseArray[tile.ID, assets.ID]()
-		assets.Set(registry.TileSand, gameAssets.Tiles.Sand)
-		assets.Set(registry.TileMountain, gameAssets.Tiles.Mountain)
-		assets.Set(registry.TileGrass, gameAssets.Tiles.Grass)
-		assets.Set(registry.TileWater, gameAssets.Tiles.Water)
-		s.AddType(assets)
-	})
-
-	ioc.WrapService(b, func(c ioc.Dic, s construct.Service) {
-		gameAssets := ioc.Get[registry.Assets](c)
-		s.RegisterConstruct(registry.ConstructFarm, construct.NewBlueprint(gameAssets.Constructs.Farm))
 	})
 
 	//
@@ -95,11 +79,11 @@ func (pkg) Register(b ioc.Builder) {
 
 	// animations
 
-	ioc.WrapService(b, func(c ioc.Dic, b transition.EasingService) {
-		b.Set(registry.LinearEasingFunction, func(t transition.Progress) transition.Progress {
+	transitions := map[string]func(t transition.Progress) transition.Progress{
+		"linear": func(t transition.Progress) transition.Progress {
 			return t
-		})
-		b.Set(registry.MyEasingFunction, func(t transition.Progress) transition.Progress {
+		},
+		"my easing": func(t transition.Progress) transition.Progress {
 			const n1 = 7.5625
 			const d1 = 2.75
 
@@ -115,8 +99,8 @@ func (pkg) Register(b ioc.Builder) {
 				t -= 2.625 / d1
 				return n1*t*t + 0.984375
 			}
-		})
-		b.Set(registry.EaseOutElastic, func(t transition.Progress) transition.Progress {
+		},
+		"ease out elastic": func(t transition.Progress) transition.Progress {
 			const c1 float64 = 10
 			const c2 float64 = .75
 			const c3 float64 = (2 * math.Pi) / 3
@@ -131,6 +115,17 @@ func (pkg) Register(b ioc.Builder) {
 				math.Sin((x*c1-c2)*c3) +
 				1
 			return transition.Progress(x)
+		},
+	}
+
+	ioc.WrapService(b, func(c ioc.Dic, b registry.Service) {
+		b.Register("transition", func(entity ecs.EntityID, structTagValue string) {
+			transitionService := ioc.Get[transition.Service](c)
+			easing, ok := transitions[structTagValue]
+			if !ok {
+				easing = func(t transition.Progress) transition.Progress { return t }
+			}
+			transitionService.EasingFunction().Set(entity, transition.NewEasingFunction(easing))
 		})
 	})
 }

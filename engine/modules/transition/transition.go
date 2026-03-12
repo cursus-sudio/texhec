@@ -9,6 +9,7 @@ type System ecs.SystemRegister
 
 type Service interface {
 	Easing() ecs.ComponentsArray[EasingComponent]
+	EasingFunction() ecs.ComponentsArray[EasingFunctionComponent]
 }
 
 //
@@ -80,18 +81,18 @@ func NewDelayedEvent(
 
 //
 
-type EasingID uint16
-type EasingFunction func(t Progress) Progress
-
-type EasingService interface {
-	Set(EasingID, EasingFunction)
-	Get(EasingID) (EasingFunction, bool)
-}
-
 type EasingComponent struct {
-	ID EasingID
+	ID ecs.EntityID
 }
 
-func NewEasing(id EasingID) EasingComponent {
+type EasingFunctionComponent struct {
+	EasingFunction func(t Progress) Progress
+}
+
+func NewEasing(id ecs.EntityID) EasingComponent {
 	return EasingComponent{id}
+}
+
+func NewEasingFunction(easingFunction func(t Progress) Progress) EasingFunctionComponent {
+	return EasingFunctionComponent{easingFunction}
 }

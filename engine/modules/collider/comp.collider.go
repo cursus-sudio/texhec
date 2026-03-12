@@ -1,11 +1,11 @@
 package collider
 
 import (
-	"engine/modules/assets"
+	"engine/services/ecs"
 )
 
-type Component struct{ ID assets.ID }
+type Component struct{ ID ecs.EntityID }
 
-func NewCollider(id assets.ID) Component {
+func NewCollider(id ecs.EntityID) Component {
 	return Component{ID: id}
 }

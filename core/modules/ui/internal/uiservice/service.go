@@ -1,7 +1,7 @@
 package uiservice
 
 import (
-	"core/modules/registry"
+	"core/modules/definitions"
 	"core/modules/ui"
 	"engine"
 	"engine/modules/transform"
@@ -19,7 +19,7 @@ type menuComponent struct {
 type childrenComponent struct{}
 
 type service struct {
-	GameAssets   registry.Assets `inject:"1"`
+	GameAssets   definitions.Definitions `inject:"1"`
 	engine.World `inject:"1"`
 
 	animationDuration time.Duration

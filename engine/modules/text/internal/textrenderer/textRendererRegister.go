@@ -2,7 +2,6 @@ package textrenderer
 
 import (
 	_ "embed"
-	"engine/modules/assets"
 	"engine/modules/camera"
 	"engine/modules/groups"
 	"engine/modules/text"
@@ -43,13 +42,13 @@ type textRendererRegister struct {
 	TextureArrayFactory texturearray.Factory  `inject:"1"`
 	FontsKeys           FontKeys              `inject:"1"`
 
-	defaultTextAsset    assets.ID
+	defaultTextAsset    ecs.EntityID
 	defaultColor        text.TextColorComponent
 	removeOncePerNCalls uint16
 }
 
 func NewTextRenderer(c ioc.Dic,
-	defaultTextAsset assets.ID,
+	defaultTextAsset ecs.EntityID,
 	defaultColor text.TextColorComponent,
 	removeOncePerNCalls uint16,
 ) text.SystemRenderer {

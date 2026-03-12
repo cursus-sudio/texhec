@@ -1,16 +1,16 @@
 package render
 
 import (
-	"engine/modules/assets"
+	"engine/services/ecs"
 	"errors"
 	"image"
 )
 
 type TextureComponent struct {
-	Asset assets.ID
+	Asset ecs.EntityID
 }
 
-func NewTexture(asset assets.ID) TextureComponent {
+func NewTexture(asset ecs.EntityID) TextureComponent {
 	return TextureComponent{Asset: asset}
 }
 
@@ -50,6 +50,7 @@ type TextureAsset interface {
 	Images() []image.Image
 	Res() image.Rectangle
 	AspectRatio() image.Rectangle
+	Release()
 }
 
 type textureAsset struct {

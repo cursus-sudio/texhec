@@ -37,9 +37,9 @@ func (pkg) Register(b ioc.Builder) {
 		return internal.NewSystem(c)
 	})
 
-	ioc.WrapService(b, func(c ioc.Dic, b assets.Extensions) {
-		b.Register("wav", func(id assets.Path) (any, error) {
-			source, err := os.ReadFile(string(id))
+	ioc.WrapService(b, func(c ioc.Dic, b assets.Service) {
+		b.Register("wav", func(id assets.PathComponent) (assets.Asset, error) {
+			source, err := os.ReadFile(id.Path)
 			if err != nil {
 				return nil, err
 			}

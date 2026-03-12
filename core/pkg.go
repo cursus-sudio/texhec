@@ -2,11 +2,11 @@ package main
 
 import (
 	constructpkg "core/modules/construct/pkg"
+	"core/modules/definitions"
+	"core/modules/definitions/pkg"
 	"core/modules/fpslogger/pkg"
 	"core/modules/generation/pkg"
 	"core/modules/loading/pkg"
-	"core/modules/registry"
-	"core/modules/registry/pkg"
 	"core/modules/settings"
 	"core/modules/settings/pkg"
 	"core/modules/tile"
@@ -37,6 +37,7 @@ import (
 	"engine/modules/noise/pkg"
 	"engine/modules/record"
 	"engine/modules/record/pkg"
+	"engine/modules/registry/pkg"
 	"engine/modules/render"
 	"engine/modules/render/pkg"
 	"engine/modules/scene/pkg"
@@ -162,7 +163,7 @@ func getDic() ioc.Dic {
 		renderpkg.Package(),
 		textpkg.Package(
 			func(c ioc.Dic) text.FontFamilyComponent {
-				asset := ioc.Get[registry.Assets](c).FontAsset
+				asset := ioc.Get[definitions.Definitions](c).FontAsset
 				return text.FontFamilyComponent{FontFamily: asset}
 			},
 			text.FontSizeComponent{FontSize: 16},
@@ -233,6 +234,7 @@ func getDic() ioc.Dic {
 			return config
 		}()),
 		recordpkg.Package(),
+		registrypkg.Package(),
 		smoothpkg.Package(func() smoothpkg.Config {
 			config := smoothpkg.NewConfig()
 			smoothpkg.SmoothComponent[render.ColorComponent](config)
@@ -247,7 +249,7 @@ func getDic() ioc.Dic {
 		fpsloggerpkg.Package(),
 
 		gamescenes.Package(),
-		registrypkg.Package(),
+		definitionspkg.Package(),
 
 		creditsscene.Package(),
 		gamescene.Package(),

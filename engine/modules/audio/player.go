@@ -1,6 +1,8 @@
 package audio
 
-import "engine/modules/assets"
+import (
+	"engine/services/ecs"
+)
 
 type Channel int
 type Volume float32 // volume is normalized
@@ -12,9 +14,9 @@ type Service interface {
 
 type PlayerService interface {
 	Stop(Channel) error
-	Play(Channel, assets.ID) error
-	Queue(Channel, assets.ID) error
-	QueueEndless(Channel, assets.ID) error
+	Play(Channel, ecs.EntityID) error
+	Queue(Channel, ecs.EntityID) error
+	QueueEndless(Channel, ecs.EntityID) error
 }
 
 type VolumeService interface {

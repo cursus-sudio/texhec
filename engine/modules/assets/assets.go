@@ -1,48 +1,46 @@
 package assets
 
 import (
+	"engine/services/ecs"
 	"engine/services/httperrors"
 	"errors"
 	"fmt"
 	"reflect"
 )
 
-var (
-	ErrStoredAssetIsntCachable error = errors.New("stored asset isn't cachable")
-)
-
-type ID uint32
-type Path string
 type Asset interface{ Release() }
+
+// components
+
+type PathComponent struct{ Path string }
+type CacheComponent struct{ Cache Asset }
+
+func NewPath(path string) PathComponent   { return PathComponent{path} }
+func NewCache(cache Asset) CacheComponent { return CacheComponent{cache} }
 
 // add asset struct
 
-type Extensions interface {
+type Service interface {
+	Path() ecs.ComponentsArray[PathComponent]
+	Cache() ecs.ComponentsArray[CacheComponent]
+
 	Register(
 		/* shouldn't have dots and be after dots in asset */ extension string,
-		dispatcher func(path Path) (any, error),
+		dispatcher func(path PathComponent) (Asset, error),
 	)
-	PathExntesion(Path) string
-	ExtensionDispatcher(extension string) (func(Path) (any, error), bool)
-}
-
-type Service interface {
-	// takes asset struct pointer
-	// for each [AssetID] property sets its value to its `path` struct tag value
-	InitializeProperties(pointerToStruct any) error
-	PathID(Path) (ID, bool)
 
 	// get also caches asset
-	Get(ID) (any, error)
-	Release(...ID)
+	Get(ecs.EntityID) (Asset, error)
+	Release(...ecs.EntityID)
 	ReleaseAll()
 }
 
 var (
 	ErrAssetHasDifferentType error = errors.New("asset is not of requested type")
+	ErrAssetNotFound         error = errors.New("asset not found")
 )
 
-func GetAsset[Asset any](assets Service, assetID ID) (Asset, error) {
+func GetAsset[Asset any](assets Service, assetID ecs.EntityID) (Asset, error) {
 	rawAsset, err := assets.Get(assetID)
 	if err != nil {
 		var a Asset

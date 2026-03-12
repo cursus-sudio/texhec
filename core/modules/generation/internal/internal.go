@@ -1,8 +1,8 @@
 package internal
 
 import (
+	"core/modules/definitions"
 	"core/modules/generation"
-	"core/modules/registry"
 	"core/modules/tile"
 	"engine"
 	"engine/modules/batcher"
@@ -10,6 +10,8 @@ import (
 	"engine/modules/grid"
 	"engine/modules/inputs"
 	"engine/modules/noise"
+	"engine/services/ecs"
+	"fmt"
 	"slices"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -23,8 +25,8 @@ type config struct {
 
 type service struct {
 	engine.World `inject:"1"`
-	GameAssets   registry.Assets `inject:"1"`
-	Tile         tile.Service    `inject:"1"`
+	GameAssets   definitions.Definitions `inject:"1"`
+	Tile         tile.Service            `inject:"1"`
 
 	config
 }
@@ -32,17 +34,22 @@ type service struct {
 func NewService(c ioc.Dic) generation.Service {
 	s := ioc.GetServices[service](c)
 	s.types = []tile.ID{}
-	s.addChance(registry.TileWater, 35)
-	s.addChance(registry.TileSand, 15)
-	s.addChance(registry.TileGrass, 45)
-	s.addChance(registry.TileMountain, 5)
+	s.addChance(s.GameAssets.Tiles.Water, 35)
+	s.addChance(s.GameAssets.Tiles.Sand, 15)
+	s.addChance(s.GameAssets.Tiles.Grass, 45)
+	s.addChance(s.GameAssets.Tiles.Mountain, 5)
 
 	s.tilesPerJob = 100
 	return &s
 }
 
-func (s *service) addChance(tileType tile.ID, chance int) {
-	s.types = append(s.types, slices.Repeat([]tile.ID{tileType}, chance)...)
+func (s *service) addChance(tileType ecs.EntityID, chance int) {
+	tileComp, ok := s.Tile.Tile().Get(tileType)
+	if !ok {
+		s.Logger.Warn(fmt.Errorf("\"%v\" isn't a tile tile and therefor cannot be used in generation", tileType))
+		return
+	}
+	s.types = append(s.types, slices.Repeat([]tile.ID{tileComp.ID}, chance)...)
 }
 
 func MapRange(val, min, max float64) float64 { return min + (val * (max - min)) }

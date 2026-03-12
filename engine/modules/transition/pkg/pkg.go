@@ -2,7 +2,6 @@ package transitionpkg
 
 import (
 	"engine/modules/transition"
-	"engine/modules/transition/internal/easing"
 	"engine/modules/transition/internal/service"
 	"engine/modules/transition/internal/system"
 	"engine/modules/transition/internal/transitionimpl"
@@ -35,8 +34,5 @@ func (pkg) Register(b ioc.Builder) {
 	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) transition.Service {
 		return service.NewService(c)
-	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) transition.EasingService {
-		return easing.NewEasingService()
 	})
 }

@@ -54,8 +54,8 @@ type system struct {
 	entitiesBatches datastructures.SparseArray[ecs.EntityID, batchKey]
 	batches         map[batchKey]*batch
 
-	meshes   map[assets.ID]vao.VAO
-	textures map[assets.ID]texturearray.TextureArray
+	meshes   map[ecs.EntityID]vao.VAO
+	textures map[ecs.EntityID]texturearray.TextureArray
 
 	program   program.Program
 	locations locations
@@ -95,8 +95,8 @@ func NewSystem(c ioc.Dic) render.SystemRenderer {
 		s.entitiesBatches = datastructures.NewSparseArray[ecs.EntityID, batchKey]()
 		s.batches = make(map[batchKey]*batch)
 
-		s.meshes = make(map[assets.ID]vao.VAO)
-		s.textures = make(map[assets.ID]texturearray.TextureArray)
+		s.meshes = make(map[ecs.EntityID]vao.VAO)
+		s.textures = make(map[ecs.EntityID]texturearray.TextureArray)
 
 		s.program = p
 		s.locations = locations

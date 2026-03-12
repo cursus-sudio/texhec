@@ -12,6 +12,7 @@ type BiomAsset interface {
 	Images() [15][]image.Image
 	Res() image.Rectangle
 	AspectRatio() image.Rectangle
+	Release()
 }
 
 type biomAsset struct {

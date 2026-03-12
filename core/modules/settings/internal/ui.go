@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"core/modules/registry"
+	"core/modules/definitions"
 	"core/modules/settings"
 	"core/modules/ui"
 	gamescenes "core/scenes"
@@ -27,7 +27,7 @@ import (
 // 2. quit button
 
 type system struct {
-	GameAssets registry.Assets `inject:"1"`
+	GameAssets definitions.Definitions `inject:"1"`
 
 	engine.World `inject:"1"`
 	Ui           ui.Service `inject:"1"`

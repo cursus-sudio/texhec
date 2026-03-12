@@ -11,10 +11,10 @@ import (
 )
 
 type sysT[Component transition.Lerp[Component]] struct {
-	World         ecs.World                `inject:"1"`
-	Logger        logger.Logger            `inject:"1"`
-	EasingService transition.EasingService `inject:"1"`
-	EventsBuilder events.Builder           `inject:"1"`
+	World         ecs.World          `inject:"1"`
+	Logger        logger.Logger      `inject:"1"`
+	Transition    transition.Service `inject:"1"`
+	EventsBuilder events.Builder     `inject:"1"`
 
 	dirtySet ecs.DirtySet
 
@@ -62,8 +62,8 @@ func (s *sysT[Component]) ListenFrame(event frames.FrameEvent) {
 
 		easingComponent, ok := s.easingArray.Get(entity)
 		if ok {
-			if fn, ok := s.EasingService.Get(easingComponent.ID); ok {
-				progress = fn(progress)
+			if fn, ok := s.Transition.EasingFunction().Get(easingComponent.ID); ok {
+				progress = fn.EasingFunction(progress)
 			}
 		}
 

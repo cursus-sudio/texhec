@@ -4,6 +4,7 @@ import (
 	"engine/modules/assets"
 	"engine/modules/text"
 	"engine/services/datastructures"
+	"engine/services/ecs"
 	"engine/services/logger"
 
 	"golang.org/x/image/font/opentype"
@@ -12,7 +13,7 @@ import (
 type FontKey uint32
 
 type FontService interface {
-	AssetFont(assets.ID) (text.Glyphs, error)
+	AssetFont(ecs.EntityID) (text.Glyphs, error)
 }
 
 type fontService struct {
@@ -46,7 +47,7 @@ func NewFontService(
 
 //
 
-func (s *fontService) AssetFont(assetID assets.ID) (text.Glyphs, error) {
+func (s *fontService) AssetFont(assetID ecs.EntityID) (text.Glyphs, error) {
 	asset, err := assets.GetAsset[text.FontFaceAsset](s.assets, assetID)
 	if err != nil {
 		return text.Glyphs{}, err

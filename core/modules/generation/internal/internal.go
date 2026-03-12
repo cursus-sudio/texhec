@@ -88,28 +88,6 @@ func (s *service) Generate(c generation.Config) batcher.Task {
 		}
 	})
 	flushBatch := batcher.NewBatch(1, func(i int) {
-		// typesCount := []int64{
-		// 	0,
-		// 	0,
-		// 	0,
-		// 	0,
-		// }
-		// count := gridComponent.GetLastIndex()
-		// for i := range count {
-		// 	v := gridComponent.GetTile(i)
-		// 	atomic.AddInt64(&typesCount[v-1], 1)
-		// }
-		// text := &strings.Builder{}
-		// for i, typeCount := range typesCount {
-		// 	fmt.Fprintf(text, "%v %05.2f%% \n",
-		// 		i,
-		// 		float64(typeCount*100)/float64(count),
-		// 	)
-		// }
-		//
-		// print(text.String())
-		// print("\n\n\n")
-
 		size := s.Tile.GetTileSize()
 		size.Size[0] *= float32(c.Size.X)
 		size.Size[1] *= float32(c.Size.Y)

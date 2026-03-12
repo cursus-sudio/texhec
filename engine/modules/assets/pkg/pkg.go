@@ -25,15 +25,10 @@ func (pkg pkg) Register(b ioc.Builder) {
 		return internal.NewService(c)
 	})
 	ioc.WrapService(b, func(c ioc.Dic, registry registry.Service) {
-		world := ioc.Get[ecs.World](c)
-		registry.Register("path", func(structTagValue string) ecs.EntityID {
-			entity := world.NewEntity()
-
+		registry.Register("path", func(entity ecs.EntityID, structTagValue string) {
 			assetsService := ioc.Get[assets.Service](c)
 			path := assets.NewPath(pkg.parentDirectory + structTagValue)
 			assetsService.Path().Set(entity, path)
-
-			return entity
 		})
 	})
 }

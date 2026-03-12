@@ -8,6 +8,7 @@ import (
 	"core/modules/tile/internal/tileui"
 	"engine/modules/assets"
 	gridpkg "engine/modules/grid/pkg"
+	"engine/modules/registry"
 	"engine/services/codec"
 	"engine/services/ecs"
 	gtexture "engine/services/graphics/texture"
@@ -55,6 +56,15 @@ func (pkg pkg) Register(b ioc.Builder) {
 				}
 			}
 			return nil
+		})
+	})
+
+	ioc.WrapService(b, func(c ioc.Dic, registry registry.Service) {
+		var counter tile.ID
+		registry.Register("tile", func(entity ecs.EntityID, structTagValue string) {
+			counter++
+			tileService := ioc.Get[tile.Service](c)
+			tileService.Tile().Set(entity, tile.NewTile(counter))
 		})
 	})
 

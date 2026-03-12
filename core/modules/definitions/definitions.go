@@ -1,7 +1,6 @@
 package definitions
 
 import (
-	"core/modules/tile"
 	"engine/services/ecs"
 )
 
@@ -33,10 +32,10 @@ type Hud struct {
 }
 
 type Tiles struct {
-	Grass    ecs.EntityID `path:"tiles/grass.biom"`
-	Sand     ecs.EntityID `path:"tiles/sand.biom"`
-	Mountain ecs.EntityID `path:"tiles/mountain.biom"`
-	Water    ecs.EntityID `path:"tiles/water.biom"`
+	Grass    ecs.EntityID `path:"tiles/grass.biom" tile:""`
+	Sand     ecs.EntityID `path:"tiles/sand.biom" tile:""`
+	Mountain ecs.EntityID `path:"tiles/mountain.biom" tile:""`
+	Water    ecs.EntityID `path:"tiles/water.biom" tile:""`
 }
 
 type Constructs struct {
@@ -53,14 +52,3 @@ type Transitions struct {
 	MyEasing       ecs.EntityID `transition:"my easing"`
 	EaseOutElastic ecs.EntityID `transition:"ease out elastic"`
 }
-
-const (
-	// this has to be changed before using saving
-	// when i save game and then update to new version which adds new tile as not last
-	// than other tiles are pushed back and every next tile is marked as previous
-	_ tile.ID = iota
-	TileWater
-	TileSand
-	TileGrass
-	TileMountain
-)

@@ -4,11 +4,13 @@ import (
 	"core/modules/tile"
 	_ "embed"
 	"engine"
+	"engine/modules/assets"
 	"engine/modules/render"
 	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/graphics/buffers"
 	"engine/services/graphics/program"
+	gtexture "engine/services/graphics/texture"
 	"engine/services/graphics/texturearray"
 	"engine/services/graphics/vao"
 	"image"
@@ -41,8 +43,9 @@ func (b *Batch) Release() {
 //
 
 type system struct {
-	engine.World `inject:"1"`
-	Tile         tile.Service `inject:"1"`
+	TextureArrayFactory texturearray.Factory `inject:"1"`
+	engine.World        `inject:"1"`
+	Tile                tile.Service `inject:"1"`
 
 	program   program.Program
 	locations locations
@@ -53,8 +56,12 @@ type system struct {
 	// texturesSizeBuffer buffers.Buffer[int32]
 	vao vao.VAO
 
-	dirtySet ecs.DirtySet
-	batches  datastructures.SparseArray[ecs.EntityID, Batch]
+	tileTextures datastructures.SparseArray[uint32, mgl32.Vec2]
+	textures     datastructures.SparseArray[uint32, image.Image]
+
+	tilesDirtySet ecs.DirtySet
+	gridDirtySet  ecs.DirtySet
+	batches       datastructures.SparseArray[ecs.EntityID, Batch]
 }
 
 type locations struct {
@@ -67,8 +74,77 @@ type locations struct {
 }
 
 func (s *system) ListenRender(render render.RenderEvent) {
-	dirtyEntities := s.dirtySet.Get()
-	for _, entity := range dirtyEntities {
+	dirtyTiles := s.tilesDirtySet.Get()
+	for _, entity := range dirtyTiles {
+		tileComp, ok := s.Tile.Tile().Get(entity)
+		if !ok {
+			continue
+		}
+
+		id := uint32(s.ids.Size())
+		s.ids.Set(tileComp.ID, id)
+		texture, err := assets.GetAsset[tile.BiomAsset](s.Assets, entity)
+		if err != nil {
+			s.Logger.Warn(err)
+			continue
+		}
+
+		rangeBase := id*15 + 1
+		for i, images := range texture.Images() {
+			size := s.textures.Size()
+			tileRange := mgl32.Vec2{float32(size), float32(len(images))}
+			s.tileTextures.Set(rangeBase+uint32(i), tileRange)
+
+			imageBase := size
+			for i, img := range images {
+				s.textures.Set(uint32(imageBase+i), img)
+			}
+		}
+	}
+	if len(dirtyTiles) != 0 {
+		// remake images
+		highLodTextureArray, err := s.TextureArrayFactory.New(s.textures)
+		if err != nil {
+			s.Logger.Warn(err)
+			return
+		}
+
+		lowLodTextures := datastructures.NewSparseArray[uint32, image.Image]()
+		for _, texture := range s.textures.GetIndices() {
+			img, _ := s.textures.Get(texture)
+			img = gtexture.NewImage(img).Scale(2, 2).Opaque().Image()
+			lowLodTextures.Set(texture, img)
+		}
+		lowLodTextureArray, err := s.TextureArrayFactory.New(lowLodTextures)
+		if err != nil {
+			s.Logger.Warn(err)
+			return
+		}
+
+		dirtySet := ecs.NewDirtySet()
+		s.Tile.Grid().AddDirtySet(dirtySet)
+
+		for _, t := range s.lodTextureArrays {
+			t.Release()
+		}
+
+		s.lodTextureArrays = []texturearray.TextureArray{
+			highLodTextureArray,
+			lowLodTextureArray,
+		}
+
+		for _, id := range s.tileTextures.GetIndices() {
+			value, _ := s.tileTextures.Get(id)
+			s.texturesBuffer.Set(int(id), value)
+		}
+		s.texturesBuffer.Flush()
+	}
+
+	if len(s.lodTextureArrays) == 0 {
+		return
+	}
+
+	for _, entity := range s.gridDirtySet.Get() {
 		batch, batchOk := s.batches.Get(entity)
 		grid, compOk := s.Tile.Grid().Get(entity)
 

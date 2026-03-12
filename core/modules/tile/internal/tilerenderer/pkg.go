@@ -20,14 +20,8 @@ func Package() ioc.Pkg {
 }
 
 func (pkg pkg) Register(b ioc.Builder) {
-	ioc.RegisterSingleton(b, func(c ioc.Dic) *TileRenderSystemRegister {
-		return NewTileRenderSystemRegister(c)
-	})
-	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.TileAssets {
-		return ioc.Get[*TileRenderSystemRegister](c)
-	})
 	ioc.RegisterSingleton(b, func(c ioc.Dic) tile.SystemRenderer {
-		return ioc.Get[*TileRenderSystemRegister](c)
+		return NewTileRenderSystemRegister(c)
 	})
 
 	ioc.RegisterSingleton(b, func(c ioc.Dic) vbo.VBOFactory[tile.ID] {

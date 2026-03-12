@@ -2,13 +2,11 @@ package definitionspkg
 
 import (
 	"core/modules/definitions"
-	"core/modules/tile"
 	"engine/modules/assets"
 	"engine/modules/collider"
 	"engine/modules/registry"
 	"engine/modules/render"
 	"engine/modules/transition"
-	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/graphics/vao/ebo"
 	"engine/services/logger"
@@ -75,16 +73,6 @@ func (pkg) Register(b ioc.Builder) {
 		return gameAssets
 	})
 
-	ioc.WrapService(b, func(c ioc.Dic, s tile.TileAssets) {
-		gameAssets := ioc.Get[definitions.Definitions](c)
-		assets := datastructures.NewSparseArray[tile.ID, ecs.EntityID]()
-		assets.Set(definitions.TileSand, gameAssets.Tiles.Sand)
-		assets.Set(definitions.TileMountain, gameAssets.Tiles.Mountain)
-		assets.Set(definitions.TileGrass, gameAssets.Tiles.Grass)
-		assets.Set(definitions.TileWater, gameAssets.Tiles.Water)
-		s.AddType(assets)
-	})
-
 	//
 	//
 	//
@@ -131,16 +119,13 @@ func (pkg) Register(b ioc.Builder) {
 	}
 
 	ioc.WrapService(b, func(c ioc.Dic, b registry.Service) {
-		b.Register("transition", func(structTagValue string) ecs.EntityID {
-			world := ioc.Get[ecs.World](c)
+		b.Register("transition", func(entity ecs.EntityID, structTagValue string) {
 			transitionService := ioc.Get[transition.Service](c)
 			easing, ok := transitions[structTagValue]
 			if !ok {
 				easing = func(t transition.Progress) transition.Progress { return t }
 			}
-			entity := world.NewEntity()
 			transitionService.EasingFunction().Set(entity, transition.NewEasingFunction(easing))
-			return entity
 		})
 	})
 }

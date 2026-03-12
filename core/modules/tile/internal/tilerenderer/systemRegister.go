@@ -3,13 +3,11 @@ package tilerenderer
 import (
 	"core/modules/tile"
 	"engine"
-	"engine/modules/assets"
 	"engine/services/datastructures"
 	"engine/services/ecs"
 	"engine/services/graphics/buffers"
 	"engine/services/graphics/program"
 	"engine/services/graphics/shader"
-	gtexture "engine/services/graphics/texture"
 	"engine/services/graphics/texturearray"
 	"engine/services/graphics/vao"
 	"image"
@@ -27,44 +25,14 @@ type TileRenderSystemRegister struct {
 	engine.World        `inject:"1"`
 	Tile                tile.Service `inject:"1"`
 
-	C            ioc.Dic
-	ids          datastructures.SparseArray[tile.ID, uint32]
-	tileTextures datastructures.SparseArray[uint32, mgl32.Vec2]
-	textures     datastructures.SparseArray[uint32, image.Image]
+	C ioc.Dic
 }
 
 func NewTileRenderSystemRegister(c ioc.Dic) *TileRenderSystemRegister {
 	s := ioc.GetServices[*TileRenderSystemRegister](c)
 	s.C = c
-	s.ids = datastructures.NewSparseArray[tile.ID, uint32]()
-	s.tileTextures = datastructures.NewSparseArray[uint32, mgl32.Vec2]()
-	s.textures = datastructures.NewSparseArray[uint32, image.Image]()
+
 	return s
-}
-
-func (service *TileRenderSystemRegister) AddType(addedAssets datastructures.SparseArray[tile.ID, ecs.EntityID]) {
-	for _, assetIndex := range addedAssets.GetIndices() {
-		id := uint32(service.ids.Size())
-		service.ids.Set(assetIndex, id)
-		asset, _ := addedAssets.Get(assetIndex)
-		texture, err := assets.GetAsset[tile.BiomAsset](service.Assets, asset)
-		if err != nil {
-			service.Logger.Warn(err)
-			continue
-		}
-
-		rangeBase := id*15 + 1
-		for i, images := range texture.Images() {
-			size := service.textures.Size()
-			tileRange := mgl32.Vec2{float32(size), float32(len(images))}
-			service.tileTextures.Set(rangeBase+uint32(i), tileRange)
-
-			imageBase := size
-			for i, img := range images {
-				service.textures.Set(uint32(imageBase+i), img)
-			}
-		}
-	}
 }
 
 func (factory *TileRenderSystemRegister) Register() error {
@@ -101,44 +69,27 @@ func (factory *TileRenderSystemRegister) Register() error {
 		return err
 	}
 
-	highLodTextureArray, err := factory.TextureArrayFactory.New(factory.textures)
-	if err != nil {
-		return err
-	}
+	gridDirtySet := ecs.NewDirtySet()
+	factory.Tile.Grid().AddDirtySet(gridDirtySet)
 
-	lowLodTextures := datastructures.NewSparseArray[uint32, image.Image]()
-	for _, texture := range factory.textures.GetIndices() {
-		img, _ := factory.textures.Get(texture)
-		img = gtexture.NewImage(img).Scale(2, 2).Opaque().Image()
-		lowLodTextures.Set(texture, img)
-	}
-	lowLodTextureArray, err := factory.TextureArrayFactory.New(lowLodTextures)
-	if err != nil {
-		return err
-	}
-
-	dirtySet := ecs.NewDirtySet()
-	factory.Tile.Grid().AddDirtySet(dirtySet)
+	tileDirtySet := ecs.NewDirtySet()
+	factory.Tile.Tile().AddDirtySet(tileDirtySet)
 
 	s := ioc.GetServices[*system](factory.C)
 
 	s.program = p
 	s.vao = vao.NewVAO(nil, nil)
 	s.locations = locations
-	s.ids = factory.ids
-	s.lodTextureArrays = []texturearray.TextureArray{
-		highLodTextureArray,
-		lowLodTextureArray,
-	}
+	s.ids = datastructures.NewSparseArray[tile.ID, uint32]()
+	s.lodTextureArrays = []texturearray.TextureArray{}
 
 	s.texturesBuffer = buffers.NewBuffer[mgl32.Vec2](gl.SHADER_STORAGE_BUFFER, gl.DYNAMIC_DRAW, 1)
-	for _, id := range factory.tileTextures.GetIndices() {
-		value, _ := factory.tileTextures.Get(id)
-		s.texturesBuffer.Set(int(id), value)
-	}
-	s.texturesBuffer.Flush()
 
-	s.dirtySet = dirtySet
+	s.tileTextures = datastructures.NewSparseArray[uint32, mgl32.Vec2]()
+	s.textures = datastructures.NewSparseArray[uint32, image.Image]()
+
+	s.tilesDirtySet = tileDirtySet
+	s.gridDirtySet = gridDirtySet
 	s.batches = datastructures.NewSparseArray[ecs.EntityID, Batch]()
 
 	events.Listen(factory.EventsBuilder, s.ListenRender)

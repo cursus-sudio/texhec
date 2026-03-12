@@ -13,21 +13,19 @@ import (
 
 type service struct {
 	Logger      logger.Logger `inject:"1"`
+	World       ecs.World     `inject:"1"`
 	tags        []string
-	handlers    []func(string) ecs.EntityID
+	handlers    []func(ecs.EntityID, string)
 	presentTags map[string]any
 }
 
 func NewService(c ioc.Dic) registry.Service {
-	return &service{
-		Logger:      ioc.Get[logger.Logger](c),
-		tags:        nil,
-		handlers:    nil,
-		presentTags: make(map[string]any),
-	}
+	s := ioc.GetServices[*service](c)
+	s.presentTags = make(map[string]any)
+	return s
 }
 
-func (s *service) Register(structTagKey string, handler func(structTagValue string) ecs.EntityID) {
+func (s *service) Register(structTagKey string, handler func(entity ecs.EntityID, structTagValue string)) {
 	if _, ok := s.presentTags[structTagKey]; ok {
 		s.Logger.Warn(errors.Join(
 			fmt.Errorf("already registered struct tag key"),
@@ -56,14 +54,17 @@ func (s *service) populateValue(v reflect.Value) error {
 			}
 			continue
 		}
+
+		entity := s.World.NewEntity()
+		fieldValue.Set(reflect.ValueOf(entity))
+
 		for tagIndex, tagName := range s.tags {
 			tagValue, ok := fieldType.Tag.Lookup(tagName)
 			if !ok {
 				continue
 			}
 			tagHandler := s.handlers[tagIndex]
-			entity := tagHandler(tagValue)
-			fieldValue.Set(reflect.ValueOf(entity))
+			tagHandler(entity, tagValue)
 		}
 	}
 

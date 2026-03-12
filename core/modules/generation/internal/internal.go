@@ -10,6 +10,8 @@ import (
 	"engine/modules/grid"
 	"engine/modules/inputs"
 	"engine/modules/noise"
+	"engine/services/ecs"
+	"fmt"
 	"slices"
 
 	"github.com/go-gl/mathgl/mgl64"
@@ -32,17 +34,22 @@ type service struct {
 func NewService(c ioc.Dic) generation.Service {
 	s := ioc.GetServices[service](c)
 	s.types = []tile.ID{}
-	s.addChance(definitions.TileWater, 35)
-	s.addChance(definitions.TileSand, 15)
-	s.addChance(definitions.TileGrass, 45)
-	s.addChance(definitions.TileMountain, 5)
+	s.addChance(s.GameAssets.Tiles.Water, 35)
+	s.addChance(s.GameAssets.Tiles.Sand, 15)
+	s.addChance(s.GameAssets.Tiles.Grass, 45)
+	s.addChance(s.GameAssets.Tiles.Mountain, 5)
 
 	s.tilesPerJob = 100
 	return &s
 }
 
-func (s *service) addChance(tileType tile.ID, chance int) {
-	s.types = append(s.types, slices.Repeat([]tile.ID{tileType}, chance)...)
+func (s *service) addChance(tileType ecs.EntityID, chance int) {
+	tileComp, ok := s.Tile.Tile().Get(tileType)
+	if !ok {
+		s.Logger.Warn(fmt.Errorf("\"%v\" isn't a tile tile and therefor cannot be used in generation", tileType))
+		return
+	}
+	s.types = append(s.types, slices.Repeat([]tile.ID{tileComp.ID}, chance)...)
 }
 
 func MapRange(val, min, max float64) float64 { return min + (val * (max - min)) }

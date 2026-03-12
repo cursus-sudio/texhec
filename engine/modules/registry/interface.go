@@ -10,7 +10,7 @@ var (
 )
 
 type Service interface {
-	Register(structTagKey string, handler func(structTagValue string) ecs.EntityID)
+	Register(structTagKey string, handler func(entity ecs.EntityID, structTagValue string))
 
 	// can return ErrExpectedPointerToAStruct
 	Populate(any) error

@@ -4,9 +4,6 @@ import (
 	"engine/services/ecs"
 )
 
-// asset ID should be a number.
-// asset path and its dispatcher should be pointed by id.
-// and this approach should be used by every registry
 type Definitions struct {
 	Hud        Hud
 	Tiles      Tiles
